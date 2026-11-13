@@ -3,6 +3,121 @@
 Design and feasibility proposal, 2026-11-13. Operator's idea; no implementation,
 trained result, transcript benchmark, or quality gain is claimed here.
 
+## Revision 2 — operator-corrected core (2026-11-13; supersedes the framing below)
+
+The operator corrected the framing on 2026-11-13. Where Revision 2 and the sections
+below disagree, **Revision 2 governs**.
+
+### R2.1 MEM is a string kernel, not a next-byte lookup
+
+The operator is a **maximal-exact-match string kernel** in the classical sense used by
+read-mapping systems (BWA-MEM, minimap2): a long MEM between the current context and a
+window is *evidence that the window is a similar context*, not a promise about the next
+byte. The kernel returns a **weighted neighbourhood**; the neural block decides what to
+extract from it (contents, regions, continuations, embeddings).
+
+Consequence: the frequency of exact repetition in any particular corpus is **not** the
+argument, and the depth-support statistics of §5 must not be used as one. They describe
+which corpora are repetitive; they do not bound what the operator can find, and they say
+nothing about the value of a neighbourhood once found.
+
+### R2.2 The operator chain: seeds → chain → correspondence → fork
+
+| stage | mechanism | status |
+|---|---|---|
+| seeds | `xsa seeds`, adaptive length solved for a target multiplicity | exists |
+| **colinear chaining** | sparse DP over anchors, ordered/gap-consistent, chain score | **MISSING — the key build** |
+| correspondence | the chain yields context position ↔ corpus position alignment | follows from chaining |
+| **fork / variable site** | branch histogram at the aligned site with multiplicities | exists (`xsa branches`; `xsa forks` for the fork matrix) |
+
+Without chaining the operator is a bag-of-seeds ranker: it learns "this document shares a
+string with me". With chaining it is a **positional pointer** — it knows where the
+correspondence is, hence where the variable site is, hence which corpus position answers
+for the current one. That is the difference between retrieval and attention.
+
+### R2.3 The guarantee is completeness, not statistical support
+
+Seed-based search is **complete by construction**: for any true correspondence containing
+at least one exact seed of length ≥ L within the accepted transformation class, chaining
+cannot miss it. Precision is then supplied by the chain/support filter. The only losses
+are enumerable by design: (a) no exact stretch ≥ L, or (b) the correspondence lies outside
+the accepted class. **L and the transformation class are the two knobs, and both are
+registered parameters, not heuristics.**
+
+### R2.4 One operator was wrong: it is an additive algebra
+
+`ATTEND_SELF` alone is a design error. The general object is a measure-valued operator,
+and operators compose by summing measures:
+
+```
+O(x) -> { (j, w_j, v_j) }   bounded candidates, nonnegative weights, value vectors
+      + A_O                  exact aggregates (mass, distinct-region support, entropy),
+                             independent of any truncation
+
+a_o(j) = alpha_o * w_o(j) / sum_{j' in cand_o} w_o(j')      per-operator normalisation
+out    = sum_o sum_j a_o(j) * v_j                          additive readout
+```
+
+Siblings, all on the same interface:
+
+- **ATTEND_SELF** — universe: visible context regions; weights from local rarity and
+  region proximity/recency.
+- **ATTEND_WORLD** — universe: corpus documents; weights `ln(D/df)` over *distinct*
+  seeds, region-clustered.
+- **ATTEND_STORE** — universe: the slot store; weights from slot strength (the existing
+  Emender memory branch expressed in the same algebra).
+
+Three rules make the algebra safe to extend:
+
+1. **Per-operator normalisation, not joint.** A joint softmax lets one strong operator
+   starve the others. With per-operator normalisation plus a learned `alpha_o`, each
+   contribution stays bounded and comparable, and truncation only drops candidates — it
+   can never make an operator look *sharper*. `A_O` carries the exact mass, so truncation
+   is always disclosed.
+2. **`alpha_o = 0` is exactly a no-op.** Every operator is ablatable by construction, so
+   contribution is measured rather than argued.
+3. **Empty is a value.** An operator with no support contributes exactly zero mass; the
+   neural path still predicts. Empty support must never renormalise into noise.
+
+A new operator is a four-item contract: position space + value source; a weight rule
+defined on the *eligible* universe with source-document exclusion; exact aggregates
+independent of truncation; a nonnegative learned scale initialised small (so `alpha=0` is
+an exact ablation). Ties sort by (layer, document, position) for determinism.
+
+### R2.5 The accepted transformation class is a registered parameter
+
+"Transformations of it that you would accept" defines the kernel's equivalence class:
+byte-exact admits everything losslessly but misses case/whitespace/format variants;
+case-folded or normalised classes generalise but can merge distinct contexts. Because it
+is a *class* and not a heuristic, it is declared, hash-bound, and ablated like every other
+registered choice.
+
+### R2.6 Linear in state: chunk-scan is the performance path
+
+The step is affine with a diagonal linear part and rank-1 injections:
+
+```
+s_{t+1} = D_t * s_t + e_{i_t} (x) delta_t
+```
+
+Composition is associative and **factorises over slots** (the linear part is diagonal in
+the slot basis), so the sequence chunk-scans exactly as chunked linear attention / the
+GDN2 delta rule does: intra-chunk sequential (hard routing preserved, exact), inter-chunk
+parallel prefix over the composed diagonal products and injected values. Serial depth
+drops from O(T) to O(T/C) with no semantic change.
+
+**What it buys and what it does not**, stated so the measurement decides:
+
+- It removes *serialisation*. If the deficit is latency-bound small-matrix work — which
+  the 2.13M regime (13 steps/s) suggests — chunking wins materially.
+- It does **not** reduce per-token read/write volume (match over B slots, store traffic;
+  compulsory traffic measured at 180.08 MB/head). If we are bandwidth-bound — which the
+  T1024 profile (718.65 ms/head, 13,802 spills) suggests — only a smaller state or higher
+  arithmetic intensity helps.
+- The match still needs the state, so intra-chunk work stays sequential. C is the knob.
+
+---
+
 ## Architectural decision
 
 Make the model's own input an addressable exact-match object. The primary memory
@@ -283,6 +398,10 @@ change that operation mix; adding CPU queries may also worsen it. It does not
 repair the store's arithmetic-intensity floor by assertion.
 
 ## 5. Failure envelope and evidence corrections
+
+*(Superseded as an argument by R2.1/R2.3: corpus repetition statistics are not the basis
+on which this operator is judged. Retained for the record as evidence about which corpora
+are repetitive, and for the practical fan-out constraint in R2.4.)*
 
 The natural-text prior is sparse at depth and broad at shallow lengths. The
 primary sxgc [CONTEXT_DEPTH.md](../../../../sxgc/CONTEXT_DEPTH.md) is more precise
