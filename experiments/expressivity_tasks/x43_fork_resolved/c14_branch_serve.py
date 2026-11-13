@@ -22,6 +22,133 @@ from .c14_feature_extract import digest, INDEX, N
 ROOT = Path(__file__).resolve().parent
 XSA = Path('/home/erikg/emender-scratch/c14-xsa-serving/xsa/target/release/xsa')
 
+SPINE_CAP = 1024
+"""Registered left-context cap in bytes; the fixed 1024-byte spine."""
+
+SEPARATOR = b'\x1e'
+"""The Pile's framing byte. Content, never a boundary: at vocabulary 256 no
+in-band delimiter is safe by construction (SXGC_DOCUMENT_BOUNDARIES_NOTE.md)."""
+
+SPINE_POLICY_REGISTERED = 'registered-1024'
+SPINE_POLICY_SHORT = 'amended-short-8-16'
+SPINE_POLICY = SPINE_POLICY_REGISTERED
+SHORT_SPINE_BYTES = (8, 16)
+
+
+def spine_left(policy=None):
+    """Left-context cap in bytes, resolved from the spine policy flag.
+
+    `registered-1024` is the registered feature definition and the default: every
+    registered board's numbers depend on the fixed 1024-byte spine. The
+    2026-11-10 short-spine amendment (RESULT_CONSULT_BOUNDARY_HARDENING.md) sets
+    the flag to `amended-short-8-16` — an 8..16-byte spine with support-weighted
+    relax. That policy is NOT implemented and refuses here rather than silently
+    training a different feature: activation needs the relax implementation and a
+    new registration.
+    """
+    policy = SPINE_POLICY if policy is None else policy
+    if policy == SPINE_POLICY_REGISTERED:
+        return SPINE_CAP
+    if policy == SPINE_POLICY_SHORT:
+        raise NotImplementedError('short-spine amendment ' + repr(SHORT_SPINE_BYTES) +
+            ' has no implementation; no registered board may consume it without a new registration')
+    raise ValueError('unknown spine policy ' + repr(policy))
+
+
+class EndBranch:
+    """Witness sentinel: the position's own occurrence ends the corpus (END branch)."""
+    __slots__ = ()
+
+    def __repr__(self):
+        return 'EndBranch()'
+
+
+END_BRANCH = EndBranch()
+
+
+def consult_context(text, base, off, left=None):
+    """The consult context for the position at absolute corpus offset `off`.
+
+    `text` is the document's bytes starting at `base` — the window manifest's
+    `byte_offset` for that document. `left` defaults to the spine policy flag
+    (`spine_left()`). A caller that has already trimmed at a
+    stricter in-document floor (a window start) passes that floor as `base` and
+    the bytes from it; the function never reads outside `text`.
+
+    The context is `corpus[max(base, off - left) .. off]`, so it can never leave
+    the document, and a document shorter than `left` contributes only its own
+    bytes. The last 0x1E is then cut as a belt-and-braces extra that can only
+    shorten: on the pile it does shorten inside the documents carrying an
+    internal 0x1E (6,979 in the spine region, 2,883 in the C14 region), which is
+    a deliberate conservative loss and never a boundary. `off == base` is the
+    document's first byte and yields the empty context, whose histogram is empty
+    by rule.
+    """
+    if not isinstance(text, bytes):
+        raise TypeError('document bytes must be bytes')
+    left = spine_left() if left is None else left
+    if left < 1:
+        raise ValueError('left must be positive')
+    if base < 0 or off < base:
+        raise ValueError('invalid document geometry')
+    depth = off - base
+    if depth > len(text):
+        raise ValueError('document bytes do not reach the query position')
+    return text[max(0, depth-left):depth].rsplit(SEPARATOR, 1)[-1]
+
+
+def exclude_occurrence(reply, next_byte, count=1):
+    """`reply` with the query position's own occurrence removed, as arithmetic.
+
+    `next_byte` is what that occurrence contributed: an int 0..255 for a content
+    branch, or END_BRANCH for the END branch. `count` is how many times it was
+    counted (1 per container position). Being pure arithmetic on a raw histogram,
+    it can be applied BEFORE any support or width test.
+
+    A witness absent from the raw counts is an error, never a silent no-op: a
+    skipped exclusion is leakage, not a smaller count. The emitted branch order is
+    kept; a branch whose count reaches zero is dropped.
+    """
+    if not isinstance(count, int) or isinstance(count, bool) or count < 1:
+        raise ValueError('count must be a positive integer')
+    width = reply['width'] - count
+    if width < 0:
+        raise ValueError('source occurrence absent from the raw counts')
+    if next_byte is END_BRANCH:
+        eof = reply['eof'] - count
+        if eof < 0:
+            raise ValueError('source occurrence absent from the raw counts')
+        branches = list(reply['branches'])
+    else:
+        if not isinstance(next_byte, int) or isinstance(next_byte, bool) or not 0 <= next_byte <= 255:
+            raise TypeError('next_byte must be a byte or END_BRANCH')
+        if dict(reply['branches']).get(next_byte, 0) < count:
+            raise ValueError('source occurrence absent from the raw counts')
+        eof = reply['eof']
+        branches = []
+        for byte, counted in reply['branches']:
+            if byte != next_byte:
+                branches.append((byte, counted))
+            elif counted > count:
+                branches.append((byte, counted-count))
+    return dict(width=width, eof=eof, branches=branches)
+
+
+def is_source_occurrence(hit, doc_id, offset_in_doc):
+    """The filter rule that attributes a located hit to the query position.
+
+    `xsa query <container> <context> --docs DIR` returns one row per occurrence
+    carrying `doc_id` (0-based container document id) and `offset_in_doc` (the
+    occurrence's byte offset inside that document). A row IS the query position's
+    own occurrence iff BOTH equal the query position's own pair, `hit['doc_id'] ==
+    doc_id and hit['offset_in_doc'] == offset_in_doc`; a container position is
+    unique, so the pair identifies at most one row. Other occurrences inside the
+    same document are NOT the position's own occurrence and stay in the counts
+    (removing those is `--doc-restrict`, a different question). A hit missing
+    either field raises rather than quietly failing to exclude.
+    """
+    return hit['doc_id'] == doc_id and hit['offset_in_doc'] == offset_in_doc
+
 
 def exact(stream, n):
     parts = bytearray()
@@ -109,14 +236,35 @@ class BranchServer:
             raise RuntimeError(f'branch server exit {status}')
 
 
-def select(lefts, query):
+def select(lefts, query, *, spans=None, excludes=None, left=None):
     """Binary search monotone suffix support; query every emitted branch exactly.
 
     Memory bounded by the caller's chunk. Empty context maps to zero, and is
-    never queried as the global corpus histogram. A separator in a natural
-    Pile context cuts off Wikipedia context at that separator, preventing seams.
+    never queried as the global corpus histogram.
+
+    Two opt-in hardenings, both OFF by default so every registered board keeps
+    its recorded numbers (RESULT_CONSULT_BOUNDARY_HARDENING.md):
+
+    `left` is the context cap, resolved from the spine policy flag when None.
+
+    `spans` — a parallel sequence of `(base, off)` container offsets. With it,
+    `lefts[i]` is the document's bytes from `base` and the context is cut by
+    `consult_context` at the document base instead of scanning for 0x1E.
+    `excludes` — a parallel sequence of the query position's own continuation:
+    an int byte, END_BRANCH, or None when the position's document is known to be
+    outside the index by span geometry. Excluded counts are applied BEFORE every
+    support and width test, so `context_bytes` is the longest depth whose
+    POST-exclusion width is nonzero.
     """
-    lefts = [s.rsplit(b'\x1e', 1)[-1][-1024:] for s in lefts]
+    left = spine_left() if left is None else left
+    if spans is None:
+        contexts = [s.rsplit(SEPARATOR, 1)[-1][-left:] for s in lefts]
+    else:
+        if len(spans) != len(lefts):
+            raise ValueError('span cardinality mismatch')
+        contexts = [consult_context(s, base, off, left) for s, (base, off) in zip(lefts, spans)]
+    if excludes is not None and len(excludes) != len(contexts):
+        raise ValueError('exclusion cardinality mismatch')
     cache = {}
     def fetch(patterns):
         missing = list(dict.fromkeys(p for p in patterns if p and p not in cache))
@@ -125,36 +273,50 @@ def select(lefts, query):
             if len(replies) != len(missing):
                 raise ValueError('response cardinality mismatch')
             cache.update(zip(missing, replies))
-    fetch(lefts)
-    lo = [len(s) if s and cache[s]['width'] else 0 for s in lefts]
-    hi = [len(s)+1 if k else len(s) for s, k in zip(lefts, lo)]
+    def histogram(i, k):
+        # Per position, because the exclusion belongs to the position and not to
+        # the shared pattern: the same context can be supported for one position
+        # and source-only for another.
+        if not k:
+            return dict(width=0, eof=0, branches=[])
+        row = cache[contexts[i][-k:]]
+        if excludes is None or excludes[i] is None:
+            return row
+        return exclude_occurrence(row, excludes[i])
+    fetch(contexts)
+    lo = [len(s) if s and histogram(i, len(s))['width'] else 0 for i, s in enumerate(contexts)]
+    hi = [len(s)+1 if k else len(s) for s, k in zip(contexts, lo)]
     while any(b-a > 1 for a, b in zip(lo, hi)):
         probes = [(i, (a+b)//2) for i, (a, b) in enumerate(zip(lo, hi)) if b-a > 1]
-        fetch([lefts[i][-k:] for i, k in probes])
+        fetch([contexts[i][-k:] for i, k in probes])
         for i, k in probes:
-            if cache[lefts[i][-k:]]['width']:
+            if histogram(i, k)['width']:
                 lo[i] = k
             else:
                 hi[i] = k
-    fetch([s[-k:] for s, k in zip(lefts, lo) if k])
+    fetch([s[-k:] for s, k in zip(contexts, lo) if k])
     rates = {}
     for k in (16, 64, 256, 1024):
         # Exact support queries, rather than inference from censored maxima.
-        eligible = [s for s in lefts if len(s) >= k]
-        fetch([s[-k:] for s in eligible])
-        rates[str(k)] = dict(eligible=len(eligible), supported=sum(cache[s[-k:]]['width'] > 0 for s in eligible))
+        eligible = [i for i, s in enumerate(contexts) if len(s) >= k]
+        fetch([contexts[i][-k:] for i in eligible])
+        rates[str(k)] = dict(eligible=len(eligible), supported=sum(histogram(i, k)['width'] > 0 for i in eligible))
     result = []
-    for s, k in zip(lefts, lo):
-        row = cache[s[-k:]] if k else dict(width=0, eof=0, branches=[])
+    for i, (s, k) in enumerate(zip(contexts, lo)):
+        row = histogram(i, k)
         pairs = row['branches']
         terminal = sum(c for b, c in pairs if b == 30)
         counts = [(b, c) for b, c in pairs if b != 30]
         total = sum(c for _, c in counts)
         entropy = -sum((c/total)*math.log(c/total) for _, c in counts) if total else 0.
-        result.append(dict(context_bytes=k, censored=bool(k and k == len(s)),
+        entry = dict(context_bytes=k, censored=bool(k and k == len(s)),
             context_count=row['width'], eof=row['eof'], terminal_count=terminal,
             branches=pairs, support_size=total, distinct_branches=len(counts),
-            entropy=entropy, coverage=bool(total)))
+            entropy=entropy, coverage=bool(total))
+        if excludes is not None:
+            # Absent means the counts are the raw histogram, as registered.
+            entry['exclude_source'] = True
+        result.append(entry)
     return result, rates, len(cache)
 
 
