@@ -1,0 +1,149 @@
+{
+  "arm": "lattice_emender_bounded",
+  "base_arm": "pure",
+  "parameters": 150010932,
+  "microbatches_per_step": 64,
+  "windows_per_step": 64,
+  "context": 2048,
+  "budgets": [
+    73
+  ],
+  "tokens": 420384,
+  "steps": 4,
+  "phase_s": {
+    "fwd": 0.005,
+    "bwd": 32.361,
+    "opt": 0.045
+  },
+  "phase_frac": {
+    "fwd": 0.0002,
+    "bwd": 0.9984,
+    "opt": 0.0014
+  },
+  "total_s": 32.411,
+  "us_per_token": 77.1,
+  "tokens_per_s": 12970.3,
+  "top_kernels": [
+    {
+      "name": "ReplayBackward",
+      "cuda_ms": 18820.747,
+      "calls": 384,
+      "cuda_frac": 0.2948
+    },
+    {
+      "name": "reverse_kernel",
+      "cuda_ms": 18783.483,
+      "calls": 384,
+      "cuda_frac": 0.2942
+    },
+    {
+      "name": "Replay",
+      "cuda_ms": 6106.234,
+      "calls": 768,
+      "cuda_frac": 0.0956
+    },
+    {
+      "name": "scan_kernel",
+      "cuda_ms": 5920.817,
+      "calls": 768,
+      "cuda_frac": 0.0927
+    },
+    {
+      "name": "aten::addmm",
+      "cuda_ms": 2722.579,
+      "calls": 7680,
+      "cuda_frac": 0.0426
+    },
+    {
+      "name": "void cutlass::Kernel2<cutlass_75_tensorop_bf16_s1688gemm_bf16_128x128_tn_align1>(cutlass_75_tensorop_bf16_s168",
+      "cuda_ms": 2430.042,
+      "calls": 1536,
+      "cuda_frac": 0.0381
+    },
+    {
+      "name": "aten::mm",
+      "cuda_ms": 2266.873,
+      "calls": 10496,
+      "cuda_frac": 0.0355
+    },
+    {
+      "name": "void cutlass::Kernel2<cutlass_75_tensorop_bf16_s1688gemm_bf16_256x128_nn_align1>(cutlass_75_tensorop_bf16_s168",
+      "cuda_ms": 964.453,
+      "calls": 768,
+      "cuda_frac": 0.0151
+    },
+    {
+      "name": "void cutlass::Kernel2<cutlass_75_tensorop_bf16_s1688gemm_bf16_128x128_nt_align1>(cutlass_75_tensorop_bf16_s168",
+      "cuda_ms": 959.879,
+      "calls": 768,
+      "cuda_frac": 0.015
+    },
+    {
+      "name": "aten::gelu",
+      "cuda_ms": 446.705,
+      "calls": 768,
+      "cuda_frac": 0.007
+    },
+    {
+      "name": "void at::native::vectorized_elementwise_kernel<4, at::native::GeluCUDAKernelImpl(at::TensorIteratorBase&, at::",
+      "cuda_ms": 446.705,
+      "calls": 768,
+      "cuda_frac": 0.007
+    },
+    {
+      "name": "aten::gelu_backward",
+      "cuda_ms": 336.032,
+      "calls": 384,
+      "cuda_frac": 0.0053
+    },
+    {
+      "name": "void at::native::vectorized_elementwise_kernel<4, at::native::GeluBackwardCUDAKernelImpl(at::TensorIteratorBas",
+      "cuda_ms": 336.032,
+      "calls": 384,
+      "cuda_frac": 0.0053
+    },
+    {
+      "name": "aten::native_layer_norm_backward",
+      "cuda_ms": 260.283,
+      "calls": 800,
+      "cuda_frac": 0.0041
+    },
+    {
+      "name": "aten::add",
+      "cuda_ms": 244.262,
+      "calls": 3108,
+      "cuda_frac": 0.0038
+    },
+    {
+      "name": "aten::copy_",
+      "cuda_ms": 218.295,
+      "calls": 24768,
+      "cuda_frac": 0.0034
+    },
+    {
+      "name": "aten::sum",
+      "cuda_ms": 191.211,
+      "calls": 2688,
+      "cuda_frac": 0.003
+    },
+    {
+      "name": "void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>, 4, Tr",
+      "cuda_ms": 175.925,
+      "calls": 1536,
+      "cuda_frac": 0.0028
+    },
+    {
+      "name": "void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16_copy_kernel_cuda(at::TensorIteratorBase",
+      "cuda_ms": 164.76,
+      "calls": 6912,
+      "cuda_frac": 0.0026
+    },
+    {
+      "name": "ampere_sgemm_32x128_tn",
+      "cuda_ms": 162.491,
+      "calls": 3840,
+      "cuda_frac": 0.0025
+    }
+  ],
+  "cuda_total_ms": 63842.5
+}
