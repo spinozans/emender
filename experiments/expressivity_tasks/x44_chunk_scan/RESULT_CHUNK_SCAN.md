@@ -316,3 +316,240 @@ real 32–64× state-traffic reduction into wall time instead of leaving the pat
 bound at ~2.4 µs per graph node; the measured ceiling from that change alone is
 the device-time figure in §5.1 (`210 ms` at `s117`, `383 ms` at `s2196` before
 fusion, both of which then become bandwidth-limited work).
+
+---
+
+# Continuation — optimisation pass and the X42 pure-arm integration
+
+Sections 1–8 above are unchanged: their numbers stand as measured. This part adds
+the four optimisation levers the operator ordered, and the end-to-end
+integration into the registered lattice arm. One correction to §5's framing is
+recorded in §13.1.
+
+## 9. Lever 1 — the per-token bookkeeping is now computed once per chunk
+
+`_chunk` used to walk the chunk token by token (~12 torch calls per token) to
+re-derive quantities that are functions of the schedule. `_chunk_vector` computes
+them once per chunk:
+
+| derived quantity | loop | closed form |
+| --- | --- | --- |
+| last append / last write before token `i`, per slot | carried | prefix maximum (`cummax` of a stamped index) |
+| first threshold crossing of each life (POP death, decay death) | carried (`tracked` mask) | suppression by the running maximum of the pass-A crossing set |
+| liveness at read / after write | carried | last-event-wins between the append index and the death index |
+| value payload chain (a correction reads the value it overwrites) | dense `gather`/`index_put` per token | log-depth pointer jumping along the "previous write to the same slot" pointer |
+| exit keys/values | in-place writes per token | one gather at the last write index of each slot |
+
+This is licensed by `chunked_fold_equiv`: the schedule is fixed, so the derived
+channel is an associative fold over the token axis.
+
+Measured (RTX 6000 Ada, `torch.profiler`, 2048 tokens, 64 rows, real routed
+schedule, chunk 64):
+
+| | device kernels per chunk | device kernels total | s117 graph replay | s2196 graph replay |
+| --- | --- | --- | --- | --- |
+| loop bookkeeping (banked, §5) | 7 381 | 236 068 | 165 ms | 346 ms |
+| vectorised bookkeeping | 543 | 17 361 | **22.0 ms** | **256 ms** |
+
+Equivalence: `test_vectorised_bookkeeping_matches_the_loop_bit_for_bit` requires
+the two implementations to agree **bit-for-bit** on strength, age, liveness, keys
+and the derived death masks, for 4 fixtures x 7 chunk lengths; the value payload
+is allowed the one-ulp reassociation of `(1-beta)*v_old + beta*v_new`
+(measured 6e-8–1.2e-7).
+
+## 10. Lever 2 — chunk length: the optimum is shape-dependent, measured
+
+Median of 3 CUDA-graph replays after one warm-up, `T` tokens, `rows` rows, `S`
+slots; ms. `seq` is `sequential_replay` on the same schedule.
+
+| shape | seq ms | C=16 | 32 | 48 | 64 | 96 | 128 | 192 | 256 | best |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| s117 T2048 b64 | 1460 | 52 | 30 | 24 | 20 | 17 | 15 | 14 | **14** | C=256 → **107x** |
+| s311 T2048 b64 | 1548 | 61 | 38 | 32 | 27 | 26 | **25** | 30 | 33 | C=128 → 62x |
+| s826 T2048 b64 | 1475 | 96 | 68 | **64** | 69 | 79 | 88 | 98 | 105 | C=48 → 23x |
+| s2196 T2048 b64 | 1464 | **204** | 212 | 240 | 254 | 277 | 284 | 275 | 277 | C=16 → 7.2x |
+| s2196 T256 b64 | 183 | **26** | 28 | 30 | 32 | 35 | 36 | 33 | 35 | C=16 → 7.0x |
+| s117 T256 b64 | 181 | 6 | 4 | 3 | 3 | 2 | 2 | 2 | **2** | C=256 → 102x |
+| s2196 T2048 b8 | 1453 | 56 | 42 | 33 | 28 | 24 | **22** | 24 | 26 | C=128 → 66x |
+
+Two regimes, both measured rather than guessed:
+
+* the **node count** per scan is `ceil(T/C) x ~400`, so long chunks win when the
+  per-chunk tensors are small;
+* the per-chunk trajectories are `rows x C x S` floats and there are ~10 live at
+  once, so once `rows*C*S*4` exceeds cache the elementwise volume streams from
+  DRAM and short chunks win. At `S=2196, rows=64` the optimum is C=16 (a 2.2 M
+  element, ~9 MB working set); at the same `S` with `rows=8` it is C=128.
+
+`velocity_adapter.schedule_recommended_chunk` encodes these measured optima as a
+footprint rule (`rows*slots` thresholds 32 768 / 131 072 / 524 288 → 256 / 128 /
+48 / 16).
+
+## 11. Lever 3 — the strength/liveness channel is one fused kernel
+
+`triton_scan.strength_liveness` walks each `(row, slot)` lane once over the chunk
+in registers and emits the pre-pop strength, read-time liveness, post-write
+liveness and the exit strength/liveness, with round-per-operation arithmetic.
+It replaces, per chunk: the multiplier/injection construction for two affine
+passes (~10 passes over `[rows, C, S]`), the two scans, the crossing stamps, and
+both liveness loops. Mask materialisation is avoided entirely — the kernel reads
+the schedule's per-token scalars and compares them against the lane index.
+
+**Bit-exactness is required and verified**: `strength_liveness_matches_torch`
+compares it with the affine-scan reference formulation (`_strength_reference`,
+itself the implementation verified against the certified sequential path in §3)
+on real routed schedules at 8 and 2 196 slots, `derive=True/False`: **exact,
+deviation 0.0** in all four cases. The death masks therefore stay identical to
+the traced frees, which is the property §6.2 showed is easy to lose.
+
+Effect of Lever 1 + Lever 3 together at the production shapes (graph replay,
+best chunk):
+
+| shape | banked (§5) | now | speedup vs sequential |
+| --- | --- | --- | --- |
+| s117 T2048 b64 | 165 ms | **9.3 ms** | 159x (was 8.9x) |
+| s2196 T2048 b64 | 313 ms | **101 ms** | 18.3x (was 4.7x) |
+| s2196 T256 b64 | 40 ms | **13.3 ms** | 17.2x |
+| s2196 T2048 b8 | 167 ms | **11.2 ms** | 168x |
+
+Node counts are now ~350–420 per chunk (from 7 381), i.e. ~3 400–15 700 per scan.
+
+**Not** done, and not claimed: log-depth/tree composition of chunk summaries on
+the content lane. §6.4's obstruction (the chunk entry state depends on in-chunk
+deaths, which depend on the entry state) is unchanged, so the exact carry stays.
+
+## 12. Lever 4 — fp64 chunk-boundary accumulation: measured, not adopted
+
+`precision_probe.py` prices the fully chunk-parallel composition (composed
+`(P,I)` summaries, renormalised entries) against the runtime's exact carry, with
+an fp64 exact fold as ground truth. 140 544 lanes (`rows=64, S=2196`) and 7 488
+lanes, 4 096 steps, with overwrite/POP zeros every 7th step:
+
+| configuration | max abs deviation | median | seconds |
+| --- | --- | --- | --- |
+| exact carry (runtime path) | **4.09e-8** | 2.38e-8 | 0.068 |
+| composed, fp64 boundaries | 1.00e-7 | 2.38e-8 | 0.063 |
+| composed, fp32 boundaries | 1.00e-7 | 2.38e-8 | 0.059 |
+
+**fp64 boundary accumulation buys nothing** (identical deviation to fp32
+boundaries) and is not faster; the deviation is dominated by the renormalised
+re-multiplication (`prefix_product * entry`), not by the precision of the chunk
+product. The runtime's exact carry is both the most accurate and the simplest, so
+it stays. At 7 488 lanes the composed form is 7x faster (0.0095 s vs 0.067 s) but
+that is Python-loop overhead in the carried version, not an algorithmic win.
+
+## 13. Integration: the registered lattice pure arm
+
+`lattice.py` gained `X44_CHUNK_SCAN` (unset by default, so the registered arm is
+byte-for-byte unchanged). `X44_CHUNK_SCAN=replay` runs the chunked content scan
+on the decision schedule the certified kernel produced for the same call, and
+records parity and timing in the run receipt (`chunk_scan.json` and
+`result.json.chunk_scan_evidence`). New runs land under `runs_150m/`; no
+registered number or receipt was touched.
+
+### 13.1 Correction to §5's framing
+
+§5's shape table used head budgets 117/311/826/2196 — those are the older
+`velocity_production_v1` arm's budgets. **The registered lattice arm is one head
+with 73 slots** (`start.json.budgets == [73]`, N=1). Its certified scan call is
+therefore ~9 ms, not ~6 s, and the "four-head memory block" line in §5 is not the
+end-to-end share for this arm. The numbers below are the end-to-end ones.
+
+### 13.2 End to end, registered flagship stream, `lattice_emender_bounded`, seed 3401, 150 s
+
+| | flag off | flag on (`replay`) |
+| --- | --- | --- |
+| steps | 18 | 17 |
+| steady step | 8.28 s | 9.15 s (+10.5 %) |
+| bytes | 2 126 178 | 2 003 314 |
+| bytes in 2700 s | **38.3 MB** | 34.4 MB |
+| steps in 2700 s | **326** | 295 |
+| first-17 step losses | reference | **bit-identical** |
+| state parity (3 348 calls) | — | values ≤2.0e-7, strength **0.0**, liveness identical, age identical |
+| read parity | — | 1.5–2.1 in-arm (see 13.4); 3.0e-7 on captured calls replayed offline |
+
+The baseline reproduces the registered arm (329 steps / 36.5 MB in 2 704 s), so
+the flag-off column is the registered behaviour. The flag-on column is +10.5 %
+**slower**: the replay is *added* to the certified call, because the decision
+schedule only exists once that call has run. The step losses are bit-identical,
+which is the parity claim: the integration does not perturb the arm.
+
+Attributed per-call cost (CUDA events, no per-call synchronisation): certified
+**8.5 ms**, chunked **4.3 ms** — the chunked content scan is **2.0x** the whole
+certified call at this shape *while the routing pre-pass still runs inside it*.
+
+### 13.3 What the arm's shapes cost in isolation
+
+`rows=8, T=2048, S=73`, one scan call:
+
+| path | ms | vs sequential |
+| --- | --- | --- |
+| `sequential_replay` | 1 443 | 1x |
+| chunked, eager | 20.1 (C=256) / 12.6 (C=512) | 72x / 115x |
+| chunked, CUDA graph | **4.8** (C=256) / **3.7** (C=512) | **301x / 389x** |
+
+So the content scan is no longer the bottleneck anywhere. What remains inside the
+certified call is the **routing pre-pass**: the read-argmax for the POP target,
+the lowest-free allocator, the age-adjacency target, the residual comparison and
+the death scheduling — all of which are per-token and depend on the state that
+the same token is about to update. That is the measured ceiling: with the routing
+pre-pass unchanged, the memory block of a step can at best fall from 8.5 ms to
+the routing cost per call, and with it chunked the step time would fall from
+8.28 s to roughly 8.28 − 1.63 + 0.8 ≈ 7.4 s (≈ 366 steps / 2700 s) — a
+*projection*, not a measurement, and it needs the routing work that §6.5.1
+scopes out.
+
+### 13.4 Two measured findings the integration surfaced
+
+1. **The arm's training read is a different read.** With
+   `X40_BATCHED_READS=1` (production training) the read comes from the X35
+   `causal_read` variant, whose softmax denominator counts every *versioned*
+   slot rather than only the live ones (`numer` has no strength factor and
+   `denom = sum(numer)` over `version >= 0`). The certified read — the one used
+   for evaluation and the one this implementation reproduces — normalises over
+   live slots only. That difference is exactly the 1.5–2.1 read deviation seen on
+   the training path, and it is a property of the arm, not of the chunked scan
+   (the state store still matches to 2e-7 on those same calls).
+2. **The in-arm read comparison is not yet fully explained.** The 8 sampled
+   evaluation calls also report 1.5–2.1, while a captured call re-run offline —
+   through both the certified kernel and `sequential_replay` — agrees to
+   **3.0e-7**. Explicitly synchronising before the comparison did not change the
+   in-arm number, and the certified kernel is deterministic across runs
+   (0.0 deviation over 3 repeats). The state channel is unaffected (exact on all
+   3 348 calls). This is an open item, recorded rather than smoothed over.
+3. **Instrumentation cost lesson.** Measuring inside the training loop is
+   destructive if it synchronises: per-call `.item()`/`synchronize()` took the
+   replay arm from 8.28 s to 24.4 s per step (+195 %) with only 2.6 s of it
+   attributable to the chunked work. Event-based timing plus sampled parity
+   reductions bring the same run to 9.15 s/step (+10.5 %), which is what the
+   table above reports.
+
+## 14. Commands (continuation)
+
+```bash
+"$EMENDER_PYTHON" -m pytest experiments/expressivity_tasks/x44_chunk_scan/test_chunk_scan.py -q
+# 37 passed
+
+eval "$(GPU_LEASE_VISIBLE=0,1 scripts/gpu_lease.sh acquire 1 --wait)"
+"$EMENDER_PYTHON" -m experiments.expressivity_tasks.x42_pile_scale.lattice train \
+    --arm lattice_emender_bounded --seconds 150 --seed 3401 --output RUNS/x44_baseline_s150
+X44_CHUNK_SCAN=replay X44_SAMPLE=8 "$EMENDER_PYTHON" -m \
+    experiments.expressivity_tasks.x42_pile_scale.lattice train \
+    --arm lattice_emender_bounded --seconds 150 --seed 3401 --output RUNS/x44_replay_sampled
+
+"$EMENDER_PYTHON" -m experiments.expressivity_tasks.x44_chunk_scan.precision_probe   # Lever 4
+```
+
+## 15. Remaining levers, in the order I would take them
+
+1. **Chunk the routing pre-pass** (the only thing left in the certified call). The
+   score matrix it needs is already a per-chunk matmul in this implementation;
+   what is sequential is the argmax under a liveness mask, the lowest-free
+   allocator and the residual test — one kernel per chunk with a per-token loop
+   over `(rows, slots)` reductions. Measured headroom: 8.5 ms -> ~2 ms per call.
+2. Fuse the payload pointer-jumping into a kernel (it is ~40 of the remaining
+   ~400 nodes per chunk) and switch the index stamps to int16/int8 (they are the
+   largest remaining `[rows, C, S]` tensors).
+3. A flash-style tiled read that never materialises the `[rows, C, S]` score and
+   weight matrices, which is what bounds `S=2196` at 101 ms.
+4. Settle §13.4.2 (in-arm read comparison) before quoting read parity at scale.

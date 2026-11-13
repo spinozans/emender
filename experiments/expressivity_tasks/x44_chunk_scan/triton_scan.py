@@ -76,4 +76,99 @@ def same_as_torch(multiplier: torch.Tensor, injection: torch.Tensor,
     return bool(torch.equal(states, reference)), deviation
 
 
-__all__ = ['scan_with_entry', 'same_as_torch']
+@triton.jit
+def _strength_liveness_kernel(alloc, pop_slot, pop_factor, entry_strength, entry_live,
+                              observed, live_read, live_after_out, final_strength,
+                              final_live, rows, slots, steps: tl.constexpr,
+                              decay: tl.constexpr, threshold: tl.constexpr,
+                              derive: tl.constexpr, BLOCK: tl.constexpr):
+    """One walk per (row, slot) lane over the chunk: the whole strength channel.
+
+    Reproduces the certified sequential operation order exactly (pop multiply,
+    POP death check, reviving append, decay, decay death check) with
+    round-per-operation arithmetic, and emits the pre-pop strength, the
+    read-time and post-write liveness, and the exit strength/liveness.  This
+    replaces the two affine-scan passes plus the derived death masks, so no
+    ``[rows, steps, slots]`` multiplier, injection, stamp or crossover tensor
+    is ever materialised.
+    """
+    row = tl.program_id(0)
+    offs = tl.program_id(1) * BLOCK + tl.arange(0, BLOCK)
+    inside = offs < slots
+    lane = row * slots + offs
+    state = tl.load(entry_strength + lane, mask=inside, other=0.)
+    live = tl.load(entry_live + lane, mask=inside, other=0) != 0
+    schedule_at = row * steps
+    for step in range(steps):
+        slot_a = tl.load(alloc + schedule_at + step)
+        slot_p = tl.load(pop_slot + schedule_at + step)
+        factor = tl.load(pop_factor + schedule_at + step)
+        is_append = slot_a == offs
+        out = (row * steps + step) * slots + offs
+        tl.store(observed + out, state, mask=inside)
+        tl.store(live_read + out, live.to(tl.int8), mask=inside)
+        # POP: strength decrement on the popped lane, then the free threshold.
+        # An append erases the lane in this same step, so its pop value is dead
+        # arithmetic -- but the certified path still records the POP death
+        # before the reviving append, so the check runs first.
+        state = tl.where(is_append, state,
+                         _mul_rn(state, tl.where(slot_p == offs, factor, 1.)))
+        if derive:
+            live = live & (state > threshold)
+        # APPEND revives and injects 1 (then takes the birth-token decay).
+        state = tl.where(is_append, 1., state)
+        live = live | is_append
+        tl.store(live_after_out + out, live.to(tl.int8), mask=inside)
+        state = _mul_rn(state, tl.where(live, decay, 1.))
+        if derive:
+            live = live & (state > threshold)
+    tl.store(final_strength + lane, state, mask=inside)
+    tl.store(final_live + lane, live.to(tl.int8), mask=inside)
+
+
+def strength_liveness(sched, entry_strength, entry_live, *, decay: float, threshold: float,
+                      derive: bool = True, block: int = 256):
+    """``(observed, live_read, live_after, strength_final, live_final)``.
+
+    The first three are ``[rows, steps, slots]`` (fp32, bool, bool); the last two
+    are ``[rows, slots]``.
+    """
+    rows, steps = sched.alloc.shape
+    slots = entry_strength.shape[1]
+    device = entry_strength.device
+    shape = (rows, steps, slots)
+    observed = torch.empty(shape, dtype=torch.float32, device=device)
+    live_read = torch.empty(shape, dtype=torch.bool, device=device)
+    live_after = torch.empty(shape, dtype=torch.bool, device=device)
+    final_strength = torch.empty(rows, slots, dtype=torch.float32, device=device)
+    final_live = torch.empty(rows, slots, dtype=torch.bool, device=device)
+    _strength_liveness_kernel[(rows, triton.cdiv(slots, block))](
+        sched.alloc.contiguous(), sched.pop_slot.contiguous(),
+        sched.pop_factor.contiguous(), entry_strength.contiguous(),
+        entry_live.to(torch.int8).contiguous(), observed, live_read, live_after,
+        final_strength, final_live, rows, slots,
+        steps=steps, decay=decay, threshold=threshold, derive=derive,
+        BLOCK=block, num_warps=4)
+    return observed, live_read, live_after, final_strength, final_live
+
+
+def strength_liveness_matches_torch(sched, entry_strength, entry_live, *, decay, threshold,
+                                    derive=True):
+    """Bit-exactness check against the multiplicative-map formulation."""
+    from . import chunked_cell
+
+    states, live_read, live_after, final, live_final = strength_liveness(
+        sched, entry_strength, entry_live, decay=decay, threshold=threshold, derive=derive)
+    reference = chunked_cell._strength_reference(
+        sched, entry_strength, entry_live, decay=decay, threshold=threshold, derive=derive)
+    matched = all(torch.equal(a, b) if a.dtype != torch.float32
+                  else torch.equal(a, b) for a, b in zip(
+                      (states, live_read, live_after, final, live_final), reference))
+    deviation = max((a.float() - b.float()).abs().max().item()
+                    for a, b in zip((states, live_read, live_after, final, live_final),
+                                    reference))
+    return matched, deviation
+
+
+__all__ = ['scan_with_entry', 'same_as_torch', 'strength_liveness',
+           'strength_liveness_matches_torch']

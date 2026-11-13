@@ -58,6 +58,9 @@ NEG_MASK = -1.0e30  # same dead-slot softmax mask as the X30 reference
 # verified bit-identical to the loop (``triton_scan.same_as_torch``), so the
 # strength trajectory and every derived death boundary are unchanged.
 USE_TRITON_SCAN = True
+# One fused per-lane walk for the strength/liveness channel (CUDA only); the
+# affine-scan reference in ``_strength_reference`` stays the tested ground truth.
+USE_TRITON_STRENGTH = True
 
 
 @dataclass
@@ -124,6 +127,64 @@ def _write_values(store: torch.Tensor, slot: torch.Tensor, value: torch.Tensor,
 def _write_keys(store: torch.Tensor, slot: torch.Tensor, key: torch.Tensor,
                 rows: torch.Tensor, active: torch.Tensor) -> None:
     _write_values(store, slot, key, rows, active)
+
+
+def _read_and_channels(kc, qc, sched, entry, cfg, live_read, strength_at_read,
+                       last_append, last_write, write_slot, payload, live_after,
+                       scale):
+    """Chunk-parallel read plus the additive usage and age channels.
+
+    ``last_append[i, j]`` / ``last_write[i, j]`` are the last append / value
+    write to slot ``j`` strictly before token ``i`` inside the chunk (-1 when
+    there is none), so the chunk-entry store is streamed once per chunk instead
+    of once per token.
+    """
+    rows, steps = kc.shape[0], kc.shape[1]
+    slots, value_dim = entry.strength.shape[1], entry.values.shape[2]
+    device = kc.device
+    ones = torch.ones(rows, steps, slots, dtype=kc.dtype, device=device)
+    zeros = torch.zeros_like(ones)
+    append_mask = sched.alloc.unsqueeze(-1) == torch.arange(slots, device=device)
+    steps_index = torch.arange(steps, device=device)
+
+    scores = torch.bmm(qc, entry.keys.transpose(1, 2)) * scale
+    if steps > 1:
+        append_keys = torch.where(sched.alloc.unsqueeze(-1) >= 0, kc,
+                                  torch.zeros_like(kc))
+        event_scores = torch.bmm(qc, append_keys.transpose(1, 2)) * scale
+        override = event_scores.gather(2, last_append.clamp(min=0).long())
+        scores = torch.where(last_append >= 0, override, scores)
+    scores = scores.masked_fill(~live_read, NEG_MASK)
+    weights = torch.softmax(scores, dim=-1) * strength_at_read * live_read
+    read = torch.bmm(weights, entry.values)
+
+    # Slots whose value changed inside this chunk: replace the entry value by
+    # the (single, last) in-chunk payload for every later token.
+    if steps > 1:
+        column = write_slot.clamp(min=0).unsqueeze(1).expand(rows, steps, steps)
+        last = last_write.gather(2, column).long()
+        valid = (write_slot.unsqueeze(1) >= 0) & (last >= 0)
+        valid = valid & (last == steps_index.view(1, 1, steps))
+        valid = valid & (steps_index.view(1, steps, 1) > steps_index.view(1, 1, steps))
+        entry_at_slot = entry.values.gather(
+            1, write_slot.clamp(min=0).unsqueeze(-1).expand(rows, steps, value_dim))
+        delta = payload - entry_at_slot
+        delta = torch.where((write_slot >= 0).unsqueeze(-1), delta,
+                            torch.zeros_like(delta))
+        weight_at_slot = weights.gather(2, column)
+        read = read + torch.bmm((valid * weight_at_slot).to(read.dtype), delta)
+
+    # usage: u <- u*usage_decay + read weight, zeroed on append.
+    usage_mult = torch.where(append_mask, zeros, torch.full_like(ones, cfg.usage_decay))
+    usage_inj = torch.where(append_mask, zeros, weights)
+    _, usage_final = _scan(usage_mult.permute(1, 0, 2), usage_inj.permute(1, 0, 2),
+                           entry.usage)
+    # age: age <- age*[not append] + [live after the pop/append step].
+    age_mult = torch.where(append_mask, zeros, ones)
+    age_inj = live_after.to(ones.dtype)
+    _, age_final = _scan(age_mult.permute(1, 0, 2), age_inj.permute(1, 0, 2),
+                         entry.age.to(ones.dtype))
+    return read, usage_final, age_final
 
 
 def _chunk(kc, qc, vc, sched: DecisionSchedule, entry: ChunkState, cfg, *,
@@ -244,49 +305,9 @@ def _chunk(kc, qc, vc, sched: DecisionSchedule, entry: ChunkState, cfg, *,
     if steps > 1:
         strength_at_read[:, 1:] = strength_states[1::2][:-1].permute(1, 0, 2)
 
-    # ---- read: one softmax over the slots, entry state streamed once per chunk
-    entry_keys = entry.keys
-    scores = torch.bmm(qc, entry_keys.transpose(1, 2)) * scale
-    append_keys = torch.where(sched.alloc.unsqueeze(-1) >= 0, kc,
-                              torch.zeros_like(kc))
-    if steps > 1:
-        event_scores = torch.bmm(qc, append_keys.transpose(1, 2)) * scale
-        override = event_scores.gather(2, last_append.clamp(min=0).long())
-        scores = torch.where(last_append >= 0, override, scores)
-    scores = scores.masked_fill(~live_read, NEG_MASK)
-    weights = torch.softmax(scores, dim=-1) * strength_at_read * live_read
-    read = torch.bmm(weights, entry.values)
-
-    # slots whose value changed inside this chunk: replace the entry value by
-    # the (single, last) in-chunk payload for every later token
-    if steps > 1:
-        column = write_slot.clamp(min=0).unsqueeze(1).expand(rows, steps, steps)
-        last = last_write.gather(2, column).long()
-        valid = (write_slot.unsqueeze(1) >= 0) & (last >= 0)
-        valid = valid & (last == torch.arange(steps, device=device).view(1, 1, steps))
-        valid = valid & (torch.arange(steps, device=device).view(1, steps, 1)
-                         > torch.arange(steps, device=device).view(1, 1, steps))
-        entry_at_slot = entry.values.gather(
-            1, write_slot.clamp(min=0).unsqueeze(-1).expand(rows, steps, value_dim))
-        delta = payload - entry_at_slot
-        delta = torch.where((write_slot >= 0).unsqueeze(-1), delta,
-                            torch.zeros_like(delta))
-        weight_at_slot = weights.gather(2, column)
-        read = read + torch.bmm((valid * weight_at_slot).to(read.dtype), delta)
-
-    # ---- usage and age: additive channels
-    # usage: u <- u*usage_decay + read_weight, then zeroed on append.
-    usage_mult = torch.where(append_mask, zeros, torch.full_like(ones, cfg.usage_decay))
-    usage_inj = torch.where(append_mask, zeros, weights)
-    _, usage_final = _scan(usage_mult.permute(1, 0, 2), usage_inj.permute(1, 0, 2),
-                           entry.usage)
-
-    # age: age <- age*[not append] + [live after the pop/append step].
-    age_mult = torch.where(append_mask, zeros, ones)
-    age_inj = live_after.to(ones.dtype)
-    _, age_final = _scan(age_mult.permute(1, 0, 2), age_inj.permute(1, 0, 2),
-                         entry.age.to(ones.dtype))
-
+    read, usage_final, age_final = _read_and_channels(
+        kc, qc, sched, entry, cfg, live_read, strength_at_read, last_append,
+        last_write, write_slot, payload, live_after, scale)
     if deaths is not None:
         deaths.append((death_pop, death_decay))
     exit_state = ChunkState(keys=keys_cur, values=values_cur,
@@ -296,12 +317,257 @@ def _chunk(kc, qc, vc, sched: DecisionSchedule, entry: ChunkState, cfg, *,
     return read, exit_state
 
 
+def _last_index(mask: torch.Tensor) -> torch.Tensor:
+    """Index of the last True entry along the token axis (inclusive), -1 if none."""
+    steps = mask.shape[1]
+    index = torch.arange(steps, device=mask.device, dtype=torch.int32).view(1, steps, 1)
+    return torch.cummax(torch.where(mask, index, torch.full_like(index, -1)),
+                        dim=1).values
+
+
+def _strictly_before(index: torch.Tensor) -> torch.Tensor:
+    """Shift an index tensor along the token axis, filling -1 at token 0."""
+    return torch.cat([torch.full_like(index[:, :1], -1), index[:, :-1]], dim=1)
+
+
+def _wins(append_at: torch.Tensor, death_at: torch.Tensor,
+          entry_live: torch.Tensor) -> torch.Tensor:
+    """Liveness from the last event per lane: an append revives, a later death
+    kills, and a tie goes to the append (the reference applies the reviving
+    append AFTER the pop death check)."""
+    has_append, has_death = append_at >= 0, death_at >= 0
+    return torch.where(has_append,
+                       torch.where(has_death, append_at >= death_at,
+                                   torch.ones_like(has_append)),
+                       torch.where(has_death, torch.zeros_like(has_append), entry_live))
+
+
+def _strength_maps(sched, append_mask, ones, zeros, steps, rows, slots, decay):
+    """The strength channel as (multiplier, injection) pairs, one pair per TURN.
+
+    Two affine steps per token preserve the sequential operation order: the pop
+    multiply, then the decay (with ``1`` injected and the lane erased on append,
+    exactly as ``strength*(1-onehot) + onehot*1.0`` then ``*decay``).
+    """
+    def maps(live_after):
+        popped = torch.where(sched.pop_slot.unsqueeze(-1) == torch.arange(slots,
+                                                                        device=ones.device),
+                             sched.pop_factor.unsqueeze(-1), ones)
+        pop_map = torch.where(append_mask, zeros, popped)
+        pop_injection = torch.where(append_mask, ones, zeros)
+        decay_map = torch.where(live_after, torch.full_like(ones, decay), ones)
+        pair_mult = torch.stack([pop_map, decay_map], dim=2).permute(1, 2, 0, 3)
+        pair_inj = torch.stack([pop_injection, zeros], dim=2).permute(1, 2, 0, 3)
+        return (pair_mult.reshape(2 * steps, rows, slots),
+                pair_inj.reshape(2 * steps, rows, slots))
+    return maps
+
+
+def _strength_reference(sched: DecisionSchedule, entry_strength: torch.Tensor,
+                        entry_live: torch.Tensor, *, decay: float, threshold: float,
+                        derive: bool):
+    """Strength trajectory, liveness and derived deaths as affine scans.
+
+    This is the reference formulation of the strength/liveness channel: pass A
+    ignores in-chunk deaths to locate the first threshold crossing of each life,
+    liveness is then last-event-wins, and pass B re-runs the scan with the true
+    liveness.  It is what ``triton_scan.strength_liveness`` is tested against.
+    """
+    rows, steps = sched.alloc.shape
+    slots = entry_strength.shape[1]
+    device = entry_strength.device
+    ones = torch.ones(rows, steps, slots, dtype=entry_strength.dtype, device=device)
+    zeros = torch.zeros_like(ones)
+    index = torch.arange(slots, device=device)
+    append_mask = sched.alloc.unsqueeze(-1) == index
+    append_at = _last_index(append_mask)
+    append_pre = _strictly_before(append_at)
+    live_entry = entry_live.unsqueeze(1)
+    live_A_read = (append_pre >= 0) | ((append_pre < 0) & live_entry)
+    live_A_after = (append_at >= 0) | ((append_at < 0) & live_entry)
+    maps = _strength_maps(sched, append_mask, ones, zeros, steps, rows, slots, decay)
+
+    mult, inj = maps(live_A_after)
+    probe, _ = _scan(mult, inj, entry_strength)
+    post_decay = probe[1::2].permute(1, 0, 2)
+    pre_pop = torch.cat([entry_strength.unsqueeze(1), post_decay[:, :-1]], dim=1)
+    popped_factor = torch.where(sched.pop_slot.unsqueeze(-1) == index,
+                                sched.pop_factor.unsqueeze(-1), ones)
+    post_pop = pre_pop * popped_factor
+
+    crossed_pop = live_A_read & (post_pop <= threshold)
+    crossed_decay = live_A_after & (post_decay <= threshold)
+    cross_pre = _strictly_before(_last_index(crossed_pop | crossed_decay))
+    death_pop = crossed_pop & (cross_pre <= append_pre)
+    alive_at_decay = (live_A_read & ~death_pop) | append_mask
+    death_decay = (alive_at_decay & (post_decay <= threshold)
+                   & (cross_pre <= append_at))
+    if derive:
+        pop_at = _last_index(death_pop)
+        decay_at = _last_index(death_decay)
+        death_at = torch.maximum(pop_at, decay_at)
+        live_read = _wins(append_pre, _strictly_before(death_at), live_entry)
+        live_after = _wins(append_at, torch.maximum(pop_at, _strictly_before(decay_at)),
+                           live_entry)
+        live_final = _wins(append_at[:, -1:], death_at[:, -1:], live_entry).squeeze(1)
+    else:
+        live_read, live_after = live_A_read, live_A_after
+        live_final = live_A_after[:, -1]
+    mult, inj = maps(live_after)
+    states, strength_final = _scan(mult, inj, entry_strength)
+    observed = torch.cat([entry_strength.unsqueeze(1),
+                          states[1::2].permute(1, 0, 2)[:, :-1]], dim=1)
+    return observed, live_read, live_after, strength_final, live_final
+
+
+def _strength_channel(sched, entry_strength, entry_live, *, decay, threshold, derive,
+                      masks_only: bool = False):
+    """Dispatch: one fused Triton walk on CUDA, the affine-scan reference on CPU.
+
+    ``masks_only`` returns the derived death masks instead (diagnostic path, used
+    by the receipts and the death-trace parity test).
+    """
+    if masks_only or not (USE_TRITON_STRENGTH and entry_strength.is_cuda):
+        observed, live_read, live_after, final, live_final = _strength_reference(
+            sched, entry_strength, entry_live, decay=decay, threshold=threshold,
+            derive=derive)
+        if not masks_only:
+            return observed, live_read, live_after, final, live_final
+        rows, steps = sched.alloc.shape
+        slots = entry_strength.shape[1]
+        device = entry_strength.device
+        ones = torch.ones(rows, steps, slots, dtype=entry_strength.dtype, device=device)
+        append_mask = sched.alloc.unsqueeze(-1) == torch.arange(slots, device=device)
+        append_at = _last_index(append_mask)
+        append_pre = _strictly_before(append_at)
+        live_entry = entry_live.unsqueeze(1)
+        live_A_read = (append_pre >= 0) | ((append_pre < 0) & live_entry)
+        live_A_after = (append_at >= 0) | ((append_at < 0) & live_entry)
+        maps = _strength_maps(sched, append_mask, ones, torch.zeros_like(ones), steps,
+                              rows, slots, decay)
+        mult, inj = maps(live_A_after)
+        probe, _ = _scan(mult, inj, entry_strength)
+        post_decay = probe[1::2].permute(1, 0, 2)
+        pre_pop = torch.cat([entry_strength.unsqueeze(1), post_decay[:, :-1]], dim=1)
+        popped_factor = torch.where(sched.pop_slot.unsqueeze(-1) == torch.arange(
+            slots, device=device), sched.pop_factor.unsqueeze(-1), ones)
+        post_pop = pre_pop * popped_factor
+        crossed_pop = live_A_read & (post_pop <= threshold)
+        crossed_decay = live_A_after & (post_decay <= threshold)
+        cross_pre = _strictly_before(_last_index(crossed_pop | crossed_decay))
+        death_pop = crossed_pop & (cross_pre <= append_pre)
+        alive_at_decay = (live_A_read & ~death_pop) | append_mask
+        death_decay = (alive_at_decay & (post_decay <= threshold)
+                       & (cross_pre <= append_at))
+        return death_pop, death_decay
+    return triton_scan.strength_liveness(sched, entry_strength, entry_live,
+                                         decay=decay, threshold=threshold, derive=derive)
+
+
+def _chunk_vector(kc, qc, vc, sched: DecisionSchedule, entry: ChunkState, cfg, *,
+                  scale: float, derive_deaths: bool, deaths: list | None = None):
+    """Chunk advance with the per-token bookkeeping vectorised over the chunk.
+
+    The loop in :func:`_chunk` re-derives, token by token, quantities that are
+    functions of the input schedule.  Here they are computed once per chunk:
+    "last append / last write / last death before token i" are prefix maxima
+    over the token axis, liveness is the last-event-wins rule, and the value
+    payload chain (a correction reads the value it overwrites) is resolved by
+    log-depth pointer jumping along the "previous write to the same slot"
+    pointer.  ``chunked_fold_equiv`` licenses exactly this: the schedule is
+    fixed, so the derived channel is an associative fold over the token axis.
+    """
+    rows, steps = kc.shape[0], kc.shape[1]
+    slots, value_dim = entry.strength.shape[1], entry.values.shape[2]
+    device = kc.device
+    index = torch.arange(slots, device=device)
+    decay, threshold = cfg.decay_rate, cfg.free_threshold
+    ones = torch.ones(rows, steps, slots, dtype=kc.dtype, device=device)
+    zeros = torch.zeros_like(ones)
+    live_entry = entry.live.unsqueeze(1)
+
+    # ---- schedule stamps (functions of the decisions alone)
+    append_mask = sched.alloc.unsqueeze(-1) == index
+    append_today = sched.alloc >= 0
+    write_slot = torch.where(append_today, sched.alloc, sched.correct)
+    write_today = write_slot >= 0
+    append_at = _last_index(append_mask)
+    append_pre = _strictly_before(append_at)
+    write_at = _last_index(write_slot.unsqueeze(-1) == index)
+    write_pre = _strictly_before(write_at)
+    strength_at_read, live_read, live_after, strength_final, live_final = (
+        _strength_channel(sched, entry.strength, entry.live, decay=decay,
+                          threshold=threshold, derive=derive_deaths))
+
+    # ---- value payloads: payload_i = a_i * payload_parent(i) + b_i, resolved
+    # along the "previous write to the same slot" pointer by log-depth jumping.
+    beta = sched.beta
+    coefficient = torch.where(append_today, torch.zeros_like(beta), 1.0 - beta)
+    offset = torch.where(append_today.unsqueeze(-1), sched.gate.unsqueeze(-1) * vc,
+                         beta.unsqueeze(-1) * vc)
+    pointer = write_slot.clamp(min=0)
+    parent = torch.where(write_today,
+                         write_pre.gather(2, pointer.unsqueeze(-1)).squeeze(-1),
+                         torch.full_like(write_slot, -1))
+    base = entry.values.gather(1, pointer.unsqueeze(-1).expand(rows, steps, value_dim))
+    for _ in range(max(1, (steps - 1).bit_length())):
+        live_pointer = write_today & (parent >= 0)
+        parent_index = parent.clamp(min=0)
+        parent_coefficient = coefficient.gather(1, parent_index)
+        parent_offset = offset.gather(1, parent_index.unsqueeze(-1)
+                                      .expand(rows, steps, value_dim))
+        offset = torch.where(live_pointer.unsqueeze(-1),
+                             coefficient.unsqueeze(-1) * parent_offset + offset, offset)
+        coefficient = torch.where(live_pointer,
+                                  coefficient * parent_coefficient, coefficient)
+        parent = torch.where(live_pointer, parent.gather(1, parent_index), parent)
+    payload = torch.where(write_today.unsqueeze(-1),
+                          coefficient.unsqueeze(-1) * base + offset,
+                          torch.zeros_like(base))
+
+    # ---- exit content: the chunk's last write per slot applied to the entry store
+    last_write_of_slot, last_append_of_slot = write_at[:, -1], append_at[:, -1]
+    values_cur = torch.where(
+        (last_write_of_slot >= 0).unsqueeze(-1),
+        payload.gather(1, last_write_of_slot.clamp(min=0).unsqueeze(-1)
+                       .expand(rows, slots, value_dim)),
+        entry.values)
+    append_keys = torch.where(append_today.unsqueeze(-1), kc, torch.zeros_like(kc))
+    keys_cur = torch.where(
+        (last_append_of_slot >= 0).unsqueeze(-1),
+        append_keys.gather(1, last_append_of_slot.clamp(min=0).unsqueeze(-1)
+                           .expand(rows, slots, kc.shape[-1])),
+        entry.keys)
+
+    read, usage_final, age_final = _read_and_channels(
+        kc, qc, sched, entry, cfg, live_read, strength_at_read, append_pre,
+        write_pre, write_slot, payload, live_after, scale)
+    if deaths is not None:
+        deaths.append(_strength_channel(sched, entry.strength, entry.live, decay=decay,
+                                        threshold=threshold, derive=derive_deaths,
+                                        masks_only=True))
+    exit_state = ChunkState(keys=keys_cur, values=values_cur,
+                            strength=strength_final, live=live_final,
+                            age=age_final.round().to(torch.int64),
+                            usage=usage_final)
+    return read, exit_state
+
+
+def _advance(*args, **kwargs):
+    """Dispatch to the vectorised or the loop chunk (see ``chunked_tape_scan``)."""
+    return (_chunk_vector if _advance.vectorized else _chunk)(*args, **kwargs)
+
+
+_advance.vectorized = True
+
+
 def chunked_tape_scan(k, q, v, schedule: DecisionSchedule, cfg, *,
                       chunk_size: int = 64, state: ChunkState | None = None,
                       row_block: int | None = None,
                       derive_deaths: bool = True,
                       deaths: list | None = None,
-                      validate: bool = True):
+                      validate: bool = True,
+                      vectorized: bool = True):
     """Chunked parallel scan of the slot store over a fixed decision schedule.
 
     Args (all ``[rows, tokens, ...]`` with ``rows = batch * heads``):
@@ -312,6 +578,10 @@ def chunked_tape_scan(k, q, v, schedule: DecisionSchedule, cfg, *,
     ``deaths``, when a list is passed, collects the per-chunk
     ``(pop_chunk_deaths, decay_chunk_deaths)`` masks the scan derived from the
     strength channel (shape ``[rows, chunk, slots]`` per chunk).
+
+    ``vectorized=False`` selects the per-token loop bookkeeping, which is the
+    reference implementation the chunk-parallel one is tested against (both
+    produce identical strength/liveness/death channels).
 
     ``validate=False`` skips the schedule shape/range/collision guards, whose
     host synchronisation must stay outside a CUDA-graph capture region.
@@ -339,6 +609,7 @@ def chunked_tape_scan(k, q, v, schedule: DecisionSchedule, cfg, *,
     if row_block is None:
         # Keep the [rows, chunk, slots] trajectories inside a fixed budget.
         row_block = max(1, min(rows, 2 ** 24 // (chunk_size * slots)))
+    _advance.vectorized = bool(vectorized)
     read = torch.empty(rows, tokens, value_dim, device=k.device, dtype=v.dtype)
     pieces, death_blocks = [], []
     for start in range(0, rows, row_block):
@@ -347,7 +618,7 @@ def chunked_tape_scan(k, q, v, schedule: DecisionSchedule, cfg, *,
         block_deaths = [] if deaths is not None else None
         for begin in range(0, tokens, chunk_size):
             stop = min(tokens, begin + chunk_size)
-            piece, carry = _chunk(
+            piece, carry = _advance(
                 k[sl, begin:stop], q[sl, begin:stop], v[sl, begin:stop],
                 DecisionSchedule(*(getattr(schedule, name)[sl, begin:stop] for name in
                                    ('alloc', 'gate', 'correct', 'beta',

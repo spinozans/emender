@@ -52,6 +52,11 @@ PYTHON = "/home/erikg/emender/.venv/bin/python"
 
 CONTEXT = 2048
 BOUNDARY_BYTES = 100_000_000_000
+# X44 chunked-scan integration.  Unset (the registered default) leaves the arm
+# byte-for-byte unchanged.  "replay" additionally runs the X44 chunked content
+# scan on the same decision schedule the certified kernel produced, recording
+# parity and timing in the run receipt; "1" is accepted as "replay".
+CHUNK_SCAN_ENV = "X44_CHUNK_SCAN"
 REGISTERED_SPLITS = ("train", "calibration", "final_test")
 # "Unbounded" is a finite cap that provably never binds, receipted as
 # finite_cap_never_bound (the C14-B convention, budget=257 there). Here the store resets
@@ -242,7 +247,8 @@ def evaluate(model, stream, arm, split, windows=24):
                 units="nats/byte")
 
 
-def train(arm, seconds, seed, output, eval_split="calibration", device=None, quiet=False):
+def train(arm, seconds, seed, output, eval_split="calibration", device=None, quiet=False,
+          profile=False):
     check_python()
     identity = flagship_identity()
     base, policy, nom = build_policy(arm)
@@ -260,6 +266,15 @@ def train(arm, seconds, seed, output, eval_split="calibration", device=None, qui
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     configure_production()
+    chunk_scan = os.environ.get(CHUNK_SCAN_ENV, "").strip()
+    if chunk_scan and chunk_scan not in ("0", "replay", "1"):
+        raise ValueError(f"unknown {CHUNK_SCAN_ENV}={chunk_scan!r}")
+    collector = None
+    if chunk_scan in ("replay", "1"):
+        if base != "pure":
+            raise ValueError("the chunked scan is wired into the pure arm only")
+        from ..x44_chunk_scan import velocity_adapter
+        collector = velocity_adapter.instrument()
     out = Path(output)
     out.mkdir(parents=True, exist_ok=False)
     model = model_for(base, policy).cuda().train()
@@ -278,19 +293,25 @@ def train(arm, seconds, seed, output, eval_split="calibration", device=None, qui
                         trainable=sum(p.numel() for p in model.parameters()
                                       if p.requires_grad)),
         budgets=list(_budgets(policy)),
-        context=CONTEXT, units="nats/byte"))
+        context=CONTEXT, units="nats/byte",
+        chunk_scan=chunk_scan or "off"))
     batches = iter(stream.batches("train"))
     elapsed = 0.0
     step = targets = 0
+    prof = dict(batch_s=0.0, fwd_bwd_s=0.0, opt_s=0.0, sync_s=0.0, microbatches=0, steps=0)
     with (out / "training.jsonl").open("w", buffering=1) as log:
         while elapsed < seconds:
             torch.cuda.synchronize()
             start = time.monotonic()
+            t0 = time.monotonic()
             try:
                 rows = next(batches)
             except StopIteration:
                 raise RuntimeError("train split exhausted before the budget: refusing to wrap")
+            if profile:
+                prof["batch_s"] += time.monotonic() - t0
             n = sum(len(r[3]) for r in rows)
+            t0 = time.monotonic()
             optimizer.zero_grad(set_to_none=True)
             for group in optimizer.param_groups:
                 group["lr"] = policy.lr * min(1., (step + 1) / max(1, policy.warmup_steps))
@@ -303,9 +324,17 @@ def train(arm, seconds, seed, output, eval_split="calibration", device=None, qui
                     raise FloatingPointError("nonfinite loss")
                 (loss * (valid / n)).backward()
                 loss_sum += float(loss.detach()) * valid / n
+            torch.cuda.synchronize()
+            if profile:
+                prof["fwd_bwd_s"] += time.monotonic() - t0
+            t0 = time.monotonic()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1., error_if_nonfinite=True)
             optimizer.step()
             torch.cuda.synchronize()
+            if profile:
+                prof["opt_s"] += time.monotonic() - t0
+                prof["microbatches"] += max(1, -(-len(rows) // (8 if base == "pure" else policy.microbatch)))
+                prof["steps"] += 1
             elapsed += time.monotonic() - start
             step += 1
             targets += n
@@ -315,11 +344,33 @@ def train(arm, seconds, seed, output, eval_split="calibration", device=None, qui
                 print(f"  {arm} step {step} {elapsed:.0f}s {targets/1e6:.1f}MB "
                       f"loss {loss_sum:.4f}", flush=True)
     os.environ['X40_BATCHED_READS'] = '0'  # evaluation path is recorded-read only
+    if profile:
+        tot = max(1e-9, prof["batch_s"] + prof["fwd_bwd_s"] + prof["opt_s"])
+        prof.update(total_s=tot, batch_frac=prof["batch_s"]/tot,
+                    fwd_bwd_frac=prof["fwd_bwd_s"]/tot, opt_frac=prof["opt_s"]/tot,
+                    bytes_per_s=targets/max(1e-9, elapsed),
+                    us_per_microbatch=1e6*prof["fwd_bwd_s"]/max(1, prof["microbatches"]))
+        atomic_json(out / "profile.json", prof)
+    if collector is not None:
+        partial = collector.summary()
+        partial.update(phase="train_only")
+        atomic_json(out / "chunk_scan.json", partial)
+        print("  chunk-scan replay (train): " + json.dumps(partial), flush=True)
     result = evaluate(model, stream, base, eval_split)
+    if collector is not None:
+        # The evaluation phase runs the certified (non-batched) read, so the
+        # summary is reported again here: the two read paths are split.
+        result_chunk = collector.summary()
+        result_chunk.update(overhead_seconds=collector.chunked_seconds,
+                            certified_memory_seconds=collector.certified_seconds)
+        print("  chunk-scan replay (all): " + json.dumps(result_chunk), flush=True)
+    else:
+        result_chunk = None
     result.update(status="completed", score_eligible=True, arm=arm, base_arm=base,
                   train_seconds=elapsed, steps=step, bytes=targets,
                   seed=seed, units="nats/byte", identity=identity,
-                  policy=asdict(policy), budgets=list(_budgets(policy)))
+                  policy=asdict(policy), budgets=list(_budgets(policy)),
+                  chunk_scan=chunk_scan or "off", chunk_scan_evidence=result_chunk)
     atomic_json(out / "result.json", result)
     return result
 
@@ -442,12 +493,14 @@ def main():
     t.add_argument("--output", required=True)
     t.add_argument("--eval-split", default="calibration")
     t.add_argument("--device", default=None)
+    t.add_argument("--profile", action="store_true")
     g = sub.add_parser("gate")
     g.add_argument("--gpu", action="store_true")
     g.add_argument("--device", default="5")
     a = ap.parse_args()
     if a.cmd == "train":
-        r = train(a.arm, a.seconds, a.seed, a.output, a.eval_split, a.device)
+        r = train(a.arm, a.seconds, a.seed, a.output, a.eval_split, a.device,
+                  profile=a.profile)
         print(json.dumps({k: r[k] for k in ("arm", "score", "eval_split", "eval_windows",
                                             "steps", "bytes", "train_seconds")}, indent=2))
         return

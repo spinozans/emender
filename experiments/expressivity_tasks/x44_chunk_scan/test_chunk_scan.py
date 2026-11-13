@@ -70,6 +70,7 @@ def schedule_of(cfg, args, trace):
 
 
 def chunked_run(cfg, args, sched, chunk_size, **kw):
+    """Chunked scan on the fixture; ``vectorized`` selects the bookkeeping path."""
     k, q, v, _, _, _ = args
     batch, tokens = k.shape[0], k.shape[1]
     return chunked.chunked_tape_scan(flat(k, cfg, batch, tokens), flat(q, cfg, batch, tokens),
@@ -186,6 +187,39 @@ def test_affine_single_step_and_empty_lane_shapes():
     states, final = chunked_prefix_scan(multiplier, injection)
     torch.testing.assert_close(states, torch.zeros(1, 1, 1))
     torch.testing.assert_close(final.apply(torch.tensor([2.0])), torch.tensor([2.0]))
+
+
+def test_vectorised_bookkeeping_matches_the_loop_bit_for_bit():
+    """The chunk-parallel bookkeeping must reproduce the per-token loop exactly.
+
+    Lever 1 replaced a per-token loop (prefix maxima, last-event-wins liveness,
+    pointer-jumped payload chain) by closed forms over the chunk.  The strength,
+    liveness, age and derived death channels are required to be bit-identical;
+    the value payload is allowed the one-ulp reassociation of
+    ``(1-b)*v_old + b*v_new`` and stays inside the read tolerance.
+    """
+    for seed, decay, threshold, budget in ((0, .9, .15, 6), (3, .5, .1, 6),
+                                           (7, .999995, 1e-3, 8), (11, .8, .2, 2)):
+        cfg, args, out_ref, final_ref, trace, sched = _fixture(
+            seed=seed, decay=decay, threshold=threshold, budget=budget)
+        for chunk in (1, 2, 3, 4, 5, 19, 64):
+            loop_deaths, vector_deaths = [], []
+            loop_read, loop_final = chunked_run(cfg, args, sched, chunk, deaths=loop_deaths,
+                                                vectorized=False)
+            vector_read, vector_final = chunked_run(cfg, args, sched, chunk,
+                                                    deaths=vector_deaths, vectorized=True)
+            for phase in (0, 1):
+                assert torch.equal(torch.cat([d[phase] for d in loop_deaths], dim=1),
+                                   torch.cat([d[phase] for d in vector_deaths], dim=1))
+            assert torch.equal(loop_final.strength, vector_final.strength)
+            assert torch.equal(loop_final.age, vector_final.age)
+            assert torch.equal(loop_final.live, vector_final.live)
+            assert torch.equal(loop_final.keys, vector_final.keys)
+            assert torch.allclose(loop_final.values, vector_final.values, atol=1e-6, rtol=0)
+            assert torch.allclose(loop_read, vector_read, atol=1e-6, rtol=0)
+            worst, detail = deviation(cfg, args, vector_read, vector_final,
+                                      out_ref, final_ref)
+            assert worst < 1e-5, (seed, chunk, detail)
 
 
 # ---------------------------------------------------------------------------
