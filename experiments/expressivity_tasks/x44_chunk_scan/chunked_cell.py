@@ -47,10 +47,17 @@ from dataclasses import dataclass
 
 import torch
 
+from . import triton_scan
 from .affine import scan_with_entry
 from .schedule import DecisionSchedule
 
 NEG_MASK = -1.0e30  # same dead-slot softmax mask as the X30 reference
+
+# The intra-chunk affine scan is one Triton kernel on CUDA (one CUDA-graph node
+# instead of one launch per step) and the PyTorch loop on CPU.  The kernel is
+# verified bit-identical to the loop (``triton_scan.same_as_torch``), so the
+# strength trajectory and every derived death boundary are unchanged.
+USE_TRITON_SCAN = True
 
 
 @dataclass
@@ -90,9 +97,14 @@ def _scan(multiplier: torch.Tensor, injection: torch.Tensor,
     if entry.shape != (rows, slots) or injection.shape != multiplier.shape:
         raise ValueError('affine scan shape mismatch')
     lanes = rows * slots
-    states, final = scan_with_entry(multiplier.reshape(steps, lanes),
-                                    injection.reshape(steps, lanes),
-                                    entry.reshape(lanes))
+    if USE_TRITON_SCAN and multiplier.is_cuda:
+        states, final = triton_scan.scan_with_entry(multiplier.reshape(steps, lanes),
+                                                    injection.reshape(steps, lanes),
+                                                    entry.reshape(lanes))
+    else:
+        states, final = scan_with_entry(multiplier.reshape(steps, lanes),
+                                        injection.reshape(steps, lanes),
+                                        entry.reshape(lanes))
     return states.reshape(steps, rows, slots), final.reshape(rows, slots)
 
 
@@ -288,7 +300,8 @@ def chunked_tape_scan(k, q, v, schedule: DecisionSchedule, cfg, *,
                       chunk_size: int = 64, state: ChunkState | None = None,
                       row_block: int | None = None,
                       derive_deaths: bool = True,
-                      deaths: list | None = None):
+                      deaths: list | None = None,
+                      validate: bool = True):
     """Chunked parallel scan of the slot store over a fixed decision schedule.
 
     Args (all ``[rows, tokens, ...]`` with ``rows = batch * heads``):
@@ -299,6 +312,9 @@ def chunked_tape_scan(k, q, v, schedule: DecisionSchedule, cfg, *,
     ``deaths``, when a list is passed, collects the per-chunk
     ``(pop_chunk_deaths, decay_chunk_deaths)`` masks the scan derived from the
     strength channel (shape ``[rows, chunk, slots]`` per chunk).
+
+    ``validate=False`` skips the schedule shape/range/collision guards, whose
+    host synchronisation must stay outside a CUDA-graph capture region.
 
     Returns ``(read [rows, tokens, value_dim], final ChunkState)``.
     """
@@ -311,7 +327,8 @@ def chunked_tape_scan(k, q, v, schedule: DecisionSchedule, cfg, *,
         raise ValueError('key/query/value shape mismatch')
     if any(t.dtype != torch.float32 for t in (k, q, v)):
         raise ValueError('inputs must be fp32')
-    schedule.check(rows, tokens, slots).fail_on_collision()
+    if validate:
+        schedule.check(rows, tokens, slots).fail_on_collision()
     if chunk_size < 1:
         raise ValueError('chunk_size must be positive')
     if state is None:

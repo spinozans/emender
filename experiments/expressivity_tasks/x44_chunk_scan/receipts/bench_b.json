@@ -1,0 +1,290 @@
+{
+  "device": "NVIDIA RTX 6000 Ada Generation",
+  "copy_bandwidth_gigabytes_per_second": 836.285439088341,
+  "cases": [
+    {
+      "name": "head3_t2048_b64_s2196",
+      "tokens": 2048,
+      "rows": 64,
+      "slots": 2196,
+      "event_rates": {
+        "append": 0.41155242919921875,
+        "correct": 0.28936004638671875,
+        "pop": 0.7758102416992188,
+        "traced_deaths": 3.6062439903616905e-05
+      },
+      "repeats": 3,
+      "paths": {
+        "certified_x31_kernel": {
+          "median_seconds": 6.376381651498377,
+          "mean_seconds": 6.38246107660234,
+          "min_seconds": 6.371001493185759,
+          "tokens_per_second": 20555.85866150273,
+          "state_bytes": 221056598016,
+          "state_gigabytes_per_second": 34.66803119666688
+        },
+        "sequential_replay": {
+          "median_seconds": 1.4814643105491996,
+          "mean_seconds": 1.4794577797874808,
+          "min_seconds": 1.4718586346134543,
+          "tokens_per_second": 88474.62545446659,
+          "state_bytes": 221056598016,
+          "state_gigabytes_per_second": 149.2149331184706
+        },
+        "chunked_c32": {
+          "median_seconds": 1.3879140764474869,
+          "mean_seconds": 1.3912035701796412,
+          "min_seconds": 1.3864232329651713,
+          "tokens_per_second": 94438.122809081,
+          "state_bytes": 6908018688,
+          "state_gigabytes_per_second": 4.9772668245298055,
+          "max_abs_deviation_vs_sequential": 3.4570693969726562e-06,
+          "median_abs_deviation_vs_sequential": 2.60770320892334e-08
+        },
+        "chunked_graph_c32": {
+          "median_seconds": 0.31345400866121054,
+          "mean_seconds": 0.31348320841789246,
+          "min_seconds": 0.3134095687419176,
+          "tokens_per_second": 418153.8483422814,
+          "state_bytes": 6908018688,
+          "state_gigabytes_per_second": 22.0383804230316,
+          "graph_capture_seconds": 6.206612579524517,
+          "max_abs_deviation_vs_sequential": 3.4570693969726562e-06
+        },
+        "chunked_c64": {
+          "median_seconds": 1.3409769888967276,
+          "mean_seconds": 1.341562006312112,
+          "min_seconds": 1.3373720431700349,
+          "tokens_per_second": 97743.6608422624,
+          "state_bytes": 3454009344,
+          "state_gigabytes_per_second": 2.575740950515298,
+          "max_abs_deviation_vs_sequential": 3.4570693969726562e-06,
+          "median_abs_deviation_vs_sequential": 2.60770320892334e-08
+        },
+        "chunked_graph_c64": {
+          "median_seconds": 0.3455700343474746,
+          "mean_seconds": 0.3456291211768985,
+          "min_seconds": 0.3455425938591361,
+          "tokens_per_second": 379292.1462287602,
+          "state_bytes": 3454009344,
+          "state_gigabytes_per_second": 9.995106637420289,
+          "graph_capture_seconds": 5.855982236564159,
+          "max_abs_deviation_vs_sequential": 3.4570693969726562e-06
+        }
+      }
+    },
+    {
+      "name": "short_t256_b64_s2196",
+      "tokens": 256,
+      "rows": 64,
+      "slots": 2196,
+      "event_rates": {
+        "append": 0.409912109375,
+        "correct": 0.28765869140625,
+        "pop": 0.7684326171875,
+        "traced_deaths": 2.298546132806223e-05
+      },
+      "repeats": 3,
+      "paths": {
+        "certified_x31_kernel": {
+          "median_seconds": 0.6868492914363742,
+          "mean_seconds": 0.6868645387391249,
+          "min_seconds": 0.686823052354157,
+          "tokens_per_second": 23853.850042906713,
+          "state_bytes": 27632074752,
+          "state_gigabytes_per_second": 40.230186005163375
+        },
+        "sequential_replay": {
+          "median_seconds": 0.1836539227515459,
+          "mean_seconds": 0.18392486621936163,
+          "min_seconds": 0.18358062207698822,
+          "tokens_per_second": 89211.27169260036,
+          "state_bytes": 27632074752,
+          "state_gigabytes_per_second": 150.4573076251779
+        },
+        "chunked_c32": {
+          "median_seconds": 0.17383477929979563,
+          "mean_seconds": 0.1741939994196097,
+          "min_seconds": 0.1735255280509591,
+          "tokens_per_second": 94250.41447974078,
+          "state_bytes": 863502336,
+          "state_gigabytes_per_second": 4.9673738447402584,
+          "max_abs_deviation_vs_sequential": 2.1457672119140625e-06,
+          "median_abs_deviation_vs_sequential": 2.9802322387695312e-08
+        },
+        "chunked_graph_c32": {
+          "median_seconds": 0.03974519670009613,
+          "mean_seconds": 0.039755859722693764,
+          "min_seconds": 0.039744555950164795,
+          "tokens_per_second": 412225.91307392804,
+          "state_bytes": 863502336,
+          "state_gigabytes_per_second": 21.725954522648305,
+          "graph_capture_seconds": 0.8224734561517835,
+          "max_abs_deviation_vs_sequential": 2.1457672119140625e-06
+        },
+        "chunked_c64": {
+          "median_seconds": 0.1680674199014902,
+          "mean_seconds": 0.16854463083048662,
+          "min_seconds": 0.16800040937960148,
+          "tokens_per_second": 97484.68804723246,
+          "state_bytes": 431751168,
+          "state_gigabytes_per_second": 2.5689164994206695,
+          "max_abs_deviation_vs_sequential": 2.1457672119140625e-06,
+          "median_abs_deviation_vs_sequential": 2.9802322387695312e-08
+        },
+        "chunked_graph_c64": {
+          "median_seconds": 0.04376507271081209,
+          "mean_seconds": 0.04376101276526848,
+          "min_seconds": 0.04375275317579508,
+          "tokens_per_second": 374362.45355425536,
+          "state_bytes": 431751168,
+          "state_gigabytes_per_second": 9.865199376061737,
+          "graph_capture_seconds": 0.7322528874501586,
+          "max_abs_deviation_vs_sequential": 2.1457672119140625e-06
+        }
+      }
+    },
+    {
+      "name": "short_t256_b64_s117",
+      "tokens": 256,
+      "rows": 64,
+      "slots": 117,
+      "event_rates": {
+        "append": 0.409912109375,
+        "correct": 0.28765869140625,
+        "pop": 0.7684326171875,
+        "traced_deaths": 0.0004314194666221738
+      },
+      "repeats": 3,
+      "paths": {
+        "certified_x31_kernel": {
+          "median_seconds": 0.6854136614128947,
+          "mean_seconds": 0.6854225074251493,
+          "min_seconds": 0.6854022899642587,
+          "tokens_per_second": 23903.81301450343,
+          "state_bytes": 1472200704,
+          "state_gigabytes_per_second": 2.14790102223122
+        },
+        "sequential_replay": {
+          "median_seconds": 0.1840626634657383,
+          "mean_seconds": 0.18414534348994493,
+          "min_seconds": 0.1839957730844617,
+          "tokens_per_second": 89013.16373187082,
+          "state_bytes": 1472200704,
+          "state_gigabytes_per_second": 7.998366840290984
+        },
+        "chunked_c32": {
+          "median_seconds": 0.1809200793504715,
+          "mean_seconds": 0.1885649561882019,
+          "min_seconds": 0.173273216933012,
+          "tokens_per_second": 90559.32353567863,
+          "state_bytes": 46006272,
+          "state_gigabytes_per_second": 0.2542905804881856,
+          "max_abs_deviation_vs_sequential": 2.1457672119140625e-06,
+          "median_abs_deviation_vs_sequential": 2.9802322387695312e-08
+        },
+        "chunked_graph_c32": {
+          "median_seconds": 0.0230476725846529,
+          "mean_seconds": 0.02305756291995446,
+          "min_seconds": 0.023043222725391388,
+          "tokens_per_second": 710874.3817763994,
+          "state_bytes": 46006272,
+          "state_gigabytes_per_second": 1.9961352640281296,
+          "graph_capture_seconds": 0.7684392305091023,
+          "max_abs_deviation_vs_sequential": 2.1457672119140625e-06
+        },
+        "chunked_c64": {
+          "median_seconds": 0.1690022312104702,
+          "mean_seconds": 0.16819848027080297,
+          "min_seconds": 0.16641564760357141,
+          "tokens_per_second": 96945.46564652078,
+          "state_bytes": 23003136,
+          "state_gigabytes_per_second": 0.13611143376771515,
+          "max_abs_deviation_vs_sequential": 2.384185791015625e-06,
+          "median_abs_deviation_vs_sequential": 2.9802322387695312e-08
+        },
+        "chunked_graph_c64": {
+          "median_seconds": 0.020686649717390537,
+          "mean_seconds": 0.020699829173584778,
+          "min_seconds": 0.020685198716819286,
+          "tokens_per_second": 792008.3833694225,
+          "state_bytes": 23003136,
+          "state_gigabytes_per_second": 1.1119797702506693,
+          "graph_capture_seconds": 0.6870306534692645,
+          "max_abs_deviation_vs_sequential": 2.384185791015625e-06
+        }
+      }
+    },
+    {
+      "name": "batch8_t2048_s2196",
+      "tokens": 2048,
+      "rows": 8,
+      "slots": 2196,
+      "event_rates": {
+        "append": 0.40948486328125,
+        "correct": 0.2880859375,
+        "pop": 0.77252197265625,
+        "traced_deaths": 3.596516035031527e-05
+      },
+      "repeats": 3,
+      "paths": {
+        "certified_x31_kernel": {
+          "median_seconds": 5.481037650257349,
+          "mean_seconds": 5.48102618722866,
+          "min_seconds": 5.480999640189111,
+          "tokens_per_second": 2989.2150073500643,
+          "state_bytes": 27632074752,
+          "state_gigabytes_per_second": 5.041394807916089
+        },
+        "sequential_replay": {
+          "median_seconds": 1.489499481394887,
+          "mean_seconds": 1.4884217893704772,
+          "min_seconds": 1.4811423290520906,
+          "tokens_per_second": 10999.668146682876,
+          "state_bytes": 27632074752,
+          "state_gigabytes_per_second": 18.551248320088774
+        },
+        "chunked_c32": {
+          "median_seconds": 1.4095005262643099,
+          "mean_seconds": 1.4081871540596087,
+          "min_seconds": 1.3978054793551564,
+          "tokens_per_second": 11623.975794761547,
+          "state_bytes": 863502336,
+          "state_gigabytes_per_second": 0.6126300202871126,
+          "max_abs_deviation_vs_sequential": 2.2649765014648438e-06,
+          "median_abs_deviation_vs_sequential": 2.60770320892334e-08
+        },
+        "chunked_graph_c32": {
+          "median_seconds": 0.17637486197054386,
+          "mean_seconds": 0.17836176852385202,
+          "min_seconds": 0.176368142478168,
+          "tokens_per_second": 92893.05639675721,
+          "state_bytes": 863502336,
+          "state_gigabytes_per_second": 4.895835644334692,
+          "graph_capture_seconds": 5.938573535531759,
+          "max_abs_deviation_vs_sequential": 2.2649765014648438e-06
+        },
+        "chunked_c64": {
+          "median_seconds": 1.3421524902805686,
+          "mean_seconds": 1.3404679478456576,
+          "min_seconds": 1.3370075533166528,
+          "tokens_per_second": 12207.256715349109,
+          "state_bytes": 431751168,
+          "state_gigabytes_per_second": 0.3216856289628797,
+          "max_abs_deviation_vs_sequential": 2.384185791015625e-06,
+          "median_abs_deviation_vs_sequential": 2.60770320892334e-08
+        },
+        "chunked_graph_c64": {
+          "median_seconds": 0.16739991959184408,
+          "mean_seconds": 0.16743613903721175,
+          "min_seconds": 0.16738100908696651,
+          "tokens_per_second": 97873.40424026253,
+          "state_bytes": 431751168,
+          "state_gigabytes_per_second": 2.5791599485393983,
+          "graph_capture_seconds": 5.658152014017105,
+          "max_abs_deviation_vs_sequential": 2.384185791015625e-06
+        }
+      }
+    }
+  ]
+}

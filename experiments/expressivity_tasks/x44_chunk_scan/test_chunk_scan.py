@@ -394,6 +394,45 @@ def test_schedule_rejects_append_and_correct_collision():
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason='needs CUDA')
+@pytest.mark.parametrize('steps,lanes', [(128, 7488), (4, 1000), (128, 140544)])
+def test_triton_affine_scan_is_bit_exact(steps, lanes):
+    """The scan kernel rounds once per operation (no FMA contraction), so the
+    strength channel -- and therefore every derived death boundary -- is
+    identical to the PyTorch pass.  Without that, a 1-ulp strength change flips
+    a death boundary and moves the read output by ~5e-4."""
+    from experiments.expressivity_tasks.x44_chunk_scan import triton_scan
+
+    torch.manual_seed(0)
+    multiplier = torch.rand(steps, lanes, device='cuda') * .9 + .05
+    injection = torch.randn(steps, lanes, device='cuda')
+    multiplier[3::7] = 0.0                      # zero diagonals in every chunk
+    entry = torch.randn(lanes, device='cuda')
+    exact, deviation = triton_scan.same_as_torch(multiplier, injection, entry)
+    assert exact and deviation == 0.0
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason='needs CUDA')
+def test_cuda_graph_replay_is_bit_identical_to_eager():
+    """Graph capture must not change a single bit: it only removes launches."""
+    from experiments.expressivity_tasks.x44_chunk_scan import graph_scan
+
+    cfg = config(budget=32, heads=1, decay=0.999, threshold=1e-3)
+    args = tuple(x.cuda() for x in inputs(cfg, 17, batch=4, tokens=96))
+    out_ref, final_ref, trace = run_naive(cfg, args, 17)
+    sched = schedule_of(cfg, args, trace)
+    eager_read, eager_final = chunked_run(cfg, args, sched, 32)
+    graph = graph_scan.ChunkedScanGraph(cfg, 4, 96, chunk_size=32)
+    graph_read, graph_final = graph(flat(args[0], cfg, 4, 96), flat(args[1], cfg, 4, 96),
+                                   flat(args[2], cfg, 4, 96), sched)
+    assert torch.equal(graph_read, eager_read)
+    for name in ('keys', 'values', 'strength', 'age', 'usage'):
+        assert torch.equal(getattr(graph_final, name), getattr(eager_final, name))
+    assert torch.equal(graph_final.live, eager_final.live)
+    worst, detail = deviation(cfg, args, graph_read, graph_final, out_ref, final_ref)
+    assert worst < 1e-5, detail
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason='needs CUDA')
 def test_parity_on_gpu_at_production_slot_counts():
     """Two rows, 64-slot store, 300 tokens, chunk sizes that stress the
     in-chunk write override; device and dtype identical to training."""

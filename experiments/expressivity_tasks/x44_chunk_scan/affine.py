@@ -122,12 +122,19 @@ def scan_with_entry(multiplier: torch.Tensor, injection: torch.Tensor,
     ``multiplier``/``injection`` are ``[C, L]``, ``entry`` is ``[L]``.
     Returns ``(states [C, L], final [L])`` with ``states[i]`` the state AFTER
     step ``i`` and ``final`` equal to ``states[-1]``.
+
+    The entry state is carried by the recurrence itself rather than being
+    re-applied as ``prefix_product * entry``: with a known entry the two are
+    algebraically equal but not bitwise equal, and the certified sequential path
+    uses this association.  ``chunked_prefix_scan`` keeps the renormalised form
+    because there the entry comes from the composed chunk summaries.
     """
-    final, prefix_product, prefix_injection = step_summaries(
-        multiplier.unsqueeze(0), injection.unsqueeze(0))
-    post_product, post_injection = _post_step(prefix_product, prefix_injection, final)
-    states = post_product.squeeze(0) * entry + post_injection.squeeze(0)
-    return states, states[-1]
+    states = []
+    state = entry
+    for index in range(multiplier.shape[0]):
+        state = multiplier[index] * state + injection[index]
+        states.append(state)
+    return torch.stack(states), states[-1]
 
 
 def chunked_prefix_scan(multiplier: torch.Tensor, injection: torch.Tensor, *,

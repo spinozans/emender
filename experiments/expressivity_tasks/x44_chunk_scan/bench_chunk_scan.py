@@ -10,7 +10,10 @@ model-produced decision sequence rather than a synthetic pattern):
 * ``sequential``: ``sequential_replay.sequential_tape_scan`` -- the same
                   semantics as the chunked scan, per-token PyTorch, one launch
                   per token;
-* ``chunked``   : ``chunked_cell.chunked_tape_scan`` at several chunk lengths.
+* ``chunked``   : ``chunked_cell.chunked_tape_scan`` at several chunk lengths;
+* ``chunked_graph``: the same chunked scan captured in a CUDA graph
+                  (``graph_scan.ChunkedScanGraph``), i.e. one host launch per
+                  scan instead of ~100k.
 
 ``state_bytes`` is the analytic slot-store traffic ``rows * tokens * slots *
 (key_dim + value_dim) * 4`` for the sequential path and ``rows * ceil(tokens /
@@ -35,7 +38,7 @@ import torch
 
 from experiments.expressivity_tasks.x30_tape_cell.naive_reference import TapeHeadConfig
 from experiments.expressivity_tasks.x31_tape_cell_fused import cell_fused as x31
-from experiments.expressivity_tasks.x44_chunk_scan import chunked_cell, sequential_replay
+from experiments.expressivity_tasks.x44_chunk_scan import chunked_cell, graph_scan, sequential_replay
 from experiments.expressivity_tasks.x44_chunk_scan.schedule import DecisionSchedule
 
 # Unit of the X42 production arms: batch 64 x context 2048 through four heads
@@ -142,6 +145,7 @@ def measure_case(name, tokens, rows, slot_count, repeats, chunks, device='cuda')
             'state_bytes': traffic,
             'state_gigabytes_per_second': traffic / statistics.median(times) / 1e9,
         }
+    graph_capture_seconds = {}
     for chunk in chunks:
         death_log = []
         times, (read, final) = timed(
@@ -164,6 +168,28 @@ def measure_case(name, tokens, rows, slot_count, repeats, chunks, device='cuda')
             'max_abs_deviation_vs_sequential': worst,
             'median_abs_deviation_vs_sequential': read_error.median().item(),
         }
+        if device == 'cuda':
+            capture_start = time.perf_counter()
+            graph = graph_scan.ChunkedScanGraph(cfg, rows, tokens, chunk_size=chunk,
+                                                row_block=rows, key_dim=cfg.key_dim,
+                                                value_dim=cfg.value_dim, device=device)
+            torch.cuda.synchronize()
+            graph_capture_seconds[chunk] = time.perf_counter() - capture_start
+            graph_times, (graph_read, graph_final) = timed(
+                lambda graph=graph: graph(k, q, v, schedule), repeats)
+            graph_error = max((graph_read - reference_read).abs().max().item(),
+                              (graph_final.strength - reference_final.strength)
+                              .abs().max().item())
+            record['paths'][f'chunked_graph_c{chunk}'] = {
+                'median_seconds': statistics.median(graph_times),
+                'mean_seconds': statistics.mean(graph_times),
+                'min_seconds': min(graph_times),
+                'tokens_per_second': rows * tokens / statistics.median(graph_times),
+                'state_bytes': traffic,
+                'state_gigabytes_per_second': traffic / statistics.median(graph_times) / 1e9,
+                'graph_capture_seconds': graph_capture_seconds[chunk],
+                'max_abs_deviation_vs_sequential': graph_error,
+            }
     return record
 
 
