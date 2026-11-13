@@ -1835,8 +1835,9 @@ Paths are repository-relative. `emender` is this repository; `sxgc` is the exter
         {
           "repo": "emender",
           "path": "experiments/expressivity_tasks/x43_fork_resolved/c14_branch_serve.py",
-          "commit": "e437d7a2b0856950b6e762746f99e15463f30830",
-          "sha256": "23c48b72b9b5506121c142294b6c6de221d7cef2863d869960daea40d468a0e1"
+          "commit": "805784c24ce776e90cfe39d245161dd4957d5b75",
+          "sha256": "1a64d4477ccf22e50028c08a253a667fc0821ffe06e2beda1bed168bb3dae401",
+          "supersedes": "e437d7a2/23c48b72 — re-pinned 2026-11-11 after adding the document-base context cut and source-occurrence exclusion as opt-in, default-off hardenings (RESULT_CONSULT_BOUNDARY_HARDENING.md); the serving-preflight numbers and the registered default path are unchanged, but this file no longer reproduces the exact bytes that produced them"
         },
         {
           "repo": "emender",

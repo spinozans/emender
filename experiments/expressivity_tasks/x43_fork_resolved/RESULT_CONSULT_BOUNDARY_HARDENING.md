@@ -167,6 +167,15 @@ registration table or claim status is modified. Scripts that assert
 refuse — that is the identity binding working, not a regression: they no longer attest a
 reproduction.
 
+Audit state after the re-pin: **all 461 `emender` bindings in the ledger hash-match the
+working tree**. `test_validate_program::test_valid_ledger` is nevertheless still red, on a
+**pre-existing and unrelated** binding: `sxgc/xsa/src/branches.inc.rs` is pinned at
+`88d4e074`/`badad614…` and the read-only `~/sxgc` tree has since advanced (working
+`f293d1c0…`, HEAD `6cf19f2`). It was red before this change as well — the validator raises
+on the first mismatch in ledger order, and the `emender` pin happened to come first. That
+pin belongs to the sxgc-side registration and `~/sxgc` is read-only for this task, so it is
+reported, not re-pinned.
+
 ## 5. Short-spine amendment (dated annotation; config flag; no behaviour change)
 
 **Annotation S-1, dated 2026-11-10/11, status: proposed, NOT active, NOT implemented.**
