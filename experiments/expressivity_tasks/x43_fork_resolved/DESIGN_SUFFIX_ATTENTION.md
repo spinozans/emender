@@ -26,7 +26,7 @@ nothing about the value of a neighbourhood once found.
 | stage | mechanism | status |
 |---|---|---|
 | seeds | `xsa seeds`, adaptive length solved for a target multiplicity | exists |
-| **colinear chaining** | sparse DP over anchors, ordered/gap-consistent, chain score | **MISSING — the key build** |
+| **colinear chaining** | sparse DP over anchors, ordered/gap-consistent, chain score | **prototype built** (`chaining.py`, 16 tests); measured in `RESULT_CHAIN_COVERAGE.md` — the DP is instant, the limit is the anchor-set SHAPE the CLI returns |
 | correspondence | the chain yields context position ↔ corpus position alignment | follows from chaining |
 | **fork / variable site** | branch histogram at the aligned site with multiplicities | exists (`xsa branches`; `xsa forks` for the fork matrix) |
 
@@ -34,6 +34,25 @@ Without chaining the operator is a bag-of-seeds ranker: it learns "this document
 string with me". With chaining it is a **positional pointer** — it knows where the
 correspondence is, hence where the variable site is, hence which corpus position answers
 for the current one. That is the difference between retrieval and attention.
+
+### R2.2a Measured (2026-11-13): the signal exists; the anchor feed is the blocker
+
+150 byte-uniform positions per panel, 32-byte seed band (`RESULT_CHAIN_COVERAGE.md`):
+
+| metric | transcript | Pile |
+|---|---|---|
+| L=12 context suffix occurs >=2x | **36.7%** | 82.7% |
+| abutting correspondence (d16/d32) | **37.3%** | 82.7% |
+| **fork top-1 = actual next byte** | **58.9%** (chance 15.0%) | 75.2% (chance 14.4%) |
+| chains with >1 anchor (d32) | **0/150** | 11/150 |
+
+Two things follow. The fork carries real signal when a correspondence exists —
+3.9x chance on transcripts, 5.2x on the Pile — so the operator is not vacuous on
+conversational text. But multi-anchor chains are essentially absent, and the cause is
+not the DP: `xsa seeds --limit N` returns the first N rows of the seed's suffix-array
+interval, which share a query offset and therefore **can never chain to each other**.
+The fix is an anchor-table output shape (diverse anchors, distinct query offsets,
+positions), requested in `SXGC_COLINEAR_CHAINING_ASK.md`.
 
 ### R2.3 The guarantee is completeness, not statistical support
 
