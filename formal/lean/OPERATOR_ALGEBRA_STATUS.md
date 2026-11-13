@@ -6,7 +6,213 @@ embedding and makes no compactness claim. There are no unfinished proofs in
 this addition. The historical nonlinear E88/NDM `emender` signature is retained;
 the X30 slot store has its own semantic signature.
 
-## Validation and reproducibility
+## Phase two: attention/retrieval algebra (2026-11-13)
+
+**Verdict:** the fixed-schedule readout is linear in values. Scheduled index
+reads and the existing store writes share one affine scan on an explicit
+source-state/residual product. This proves replay, not parallel generation of
+matching, chaining, fan-out, numerical weights, or nonlinear values. The memo is
+[`EMENDER_ATTENTION_ALGEBRA.pdf`](EMENDER_ATTENTION_ALGEBRA.pdf), with source
+[`EMENDER_ATTENTION_ALGEBRA.typ`](EMENDER_ATTENTION_ALGEBRA.typ).
+
+**Design correction:** R2.4's returned-candidate denominator can double a
+survivor's coefficient and output norm under truncation. A full-population
+denominator preserves survivor coefficients but loses omitted mass. Both
+policies have the same bound `norm(out) <= alpha * B`, conditional on values
+bounded by B. Fixed joint normalization and fixed learned alpha remain linear;
+their state-dependent recomputation can break affinity. Neither a diagonal
+summary nor a fixed candidate cap is closed under general reads, while a
+fixed-state block triangular summary is closed.
+
+All names below are under **`MemoryAlgebra.Attention`**. The JSON audit contains
+the complete theorem/file/line/axiom inventory, including elementary lemmas.
+
+### AttentionOperator.lean — complete population and central theorem
+
+`Neighborhood U R` specifies the full finite eligible set, nonnegative raw
+weights, and owners; `AttentionOperator U R V` adds a returned subset, a fixed
+nonnegative alpha, and `.retained` or `.full` normalization. The universe may
+be infinite; each query population is finite. Both raw and returned measures
+are actual `MeasureTheory.Measure` values. Exact aggregate metadata comprises
+raw mass, eligible count, positive-weight count, and distinct eligible owners.
+Entropy and index aggregation algorithms are not formalized.
+
+- `Neighborhood.measure_univ`, `Neighborhood.measure_finite`
+- `Neighborhood.empty_aggregates`
+- `AttentionOperator.aggregates_independent_of_truncation`
+- `AttentionOperator.readout_linear`, `AttentionOperator.readout_affine`
+- `AttentionOperator.step_eq_embed`, `AttentionOperator.fixed_schedule_scan`
+- `AttentionOperator.outputMass_formula`, `AttentionOperator.outputMass_le_alpha`
+- `AttentionOperator.retained_normalization_mass`
+- `AttentionOperator.zero_denominator`, `AttentionOperator.zero_mass_readout`
+- `AttentionOperator.empty_candidates`, `AttentionOperator.empty_support`
+- `AttentionOperator.alpha_zero_measure`, `AttentionOperator.alpha_zero_readout`
+- `AttentionOperator.alpha_zero_noop`, `AttentionOperator.alpha_zero_identity`
+- `AttentionOperator.alpha_zero_iff_all_readouts_zero`
+- `AttentionOperator.full_coefficients_truncation_invariant`
+- `AttentionOperator.full_truncation_mass_monotone`
+- `AttentionOperator.full_truncation_decomposition`
+- `readout_norm_le`
+
+The schedule records eligibility, ownership, returned candidates, weights,
+alpha, normalization/denominator, and the value source's affine projection and
+offset. The linearity argument uses fixed support, coefficients, and source maps;
+the other metadata is pinned for reproducibility. The values themselves vary
+in the linearity theorem. `MemoryOperator`
+acts on `(U -> V) × V`, keeping the table and adding its readout to the residual.
+The converse “no-op implies alpha=0” requires nondegeneracy: the named iff is for
+all scalar value tables with positive retained mass, not one observed output.
+
+### AttentionMixture.lean — additive algebra
+
+- `mixture_measure_mass`, `mixture_mass_budget`
+- `independent_positive_budgets`
+- `mixture_linear`, `heterogeneous_mixture_linear`
+- `mixture_disjoint_union`, `ablation_exact`
+- `attention_addition_commutes`, `attention_product_readout`
+- `mixture_norm_budget`
+
+Mixtures may have separate position universes and value tables. Measures add
+on a common/tagged universe. Zero alpha erases a branch's contribution exactly;
+read-only additions commute on a fixed source snapshot. Interleaved writes
+remain ordered.
+
+### AttentionScan.lean — reads plus actual slot-store writes
+
+`ReadWriteSummary S V` acts as `(s,r) -> (L s+b, r+H s+c)`. The chronological
+product has store part `(L2 L1, L2 b1+b2)`, read linear part `H1+H2 L1`, and
+read bias `c1+H2 b1+c2`. `Event` admits any existing `MemoryOperator` write and
+an attention read whose values are a fixed affine function of source state.
+
+- `ReadWriteSummary.toAffine_apply`, `ReadWriteSummary.toAffine_thenOp`
+- `ReadWriteSummary.toAffine_identity`, `ReadWriteSummary.composeAll_toAffine`
+- `Event.step_eq_summary`, `Event.combined_scan_compatible`
+- `Event.combined_fold_scan`, `Event.combined_closed_summary`
+- `Event.combined_chunked_scan`, `Event.combined_prefix_scan`
+- `Event.combined_ordered_tree`, `Event.combined_routed_scan`
+- `Emender.attend_self_source`, `Emender.attend_world_source`
+- `Emender.attend_store_source`, `Emender.attend_current_values`
+- `Emender.store_index_single_scan`
+
+The concrete instance wraps phase one's `EmenderMemory.TokenDecision`, retains
+explicit context/world tables, and reads current slot values. A write therefore
+can affect a later read. This enlarges the original numeric store state; it does
+not assume the physical index secretly contains hidden values. The routed
+theorem requires `TraceMatches`; it does not construct that trace. All prefix
+states are covered, but storing every read separately or introducing nonlinear
+feedback requires explicit extra state/schedule work.
+
+### AttentionObstructions.lean — counterexamples and refuted blanket claims
+
+- `Obstructions.truncation_sharpens_survivor`: equal weights `(1,1)` become
+  survivor coefficients `1/2 -> 1` when one atom is dropped with retained
+  normalization, despite unchanged full aggregates.
+- `Obstructions.truncation_changes_readout_scale`: values `(0,2)` give outputs
+  `1 -> 2`, so a preserved scalar budget is not a preserved output norm.
+- `Obstructions.full_normalization_loses_omitted_mass`,
+  `Obstructions.full_normalization_readout`, and
+  `Obstructions.no_preserved_mass_and_survivor`: full normalization preserves
+  coefficient `1/2` while mass drops `1 -> 1/2`; both goals cannot hold here.
+- `Obstructions.positive_alpha_can_be_noop`,
+  `Obstructions.cancellation_with_positive_alpha`: empty support and a
+  particular cancelling value table invalidate unqualified converses.
+- `Obstructions.no_bound_without_bounded_values`: alpha=1 and singleton
+  support alone do not bound the readout norm.
+- `Obstructions.fixed_joint_normalization_linear`,
+  `Obstructions.fixed_learned_alpha_linear`: these operations do **not** break
+  affinity when fixed in the schedule.
+- `Obstructions.joint_normalization_starvation`: a fixed joint denominator
+  can still starve a branch (weight 1 against 99 gives mass 1/100).
+- `Obstructions.strength_read_is_attention`,
+  `Obstructions.state_dependent_weights_witness`, and
+  `Obstructions.state_dependent_weights_not_affine`: actual normalized
+  attention with weights `(1,x)` and values `(0,x)` gives `x^2/(x+1)`, violating
+  affinity already on `[0,1]`.
+- `Obstructions.adaptive_alpha_formula`,
+  `Obstructions.state_dependent_alpha_not_affine`: alpha(x)=x times a unit
+  singleton read of x gives x², non-affine on `[0,1]`.
+- `Obstructions.routed_support_formula`,
+  `Obstructions.state_dependent_support_not_affine`: selecting a singleton
+  by sign gives `abs(x)`, a non-affine read.
+- `Obstructions.nonlinear_value_source_not_affine`: even a fixed singleton
+  read cannot make an upstream x² value producer affine.
+- `Obstructions.read_not_diagonal`: a read shear mixes coordinates, outside
+  the original diagonal family.
+- `Obstructions.bounded_support_not_closed`: for every B, summing B+1 distinct
+  singleton probes cannot be represented by B weighted atoms for all tables.
+- `Obstructions.positive_budget_not_additively_closed`: for every positive B,
+  two nonnegative read functionals individually representable with at most B
+  atoms have a sum not representable within that budget. B=0 is excluded because
+  the zero-budget family is closed.
+- `Obstructions.zero_budget_iff`, `Obstructions.zero_budget_add_closed` prove
+  that excluded edge case explicitly.
+- `Obstructions.omitted_values_obstruction`: no function of the store alone
+  recovers arbitrary external values omitted from the state.
+
+“Compact” here concerns representation size, not topological compactness.
+These results do not refute closure of fixed-dimensional affine maps, nor
+establish an impossibility theorem for arbitrary nonlinear encodings.
+
+### Phase two validation and exact file list
+
+The baseline `lake build` passed with **2207 jobs**. The delivered root passes
+with **2253 jobs**. The trusted import closure is **29 project source files**.
+The audit checks all **12 operator modules: 949 declarations and 181 source
+theorem entries**, including **323 declarations and 89 theorem entries** in the
+attention addition. The latter comprise **86 explicit theorems plus three
+proof-field projections** (`Neighborhood.nonneg`, `AttentionOperator.eligible`,
+and `AttentionOperator.alpha_nonneg`); the existing audit includes such projections
+when they have source ranges. No new axioms or proof placeholders were found;
+dependencies are limited to `propext`, `Classical.choice`, and `Quot.sound`.
+The eight-page Typst memo was rendered and visually inspected.
+Exact final census and source hashes are retained in
+`build_logs/attention_algebra_validation.txt`.
+
+| Attention module | All declarations | Audited theorem entries |
+|---|---:|---:|
+| `AttentionOperator` | 131 | 36 |
+| `AttentionMixture` | 18 | 10 |
+| `AttentionScan` | 124 | 17 |
+| `AttentionObstructions` | 50 | 26 |
+
+```text
+SORRY_COUNT=0
+SORRY_REASONS=[]
+NEW_AXIOM_COUNT=0
+NEW_AXIOMS=[]
+```
+
+Paths relative to `formal/lean/`:
+
+```text
+.gitattributes
+ElmanProofs/Architectures/AttentionOperator.lean
+ElmanProofs/Architectures/AttentionMixture.lean
+ElmanProofs/Architectures/AttentionScan.lean
+ElmanProofs/Architectures/AttentionObstructions.lean
+ElmanProofs/PaperCore.lean
+EMENDER_ATTENTION_ALGEBRA.typ
+EMENDER_ATTENTION_ALGEBRA.pdf
+OPERATOR_ALGEBRA_STATUS.md
+OPERATOR_ALGEBRA_AUDIT.json
+scripts/audit_operator_algebra.lean
+build_logs/attention_baseline_build.log
+build_logs/attention_algebra_lake_build.log
+build_logs/attention_algebra_trust.log
+build_logs/attention_algebra_axioms.log
+build_logs/attention_algebra_memo_compile.log
+build_logs/attention_algebra_validation.txt
+```
+
+Residual risks: index/source refinement, completeness, source exclusions and
+generation correctness, nonlinear value/decision production, floating-point
+execution, gradients, and performance remain unproved. The result does not
+license “the whole expensive path is parallel” without those further premises.
+The design file and prior phase-one memo remain unchanged; their stronger
+claims are explicitly evaluated above. No GPU jobs, training artifacts, or
+external sxgc files were modified. Unrelated worktree changes are excluded.
+
+## Phase one validation and reproducibility (historical)
 
 - Validated implementation commit:
   **`ada11d67c5b2b80672709093d8836245f5caa86b`**. A follow-up documentation commit
@@ -237,7 +443,11 @@ live slot. A diagonal multiplier never spreads support. Sparse reconstruction
 is valid for any certified activity superset; neither reading/routing sparsity
 nor constant activity for an arbitrary long chunk follows.
 
-## Assumed, estimated, and open
+## Phase one assumed, estimated, and open
+
+Phase two above adds scheduled finite atomic reads and their combined scan.
+The following phase-one exclusions remain applicable to unconditioned source
+execution, decision generation, and numerics.
 
 1. **Source refinement:** the Python-to-Lean correspondence is manually checked
    at the equation level. Python execution, the allocator, native fp32 correction,
@@ -275,7 +485,7 @@ f43fa9c4e2be220494f5c17f903f529d97c2517845d1d1d67f4ac0fe455233f1  experiments/ex
 68fe25baa015031df86ee810beb2b41474b89612f74d3d51519589bd46d4e119  experiments/expressivity_tasks/x30_tape_cell/naive_reference.py
 ```
 
-## Exact changed-file list
+## Phase one exact changed-file list
 
 Paths below are relative to `formal/lean/`. The complete list of source theorem
 names and locations is also in `OPERATOR_ALGEBRA_AUDIT.json`; the index above

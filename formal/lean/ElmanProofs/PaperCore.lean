@@ -3,6 +3,7 @@ Copyright (c) 2026 Elman-Proofs Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import ElmanProofs.Architectures.EmenderLatching
+import ElmanProofs.Architectures.AttentionObstructions
 import ElmanProofs.Architectures.ConditionalScan
 import ElmanProofs.Architectures.LiftedMemory
 import ElmanProofs.Architectures.M2RNNComparison
@@ -44,6 +45,14 @@ paper-space claims:
   injections can touch all slots. Arbitrary updates also have a free-space
   embedding, without a compactness or performance claim. See
   `OPERATOR_ALGEBRA_STATUS.md` and `EMENDER_OPERATOR_ALGEBRA.typ`.
+
+* Finite measure-valued attention is linear in values under a fixed population,
+  returned support, weights, normalization and alpha. Actual slot-store writes
+  and reads share an affine scan on the explicit value-source/residual state.
+  Candidate normalization sharpens survivors under truncation; full-population
+  normalization preserves survivors but loses omitted mass. State-dependent
+  weights, alpha, support, and nonlinear value sources have named obstructions.
+  See `EMENDER_ATTENTION_ALGEBRA.typ` for the conditional architectural verdict.
 
 * M2RNN and Emender/E88 are distinct one-step transition families.
 * M2RNN's raw outer write is separated from the delta-correcting write shared
