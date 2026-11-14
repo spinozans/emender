@@ -34,11 +34,11 @@ import pytest
 import torch
 
 from experiments.expressivity_tasks.x45_matrix_emender.algebra import (
-    APPEND, NONE, POP, MatrixSchedule, apply_lane, sequential_matrix_scan)
+    APPEND, NONE, POP, MatrixSchedule)
 from experiments.expressivity_tasks.x45_matrix_emender.k1_schedule_scan import (
     K1Chunk, _reads_from_injections, k1_state_scan)
 from experiments.expressivity_tasks.x45_matrix_emender.k23_read import (
-    MAX_VALUE_DIM, k23_chunk, k23_read, union_normalised_reads)
+    MAX_VALUE_DIM, k23_read, union_normalised_reads)
 from experiments.expressivity_tasks.x45_matrix_emender.read import read_weights
 from experiments.expressivity_tasks.x45_matrix_emender.scan import (
     FUSED_SCAN_DEFAULT, chunk_scan, chunked_scan)

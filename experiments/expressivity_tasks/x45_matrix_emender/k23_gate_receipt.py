@@ -40,7 +40,6 @@ from experiments.expressivity_tasks.x45_matrix_emender.k1_schedule_scan import (
     k1_state_scan)
 from experiments.expressivity_tasks.x45_matrix_emender.k23_read import (
     k23_read, union_normalised_reads)
-from experiments.expressivity_tasks.x45_matrix_emender.read import read_weights
 from experiments.expressivity_tasks.x45_matrix_emender.scan import (
     chunk_scan, chunked_scan, routed_chunk_scan)
 from experiments.expressivity_tasks.x45_matrix_emender.schedule import (
