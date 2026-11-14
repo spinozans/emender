@@ -1,0 +1,228 @@
+{
+  "seed": 3401,
+  "shape": {
+    "batch": 8,
+    "tokens": 2048,
+    "heads": 2,
+    "rank": 128,
+    "value_dim": 128,
+    "chunk": 128
+  },
+  "decay": 0.9844964370054085,
+  "measured_chunk": 4,
+  "cases": {
+    "matrix_ops": {
+      "label": "matrix_ops",
+      "policy": {
+        "ops": true,
+        "tau_match": 0.45,
+        "tau_merge": 0.85,
+        "tau_pop": 0.1,
+        "tie_break": 1e-06,
+        "read_scale": 2.0,
+        "grow": false,
+        "grow_trigger": 0.5,
+        "grow_window": 4,
+        "grow_window_tokens": 512,
+        "grow_geometric": 2.0,
+        "grow_stride_floor": 64
+      },
+      "gate_c": {
+        "boundary": "one chunk of 128 tokens = 256 steps, forward only, fp32; the schedule and the read weights are pre-built inputs and the chunk-entry state is the reference trajectory's state at chunk 4, so no path pays for routing here",
+        "shape": {
+          "batch": 8,
+          "tokens_per_chunk": 128,
+          "heads": 2,
+          "rank": 128,
+          "value_dim": 128,
+          "lanes": 2,
+          "steps": 256
+        },
+        "ops": {
+          "none": 2810,
+          "append": 1286,
+          "correct": 0,
+          "pop": 0,
+          "merge": 0
+        },
+        "live_fraction": 0.3720703125,
+        "entry_state_scale": 0.20986425876617432,
+        "eager": {
+          "kernels": 87.0,
+          "device_ms": 0.301614333333335
+        },
+        "kernel": {
+          "kernels": 1.0,
+          "device_ms": 0.04622966666666677
+        },
+        "k1_chunk": {
+          "kernels": 24.0,
+          "device_ms": 0.11459233333333411
+        }
+      },
+      "gate_d": {
+        "boundary": "one chunk (128 tokens, 256 steps) at the populated chunk-entry state, forward only, fp32; device = CUDA events around the call, wall = perf_counter around the call plus synchronize; 2 warm-up + 5 measured reps",
+        "eager": {
+          "wall_ms_mean": 1.5484122559428215,
+          "wall_ms_p50": 1.5268120914697647,
+          "device_ms_mean": 1.5807552099227906,
+          "device_ms_p50": 1.5563199520111084,
+          "repeats": 5
+        },
+        "kernel": {
+          "wall_ms_mean": 0.18510408699512482,
+          "wall_ms_p50": 0.18446985632181168,
+          "device_ms_mean": 0.21695999503135682,
+          "device_ms_p50": 0.21670399606227875,
+          "repeats": 5
+        },
+        "k1_chunk": {
+          "wall_ms_mean": 0.6527962163090706,
+          "wall_ms_p50": 0.6536208093166351,
+          "device_ms_mean": 0.6824767827987671,
+          "device_ms_p50": 0.6840639710426331,
+          "repeats": 5
+        }
+      },
+      "block": {
+        "boundary": "the whole 2048-token block call = 16 chunk calls carrying the state, forward only, fp32 (bench_blocks.py's block row adds the backward and is therefore a different boundary)",
+        "eager": {
+          "wall_ms_mean": 24.032901041209698,
+          "wall_ms_p50": 23.966914042830467,
+          "device_ms_mean": 24.06450080871582,
+          "device_ms_p50": 23.998687744140625,
+          "repeats": 3
+        },
+        "k1_chunk": {
+          "wall_ms_mean": 10.564064917465052,
+          "wall_ms_p50": 10.585805401206017,
+          "device_ms_mean": 10.59499708811442,
+          "device_ms_p50": 10.616479873657227,
+          "repeats": 3
+        },
+        "eager_kernels": {
+          "kernels": 1392.0,
+          "device_ms": 4.44793649999997
+        },
+        "k1_kernels": {
+          "kernels": 384.0,
+          "device_ms": 1.9337330000000053
+        }
+      },
+      "parity": {
+        "read_deviation": 2.7939677238464355e-09,
+        "state_deviation": 8.344650268554688e-07,
+        "read_scale": 0.009595773182809353,
+        "state_scale": 2.0114691257476807
+      }
+    },
+    "matrix_append": {
+      "label": "matrix_append",
+      "policy": {
+        "ops": false,
+        "tau_match": 0.45,
+        "tau_merge": 0.85,
+        "tau_pop": 0.1,
+        "tie_break": 1e-06,
+        "read_scale": 2.0,
+        "grow": false,
+        "grow_trigger": 0.5,
+        "grow_window": 4,
+        "grow_window_tokens": 512,
+        "grow_geometric": 2.0,
+        "grow_stride_floor": 64
+      },
+      "gate_c": {
+        "boundary": "one chunk of 128 tokens = 256 steps, forward only, fp32; the schedule and the read weights are pre-built inputs and the chunk-entry state is the reference trajectory's state at chunk 4, so no path pays for routing here",
+        "shape": {
+          "batch": 8,
+          "tokens_per_chunk": 128,
+          "heads": 2,
+          "rank": 128,
+          "value_dim": 128,
+          "lanes": 2,
+          "steps": 256
+        },
+        "ops": {
+          "none": 0,
+          "append": 4096,
+          "correct": 0,
+          "pop": 0,
+          "merge": 0
+        },
+        "live_fraction": 1.0,
+        "entry_state_scale": 4.1254777908325195,
+        "eager": {
+          "kernels": 87.0,
+          "device_ms": 0.2736433333333338
+        },
+        "kernel": {
+          "kernels": 1.0,
+          "device_ms": 0.08384066666666663
+        },
+        "k1_chunk": {
+          "kernels": 24.0,
+          "device_ms": 0.1527886666666667
+        }
+      },
+      "gate_d": {
+        "boundary": "one chunk (128 tokens, 256 steps) at the populated chunk-entry state, forward only, fp32; device = CUDA events around the call, wall = perf_counter around the call plus synchronize; 2 warm-up + 5 measured reps",
+        "eager": {
+          "wall_ms_mean": 1.4883941039443016,
+          "wall_ms_p50": 1.499062404036522,
+          "device_ms_mean": 1.5191103935241699,
+          "device_ms_p50": 1.5313600301742554,
+          "repeats": 5
+        },
+        "kernel": {
+          "wall_ms_mean": 0.1864442601799965,
+          "wall_ms_p50": 0.1820102334022522,
+          "device_ms_mean": 0.25580160319805145,
+          "device_ms_p50": 0.25200000405311584,
+          "repeats": 5
+        },
+        "k1_chunk": {
+          "wall_ms_mean": 0.6457827985286713,
+          "wall_ms_p50": 0.6496906280517578,
+          "device_ms_mean": 0.6772992014884949,
+          "device_ms_p50": 0.6797440052032471,
+          "repeats": 5
+        }
+      },
+      "block": {
+        "boundary": "the whole 2048-token block call = 16 chunk calls carrying the state, forward only, fp32 (bench_blocks.py's block row adds the backward and is therefore a different boundary)",
+        "eager": {
+          "wall_ms_mean": 24.225677674015362,
+          "wall_ms_p50": 24.217833764851093,
+          "device_ms_mean": 24.257386525472004,
+          "device_ms_p50": 24.248863220214844,
+          "repeats": 3
+        },
+        "k1_chunk": {
+          "wall_ms_mean": 10.89371182024479,
+          "wall_ms_p50": 10.914725251495838,
+          "device_ms_mean": 10.925013542175293,
+          "device_ms_p50": 10.945440292358398,
+          "repeats": 3
+        },
+        "eager_kernels": {
+          "kernels": 1392.0,
+          "device_ms": 4.377771499999971
+        },
+        "k1_kernels": {
+          "kernels": 384.0,
+          "device_ms": 2.4460884999999952
+        }
+      },
+      "parity": {
+        "read_deviation": 1.9073486328125e-06,
+        "state_deviation": 2.384185791015625e-06,
+        "read_scale": 2.602850914001465,
+        "state_scale": 7.773181915283203
+      }
+    }
+  },
+  "device": "NVIDIA RTX 6000 Ada Generation",
+  "torch": "2.9.1+cu128",
+  "triton": "3.5.1"
+}
