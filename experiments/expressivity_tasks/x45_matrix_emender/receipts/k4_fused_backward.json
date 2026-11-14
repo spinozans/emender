@@ -1,0 +1,894 @@
+{
+  "boundary": "one whole block call, forward and backward: batch 8, 2048 tokens, 2 heads, rank 128, d_v 128, lanes 2, fp32; entry state and liveness in, the recorded schedule and read weights as inputs, reads and exit state out, four gradients back (dstate, dweights, ddecay, dpayload). Routing is outside this boundary, as in NO_HOST_LOOP.md \u00a75.",
+  "seed": 3401,
+  "repeats": 5,
+  "device": "NVIDIA RTX 6000 Ada Generation",
+  "torch": "2.9.1+cu128",
+  "triton": "3.5.1",
+  "cases": {
+    "matrix_ops": {
+      "label": "matrix_ops",
+      "shape": {
+        "batch": 8,
+        "tokens": 2048,
+        "heads": 2,
+        "rank": 128,
+        "value_dim": 128,
+        "lanes": 2
+      },
+      "trajectory_memory": {
+        "bytes": 2147483648,
+        "gib": 2.0,
+        "block_tensors_bytes": 69337088,
+        "over_block_tensors": 30.97164461247637,
+        "card_gib": 47.38275146484375,
+        "card_fraction": 0.042209452557518234
+      },
+      "paths": {
+        "eager_C128": {
+          "description": {
+            "form": "autograd through the eager chunk scan",
+            "chunk_tokens": 128
+          },
+          "step": {
+            "latency_ms_mean": 44.79051809757948,
+            "latency_ms_p50": 44.81080360710621,
+            "latency_ms_min": 44.62169390171766,
+            "latency_ms_max": 44.95139420032501,
+            "dispatch_ms_mean": 44.76004596799612,
+            "dispatch_ms_p50": 44.77841407060623,
+            "device_ms_mean": 44.91183319091797,
+            "device_ms_p50": 44.92172622680664,
+            "occupancy_ms": 14.665954999999505,
+            "latency_over_occupancy": 3.055430321933193,
+            "latency_over_device": 0.997298816710002,
+            "dispatch_over_occupancy": 3.0532218372828597,
+            "repeats": 5
+          },
+          "peak_bytes": 3245661184,
+          "forward_only": {
+            "gate_c": {
+              "kernels": 1408.0,
+              "device_ms": 4.944508333333389,
+              "distinct_kernels": 40,
+              "top_kernels": [
+                "void (anonymous namespace)::elementwise_kernel_with_index<int, at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>(int, at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}, function_traits<at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>::result_type*)",
+                "void offsetPointerArray_kernel<float>(float**, float const**, int, int, int, float**, float const**, int, int, int, float**, float const**, int, int, int, int, int)",
+                "void at::native::vectorized_elementwise_kernel<4, at::native::exp_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::exp_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>)",
+                "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1})"
+              ]
+            },
+            "gate_d": {
+              "latency_ms_mean": 20.55614273995161,
+              "latency_ms_p50": 20.553449168801308,
+              "latency_ms_min": 20.420408807694912,
+              "latency_ms_max": 20.67582868039608,
+              "dispatch_ms_mean": 20.53598277270794,
+              "dispatch_ms_p50": 20.531519316136837,
+              "device_ms_mean": 20.577650833129884,
+              "device_ms_p50": 20.577503204345703,
+              "occupancy_ms": 4.952135400000162,
+              "latency_over_occupancy": 4.1504214866178,
+              "latency_over_device": 0.9989547838403573,
+              "dispatch_over_occupancy": 4.145993123721166,
+              "repeats": 5
+            }
+          },
+          "backward_only": {
+            "gate_c": {
+              "kernels": 2027.0,
+              "device_ms": 9.680373333333264,
+              "distinct_kernels": 35,
+              "top_kernels": [
+                "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)",
+                "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+                "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 3ul> >(int, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 3ul>)",
+                "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+              ]
+            },
+            "gate_d": {
+              "latency_ms_mean": 26.924368739128113,
+              "latency_ms_p50": 26.937589049339294,
+              "latency_ms_min": 26.812038384377956,
+              "latency_ms_max": 27.045548893511295,
+              "dispatch_ms_mean": 26.886550709605217,
+              "dispatch_ms_p50": 26.899739168584347,
+              "device_ms_mean": 26.971891403198242,
+              "device_ms_p50": 26.999744415283203,
+              "occupancy_ms": 9.677165600000011,
+              "latency_over_occupancy": 2.7836238587607993,
+              "latency_over_device": 0.9982380670543374,
+              "dispatch_over_occupancy": 2.7797126018577503,
+              "repeats": 5
+            }
+          },
+          "replay": {
+            "distinct_kernels": 57,
+            "replay_kernels": [],
+            "replay_kernels_absent": true
+          }
+        },
+        "eager_C64": {
+          "description": {
+            "form": "autograd through the eager chunk scan",
+            "chunk_tokens": 64
+          },
+          "step": {
+            "latency_ms_mean": 105.42067661881447,
+            "latency_ms_p50": 103.63142751157284,
+            "latency_ms_min": 103.41105796396732,
+            "latency_ms_max": 112.06546053290367,
+            "dispatch_ms_mean": 105.39175067096949,
+            "dispatch_ms_p50": 103.605467826128,
+            "device_ms_mean": 105.48730773925782,
+            "device_ms_p50": 103.6895980834961,
+            "occupancy_ms": 21.621699600002007,
+            "latency_over_occupancy": 4.792936236685262,
+            "latency_over_device": 0.9993683494074184,
+            "dispatch_over_occupancy": 4.791735605563514,
+            "repeats": 5
+          },
+          "peak_bytes": 3017679872,
+          "forward_only": {
+            "gate_c": {
+              "kernels": 2560.0,
+              "device_ms": 6.614558999999915,
+              "distinct_kernels": 40,
+              "top_kernels": [
+                "void (anonymous namespace)::elementwise_kernel_with_index<int, at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>(int, at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}, function_traits<at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>::result_type*)",
+                "void at::native::vectorized_elementwise_kernel<4, at::native::exp_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::exp_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>)",
+                "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1})",
+                "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1} const&)::{lambda(int)#1})"
+              ]
+            },
+            "gate_d": {
+              "latency_ms_mean": 39.96346890926361,
+              "latency_ms_p50": 39.17341586202383,
+              "latency_ms_min": 39.07168563455343,
+              "latency_ms_max": 43.19671168923378,
+              "dispatch_ms_mean": 39.94407504796982,
+              "dispatch_ms_p50": 39.15465623140335,
+              "device_ms_mean": 39.98464584350586,
+              "device_ms_p50": 39.193119049072266,
+              "occupancy_ms": 6.6009954000002224,
+              "latency_over_occupancy": 5.934471013572061,
+              "latency_over_device": 0.99947037334468,
+              "dispatch_over_occupancy": 5.9316290739124025,
+              "repeats": 5
+            }
+          },
+          "backward_only": {
+            "gate_c": {
+              "kernels": 3579.0,
+              "device_ms": 14.900831666666685,
+              "distinct_kernels": 31,
+              "top_kernels": [
+                "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)",
+                "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+                "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 3ul> >(int, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 3ul>)",
+                "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+              ]
+            },
+            "gate_d": {
+              "latency_ms_mean": 52.90323793888092,
+              "latency_ms_p50": 52.70763672888279,
+              "latency_ms_min": 52.5195449590683,
+              "latency_ms_max": 53.73581685125828,
+              "dispatch_ms_mean": 52.85153593868017,
+              "dispatch_ms_p50": 52.649556659162045,
+              "device_ms_mean": 52.95908432006836,
+              "device_ms_p50": 52.77222442626953,
+              "occupancy_ms": 14.90755299999978,
+              "latency_over_occupancy": 3.535633026351378,
+              "latency_over_device": 0.9989454806119774,
+              "dispatch_over_occupancy": 3.531737010035304,
+              "repeats": 5
+            }
+          },
+          "replay": {
+            "distinct_kernels": 53,
+            "replay_kernels": [],
+            "replay_kernels_absent": true
+          }
+        },
+        "fused": {
+          "description": {
+            "form": "trajectory forward + reverse walk",
+            "host_launches": {
+              "forward": 1,
+              "backward": "1 walk + 2 deterministic reductions"
+            }
+          },
+          "step": {
+            "latency_ms_mean": 5.9757402166724205,
+            "latency_ms_p50": 5.976107902824879,
+            "latency_ms_min": 5.939808674156666,
+            "latency_ms_max": 6.004489026963711,
+            "dispatch_ms_mean": 0.8446888998150826,
+            "dispatch_ms_p50": 0.9382208809256554,
+            "device_ms_mean": 6.0004607200622555,
+            "device_ms_p50": 6.007455825805664,
+            "occupancy_ms": 5.7917414,
+            "latency_over_occupancy": 1.0318326544802014,
+            "latency_over_device": 0.9958802324449549,
+            "dispatch_over_occupancy": 0.1619928819552709,
+            "repeats": 5
+          },
+          "peak_bytes": 5088436224,
+          "forward_only": {
+            "gate_c": {
+              "kernels": 1.0,
+              "device_ms": 2.9578800000000007,
+              "distinct_kernels": 1,
+              "top_kernels": [
+                "_persistent_scan_trajectory_kernel"
+              ]
+            },
+            "gate_d": {
+              "latency_ms_mean": 3.0759401619434357,
+              "latency_ms_p50": 3.0771950259804726,
+              "latency_ms_min": 3.069203346967697,
+              "latency_ms_max": 3.080434165894985,
+              "dispatch_ms_mean": 0.12686438858509064,
+              "dispatch_ms_p50": 0.12590177357196808,
+              "device_ms_mean": 3.0928832054138184,
+              "device_ms_p50": 3.0938560962677,
+              "occupancy_ms": 2.9584257999999997,
+              "latency_over_occupancy": 1.0401460891736656,
+              "latency_over_device": 0.9945219258713923,
+              "dispatch_over_occupancy": 0.0425570158196863,
+              "repeats": 5
+            }
+          },
+          "backward_only": {
+            "gate_c": {
+              "kernels": 3.0,
+              "device_ms": 2.8601006666666664,
+              "distinct_kernels": 2,
+              "top_kernels": [
+                "void at::native::reduce_kernel<128, 4, at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4> >(at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4>)",
+                "_persistent_bwd_kernel"
+              ]
+            },
+            "gate_d": {
+              "latency_ms_mean": 2.9224421828985214,
+              "latency_ms_p50": 2.921825274825096,
+              "latency_ms_min": 2.9198331758379936,
+              "latency_ms_max": 2.927063964307308,
+              "dispatch_ms_mean": 0.14267638325691223,
+              "dispatch_ms_p50": 0.14216173440217972,
+              "device_ms_mean": 2.9401344299316405,
+              "device_ms_p50": 2.9394240379333496,
+              "occupancy_ms": 2.818252199999999,
+              "latency_over_occupancy": 1.0367508184062084,
+              "latency_over_device": 0.993982504047092,
+              "dispatch_over_occupancy": 0.050443226621868606,
+              "repeats": 5
+            }
+          },
+          "replay": {
+            "distinct_kernels": 4,
+            "replay_kernels": [],
+            "replay_kernels_absent": true
+          }
+        },
+        "fused_bwd_w8": {
+          "description": {
+            "form": "the reverse walk at 8 warps"
+          },
+          "step": {
+            "latency_ms_mean": 3.009156323969364,
+            "latency_ms_p50": 3.0071642249822617,
+            "latency_ms_min": 3.0033038929104805,
+            "latency_ms_max": 3.021334297955036,
+            "dispatch_ms_mean": 0.13942010700702667,
+            "dispatch_ms_p50": 0.1388508826494217,
+            "device_ms_mean": 3.0261120319366457,
+            "device_ms_p50": 3.023871898651123,
+            "occupancy_ms": 2.9054525999999994,
+            "latency_over_occupancy": 1.0350071534404872,
+            "latency_over_device": 0.9943968670728855,
+            "dispatch_over_occupancy": 0.04778976007022855,
+            "repeats": 5
+          },
+          "peak_bytes": 2889502720,
+          "backward_only": {
+            "gate_c": {
+              "kernels": 3.0,
+              "device_ms": 3.036136666666666,
+              "distinct_kernels": 2,
+              "top_kernels": [
+                "void at::native::reduce_kernel<128, 4, at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4> >(at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4>)",
+                "_persistent_bwd_kernel"
+              ]
+            },
+            "gate_d": {
+              "latency_ms_mean": 3.0652325600385666,
+              "latency_ms_p50": 3.0139945447444916,
+              "latency_ms_min": 3.0086245387792587,
+              "latency_ms_max": 3.15125472843647,
+              "dispatch_ms_mean": 0.14116819947957993,
+              "dispatch_ms_p50": 0.1407098025083542,
+              "device_ms_mean": 3.083135986328125,
+              "device_ms_p50": 3.0314559936523438,
+              "occupancy_ms": 2.9097214,
+              "latency_over_occupancy": 1.0358361266973848,
+              "latency_over_device": 0.994193111698949,
+              "dispatch_over_occupancy": 0.04835851381110033,
+              "repeats": 5
+            }
+          },
+          "replay": {
+            "distinct_kernels": 2,
+            "replay_kernels": [],
+            "replay_kernels_absent": true
+          }
+        },
+        "persistent_no_trajectory": {
+          "description": {
+            "form": "the forward's own forward, for the store's cost"
+          },
+          "forward_only": {
+            "gate_c": {
+              "kernels": 1.0,
+              "device_ms": 0.8773396666666667,
+              "distinct_kernels": 1,
+              "top_kernels": [
+                "_persistent_scan_kernel"
+              ]
+            },
+            "gate_d": {
+              "latency_ms_mean": 0.9958116337656975,
+              "latency_ms_p50": 0.9973905980587006,
+              "latency_ms_min": 0.9894510731101036,
+              "latency_ms_max": 1.0014921426773071,
+              "dispatch_ms_mean": 0.12364443391561508,
+              "dispatch_ms_p50": 0.12240000069141388,
+              "device_ms_mean": 1.0126847982406617,
+              "device_ms_p50": 1.0139520168304443,
+              "occupancy_ms": 0.8756879999999997,
+              "latency_over_occupancy": 1.1389794059741607,
+              "latency_over_device": 0.9833381872579918,
+              "dispatch_over_occupancy": 0.13977581135223266,
+              "repeats": 5
+            }
+          }
+        }
+      },
+      "determinism": {
+        "dstate": true,
+        "dweights": true,
+        "ddecay": true,
+        "dpayload": true
+      },
+      "grad_parity": {
+        "batch": 2,
+        "floor_and_deviation": {
+          "dstate": {
+            "floor": 1.4698199130025458e-07,
+            "max": 0.0,
+            "median": 0.0,
+            "over_floor": 0.0,
+            "scale": 0.2189263552427292,
+            "bit_equal": true
+          },
+          "dweights": {
+            "floor": 6.100406967135541e-06,
+            "max": 7.62939453125e-06,
+            "median": 4.547473508864641e-13,
+            "over_floor": 1.2506369775576462,
+            "scale": 45.76948547363281,
+            "bit_equal": false
+          },
+          "ddecay": {
+            "floor": 1.680539005555204e-05,
+            "max": 7.62939453125e-06,
+            "median": 1.1920928955078125e-07,
+            "over_floor": 0.4539849718471401,
+            "scale": 43.47769546508789,
+            "bit_equal": false
+          },
+          "dpayload": {
+            "floor": 1.011091176117418e-06,
+            "max": 0.0,
+            "median": 0.0,
+            "over_floor": 0.0,
+            "scale": 3.5426082611083984,
+            "bit_equal": true
+          }
+        }
+      }
+    },
+    "matrix_append": {
+      "label": "matrix_append",
+      "shape": {
+        "batch": 8,
+        "tokens": 2048,
+        "heads": 2,
+        "rank": 128,
+        "value_dim": 128,
+        "lanes": 2
+      },
+      "trajectory_memory": {
+        "bytes": 2147483648,
+        "gib": 2.0,
+        "block_tensors_bytes": 69337088,
+        "over_block_tensors": 30.97164461247637,
+        "card_gib": 47.38275146484375,
+        "card_fraction": 0.042209452557518234
+      },
+      "paths": {
+        "eager_C128": {
+          "description": {
+            "form": "autograd through the eager chunk scan",
+            "chunk_tokens": 128
+          },
+          "step": {
+            "latency_ms_mean": 53.98134347051382,
+            "latency_ms_p50": 53.99980675429106,
+            "latency_ms_min": 53.51720750331879,
+            "latency_ms_max": 54.31217793375254,
+            "dispatch_ms_mean": 53.94670534878969,
+            "dispatch_ms_p50": 53.97701635956764,
+            "device_ms_mean": 54.14085159301758,
+            "device_ms_p50": 54.13836669921875,
+            "occupancy_ms": 14.33717499999992,
+            "latency_over_occupancy": 3.766418890352622,
+            "latency_over_device": 0.9970538305584331,
+            "dispatch_over_occupancy": 3.764829288863946,
+            "repeats": 5
+          },
+          "peak_bytes": 3245661184,
+          "forward_only": {
+            "gate_c": {
+              "kernels": 1408.0,
+              "device_ms": 4.687727999999988,
+              "distinct_kernels": 40,
+              "top_kernels": [
+                "void (anonymous namespace)::elementwise_kernel_with_index<int, at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>(int, at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}, function_traits<at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>::result_type*)",
+                "void offsetPointerArray_kernel<float>(float**, float const**, int, int, int, float**, float const**, int, int, int, float**, float const**, int, int, int, int, int)",
+                "void at::native::vectorized_elementwise_kernel<4, at::native::exp_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::exp_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>)",
+                "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1})"
+              ]
+            },
+            "gate_d": {
+              "latency_ms_mean": 20.73755171149969,
+              "latency_ms_p50": 20.66453918814659,
+              "latency_ms_min": 20.626728422939777,
+              "latency_ms_max": 21.089261397719383,
+              "dispatch_ms_mean": 20.719153806567192,
+              "dispatch_ms_p50": 20.646329037845135,
+              "device_ms_mean": 20.75751724243164,
+              "device_ms_p50": 20.68329620361328,
+              "occupancy_ms": 4.685781400000072,
+              "latency_over_occupancy": 4.4100519047146065,
+              "latency_over_device": 0.9990381541925865,
+              "dispatch_over_occupancy": 4.4061656478137925,
+              "repeats": 5
+            }
+          },
+          "backward_only": {
+            "gate_c": {
+              "kernels": 2027.0,
+              "device_ms": 9.266187666666722,
+              "distinct_kernels": 35,
+              "top_kernels": [
+                "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)",
+                "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+                "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 3ul> >(int, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 3ul>)",
+                "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+              ]
+            },
+            "gate_d": {
+              "latency_ms_mean": 27.857269532978535,
+              "latency_ms_p50": 27.811739593744278,
+              "latency_ms_min": 27.792909182608128,
+              "latency_ms_max": 27.95164007693529,
+              "dispatch_ms_mean": 27.817489206790924,
+              "dispatch_ms_p50": 27.775649912655354,
+              "device_ms_mean": 27.89735679626465,
+              "device_ms_p50": 27.852447509765625,
+              "occupancy_ms": 9.48771719999982,
+              "latency_over_occupancy": 2.9313415448075126,
+              "latency_over_device": 0.998563044392382,
+              "dispatch_over_occupancy": 2.9275377129343485,
+              "repeats": 5
+            }
+          },
+          "replay": {
+            "distinct_kernels": 57,
+            "replay_kernels": [],
+            "replay_kernels_absent": true
+          }
+        },
+        "eager_C64": {
+          "description": {
+            "form": "autograd through the eager chunk scan",
+            "chunk_tokens": 64
+          },
+          "step": {
+            "latency_ms_mean": 104.24628090113401,
+            "latency_ms_p50": 103.8625780493021,
+            "latency_ms_min": 103.8239486515522,
+            "latency_ms_max": 105.75122199952602,
+            "dispatch_ms_mean": 104.22038286924362,
+            "dispatch_ms_p50": 103.83878834545612,
+            "device_ms_mean": 104.46218872070312,
+            "device_ms_p50": 104.08943939208984,
+            "occupancy_ms": 21.312174400000906,
+            "latency_over_occupancy": 4.873391897980043,
+            "latency_over_device": 0.9979331486137403,
+            "dispatch_over_occupancy": 4.8722756484881105,
+            "repeats": 5
+          },
+          "peak_bytes": 3017679872,
+          "forward_only": {
+            "gate_c": {
+              "kernels": 2560.0,
+              "device_ms": 6.472408666666709,
+              "distinct_kernels": 40,
+              "top_kernels": [
+                "void (anonymous namespace)::elementwise_kernel_with_index<int, at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>(int, at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}, function_traits<at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>::result_type*)",
+                "void at::native::vectorized_elementwise_kernel<4, at::native::exp_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::exp_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>)",
+                "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1})",
+                "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1} const&)::{lambda(int)#1})"
+              ]
+            },
+            "gate_d": {
+              "latency_ms_mean": 40.65567199140787,
+              "latency_ms_p50": 40.151217952370644,
+              "latency_ms_min": 39.70700688660145,
+              "latency_ms_max": 43.23520138859749,
+              "dispatch_ms_mean": 40.63645005226135,
+              "dispatch_ms_p50": 40.1315176859498,
+              "device_ms_mean": 40.675680541992186,
+              "device_ms_p50": 40.170623779296875,
+              "occupancy_ms": 6.459079800000133,
+              "latency_over_occupancy": 6.216244294174817,
+              "latency_over_device": 0.9995080954929898,
+              "dispatch_over_occupancy": 6.213194282868122,
+              "repeats": 5
+            }
+          },
+          "backward_only": {
+            "gate_c": {
+              "kernels": 3579.0,
+              "device_ms": 14.719012999999704,
+              "distinct_kernels": 31,
+              "top_kernels": [
+                "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)",
+                "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)",
+                "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 3ul> >(int, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 3ul>)",
+                "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+              ]
+            },
+            "gate_d": {
+              "latency_ms_mean": 53.68797890841961,
+              "latency_ms_p50": 53.37842553853989,
+              "latency_ms_min": 53.10828611254692,
+              "latency_ms_max": 54.606848396360874,
+              "dispatch_ms_mean": 53.63756250590086,
+              "dispatch_ms_p50": 53.331355564296246,
+              "device_ms_mean": 53.73948745727539,
+              "device_ms_p50": 53.426273345947266,
+              "occupancy_ms": 14.71268980000023,
+              "latency_over_occupancy": 3.6280534874417762,
+              "latency_over_device": 0.9990415139538364,
+              "dispatch_over_occupancy": 3.624854210159138,
+              "repeats": 5
+            }
+          },
+          "replay": {
+            "distinct_kernels": 53,
+            "replay_kernels": [],
+            "replay_kernels_absent": true
+          }
+        },
+        "fused": {
+          "description": {
+            "form": "trajectory forward + reverse walk",
+            "host_launches": {
+              "forward": 1,
+              "backward": "1 walk + 2 deterministic reductions"
+            }
+          },
+          "step": {
+            "latency_ms_mean": 7.0980362594127655,
+            "latency_ms_p50": 7.091891020536423,
+            "latency_ms_min": 7.083539851009846,
+            "latency_ms_max": 7.124939933419228,
+            "dispatch_ms_mean": 0.9680671617388725,
+            "dispatch_ms_p50": 0.9360909461975098,
+            "device_ms_mean": 7.118431949615479,
+            "device_ms_p50": 7.112031936645508,
+            "occupancy_ms": 6.9209322,
+            "latency_over_occupancy": 1.0247017042785684,
+            "latency_over_device": 0.9971348057624102,
+            "dispatch_over_occupancy": 0.13525503778197823,
+            "repeats": 5
+          },
+          "peak_bytes": 5088436224,
+          "forward_only": {
+            "gate_c": {
+              "kernels": 1.0,
+              "device_ms": 3.7530543333333335,
+              "distinct_kernels": 1,
+              "top_kernels": [
+                "_persistent_scan_trajectory_kernel"
+              ]
+            },
+            "gate_d": {
+              "latency_ms_mean": 3.869217447936535,
+              "latency_ms_p50": 3.867214545607567,
+              "latency_ms_min": 3.862295299768448,
+              "latency_ms_max": 3.8790060207247734,
+              "dispatch_ms_mean": 0.12688413262367249,
+              "dispatch_ms_p50": 0.12742169201374054,
+              "device_ms_mean": 3.8866047859191895,
+              "device_ms_p50": 3.8840959072113037,
+              "occupancy_ms": 3.728608800000001,
+              "latency_over_occupancy": 1.037173582170263,
+              "latency_over_device": 0.9955263426717202,
+              "dispatch_over_occupancy": 0.034174057630755074,
+              "repeats": 5
+            }
+          },
+          "backward_only": {
+            "gate_c": {
+              "kernels": 3.0,
+              "device_ms": 3.0803076666666667,
+              "distinct_kernels": 2,
+              "top_kernels": [
+                "void at::native::reduce_kernel<128, 4, at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4> >(at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4>)",
+                "_persistent_bwd_kernel"
+              ]
+            },
+            "gate_d": {
+              "latency_ms_mean": 3.1886765733361244,
+              "latency_ms_p50": 3.188174217939377,
+              "latency_ms_min": 3.1847143545746803,
+              "latency_ms_max": 3.195284865796566,
+              "dispatch_ms_mean": 0.14755651354789734,
+              "dispatch_ms_p50": 0.1440802589058876,
+              "device_ms_mean": 3.2065024375915527,
+              "device_ms_p50": 3.2059199810028076,
+              "occupancy_ms": 3.0867771999999993,
+              "latency_over_occupancy": 1.0328488294974374,
+              "latency_over_device": 0.9944407139547295,
+              "dispatch_over_occupancy": 0.04667659813798276,
+              "repeats": 5
+            }
+          },
+          "replay": {
+            "distinct_kernels": 4,
+            "replay_kernels": [],
+            "replay_kernels_absent": true
+          }
+        },
+        "fused_bwd_w8": {
+          "description": {
+            "form": "the reverse walk at 8 warps"
+          },
+          "step": {
+            "latency_ms_mean": 3.5238130018115044,
+            "latency_ms_p50": 3.5221250727772713,
+            "latency_ms_min": 3.517615608870983,
+            "latency_ms_max": 3.5310648381710052,
+            "dispatch_ms_mean": 0.1416018232703209,
+            "dispatch_ms_p50": 0.1380695030093193,
+            "device_ms_mean": 3.541376066207886,
+            "device_ms_p50": 3.5398080348968506,
+            "occupancy_ms": 3.4153536000000004,
+            "latency_over_occupancy": 1.0312622015996442,
+            "latency_over_device": 0.9950406101842812,
+            "dispatch_over_occupancy": 0.04042612249850771,
+            "repeats": 5
+          },
+          "peak_bytes": 2889502720,
+          "backward_only": {
+            "gate_c": {
+              "kernels": 3.0,
+              "device_ms": 3.4852433333333335,
+              "distinct_kernels": 2,
+              "top_kernels": [
+                "void at::native::reduce_kernel<128, 4, at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4> >(at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4>)",
+                "_persistent_bwd_kernel"
+              ]
+            },
+            "gate_d": {
+              "latency_ms_mean": 3.5438846796751022,
+              "latency_ms_p50": 3.5451743751764297,
+              "latency_ms_min": 3.5218847915530205,
+              "latency_ms_max": 3.580874763429165,
+              "dispatch_ms_mean": 0.14111772179603577,
+              "dispatch_ms_p50": 0.14150980859994888,
+              "device_ms_mean": 3.5616512298583984,
+              "device_ms_p50": 3.5628159046173096,
+              "occupancy_ms": 3.4464541999999994,
+              "latency_over_occupancy": 1.0286439829017402,
+              "latency_over_device": 0.9950117097276808,
+              "dispatch_over_occupancy": 0.04105953550752217,
+              "repeats": 5
+            }
+          },
+          "replay": {
+            "distinct_kernels": 2,
+            "replay_kernels": [],
+            "replay_kernels_absent": true
+          }
+        },
+        "persistent_no_trajectory": {
+          "description": {
+            "form": "the forward's own forward, for the store's cost"
+          },
+          "forward_only": {
+            "gate_c": {
+              "kernels": 1.0,
+              "device_ms": 1.2741146666666667,
+              "distinct_kernels": 1,
+              "top_kernels": [
+                "_persistent_scan_kernel"
+              ]
+            },
+            "gate_d": {
+              "latency_ms_mean": 1.390489935874939,
+              "latency_ms_p50": 1.3905419036746025,
+              "latency_ms_min": 1.383981667459011,
+              "latency_ms_max": 1.3986118137836456,
+              "dispatch_ms_mean": 0.12229830026626587,
+              "dispatch_ms_p50": 0.12185052037239075,
+              "device_ms_mean": 1.407692813873291,
+              "device_ms_p50": 1.407520055770874,
+              "occupancy_ms": 1.272595,
+              "latency_over_occupancy": 1.092682199501493,
+              "latency_over_device": 0.9877793806796399,
+              "dispatch_over_occupancy": 0.09574964570219964,
+              "repeats": 5
+            }
+          }
+        }
+      },
+      "determinism": {
+        "dstate": true,
+        "dweights": true,
+        "ddecay": true,
+        "dpayload": true
+      },
+      "grad_parity": {
+        "batch": 2,
+        "floor_and_deviation": {
+          "dstate": {
+            "floor": 1.3207244653479222e-07,
+            "max": 0.0,
+            "median": 0.0,
+            "over_floor": 0.0,
+            "scale": 0.20567183196544647,
+            "bit_equal": true
+          },
+          "dweights": {
+            "floor": 1.5145390619863974e-05,
+            "max": 1.52587890625e-05,
+            "median": 4.76837158203125e-07,
+            "over_floor": 1.007487323733156,
+            "scale": 101.93882751464844,
+            "bit_equal": false
+          },
+          "ddecay": {
+            "floor": 5.780593575721582e-05,
+            "max": 6.103515625e-05,
+            "median": 3.814697265625e-06,
+            "over_floor": 1.0558631298063725,
+            "scale": 335.16595458984375,
+            "bit_equal": false
+          },
+          "dpayload": {
+            "floor": 9.83972360923957e-07,
+            "max": 0.0,
+            "median": 0.0,
+            "over_floor": 0.0,
+            "scale": 3.7039906978607178,
+            "bit_equal": true
+          }
+        }
+      }
+    }
+  },
+  "rank_sweep": {
+    "rank64": {
+      "shape": {
+        "batch": 8,
+        "tokens": 2048,
+        "rank": 64,
+        "value_dim": 128
+      },
+      "fused_step": {
+        "latency_ms_mean": 4.432390257716179,
+        "latency_ms_p50": 4.431196488440037,
+        "latency_ms_min": 4.4196657836437225,
+        "latency_ms_max": 4.443527199327946,
+        "dispatch_ms_mean": 0.8152671158313751,
+        "dispatch_ms_p50": 0.8103316649794579,
+        "device_ms_mean": 4.453779125213623,
+        "device_ms_p50": 4.452352046966553,
+        "occupancy_ms": 3.8387108,
+        "latency_over_occupancy": 1.1543449661381204,
+        "latency_over_device": 0.9951975913272487,
+        "dispatch_over_occupancy": 0.21109474175013598,
+        "repeats": 5
+      },
+      "eager_step_C128": {
+        "latency_ms_mean": 53.97797729820013,
+        "latency_ms_p50": 54.12374809384346,
+        "latency_ms_min": 53.389196284115314,
+        "latency_ms_max": 54.21657767146826,
+        "dispatch_ms_mean": 53.94517332315445,
+        "dispatch_ms_p50": 54.076978005468845,
+        "device_ms_mean": 54.272115325927736,
+        "device_ms_p50": 54.46041488647461,
+        "occupancy_ms": 13.179492599999756,
+        "latency_over_occupancy": 4.106664022395252,
+        "latency_over_device": 0.9945803102392237,
+        "dispatch_over_occupancy": 4.103115320651256,
+        "repeats": 5
+      },
+      "forward_bit_equal_to_persistent_scan": true,
+      "fused_vs_eager_grad_max": {
+        "dstate": 2.7194619178771973e-06,
+        "dweights": 5.14984130859375e-05,
+        "ddecay": 5.7220458984375e-05,
+        "dpayload": 4.76837158203125e-06
+      }
+    },
+    "rank512": {
+      "shape": {
+        "batch": 8,
+        "tokens": 2048,
+        "rank": 512,
+        "value_dim": 128
+      },
+      "fused_step": {
+        "latency_ms_mean": 24.34327509254217,
+        "latency_ms_p50": 24.318925105035305,
+        "latency_ms_min": 24.0568146109581,
+        "latency_ms_max": 24.61324632167816,
+        "dispatch_ms_mean": 0.8465036749839783,
+        "dispatch_ms_p50": 0.835740938782692,
+        "device_ms_mean": 24.36562576293945,
+        "device_ms_p50": 24.344863891601562,
+        "occupancy_ms": 21.325394599999992,
+        "latency_over_occupancy": 1.1403739795293313,
+        "latency_over_device": 0.9990826966393256,
+        "dispatch_over_occupancy": 0.039189940184398385,
+        "repeats": 5
+      },
+      "eager_step_C128": {
+        "latency_ms_mean": 53.9548434317112,
+        "latency_ms_p50": 53.95362712442875,
+        "latency_ms_min": 53.87137737125158,
+        "latency_ms_max": 54.05535828322172,
+        "dispatch_ms_mean": 53.92172317951918,
+        "dispatch_ms_p50": 53.9072472602129,
+        "device_ms_mean": 53.98353271484375,
+        "device_ms_p50": 53.99292755126953,
+        "occupancy_ms": 17.928069000000427,
+        "latency_over_occupancy": 3.0094499928814122,
+        "latency_over_device": 0.9994685549149943,
+        "dispatch_over_occupancy": 3.0068629956863515,
+        "repeats": 5
+      },
+      "forward_bit_equal_to_persistent_scan": true,
+      "fused_vs_eager_grad_max": {
+        "dstate": 3.5762786865234375e-06,
+        "dweights": 3.814697265625e-05,
+        "ddecay": 5.14984130859375e-05,
+        "dpayload": 5.9604644775390625e-06
+      }
+    }
+  },
+  "fallback_rank_2048": {
+    "rank": 2048,
+    "refused_by_name": "the persistent kernel needs next_pow2(2048) * 16 = 32768 register-resident floats and its budget is 8192; rank 2048 at value dim 8 does not fit, so it must take the chunked path",
+    "fallback_grads_finite": true,
+    "fallback_grads_nonzero": true
+  }
+}
