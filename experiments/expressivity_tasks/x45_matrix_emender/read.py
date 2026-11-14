@@ -1,46 +1,38 @@
-"""The one read of the matrix store, in one place.
+"""The one read of the matrix store, in one place, matching the certified reference.
 
-The four arms that ever read a store in this project are the tape Emender
-(``x30``/``x40``), the X44 chunked replay, and now this one.  They do *not* all
-normalise the same way, and the difference is large enough to move a held-out
-number, so this module fixes exactly one definition and the tests pin its relation
-to the certified reference numerically.
+The certified read (``x30_tape_cell/naive_reference.py`` docstring, and the
+production kernel ``x35_tape_cell_v3/causal_read.py``) is
 
-Definitions of the read over a store of rows ``S[0..r)`` with liveness ``live``,
-row strengths ``s_j = ||S[j]||`` and query ``q_t``:
+    out_t = sum_j softmax_j(score_t over LIVE slots) * strength_j * S[j]
 
-``certified`` (``x30_tape_cell/naive_reference.py``)
-    ``a = softmax_j(scale * q.k_j over live)``; ``out_t = sum_j a_tj s_j S[j]``.
-    No denominator: the read magnitude scales with the stored strengths.
-``x35 training`` (``x35_tape_cell_v3/causal_read.py``)
-    ``out_t = sum_j a_tj s_j S[j] / sum_j a_tj`` -- the denominator counts the
-    softmax weights only, so strength drops out of the normalisation.  This is the
-    inconsistency that made in-arm read parity unmeasurable.
-``strength`` (this module, :data:`READ_NORMALISATION`)
-    ``out_t = sum_j a_tj s_j S[j] / sum_j a_tj s_j``
+with no division by the strength mass: the read *magnitude* carries the stored
+strengths, which is by design, and the softmax is normalised over the live slots
+only (``numer = where(live, exp(score - max), 0)``, ``denom = sum(numer)``).
 
-This arm implements ``strength``.  Reasons: (i) it is the only one of the three
-that is a convex combination, so the read magnitude is bounded by the stored
-content and cannot be inflated by a large-strength row; (ii) it keeps ``s_j`` in
-the mixture in the same place on both sides of the fraction, which is what makes
-a POP (``s_j -> 0``) remove a slot from the read *and* from the normalisation in
-one step -- under the ``x35`` form a dying row would keep its softmax weight and
-dilute the denominator with content that is no longer there; (iii) it reduces to
-the ``certified`` read exactly when ``sum_j a_tj s_j == 1``, so the parity test can
-state the relation as an identity rather than as a tolerance.
+This module implements exactly that, once:
 
-The division in ``sum_j a_tj s_j`` is the read's softmax normaliser, not an
-accumulated decay: the scan's decay/erase channel stays division-free (see
-``scan.py``).
+* :func:`attention_probs` -- softmax over live rows, exactly zero when nothing is live;
+* :func:`row_strength` -- the strength channel.  The matrix store has no separate
+  strength scalar: its strength **is** the row norm ``||S[j]||``, so a POP
+  (``S[j] := 0``) removes a row from the numerator in the same step;
+* :func:`read_weights` -- ``softmax_j * strength_j``, the channel the scan consumes;
+* :func:`read` -- ``w @ S`` as one dense matmul.
+
+Scores are cosines between a learned query in the value space and the stored rows
+(``scale * cos(q_t, S[j])``); the tape arm's keys and the matrix store's rows are the
+same object, so this is the certified ``keys . q`` score with the key normalised.
+That normalisation is the only difference, and ``test_read_matches_certified_reference``
+holds the two to each other on identical state.
+
+Mask: this arm masks the read by *store liveness* (a row exists because a write put
+content there and no POP removed it), which is the same predicate the two certified
+kernels use -- ``x30``'s ``live`` flag and ``x35``'s ``version >= 0``.
 """
 from __future__ import annotations
 
 import torch
 
-READ_NORMALISATION = "strength"
-CERTIFIED_NORMALISATION = "certified"
-TRAINING_NORMALISATION = "x35"
-
+READ_NORMALISATION = "certified"   # sum_j softmax_j * strength_j * v_j, no renormaliser
 EPS = 1e-6
 
 
@@ -62,7 +54,7 @@ def match_scores(query: torch.Tensor, rows: torch.Tensor, live: torch.Tensor,
 
 
 def attention_probs(query, rows, live, scale) -> torch.Tensor:
-    """Softmax over live rows; all-dead rows give exactly zero attention."""
+    """Softmax over live rows; an all-dead read is exactly zero attention."""
     scores = match_scores(query, rows, live, scale)
     all_dead = (~live.any(-1)).unsqueeze(-1).unsqueeze(-1)   # (b, h, 1, 1)
     safe = torch.where(all_dead, torch.zeros_like(scores), scores)
@@ -70,35 +62,11 @@ def attention_probs(query, rows, live, scale) -> torch.Tensor:
     return torch.where(all_dead, torch.zeros_like(probs), probs)
 
 
-def mix(probs, rows, live):
-    """``(w, sum_j a_j s_j)``: the strength-weighted mixture of the stored rows.
-
-    ``w`` is the read-weight channel and the returned sum is exactly the
-    normaliser that separates the ``strength`` read from the ``certified`` one.
-    """
-    weighted = probs * row_strength(rows, live).unsqueeze(-2)
-    total = weighted.sum(-1)
-    weights = torch.where(total.unsqueeze(-1) > 0,
-                          weighted / total.clamp_min(EPS).unsqueeze(-1),
-                          torch.zeros_like(weighted))
-    return weights, total
-
-
 def read_weights(query, rows, live, scale) -> torch.Tensor:
-    """The single read definition (``strength`` normalisation, see module doc)."""
-    return mix(attention_probs(query, rows, live, scale), rows, live)[0]
+    """The single read definition: ``softmax_j(live) * strength_j`` (certified)."""
+    return attention_probs(query, rows, live, scale) * row_strength(rows, live).unsqueeze(-2)
 
 
 def read(weights: torch.Tensor, rows: torch.Tensor) -> torch.Tensor:
     """``out_t = sum_j w_tj S[j]`` as one dense matmul (never a gather)."""
     return weights @ rows
-
-
-def certified_read(weights: torch.Tensor, rows: torch.Tensor,
-                   denominator: torch.Tensor) -> torch.Tensor:
-    """The ``certified`` read (no strength normalisation), only for the parity test.
-
-    ``certified_read(w, rows, total) == read(w, rows) * total`` -- the identity the
-    parity test asserts against ``naive_reference``'s executed formula.
-    """
-    return (weights * denominator.unsqueeze(-1)) @ rows

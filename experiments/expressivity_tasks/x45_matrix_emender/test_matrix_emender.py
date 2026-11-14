@@ -393,69 +393,72 @@ def test_repeat_write_rate_counts_only_writes_inside_the_window():
 
 # ------------------------------------------------------- read (single-sourced)
 
-def test_the_read_we_implement_is_the_certified_read_renormalised():
-    """Pin the relation to the certified reference by executing ``naive_reference``.
+def test_read_matches_certified_reference():
+    """Our read and the executed ``naive_reference`` read on identical state.
 
-    ``naive.tape_scan`` reads ``sum_j a_j s_j v_j`` (no denominator).  Our read is
-    that divided by ``sum_j a_j s_j``; the test measures the identity on a store
-    the certified reference itself read.
+    The tape's keys are unit directions with the stored value as content, its
+    strength channel is the row norm, and the query is unit-norm: then the certified
+    ``keys . q`` score and our cosine score are the same number, so the two reads
+    must agree to the fp32 matmul noise floor -- with no renormalisation of either.
     """
     from experiments.expressivity_tasks.x30_tape_cell import naive_reference as naive
 
-    config = naive.TapeHeadConfig(key_dim=4, value_dim=3, n_heads=1, budget=5,
-                                  decay_rate=1.0, free_threshold=1e-9,
+    # key_dim == value_dim: the tape's key axis and the matrix store's row axis are
+    # the same axis (that is what makes the tape a special case of the matrix).
+    config = naive.TapeHeadConfig(key_dim=3, value_dim=3, n_heads=1, budget=5,
+                                  decay_rate=1.0, free_threshold=0.0,
                                   pop_threshold=1.0, write_enable_threshold=0.5)
     generator = torch.Generator().manual_seed(5)
     slots, key_dim, value_dim = config.slots, config.key_dim, config.value_dim
     state = naive.init_state(1, config, "cpu")
-    state.keys = torch.randn(1, 1, slots, key_dim, generator=generator)
     state.values = torch.randn(1, 1, slots, value_dim, generator=generator)
-    # The matrix store has no separate strength channel: its strength IS the row
-    # norm (`read.row_strength`).  Setting the tape's strength to the row norms is
-    # what makes the two stores the same object.
+    state.keys = read_module.unit(state.values)
     state.strength = state.values.norm(dim=-1)
     state.live = torch.tensor([[[True, True, True, False, True]]])
     state.age = torch.ones(1, 1, slots, dtype=torch.int64)
     tokens = 2
-    query = torch.randn(1, tokens, 1, key_dim, generator=generator)
+    query = read_module.unit(torch.randn(1, tokens, 1, key_dim, generator=generator))
     reference, _, _ = naive.tape_scan(
         torch.zeros(1, tokens, 1, key_dim), query,
         torch.randn(1, tokens, 1, value_dim, generator=generator),
         torch.zeros(1, tokens, 1), torch.zeros(1, tokens, 1),
         torch.full((1, tokens, 1), -50.0), state, config)
 
-    # The certified read, computed by hand from the same tensors.
-    scores = torch.einsum("bhsk,bhk->bhs", state.keys, query[:, 0]) * (2.0 / key_dim ** 0.5)
-    probs = torch.softmax(scores.masked_fill(~state.live, float("-inf")), dim=-1)
-    certified = (probs * state.strength * state.live) @ state.values
-    assert torch.allclose(reference[:, 0], certified, atol=1e-6), \
-        "the certified read is not the formula documented in read.py"
-
-    # Our read, from the same attention weights: the certified read / sum_j a_j s_j.
-    weights, total = read_module.mix(probs, state.values, state.live)
-    ours = read_module.read(weights, state.values)
-    assert torch.allclose(read_module.certified_read(weights, state.values, total),
-                          certified, atol=1e-6)
-    assert torch.allclose(ours * total.unsqueeze(-1).unsqueeze(-1), certified, atol=1e-6)
-    assert torch.allclose(weights.sum(-1), torch.ones(1, 1), atol=1e-6), \
-        "the strength read must be a convex combination"
+    scale = 2.0 / key_dim ** 0.5       # the certified read's softmax scale
+    rows = state.values[0, 0].unsqueeze(0).unsqueeze(0)
+    live = state.live
+    weights = read_module.read_weights(query[0, 0].unsqueeze(0).unsqueeze(0).unsqueeze(0),
+                                       rows, live, scale)
+    ours = read_module.read(weights, rows)
+    deviation = float((ours[0, 0, 0] - reference[0, 0]).abs().max())
+    assert deviation <= 1e-6, deviation
+    # No strength renormalisation: the read magnitude carries the stored strengths.
+    doubled = read_module.read(weights * 2.0, rows)
+    assert torch.allclose(doubled, 2.0 * ours, atol=1e-6)
 
 
-def test_a_pop_removes_a_row_from_the_numerator_and_the_denominator():
-    """``s_j -> 0`` needs no special case: the row leaves both sides at once."""
+def test_a_pop_removes_a_row_from_the_read():
+    """``s_j -> 0`` needs no special case: the row leaves the mixture entirely."""
     generator = torch.Generator().manual_seed(7)
     rows = torch.randn(1, 1, 4, 3, generator=generator)
     query = torch.randn(1, 1, 1, 3, generator=generator)
     live = torch.tensor([[[True, True, True, True]]])
-    probs = read_module.attention_probs(query, rows, live, 2.0)
-    weights, _ = read_module.mix(probs, rows, live)
-    assert weights.sum(-1).item() == pytest.approx(1.0, abs=1e-6)
+    weights = read_module.read_weights(query, rows, live, 2.0)
+    assert weights[0, 0, 0, 2] > 0
 
     popped = live.clone()
     popped[0, 0, 2] = False
     dead_rows = rows.clone()
     dead_rows[0, 0, 2] = 0.0
-    probs_after = read_module.attention_probs(query, dead_rows, popped, 2.0)
-    weights_after, _ = read_module.mix(probs_after, dead_rows, popped)
-    assert weights_after[0, 0, 0, 2].item() == 0.0
-    assert weights_after.sum(-1).item() == pytest.approx(1.0, abs=1e-6)
+    after = read_module.read_weights(query, dead_rows, popped, 2.0)
+    assert after[0, 0, 0, 2].item() == 0.0
+    assert weights[0, 0, 0, 2].item() > 0.0
+    # A POP is exactly equivalent to deleting the row from the store: the softmax
+    # renormalises over the surviving live rows and nothing else moves.
+    survivors = torch.tensor([0, 1, 3])
+    deleted_rows = rows[:, :, survivors]
+    deleted = read_module.read_weights(query, deleted_rows,
+                                       torch.ones(1, 1, len(survivors), dtype=torch.bool),
+                                       2.0)
+    assert torch.allclose(read_module.read(after, dead_rows)[0, 0, 0],
+                          read_module.read(deleted, deleted_rows)[0, 0, 0], atol=1e-6)
