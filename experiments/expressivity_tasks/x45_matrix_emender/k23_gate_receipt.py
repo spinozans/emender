@@ -31,6 +31,8 @@ import json
 import math
 
 import torch
+import triton
+import triton.language as tl
 
 from experiments.expressivity_tasks.x45_matrix_emender.algebra import (
     APPEND, NONE, POP, MatrixSchedule, op_histogram)
@@ -51,6 +53,46 @@ from experiments.expressivity_tasks.x45_matrix_emender.test_matrix_emender impor
     NOISE_FACTOR, sequential_noise_floor)
 
 DEVICE = "cuda"
+
+
+@triton.jit
+def _precision_probe_kernel(a_ptr, b_ptr, o_ptr, K, PREC: tl.constexpr,
+                            BM: tl.constexpr, BN: tl.constexpr, BK: tl.constexpr):
+    """One fp32 ``tl.dot`` at a rank-K shape, at a chosen input precision."""
+    rows = tl.arange(0, BM)
+    lanes = tl.arange(0, BK)
+    cols = tl.arange(0, BN)
+    acc = tl.zeros((BM, BN), dtype=tl.float32)
+    for start in range(0, K, BK):
+        ranks = start + lanes
+        left = tl.load(a_ptr + rows[:, None] * K + ranks[None, :])
+        right = tl.load(b_ptr + ranks[:, None] * BN + cols[None, :])
+        acc = tl.dot(left, right, acc, input_precision=PREC)
+    tl.store(o_ptr + rows[:, None] * BN + cols[None, :], acc)
+
+
+def precision_probe(rank: int = 128, rows: int = 64, cols: int = 64) -> dict:
+    """What ``input_precision`` is worth, in the units of the gates.
+
+    Triton's default for an fp32 ``tl.dot`` is TF32.  This measures both settings against
+    torch's fp32 matmul (which is true fp32 here: ``allow_tf32`` is False), so the choice
+    in the kernels above is a receipted number rather than a preference.
+    """
+    generator = torch.Generator().manual_seed(3401)
+    left = torch.randn(rows, rank, generator=generator).to(DEVICE)
+    right = torch.randn(rank, cols, generator=generator).to(DEVICE)
+    reference = left @ right
+    scale = float(reference.abs().max())
+    out = {}
+    for precision in ("ieee", "tf32"):
+        result = torch.empty(rows, cols, dtype=torch.float32, device=DEVICE)
+        _precision_probe_kernel[(1,)](left, right, result, rank, PREC=precision,
+                                      BM=rows, BN=cols, BK=32)
+        deviation = float((result - reference).abs().max())
+        out[precision] = dict(deviation=deviation, relative=deviation / scale)
+    out['scale'] = scale
+    out['rank'] = rank
+    return out
 
 
 # --------------------------------------------------------------------------- gate A
@@ -267,6 +309,7 @@ def main():
                   union_read=dict(
                       routed_fixture=union_read(routed_fixture()),
                       arm_shape=union_read(arm_shape_fixture())),
+                  precision_probe=precision_probe(),
                   noise_factor=NOISE_FACTOR,
                   device=torch.cuda.get_device_name(0), torch=torch.__version__)
     with open(arguments.out, "w") as handle:
