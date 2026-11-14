@@ -1,0 +1,61 @@
+{
+ "boundary": "one memory block, forward+backward, eager, no graph",
+ "shape": {
+  "batch": 8,
+  "tokens": 2048,
+  "width": 576,
+  "heads": 2,
+  "value_dim": 128,
+  "rank": 128,
+  "chunk_tokens": 128
+ },
+ "mode": "eager (no torch.compile, no CUDA graph)",
+ "matrix_ops_block": {
+  "reps": [
+   113.998046875,
+   111.98976135253906,
+   113.12210845947266
+  ],
+  "mean_ms": 113.04,
+  "p50_ms": 113.12,
+  "device_ms": 21.7,
+  "parameters": 443522,
+  "state_per_head": [
+   128,
+   128
+  ]
+ },
+ "matrix_append_block": {
+  "reps": [
+   97.69292449951172,
+   97.52569580078125,
+   96.92857360839844
+  ],
+  "mean_ms": 97.38,
+  "p50_ms": 97.53,
+  "device_ms": 13.37,
+  "parameters": 443522,
+  "state_per_head": [
+   128,
+   128
+  ]
+ },
+ "gdn2_delta_block": {
+  "reps": [
+   9.464544296264648,
+   8.536479949951172,
+   8.572992324829102
+  ],
+  "mean_ms": 8.86,
+  "p50_ms": 8.57,
+  "device_ms": 5.97,
+  "parameters": 1101442,
+  "state_per_head": [
+   128,
+   128
+  ],
+  "note": "GDN2ExternalLayer(head_dim=rank=128, expansion=1.0, num_heads=2): the NVIDIA chunked delta-rule Triton kernel, state d_k x d_v = 128 x 128 per head -- the same state size as the matrix store."
+ },
+ "p50_ratio_ops_over_gdn2": 13.2,
+ "device_ratio_ops_over_gdn2": 3.63
+}

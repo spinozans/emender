@@ -1,0 +1,200 @@
+{
+ "gate": "C+D",
+ "arm": "matrix_append",
+ "parameters": 149981808,
+ "summary": {
+  "shape": {
+   "width": 576,
+   "depth": 24,
+   "hidden": 3352,
+   "heads": 2,
+   "value_dim": 128,
+   "rank": 128,
+   "rank_max": 128,
+   "vocab": 256
+  },
+  "parameters": {
+   "total": 149981808,
+   "trainable": 149981808,
+   "per_layer": 6236930,
+   "mixer": 443522,
+   "mlp": 5792256,
+   "norms": 1152,
+   "embedding": 147456,
+   "head": 147456,
+   "final_norm": 576,
+   "capacity": 150003984,
+   "capacity_relative": -0.00014783607347390593
+  },
+  "routing": {
+   "ops": false,
+   "tau_match": 0.45,
+   "tau_merge": 0.85,
+   "tau_pop": 0.1,
+   "tie_break": 1e-06,
+   "read_scale": 2.0,
+   "grow": false,
+   "grow_trigger": 0.5,
+   "grow_window": 4,
+   "grow_window_tokens": 512,
+   "grow_geometric": 2.0,
+   "grow_stride_floor": 64
+  },
+  "chunk_tokens": 128
+ },
+ "microbatches": 8,
+ "windows_per_step": 64,
+ "context": 2048,
+ "tokens": 344027,
+ "steps": 3,
+ "phase_s": {
+  "prepare": 0.005,
+  "fwd_bwd": 21.625,
+  "opt": 0.067
+ },
+ "phase_frac": {
+  "prepare": 0.0002,
+  "fwd_bwd": 0.9967,
+  "opt": 0.0031
+ },
+ "total_s": 21.697,
+ "tokens_per_s": 15855.9,
+ "bytes_per_step": 131072,
+ "peak_allocated_gb": 21.93,
+ "losses": [
+  5.141766786575317,
+  4.865988332543461,
+  4.85928801828579
+ ],
+ "forbidden_kernels_found": [],
+ "replay_absent": true,
+ "top_kernels": [
+  {
+   "name": "## Call CompiledFxGraph fgtqrllspkpv6afxfm2ngrabhrblj4rnzc5dlkq7t5kzrlxpn7cx ##",
+   "cuda_ms": 8855.699,
+   "calls": 576,
+   "cuda_frac": 0.3057
+  },
+  {
+   "name": "## Call CompiledFxGraph fuwtv4xcywwm6zut3fnf2j2r4gh56b6iul357jkrr4bgbm5bphir ##",
+   "cuda_ms": 7351.195,
+   "calls": 576,
+   "cuda_frac": 0.2537
+  },
+  {
+   "name": "aten::mm",
+   "cuda_ms": 2390.377,
+   "calls": 11568,
+   "cuda_frac": 0.0825
+  },
+  {
+   "name": "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8>(cutlass_80_tensorop_",
+   "cuda_ms": 1008.748,
+   "calls": 29952,
+   "cuda_frac": 0.0348
+  },
+  {
+   "name": "aten::linalg_solve_triangular",
+   "cuda_ms": 859.04,
+   "calls": 18432,
+   "cuda_frac": 0.0296
+  },
+  {
+   "name": "aten::mul",
+   "cuda_ms": 652.995,
+   "calls": 1779,
+   "cuda_frac": 0.0225
+  },
+  {
+   "name": "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<c10::BFloat16, c10::BFloat16, c10:",
+   "cuda_ms": 652.938,
+   "calls": 1728,
+   "cuda_frac": 0.0225
+  },
+  {
+   "name": "ampere_bf16_s1688gemm_bf16_64x128_sliced1x2_ldg8_f2f_nn",
+   "cuda_ms": 471.952,
+   "calls": 1152,
+   "cuda_frac": 0.0163
+  },
+  {
+   "name": "ampere_bf16_s16816gemm_bf16_128x64_ldg8_f2f_tn",
+   "cuda_ms": 395.585,
+   "calls": 1152,
+   "cuda_frac": 0.0137
+  },
+  {
+   "name": "void batch_trsm_left_kernel<float, 64, 4, 3, false, false, true>(cublasTrsmBatchParams2<float>, float, float c",
+   "cuda_ms": 379.263,
+   "calls": 18432,
+   "cuda_frac": 0.0131
+  },
+  {
+   "name": "aten::bmm",
+   "cuda_ms": 300.947,
+   "calls": 91008,
+   "cuda_frac": 0.0104
+  },
+  {
+   "name": "aten::copy_",
+   "cuda_ms": 287.173,
+   "calls": 36000,
+   "cuda_frac": 0.0099
+  },
+  {
+   "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >",
+   "cuda_ms": 282.085,
+   "calls": 8031,
+   "cuda_frac": 0.0097
+  },
+  {
+   "name": "aten::add_",
+   "cuda_ms": 282.059,
+   "calls": 8007,
+   "cuda_frac": 0.0097
+  },
+  {
+   "name": "void batch_trsm_left_kernel<float, 64, 4, 3, false, true, true>(cublasTrsmBatchParams2<float>, float, float co",
+   "cuda_ms": 277.465,
+   "calls": 18432,
+   "cuda_frac": 0.0096
+  },
+  {
+   "name": "aten::_fused_rms_norm_backward",
+   "cuda_ms": 241.013,
+   "calls": 1176,
+   "cuda_frac": 0.0083
+  },
+  {
+   "name": "ampere_bf16_s1688gemm_bf16_64x128_sliced1x2_ldg8_f2f_tn",
+   "cuda_ms": 237.832,
+   "calls": 576,
+   "cuda_frac": 0.0082
+  },
+  {
+   "name": "ampere_bf16_s16816gemm_bf16_128x64_ldg8_f2f_nn",
+   "cuda_ms": 234.362,
+   "calls": 576,
+   "cuda_frac": 0.0081
+  },
+  {
+   "name": "aten::silu_backward",
+   "cuda_ms": 217.387,
+   "calls": 576,
+   "cuda_frac": 0.0075
+  },
+  {
+   "name": "void at::native::vectorized_elementwise_kernel<4, at::native::(anonymous namespace)::silu_backward_kernel(at::",
+   "cuda_ms": 217.387,
+   "calls": 576,
+   "cuda_frac": 0.0075
+  }
+ ],
+ "cuda_total_ms": 28972.7,
+ "registered_gdn2_tokens_per_s": 35875.6,
+ "capacity": 150003984,
+ "boundary": "whole model, whole step: prepare + all microbatches' forward and backward + clip/AdamW; flagship-stream read excluded; tokens are measured targets over the same 64-window stream batches for every arm",
+ "scan_mode": "torch.compile(mode=default) on ONE shared scan (inductor fusion, NO CUDA graph)",
+ "seed": 3401,
+ "scan_mode_note": "descriptive field corrected after the run: the compiled region is one shared scan, not one per mixer. No measured number was altered."
+}

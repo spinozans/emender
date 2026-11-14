@@ -1,0 +1,200 @@
+{
+ "gate": "C+D",
+ "arm": "matrix_ops",
+ "parameters": 149981808,
+ "summary": {
+  "shape": {
+   "width": 576,
+   "depth": 24,
+   "hidden": 3352,
+   "heads": 2,
+   "value_dim": 128,
+   "rank": 128,
+   "rank_max": 128,
+   "vocab": 256
+  },
+  "parameters": {
+   "total": 149981808,
+   "trainable": 149981808,
+   "per_layer": 6236930,
+   "mixer": 443522,
+   "mlp": 5792256,
+   "norms": 1152,
+   "embedding": 147456,
+   "head": 147456,
+   "final_norm": 576,
+   "capacity": 150003984,
+   "capacity_relative": -0.00014783607347390593
+  },
+  "routing": {
+   "ops": true,
+   "tau_match": 0.45,
+   "tau_merge": 0.85,
+   "tau_pop": 0.1,
+   "tie_break": 1e-06,
+   "read_scale": 2.0,
+   "grow": false,
+   "grow_trigger": 0.5,
+   "grow_window": 4,
+   "grow_window_tokens": 512,
+   "grow_geometric": 2.0,
+   "grow_stride_floor": 64
+  },
+  "chunk_tokens": 128
+ },
+ "microbatches": 8,
+ "windows_per_step": 64,
+ "context": 2048,
+ "tokens": 344027,
+ "steps": 3,
+ "phase_s": {
+  "prepare": 0.004,
+  "fwd_bwd": 26.02,
+  "opt": 0.058
+ },
+ "phase_frac": {
+  "prepare": 0.0002,
+  "fwd_bwd": 0.9976,
+  "opt": 0.0022
+ },
+ "total_s": 26.083,
+ "tokens_per_s": 13189.7,
+ "bytes_per_step": 131072,
+ "peak_allocated_gb": 25.07,
+ "losses": [
+  3.7587409615516663,
+  4.272640923296047,
+  3.9874916614261284
+ ],
+ "forbidden_kernels_found": [],
+ "replay_absent": true,
+ "top_kernels": [
+  {
+   "name": "## Call CompiledFxGraph f3u46ozu74zfqynmbolyiox3dqehqjv6vqvbijdzmkt5ovbupdkw ##",
+   "cuda_ms": 10849.244,
+   "calls": 576,
+   "cuda_frac": 0.2944
+  },
+  {
+   "name": "## Call CompiledFxGraph fcfasltfaragn3dqhwh7yt4uxccsv4jfgvymcu37qsg24pjw4foj ##",
+   "cuda_ms": 9016.843,
+   "calls": 576,
+   "cuda_frac": 0.2447
+  },
+  {
+   "name": "aten::mm",
+   "cuda_ms": 2395.866,
+   "calls": 11568,
+   "cuda_frac": 0.065
+  },
+  {
+   "name": "aten::linalg_solve_triangular",
+   "cuda_ms": 2016.053,
+   "calls": 18432,
+   "cuda_frac": 0.0547
+  },
+  {
+   "name": "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8>(cutlass_80_tensorop_",
+   "cuda_ms": 1012.388,
+   "calls": 29952,
+   "cuda_frac": 0.0275
+  },
+  {
+   "name": "void batch_trsm_left_kernel<float, 64, 4, 3, false, false, true>(cublasTrsmBatchParams2<float>, float, float c",
+   "cuda_ms": 764.823,
+   "calls": 36864,
+   "cuda_frac": 0.0208
+  },
+  {
+   "name": "aten::mul",
+   "cuda_ms": 652.094,
+   "calls": 1779,
+   "cuda_frac": 0.0177
+  },
+  {
+   "name": "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<c10::BFloat16, c10::BFloat16, c10:",
+   "cuda_ms": 652.04,
+   "calls": 1728,
+   "cuda_frac": 0.0177
+  },
+  {
+   "name": "void batch_trsm_left_kernel<float, 64, 4, 3, false, true, true>(cublasTrsmBatchParams2<float>, float, float co",
+   "cuda_ms": 554.983,
+   "calls": 36864,
+   "cuda_frac": 0.0151
+  },
+  {
+   "name": "ampere_bf16_s1688gemm_bf16_64x128_sliced1x2_ldg8_f2f_nn",
+   "cuda_ms": 470.47,
+   "calls": 1152,
+   "cuda_frac": 0.0128
+  },
+  {
+   "name": "ampere_bf16_s16816gemm_bf16_128x64_ldg8_f2f_tn",
+   "cuda_ms": 402.47,
+   "calls": 1152,
+   "cuda_frac": 0.0109
+  },
+  {
+   "name": "aten::bmm",
+   "cuda_ms": 356.984,
+   "calls": 100224,
+   "cuda_frac": 0.0097
+  },
+  {
+   "name": "aten::copy_",
+   "cuda_ms": 318.545,
+   "calls": 36000,
+   "cuda_frac": 0.0086
+  },
+  {
+   "name": "ampere_sgemm_128x128_tn",
+   "cuda_ms": 287.366,
+   "calls": 27648,
+   "cuda_frac": 0.0078
+  },
+  {
+   "name": "ampere_sgemm_128x128_nn",
+   "cuda_ms": 287.056,
+   "calls": 27648,
+   "cuda_frac": 0.0078
+  },
+  {
+   "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >",
+   "cuda_ms": 272.999,
+   "calls": 8031,
+   "cuda_frac": 0.0074
+  },
+  {
+   "name": "aten::add_",
+   "cuda_ms": 272.973,
+   "calls": 8007,
+   "cuda_frac": 0.0074
+  },
+  {
+   "name": "aten::scatter_reduce_",
+   "cuda_ms": 257.703,
+   "calls": 9216,
+   "cuda_frac": 0.007
+  },
+  {
+   "name": "void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda_scatter_gather_internal_kernel<t",
+   "cuda_ms": 257.703,
+   "calls": 9216,
+   "cuda_frac": 0.007
+  },
+  {
+   "name": "aten::_fused_rms_norm_backward",
+   "cuda_ms": 242.22,
+   "calls": 1176,
+   "cuda_frac": 0.0066
+  }
+ ],
+ "cuda_total_ms": 36848.0,
+ "registered_gdn2_tokens_per_s": 35875.6,
+ "capacity": 150003984,
+ "boundary": "whole model, whole step: prepare + all microbatches' forward and backward + clip/AdamW; flagship-stream read excluded; tokens are measured targets over the same 64-window stream batches for every arm",
+ "scan_mode": "torch.compile(mode=default) on ONE shared scan (inductor fusion, NO CUDA graph)",
+ "seed": 3401,
+ "scan_mode_note": "descriptive field corrected after the run: the compiled region is one shared scan, not one per mixer. No measured number was altered."
+}

@@ -46,7 +46,20 @@ REFERENCE_DEPTH = 24
 DECAY_HORIZON_TOKENS = 64
 DECAY_FLOOR = 1e-4
 # See MatrixMixer: the chunk loop is launch-bound, so it is compiled and graphed.
-COMPILE_MODE = "reduce-overhead"
+COMPILE_MODE = "default"
+# One compiled scan shared by every layer: the arm has 24 identical mixers, so a
+# per-module graph would be 24 compiles of the same shapes.  The mode is "default"
+# (inductor fusion, no CUDA graph) because per-module CUDA graphs share a
+# cudagraph-trees pool and invalidate each other's outputs between a forward and its
+# backward -- that fault is recorded in RESULT_MATRIX_EMENDER.md.
+_SCAN_CACHE: dict = {}
+
+
+def compiled_scan(mode: str = COMPILE_MODE):
+    """The chunk scan, compiled once and shared by every mixer in the model."""
+    if mode not in _SCAN_CACHE:
+        _SCAN_CACHE[mode] = torch.compile(routed_chunk_scan, mode=mode, dynamic=False)
+    return _SCAN_CACHE[mode]
 
 
 @dataclass(frozen=True)
@@ -143,12 +156,9 @@ class MatrixMixer(nn.Module):
         # CUDA graph ("reduce-overhead"): the binding cost is the per-kernel launch
         # count, not bytes or FLOPs.  Compiling the whole 24-layer forward instead is
         # impractical — a single graph that large did not finish compiling in 50 min.
-        self.compiled = (torch.compile(self._forward_impl, mode=COMPILE_MODE,
-                                       dynamic=False) if compile_scan else None)
+        self.compile_scan = compile_scan
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        if self.compiled is not None:
-            return self.compiled(x)
         return self._forward_impl(x)
 
     def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
@@ -162,7 +172,8 @@ class MatrixMixer(nn.Module):
         query = self.query(x).view(batch, tokens, self.heads, self.value_dim)
         payload = self.value(x).view(batch, tokens, self.heads, self.value_dim)
         decay = torch.sigmoid(self.decay(x)).clamp(min=DECAY_FLOOR, max=1.0 - 1e-6)
-        result = routed_chunk_scan(
+        scan = compiled_scan(COMPILE_MODE) if self.compile_scan else routed_chunk_scan
+        result = scan(
             query, payload, decay, router=route_chunk, policy=self.policy,
             rank=self.rank, rank_max=self.rank_max, chunk_tokens=self.chunk_tokens)
         return (self.out(result.reads.reshape(batch, tokens, self.heads * self.value_dim)),

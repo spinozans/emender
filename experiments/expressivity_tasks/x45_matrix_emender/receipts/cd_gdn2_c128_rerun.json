@@ -1,0 +1,172 @@
+{
+ "gate": "C+D",
+ "arm": "gdn2",
+ "parameters": 149855670,
+ "summary": {
+  "base_arm": "gdn2",
+  "parameters": {
+   "total": 149855670
+  },
+  "policy": {
+   "lr": 0.0005420185524740253,
+   "microbatch": 8,
+   "beta2": 0.9392004369596886,
+   "weight_decay": 0.20059436743465126
+  }
+ },
+ "microbatches": 8,
+ "windows_per_step": 64,
+ "context": 2048,
+ "tokens": 344027,
+ "steps": 3,
+ "phase_s": {
+  "prepare": 0.005,
+  "fwd_bwd": 12.165,
+  "opt": 0.063
+ },
+ "phase_frac": {
+  "prepare": 0.0004,
+  "fwd_bwd": 0.9945,
+  "opt": 0.0052
+ },
+ "total_s": 12.233,
+ "tokens_per_s": 28124.0,
+ "bytes_per_step": 131072,
+ "peak_allocated_gb": 4.49,
+ "losses": [
+  4.126391232013702,
+  4.557178598124848,
+  4.494921053623334
+ ],
+ "forbidden_kernels_found": [],
+ "replay_absent": true,
+ "top_kernels": [
+  {
+   "name": "aten::mm",
+   "cuda_ms": 2864.067,
+   "calls": 32448,
+   "cuda_frac": 0.1822
+  },
+  {
+   "name": "aten::copy_",
+   "cuda_ms": 932.36,
+   "calls": 51480,
+   "cuda_frac": 0.0593
+  },
+  {
+   "name": "ChunkGDN2FunctionBackward",
+   "cuda_ms": 862.417,
+   "calls": 648,
+   "cuda_frac": 0.0549
+  },
+  {
+   "name": "void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16_copy_kernel_cuda(at::TensorIteratorBase",
+   "cuda_ms": 631.639,
+   "calls": 33120,
+   "cuda_frac": 0.0402
+  },
+  {
+   "name": "ampere_bf16_s1688gemm_bf16_64x128_sliced1x2_ldg8_f2f_tn",
+   "cuda_ms": 611.884,
+   "calls": 2592,
+   "cuda_frac": 0.0389
+  },
+  {
+   "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >",
+   "cuda_ms": 597.833,
+   "calls": 19065,
+   "cuda_frac": 0.038
+  },
+  {
+   "name": "aten::mul",
+   "cuda_ms": 596.599,
+   "calls": 5883,
+   "cuda_frac": 0.038
+  },
+  {
+   "name": "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8>(cutlass_80_tensorop_",
+   "cuda_ms": 562.801,
+   "calls": 2592,
+   "cuda_frac": 0.0358
+  },
+  {
+   "name": "aten::add_",
+   "cuda_ms": 537.232,
+   "calls": 19041,
+   "cuda_frac": 0.0342
+  },
+  {
+   "name": "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<c10::BFloat16, c10::BFloat16, c10:",
+   "cuda_ms": 528.847,
+   "calls": 2592,
+   "cuda_frac": 0.0336
+  },
+  {
+   "name": "ChunkGDN2Function",
+   "cuda_ms": 474.202,
+   "calls": 1296,
+   "cuda_frac": 0.0302
+  },
+  {
+   "name": "ampere_bf16_s1688gemm_bf16_128x128_ldg8_f2f_stages_32x1_tn",
+   "cuda_ms": 425.138,
+   "calls": 11688,
+   "cuda_frac": 0.027
+  },
+  {
+   "name": "aten::add",
+   "cuda_ms": 381.92,
+   "calls": 5859,
+   "cuda_frac": 0.0243
+  },
+  {
+   "name": "chunk_gdn2_bwd_kernel_wy_dqkg_fused",
+   "cuda_ms": 381.112,
+   "calls": 648,
+   "cuda_frac": 0.0242
+  },
+  {
+   "name": "ampere_bf16_s1688gemm_bf16_128x128_ldg8_f2f_stages_32x1_nn",
+   "cuda_ms": 361.691,
+   "calls": 7152,
+   "cuda_frac": 0.023
+  },
+  {
+   "name": "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nn_align8>(cutlass_80_tensorop_",
+   "cuda_ms": 315.434,
+   "calls": 1296,
+   "cuda_frac": 0.0201
+  },
+  {
+   "name": "ampere_bf16_s1688gemm_bf16_128x64_sliced1x2_ldg8_f2f_tn",
+   "cuda_ms": 306.106,
+   "calls": 1296,
+   "cuda_frac": 0.0195
+  },
+  {
+   "name": "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{la",
+   "cuda_ms": 287.028,
+   "calls": 16296,
+   "cuda_frac": 0.0183
+  },
+  {
+   "name": "aten::_fused_rms_norm_backward",
+   "cuda_ms": 280.385,
+   "calls": 1320,
+   "cuda_frac": 0.0178
+  },
+  {
+   "name": "void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>, 4, Tr",
+   "cuda_ms": 245.842,
+   "calls": 2592,
+   "cuda_frac": 0.0156
+  }
+ ],
+ "cuda_total_ms": 15717.6,
+ "registered_gdn2_tokens_per_s": 35875.6,
+ "capacity": 150003984,
+ "boundary": "whole model, whole step: prepare + all microbatches' forward and backward + clip/AdamW; flagship-stream read excluded; tokens are measured targets over the same 64-window stream batches for every arm",
+ "scan_mode": "n/a: registered GDN2 arm (external Triton chunk kernel, eager)",
+ "seed": 3401,
+ "scan_mode_note": "descriptive field corrected after the run: this arm is the registered GDN2 mixer (external Triton, eager); it has no chunk scan and no torch.compile. No measured number was altered."
+}

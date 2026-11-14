@@ -164,5 +164,8 @@
  ],
  "cuda_total_ms": 15552.2,
  "registered_gdn2_tokens_per_s": 35875.6,
- "capacity": 150003984
+ "capacity": 150003984,
+ "scan_mode": "n/a: registered GDN2 arm (external Triton chunk kernel, eager)",
+ "scan_mode_note": "descriptive field corrected after the run: this arm is the registered GDN2 mixer (external Triton, eager); it has no chunk scan and no torch.compile. No measured number was altered.",
+ "phase_label_note": "labels as written by the pre-correction harness: fwd = host-side window grouping, bwd = every microbatch's forward AND backward. The corrected harness (cd_gdn2_c128_rerun.json and both matrix receipts) labels these prepare and fwd_bwd. No measured number was altered."
 }

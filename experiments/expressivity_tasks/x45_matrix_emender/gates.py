@@ -27,7 +27,8 @@ from experiments.expressivity_tasks.x42_pile_scale import lattice as L
 from experiments.expressivity_tasks.x42_pile_scale.byte_velocity import grouped, model_for
 from experiments.expressivity_tasks.x42_pile_scale.velocity_train import configure_production
 from experiments.expressivity_tasks.x45_matrix_emender.model import (
-    CAPACITY, MatrixShape, matrix_config, model_for as matrix_model_for, parameter_count)
+    CAPACITY, COMPILE_MODE, MatrixShape, matrix_config,
+    model_for as matrix_model_for, parameter_count)
 from experiments.expressivity_tasks.x45_matrix_emender.schedule import RoutingPolicy
 
 ROOT = Path(__file__).resolve().parent
@@ -99,16 +100,20 @@ def main():
     batches = iter(stream.batches("train"))
 
     def one_step(rows, timed):
+        # Phase labels are literal: ``prepare`` is the host-side window grouping,
+        # ``fwd_bwd`` is the whole microbatch loop (every forward and its backward),
+        # ``opt`` is clip + AdamW.  The flagship-stream read (``next(batches)``) is
+        # outside every phase, the same boundary the registered profiler uses.
         count = sum(len(r[3]) for r in rows)
         optimizer.zero_grad(set_to_none=True)
-        phases = {"fwd": 0.0, "bwd": 0.0, "opt": 0.0}
+        phases = {"prepare": 0.0, "fwd_bwd": 0.0, "opt": 0.0}
         if timed:
             torch.cuda.synchronize()
             mark = time.monotonic()
         groups = list(grouped(rows, args.microbatch))
         if timed:
             torch.cuda.synchronize()
-            phases["fwd"] = time.monotonic() - mark
+            phases["prepare"] = time.monotonic() - mark
             mark = time.monotonic()
         loss_sum = 0.0
         for x, y, valid in groups:
@@ -121,7 +126,7 @@ def main():
             loss_sum += float(loss.detach()) * valid / count
         if timed:
             torch.cuda.synchronize()
-            phases["bwd"] = time.monotonic() - mark
+            phases["fwd_bwd"] = time.monotonic() - mark
             mark = time.monotonic()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0, error_if_nonfinite=True)
         optimizer.step()
@@ -134,7 +139,7 @@ def main():
         one_step(next(batches), False)
     torch.cuda.reset_peak_memory_stats()
 
-    phases = {"fwd": 0.0, "bwd": 0.0, "opt": 0.0}
+    phases = {"prepare": 0.0, "fwd_bwd": 0.0, "opt": 0.0}
     tokens = 0
     losses = []
     profiler = torch.profiler.profile(
@@ -179,7 +184,15 @@ def main():
         top_kernels=kernels[:20],
         cuda_total_ms=round(device_total, 1),
         registered_gdn2_tokens_per_s=round(REGISTERED_GDN2_TOKENS_PER_S, 1),
-        capacity=CAPACITY)
+        capacity=CAPACITY,
+        boundary=("whole model, whole step: prepare + all microbatches' forward and "
+                  "backward + clip/AdamW; flagship-stream read excluded; tokens are "
+                  "measured targets over the same 64-window stream batches for every "
+                  "arm"),
+        scan_mode=("eager chunk loop (--eager)" if args.eager else
+                   f"torch.compile(mode={COMPILE_MODE}) on ONE shared scan "
+                   "(inductor fusion, NO CUDA graph)"),
+        seed=args.seed)
     if args.out:
         out = Path(args.out)
         out.parent.mkdir(parents=True, exist_ok=True)
