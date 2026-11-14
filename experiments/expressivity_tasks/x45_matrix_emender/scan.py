@@ -219,7 +219,8 @@ def repeat_write_rate(schedule, last_write, step_offset, window_tokens):
 def routed_chunk_scan(query, payload, decay, *, router, policy, rank=None,
                       rank_max=None, initial_state=None, initial_live=None,
                       chunk_tokens=None, collect=False,
-                      fused: bool = FUSED_SCAN_DEFAULT):
+                      fused: bool = FUSED_SCAN_DEFAULT,
+                      trainable_fused: bool = False):
     """Chunked scan whose fixed schedule (and read weights) come from ``router``.
 
     ``router(chunk_index, token_offset, state, live, query_chunk, payload_chunk,
@@ -232,6 +233,16 @@ def routed_chunk_scan(query, payload, decay, *, router, policy, rank=None,
     With ``policy.grow`` the rank may widen at a chunk boundary.  Rows above the
     current rank are exact zeros (growth is a zero-injection), so widening is a
     bookkeeping change recorded in ``stats.rank_trajectory``.
+
+    ``trainable_fused=True`` (K4, default off) runs each chunk's scan through
+    ``k4_fused_backward.trainable_block_scan(fused=True)``: the trajectory forward
+    plus the reverse-walk backward, one autograd node per chunk, instead of
+    autograd through the eager chunk scan.  The routing loop, the recorded
+    schedule and every gradient path are unchanged -- the read weights and the
+    payloads stay attached exactly as they are, so this is a drop-in for the
+    chunk's forward+backward and not a new training semantics.  Where the
+    persistent kernel does not fit one program it falls back to the eager
+    autograd path (the same ``persistent_available`` gate the forward uses).
     """
     chunk_tokens = DEFAULT_CHUNK_TOKENS if chunk_tokens is None else int(chunk_tokens)
     batch, tokens, heads, value_dim = payload.shape
@@ -275,7 +286,14 @@ def routed_chunk_scan(query, payload, decay, *, router, policy, rank=None,
         elif growth:
             window.append(repeat_write_rate(schedule, last_write, start,
                                             policy.grow_window_tokens))
-        chunk_reads, state, live = chunk_scan(state, live, weights, dc, schedule, fused)
+        if trainable_fused:
+            from .k4_fused_backward import trainable_block_scan
+            chunk_reads, state, live = trainable_block_scan(
+                state, live, weights.to(torch.float32), dc.to(torch.float32),
+                schedule, fused=True, chunk_tokens=chunk_tokens)
+        else:
+            chunk_reads, state, live = chunk_scan(state, live, weights, dc, schedule,
+                                                  fused)
         reads[:, start:stop] = chunk_reads.permute(0, 2, 1, 3)
         if growth and len(window) >= policy.grow_window and rank_now < rank_max:
             if sum(window[-policy.grow_window:]) / policy.grow_window >= policy.grow_trigger:
