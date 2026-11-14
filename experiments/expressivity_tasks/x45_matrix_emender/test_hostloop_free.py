@@ -269,24 +269,33 @@ def test_auto_picks_the_persistent_kernel_where_it_fits():
 @needs_cuda
 @pytest.mark.parametrize("rank", [64, 512])
 def test_rank_at_both_ends_of_the_persistent_kernels_range(rank):
-    """Rank 64 (a 1 024-float tile) and rank 512 (8 192) against the chunked pipeline."""
+    """Rank 64 (a 1 024-float tile) and rank 512 (8 192) against the per-token oracle.
+
+    The two ends of the range that still fit one program: rank 64 is where the tile is
+    smallest and rank 512 where it is at the budget, so these are the shapes that would
+    catch a wrong ``RP`` masking or an off-by-one in the value-block offset.
+    """
     tokens, value_dim = 32, 16
     schedule, query, _, decay = random_schedule(1, tokens, 2, rank, value_dim, lanes=2,
                                                 seed=rank)
     weights = query.permute(0, 2, 1, 3).contiguous()
-    decay = head_major(decay)
+    floor, oracle_state, oracle_reads = sequential_noise_floor(query, decay, schedule)
+    oracle_reads = oracle_reads.permute(0, 2, 1, 3)
+    head_first_decay = head_major(decay)
     state, live = empty_store(1, 2, rank, value_dim)
-    persistent = persistent_scan(state, live, weights, decay, schedule)
-    chunked = chunked_block_scan(state, live, weights, decay, schedule, 16)
-    assert torch.equal(persistent[2], chunked[2]), rank
-    scale = max(1.0, float(chunked[0].abs().max()))
-    deviation = float((persistent[0] - chunked[0]).abs().max())
-    print(f"rank {rank}: read deviation {deviation:.3e} on a scale of {scale:.3e}")
-    assert deviation <= 1e-5 * scale, (rank, deviation, scale)
-    # The state differs only by the trailing term: both are the same walk with different
-    # reduction groupings, so the exit state is close, and the liveness is identical.
-    state_scale = max(1.0, float(chunked[1].abs().max()))
-    assert float((persistent[1] - chunked[1]).abs().max()) <= 1e-5 * state_scale
+    reads, exit_state, exit_live = persistent_scan(state, live, weights, head_first_decay,
+                                                  schedule)
+    peak, median = per_token_deviation(reads, oracle_reads)
+    print(f"rank {rank}: floor {floor:.3e}, read max {peak:.3e} ({peak / floor:.2f}x), "
+          f"median {median:.3e}, state {float((exit_state - oracle_state).abs().max()):.3e}")
+    assert torch.equal(exit_state, oracle_state), rank
+    assert peak <= NOISE_FACTOR * floor, (rank, peak, floor)
+    assert median <= NOISE_FACTOR * floor, (rank, median, floor)
+    # The chunked path reaches the same state (K1's walk is the same walk) and the same
+    # liveness; only the read's grouping differs.
+    chunked = chunked_block_scan(state, live, weights, head_first_decay, schedule, 16)
+    assert torch.equal(chunked[1], exit_state), rank
+    assert torch.equal(chunked[2], exit_live), rank
 
 
 @needs_cuda

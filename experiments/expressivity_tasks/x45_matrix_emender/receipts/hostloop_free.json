@@ -1,0 +1,3184 @@
+{
+  "seed": 3401,
+  "repeats": 5,
+  "shape": {
+    "batch": 8,
+    "tokens": 2048,
+    "heads": 2,
+    "rank": 128,
+    "value_dim": 128,
+    "chunk": 128,
+    "lanes": 2
+  },
+  "device": "NVIDIA RTX 6000 Ada Generation",
+  "torch": "2.9.1+cu128",
+  "triton": "3.5.1",
+  "cases": {
+    "matrix_ops": {
+      "label": "matrix_ops",
+      "boundary": "one whole block call: batch 8, 2048 tokens, 2 heads, lanes 2, fp32, forward only; entry state and liveness in, the recorded schedule and read weights are inputs, the tokens' reads and the exit state out -- the same boundary as K23_READ.md \u00a75.3",
+      "shape": {
+        "batch": 8,
+        "tokens": 2048,
+        "heads": 2,
+        "rank": 128,
+        "value_dim": 128,
+        "lanes": 2
+      },
+      "eager_reference": {
+        "gate_c": {
+          "kernels": 1410.0,
+          "device_ms": 4.551638333333346,
+          "distinct_kernels": 40,
+          "top_kernels": [
+            "void (anonymous namespace)::elementwise_kernel_with_index<int, at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>(int, at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}, function_traits<at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>::result_type*)",
+            "void offsetPointerArray_kernel<float>(float**, float const**, int, int, int, float**, float const**, int, int, int, float**, float const**, int, int, int, int, int)",
+            "void at::native::vectorized_elementwise_kernel<4, at::native::exp_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::exp_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>)",
+            "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1})"
+          ]
+        },
+        "gate_d": {
+          "latency_ms_mean": 20.538610095779102,
+          "latency_ms_p50": 20.52254043519497,
+          "latency_ms_min": 20.42314037680626,
+          "latency_ms_max": 20.670149475336075,
+          "dispatch_ms_mean": 20.5171766380469,
+          "dispatch_ms_p50": 20.50101011991501,
+          "device_ms_mean": 20.558560053507488,
+          "device_ms_p50": 20.54198455810547,
+          "occupancy_ms": 4.554091000000005,
+          "latency_over_occupancy": 4.506396651976201,
+          "latency_over_device": 0.9990296033537144,
+          "dispatch_over_occupancy": 4.501668965313821,
+          "repeats": 3
+        },
+        "chunk_length_effect": {
+          "16": {
+            "read_max": 1.4901161193847656e-08,
+            "read_median": 0.0,
+            "read_scale": 1.7247388362884521,
+            "read_relative": 8.639662353701141e-09,
+            "state_max": 7.450580596923828e-09,
+            "state_scale": 0.24994026124477386,
+            "state_relative": 2.9809445504368963e-08,
+            "live_equal": true
+          },
+          "256": {
+            "read_max": 1.4901161193847656e-08,
+            "read_median": 0.0,
+            "read_scale": 1.7247388362884521,
+            "read_relative": 8.639662353701141e-09,
+            "state_max": 7.450580596923828e-09,
+            "state_scale": 0.24994026124477386,
+            "state_relative": 2.9809445504368963e-08,
+            "live_equal": true
+          },
+          "512": {
+            "read_max": 1.4901161193847656e-08,
+            "read_median": 0.0,
+            "read_scale": 1.7247388362884521,
+            "read_relative": 8.639662353701141e-09,
+            "state_max": 7.450580596923828e-09,
+            "state_scale": 0.24994026124477386,
+            "state_relative": 2.9809445504368963e-08,
+            "live_equal": true
+          }
+        }
+      },
+      "paths": {
+        "chunked_C16": {
+          "description": {
+            "host_launches": 384,
+            "form": "host loop",
+            "twin_chunk": 16
+          },
+          "gate_c": {
+            "kernels": 512.0,
+            "device_ms": 2.165439666666639,
+            "distinct_kernels": 4,
+            "top_kernels": [
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel",
+              "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 47.75404818356037,
+            "latency_ms_p50": 45.41769437491894,
+            "latency_ms_min": 44.593093916773796,
+            "latency_ms_max": 52.47782543301582,
+            "dispatch_ms_mean": 47.72967025637627,
+            "dispatch_ms_p50": 45.39266508072615,
+            "device_ms_mean": 47.77603759765625,
+            "device_ms_p50": 45.44054412841797,
+            "occupancy_ms": 2.1641034000001103,
+            "latency_over_occupancy": 20.986841190174474,
+            "latency_over_device": 0.9995397396853825,
+            "dispatch_over_occupancy": 20.975275525524257,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 3.5762786865234375e-07,
+            "read_median": 1.30385160446167e-08,
+            "read_scale": 1.7247388362884521,
+            "read_relative": 2.073518964888274e-07,
+            "state_max": 1.4901161193847656e-07,
+            "state_scale": 0.24994026124477386,
+            "state_relative": 5.961889100873792e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 3.5762786865234375e-07,
+            "read_median": 1.30385160446167e-08,
+            "read_scale": 1.7247388362884521,
+            "read_relative": 2.073518964888274e-07,
+            "state_max": 1.4901161193847656e-07,
+            "state_scale": 0.24994026124477386,
+            "state_relative": 5.961889100873792e-07,
+            "live_equal": true
+          },
+          "parity_vs_oracle": {
+            "read_max": 3.5762786865234375e-07,
+            "read_median": 4.190951585769653e-09,
+            "read_scale": 1.7247393131256104,
+            "read_relative": 2.073518391624313e-07,
+            "state_max": 0.0,
+            "state_scale": 0.24994030594825745,
+            "state_relative": 0.0,
+            "live_equal": null
+          },
+          "state_bit_equal_to_eager": false
+        },
+        "chunked_C64": {
+          "description": {
+            "host_launches": 96,
+            "form": "host loop",
+            "twin_chunk": null
+          },
+          "gate_c": {
+            "kernels": 128.0,
+            "device_ms": 1.352394666666667,
+            "distinct_kernels": 4,
+            "top_kernels": [
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel",
+              "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 11.106177791953087,
+            "latency_ms_p50": 11.114136315882206,
+            "latency_ms_min": 11.042186059057713,
+            "latency_ms_max": 11.134725995361805,
+            "dispatch_ms_mean": 11.085285991430283,
+            "dispatch_ms_p50": 11.093626730144024,
+            "device_ms_mean": 11.126374435424804,
+            "device_ms_p50": 11.133760452270508,
+            "occupancy_ms": 1.3468431999999975,
+            "latency_over_occupancy": 8.251989775708283,
+            "latency_over_device": 0.9981847956323119,
+            "dispatch_over_occupancy": 8.236761881519723,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 4.76837158203125e-07,
+            "read_median": 1.3969838619232178e-08,
+            "read_scale": 1.7247388362884521,
+            "read_relative": 2.764691953184365e-07,
+            "state_max": 1.4901161193847656e-07,
+            "state_scale": 0.24994026124477386,
+            "state_relative": 5.961889100873792e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": null,
+          "parity_vs_oracle": {
+            "read_max": 3.5762786865234375e-07,
+            "read_median": 9.313225746154785e-09,
+            "read_scale": 1.7247393131256104,
+            "read_relative": 2.073518391624313e-07,
+            "state_max": 0.0,
+            "state_scale": 0.24994030594825745,
+            "state_relative": 0.0,
+            "live_equal": null
+          },
+          "state_bit_equal_to_eager": false
+        },
+        "chunked_C128": {
+          "description": {
+            "host_launches": 48,
+            "form": "host loop",
+            "twin_chunk": 128
+          },
+          "gate_c": {
+            "kernels": 64.0,
+            "device_ms": 1.1844539999999937,
+            "distinct_kernels": 4,
+            "top_kernels": [
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel",
+              "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 8.507530204951763,
+            "latency_ms_p50": 6.737369112670422,
+            "latency_ms_min": 6.697649136185646,
+            "latency_ms_max": 15.568233095109463,
+            "dispatch_ms_mean": 8.449049852788448,
+            "dispatch_ms_p50": 6.714188493788242,
+            "device_ms_mean": 8.537491130828858,
+            "device_ms_p50": 6.7630720138549805,
+            "occupancy_ms": 1.1844954000000054,
+            "latency_over_occupancy": 5.687965620356475,
+            "latency_over_device": 0.9964906638943487,
+            "dispatch_over_occupancy": 5.668395583290751,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 4.76837158203125e-07,
+            "read_median": 1.862645149230957e-08,
+            "read_scale": 1.7247388362884521,
+            "read_relative": 2.764691953184365e-07,
+            "state_max": 1.4901161193847656e-07,
+            "state_scale": 0.24994026124477386,
+            "state_relative": 5.961889100873792e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 4.76837158203125e-07,
+            "read_median": 1.862645149230957e-08,
+            "read_scale": 1.7247388362884521,
+            "read_relative": 2.764691953184365e-07,
+            "state_max": 1.4901161193847656e-07,
+            "state_scale": 0.24994026124477386,
+            "state_relative": 5.961889100873792e-07,
+            "live_equal": true
+          },
+          "parity_vs_oracle": {
+            "read_max": 3.725290298461914e-07,
+            "read_median": 1.30385160446167e-08,
+            "read_scale": 1.7247393131256104,
+            "read_relative": 2.159914991275326e-07,
+            "state_max": 0.0,
+            "state_scale": 0.24994030594825745,
+            "state_relative": 0.0,
+            "live_equal": null
+          },
+          "state_bit_equal_to_eager": false
+        },
+        "chunked_C256": {
+          "description": {
+            "host_launches": 24,
+            "form": "host loop",
+            "twin_chunk": 256
+          },
+          "gate_c": {
+            "kernels": 32.0,
+            "device_ms": 1.1532396666666649,
+            "distinct_kernels": 4,
+            "top_kernels": [
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel",
+              "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 2.8848079964518547,
+            "latency_ms_p50": 2.8680143877863884,
+            "latency_ms_min": 2.833344042301178,
+            "latency_ms_max": 3.0050743371248245,
+            "dispatch_ms_mean": 2.865791879594326,
+            "dispatch_ms_p50": 2.8492044657468796,
+            "device_ms_mean": 2.903923225402832,
+            "device_ms_p50": 2.8871359825134277,
+            "occupancy_ms": 1.1541622000000018,
+            "latency_over_occupancy": 2.484931830020411,
+            "latency_over_device": 0.9934174468581807,
+            "dispatch_over_occupancy": 2.468634361571428,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 1.3113021850585938e-06,
+            "read_median": 1.862645149230957e-08,
+            "read_scale": 1.7247388362884521,
+            "read_relative": 7.602902871257004e-07,
+            "state_max": 1.4901161193847656e-07,
+            "state_scale": 0.24994026124477386,
+            "state_relative": 5.961889100873792e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 1.3113021850585938e-06,
+            "read_median": 1.862645149230957e-08,
+            "read_scale": 1.7247388362884521,
+            "read_relative": 7.602902871257004e-07,
+            "state_max": 1.4901161193847656e-07,
+            "state_scale": 0.24994026124477386,
+            "state_relative": 5.961889100873792e-07,
+            "live_equal": true
+          },
+          "parity_vs_oracle": {
+            "read_max": 1.1920928955078125e-06,
+            "read_median": 1.30385160446167e-08,
+            "read_scale": 1.7247393131256104,
+            "read_relative": 6.911727972081043e-07,
+            "state_max": 0.0,
+            "state_scale": 0.24994030594825745,
+            "state_relative": 0.0,
+            "live_equal": null
+          },
+          "state_bit_equal_to_eager": false
+        },
+        "chunked_C512": {
+          "description": {
+            "host_launches": 12,
+            "form": "host loop",
+            "twin_chunk": 512
+          },
+          "gate_c": {
+            "kernels": 16.0,
+            "device_ms": 1.2151823333333347,
+            "distinct_kernels": 4,
+            "top_kernels": [
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel",
+              "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 1.6239684075117111,
+            "latency_ms_p50": 1.5751319006085396,
+            "latency_ms_min": 1.562122255563736,
+            "latency_ms_max": 1.773693598806858,
+            "dispatch_ms_mean": 1.526850089430809,
+            "dispatch_ms_p50": 1.470811665058136,
+            "device_ms_mean": 1.643552017211914,
+            "device_ms_p50": 1.5943679809570312,
+            "occupancy_ms": 1.2144831999999983,
+            "latency_over_occupancy": 1.2969565166554315,
+            "latency_over_device": 0.9880845817503092,
+            "dispatch_over_occupancy": 1.2110597042907947,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 1.3113021850585938e-06,
+            "read_median": 1.2665987014770508e-07,
+            "read_scale": 1.7247388362884521,
+            "read_relative": 7.602902871257004e-07,
+            "state_max": 1.4901161193847656e-07,
+            "state_scale": 0.24994026124477386,
+            "state_relative": 5.961889100873792e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 1.3113021850585938e-06,
+            "read_median": 1.2665987014770508e-07,
+            "read_scale": 1.7247388362884521,
+            "read_relative": 7.602902871257004e-07,
+            "state_max": 1.4901161193847656e-07,
+            "state_scale": 0.24994026124477386,
+            "state_relative": 5.961889100873792e-07,
+            "live_equal": true
+          },
+          "parity_vs_oracle": {
+            "read_max": 1.1920928955078125e-06,
+            "read_median": 1.30385160446167e-07,
+            "read_scale": 1.7247393131256104,
+            "read_relative": 6.911727972081043e-07,
+            "state_max": 0.0,
+            "state_scale": 0.24994030594825745,
+            "state_relative": 0.0,
+            "live_equal": null
+          },
+          "state_bit_equal_to_eager": false
+        },
+        "graph_C128": {
+          "description": {
+            "host_launches": 1,
+            "form": "one replay",
+            "twin_chunk": 128,
+            "kernels_note": "the pipeline's launches plus the copies the graph captures"
+          },
+          "gate_c": {
+            "kernels": 78.0,
+            "device_ms": 1.3295420000000002,
+            "distinct_kernels": 7,
+            "top_kernels": [
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel",
+              "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 1.3664701953530312,
+            "latency_ms_p50": 1.36486254632473,
+            "latency_ms_min": 1.362331211566925,
+            "latency_ms_max": 1.3705622404813766,
+            "dispatch_ms_mean": 0.08711796253919601,
+            "dispatch_ms_p50": 0.08676014840602875,
+            "device_ms_mean": 1.3825855731964112,
+            "device_ms_p50": 1.3822720050811768,
+            "occupancy_ms": 1.3307954000000006,
+            "latency_over_occupancy": 1.025599086324411,
+            "latency_over_device": 0.9883440286403953,
+            "dispatch_over_occupancy": 0.06519420521443695,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 4.76837158203125e-07,
+            "read_median": 1.862645149230957e-08,
+            "read_scale": 1.7247388362884521,
+            "read_relative": 2.764691953184365e-07,
+            "state_max": 1.4901161193847656e-07,
+            "state_scale": 0.24994026124477386,
+            "state_relative": 5.961889100873792e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 4.76837158203125e-07,
+            "read_median": 1.862645149230957e-08,
+            "read_scale": 1.7247388362884521,
+            "read_relative": 2.764691953184365e-07,
+            "state_max": 1.4901161193847656e-07,
+            "state_scale": 0.24994026124477386,
+            "state_relative": 5.961889100873792e-07,
+            "live_equal": true
+          },
+          "parity_vs_oracle": {
+            "read_max": 3.725290298461914e-07,
+            "read_median": 1.30385160446167e-08,
+            "read_scale": 1.7247393131256104,
+            "read_relative": 2.159914991275326e-07,
+            "state_max": 0.0,
+            "state_scale": 0.24994030594825745,
+            "state_relative": 0.0,
+            "live_equal": null
+          },
+          "state_bit_equal_to_eager": false
+        },
+        "graph_C256": {
+          "description": {
+            "host_launches": 1,
+            "form": "one replay",
+            "twin_chunk": 256,
+            "kernels_note": "the pipeline's launches plus the copies the graph captures"
+          },
+          "gate_c": {
+            "kernels": 46.0,
+            "device_ms": 1.288271666666666,
+            "distinct_kernels": 7,
+            "top_kernels": [
+              "Memcpy DtoD (Device -> Device)",
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 1.324400119483471,
+            "latency_ms_p50": 1.323961652815342,
+            "latency_ms_min": 1.321461983025074,
+            "latency_ms_max": 1.3270722702145576,
+            "dispatch_ms_mean": 0.08504614233970642,
+            "dispatch_ms_p50": 0.08459016680717468,
+            "device_ms_mean": 1.339788794517517,
+            "device_ms_p50": 1.3404159545898438,
+            "occupancy_ms": 1.2898173999999998,
+            "latency_over_occupancy": 1.026472160179683,
+            "latency_over_device": 0.9885141037923161,
+            "dispatch_over_occupancy": 0.06558305602574031,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 1.3113021850585938e-06,
+            "read_median": 1.862645149230957e-08,
+            "read_scale": 1.7247388362884521,
+            "read_relative": 7.602902871257004e-07,
+            "state_max": 1.4901161193847656e-07,
+            "state_scale": 0.24994026124477386,
+            "state_relative": 5.961889100873792e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 1.3113021850585938e-06,
+            "read_median": 1.862645149230957e-08,
+            "read_scale": 1.7247388362884521,
+            "read_relative": 7.602902871257004e-07,
+            "state_max": 1.4901161193847656e-07,
+            "state_scale": 0.24994026124477386,
+            "state_relative": 5.961889100873792e-07,
+            "live_equal": true
+          },
+          "parity_vs_oracle": {
+            "read_max": 1.1920928955078125e-06,
+            "read_median": 1.30385160446167e-08,
+            "read_scale": 1.7247393131256104,
+            "read_relative": 6.911727972081043e-07,
+            "state_max": 0.0,
+            "state_scale": 0.24994030594825745,
+            "state_relative": 0.0,
+            "live_equal": null
+          },
+          "state_bit_equal_to_eager": false
+        },
+        "graph_C512": {
+          "description": {
+            "host_launches": 1,
+            "form": "one replay",
+            "twin_chunk": 512,
+            "kernels_note": "the pipeline's launches plus the copies the graph captures"
+          },
+          "gate_c": {
+            "kernels": 30.0,
+            "device_ms": 1.3747116666666663,
+            "distinct_kernels": 7,
+            "top_kernels": [
+              "Memcpy DtoD (Device -> Device)",
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 1.409912109375,
+            "latency_ms_p50": 1.4112023636698723,
+            "latency_ms_min": 1.406482420861721,
+            "latency_ms_max": 1.4114221557974815,
+            "dispatch_ms_mean": 0.08420217782258987,
+            "dispatch_ms_p50": 0.08345022797584534,
+            "device_ms_mean": 1.4252799987792968,
+            "device_ms_p50": 1.4260480403900146,
+            "occupancy_ms": 1.3745944000000008,
+            "latency_over_occupancy": 1.026631829483571,
+            "latency_over_device": 0.9892176348384466,
+            "dispatch_over_occupancy": 0.060708982937690774,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 1.3113021850585938e-06,
+            "read_median": 1.2665987014770508e-07,
+            "read_scale": 1.7247388362884521,
+            "read_relative": 7.602902871257004e-07,
+            "state_max": 1.4901161193847656e-07,
+            "state_scale": 0.24994026124477386,
+            "state_relative": 5.961889100873792e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 1.3113021850585938e-06,
+            "read_median": 1.2665987014770508e-07,
+            "read_scale": 1.7247388362884521,
+            "read_relative": 7.602902871257004e-07,
+            "state_max": 1.4901161193847656e-07,
+            "state_scale": 0.24994026124477386,
+            "state_relative": 5.961889100873792e-07,
+            "live_equal": true
+          },
+          "parity_vs_oracle": {
+            "read_max": 1.1920928955078125e-06,
+            "read_median": 1.30385160446167e-07,
+            "read_scale": 1.7247393131256104,
+            "read_relative": 6.911727972081043e-07,
+            "state_max": 0.0,
+            "state_scale": 0.24994030594825745,
+            "state_relative": 0.0,
+            "live_equal": null
+          },
+          "state_bit_equal_to_eager": false
+        },
+        "persistent": {
+          "description": {
+            "host_launches": 1,
+            "form": "one kernel",
+            "twin_chunk": null,
+            "twin_note": "the per-token oracle, not a chunked path: the persistent kernel walks tokens, not chunks"
+          },
+          "gate_c": {
+            "kernels": 1.0,
+            "device_ms": 0.9474316666666666,
+            "distinct_kernels": 1,
+            "top_kernels": [
+              "_persistent_scan_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 1.0649777948856354,
+            "latency_ms_p50": 1.052401028573513,
+            "latency_ms_min": 1.048642210662365,
+            "latency_ms_max": 1.115112565457821,
+            "dispatch_ms_mean": 0.10672416538000107,
+            "dispatch_ms_p50": 0.10671000927686691,
+            "device_ms_mean": 1.0817599773406983,
+            "device_ms_p50": 1.0688639879226685,
+            "occupancy_ms": 0.9469286,
+            "latency_over_occupancy": 1.1113837184487965,
+            "latency_over_device": 0.9844862235555074,
+            "dispatch_over_occupancy": 0.11269066039072737,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 4.76837158203125e-07,
+            "read_median": 1.30385160446167e-08,
+            "read_scale": 1.7247388362884521,
+            "read_relative": 2.764691953184365e-07,
+            "state_max": 1.4901161193847656e-07,
+            "state_scale": 0.24994026124477386,
+            "state_relative": 5.961889100873792e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": null,
+          "parity_vs_oracle": {
+            "read_max": 1.7881393432617188e-07,
+            "read_median": 3.725290298461914e-09,
+            "read_scale": 1.7247393131256104,
+            "read_relative": 1.0367591958121564e-07,
+            "state_max": 0.0,
+            "state_scale": 0.24994030594825745,
+            "state_relative": 0.0,
+            "live_equal": null
+          },
+          "state_bit_equal_to_eager": false
+        },
+        "persistent_bv16": {
+          "description": {
+            "host_launches": 1,
+            "form": "one kernel",
+            "value_block": 16,
+            "warps": "default"
+          },
+          "gate_c": {
+            "kernels": 1.0,
+            "device_ms": 0.9480773333333333,
+            "distinct_kernels": 1,
+            "top_kernels": [
+              "_persistent_scan_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 1.0513216257095337,
+            "latency_ms_p50": 1.0516420006752014,
+            "latency_ms_min": 1.0481113567948341,
+            "latency_ms_max": 1.0551223531365395,
+            "dispatch_ms_mean": 0.10539423674345016,
+            "dispatch_ms_p50": 0.1048203557729721,
+            "device_ms_mean": 1.0678655862808228,
+            "device_ms_p50": 1.0680639743804932,
+            "occupancy_ms": 0.9470723999999999,
+            "latency_over_occupancy": 1.1104135234805719,
+            "latency_over_device": 0.984507450390916,
+            "dispatch_over_occupancy": 0.11067829214849056,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 4.76837158203125e-07,
+            "read_median": 1.30385160446167e-08,
+            "read_scale": 1.7247388362884521,
+            "read_relative": 2.764691953184365e-07,
+            "state_max": 1.4901161193847656e-07,
+            "state_scale": 0.24994026124477386,
+            "state_relative": 5.961889100873792e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": null,
+          "parity_vs_oracle": {
+            "read_max": 1.7881393432617188e-07,
+            "read_median": 3.725290298461914e-09,
+            "read_scale": 1.7247393131256104,
+            "read_relative": 1.0367591958121564e-07,
+            "state_max": 0.0,
+            "state_scale": 0.24994030594825745,
+            "state_relative": 0.0,
+            "live_equal": null
+          },
+          "state_bit_equal_to_eager": false
+        },
+        "persistent_bv32": {
+          "description": {
+            "host_launches": 1,
+            "form": "one kernel",
+            "value_block": 32,
+            "warps": 4
+          },
+          "gate_c": {
+            "kernels": 1.0,
+            "device_ms": 1.2814113333333335,
+            "distinct_kernels": 1,
+            "top_kernels": [
+              "_persistent_scan_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 1.386304385960102,
+            "latency_ms_p50": 1.38133205473423,
+            "latency_ms_min": 1.3772128149867058,
+            "latency_ms_max": 1.402292400598526,
+            "dispatch_ms_mean": 0.10785236954689026,
+            "dispatch_ms_p50": 0.10125990957021713,
+            "device_ms_mean": 1.4038143873214721,
+            "device_ms_p50": 1.3977279663085938,
+            "occupancy_ms": 1.2803520000000002,
+            "latency_over_occupancy": 1.0788689787919492,
+            "latency_over_device": 0.9875268400726539,
+            "dispatch_over_occupancy": 0.07908755527403177,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 4.76837158203125e-07,
+            "read_median": 1.30385160446167e-08,
+            "read_scale": 1.7247388362884521,
+            "read_relative": 2.764691953184365e-07,
+            "state_max": 1.4901161193847656e-07,
+            "state_scale": 0.24994026124477386,
+            "state_relative": 5.961889100873792e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": null,
+          "parity_vs_oracle": {
+            "read_max": 2.384185791015625e-07,
+            "read_median": 3.725290298461914e-09,
+            "read_scale": 1.7247393131256104,
+            "read_relative": 1.3823455944162086e-07,
+            "state_max": 0.0,
+            "state_scale": 0.24994030594825745,
+            "state_relative": 0.0,
+            "live_equal": null
+          },
+          "state_bit_equal_to_eager": false
+        },
+        "persistent_bv64": {
+          "description": {
+            "host_launches": 1,
+            "form": "one kernel",
+            "value_block": 64,
+            "warps": "default"
+          },
+          "gate_c": {
+            "kernels": 1.0,
+            "device_ms": 1.4364839999999999,
+            "distinct_kernels": 1,
+            "top_kernels": [
+              "_persistent_scan_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 1.5435600653290749,
+            "latency_ms_p50": 1.544351689517498,
+            "latency_ms_min": 1.5390720218420029,
+            "latency_ms_max": 1.5481328591704369,
+            "dispatch_ms_mean": 0.1060042530298233,
+            "dispatch_ms_p50": 0.10692980140447617,
+            "device_ms_mean": 1.5602367877960206,
+            "device_ms_p50": 1.5608960390090942,
+            "occupancy_ms": 1.4417838,
+            "latency_over_occupancy": 1.0711395769029295,
+            "latency_over_device": 0.9893114156790885,
+            "dispatch_over_occupancy": 0.0741649347180043,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 4.76837158203125e-07,
+            "read_median": 1.30385160446167e-08,
+            "read_scale": 1.7247388362884521,
+            "read_relative": 2.764691953184365e-07,
+            "state_max": 1.4901161193847656e-07,
+            "state_scale": 0.24994026124477386,
+            "state_relative": 5.961889100873792e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": null,
+          "parity_vs_oracle": {
+            "read_max": 2.384185791015625e-07,
+            "read_median": 3.725290298461914e-09,
+            "read_scale": 1.7247393131256104,
+            "read_relative": 1.3823455944162086e-07,
+            "state_max": 0.0,
+            "state_scale": 0.24994030594825745,
+            "state_relative": 0.0,
+            "live_equal": null
+          },
+          "state_bit_equal_to_eager": false
+        },
+        "persistent_bv128": {
+          "description": {
+            "host_launches": 1,
+            "form": "one kernel",
+            "value_block": 128,
+            "warps": 4
+          },
+          "gate_c": {
+            "kernels": 1.0,
+            "device_ms": 2.8521626666666666,
+            "distinct_kernels": 1,
+            "top_kernels": [
+              "_persistent_scan_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 2.9617661610245705,
+            "latency_ms_p50": 2.959894947707653,
+            "latency_ms_min": 2.9514338821172714,
+            "latency_ms_max": 2.9764845967292786,
+            "dispatch_ms_mean": 0.11205803602933884,
+            "dispatch_ms_p50": 0.10900944471359253,
+            "device_ms_mean": 2.97991042137146,
+            "device_ms_p50": 2.9813120365142822,
+            "occupancy_ms": 2.8525898,
+            "latency_over_occupancy": 1.0376167466165844,
+            "latency_over_device": 0.9939111390004339,
+            "dispatch_over_occupancy": 0.038214202656685,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 5.960464477539062e-07,
+            "read_median": 1.30385160446167e-08,
+            "read_scale": 1.7247388362884521,
+            "read_relative": 3.4558649414804564e-07,
+            "state_max": 1.4901161193847656e-07,
+            "state_scale": 0.24994026124477386,
+            "state_relative": 5.961889100873792e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": null,
+          "parity_vs_oracle": {
+            "read_max": 1.7881393432617188e-07,
+            "read_median": 2.7939677238464355e-09,
+            "read_scale": 1.7247393131256104,
+            "read_relative": 1.0367591958121564e-07,
+            "state_max": 0.0,
+            "state_scale": 0.24994030594825745,
+            "state_relative": 0.0,
+            "live_equal": null
+          },
+          "state_bit_equal_to_eager": false
+        }
+      },
+      "sequence_noise_floor": 2.06017355397492e-07
+    },
+    "synthetic_rank64": {
+      "label": "synthetic_rank64",
+      "boundary": "one whole block call: batch 8, 2048 tokens, 2 heads, lanes 2, fp32, forward only; entry state and liveness in, the recorded schedule and read weights are inputs, the tokens' reads and the exit state out -- the same boundary as K23_READ.md \u00a75.3",
+      "shape": {
+        "batch": 8,
+        "tokens": 2048,
+        "heads": 2,
+        "rank": 64,
+        "value_dim": 128,
+        "lanes": 2
+      },
+      "eager_reference": {
+        "gate_c": {
+          "kernels": 1410.0,
+          "device_ms": 4.549243666666782,
+          "distinct_kernels": 40,
+          "top_kernels": [
+            "void (anonymous namespace)::elementwise_kernel_with_index<int, at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>(int, at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}, function_traits<at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>::result_type*)",
+            "void offsetPointerArray_kernel<float>(float**, float const**, int, int, int, float**, float const**, int, int, int, float**, float const**, int, int, int, int, int)",
+            "void at::native::vectorized_elementwise_kernel<4, at::native::exp_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::exp_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>)",
+            "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1})"
+          ]
+        },
+        "gate_d": {
+          "latency_ms_mean": 24.071081541478634,
+          "latency_ms_p50": 24.15294386446476,
+          "latency_ms_min": 23.906725458800793,
+          "latency_ms_max": 24.15357530117035,
+          "dispatch_ms_mean": 24.039275012910366,
+          "dispatch_ms_p50": 24.109695106744766,
+          "device_ms_mean": 24.094506581624348,
+          "device_ms_p50": 24.174911499023438,
+          "occupancy_ms": 4.554921333333361,
+          "latency_over_occupancy": 5.302603952281491,
+          "latency_over_device": 0.9990277850236793,
+          "dispatch_over_occupancy": 5.293109000655544,
+          "repeats": 3
+        },
+        "chunk_length_effect": {
+          "16": {
+            "read_max": 4.76837158203125e-07,
+            "read_median": 0.0,
+            "read_scale": 6.056552886962891,
+            "read_relative": 7.87307841775058e-08,
+            "state_max": 2.384185791015625e-07,
+            "state_scale": 4.311625957489014,
+            "state_relative": 5.5296674955638245e-08,
+            "live_equal": true
+          },
+          "256": {
+            "read_max": 4.76837158203125e-07,
+            "read_median": 0.0,
+            "read_scale": 6.056552886962891,
+            "read_relative": 7.87307841775058e-08,
+            "state_max": 2.384185791015625e-07,
+            "state_scale": 4.311625957489014,
+            "state_relative": 5.5296674955638245e-08,
+            "live_equal": true
+          },
+          "512": {
+            "read_max": 4.76837158203125e-07,
+            "read_median": 0.0,
+            "read_scale": 6.056552886962891,
+            "read_relative": 7.87307841775058e-08,
+            "state_max": 2.384185791015625e-07,
+            "state_scale": 4.311625957489014,
+            "state_relative": 5.5296674955638245e-08,
+            "live_equal": true
+          }
+        }
+      },
+      "paths": {
+        "chunked_C16": {
+          "description": {
+            "host_launches": 384,
+            "form": "host loop",
+            "twin_chunk": 16
+          },
+          "gate_c": {
+            "kernels": 512.0,
+            "device_ms": 2.173853333333268,
+            "distinct_kernels": 4,
+            "top_kernels": [
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel",
+              "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 44.3984916433692,
+            "latency_ms_p50": 44.34652253985405,
+            "latency_ms_min": 43.64650323987007,
+            "latency_ms_max": 44.9785552918911,
+            "dispatch_ms_mean": 44.37667150050402,
+            "dispatch_ms_p50": 44.32689305394888,
+            "device_ms_mean": 44.41731262207031,
+            "device_ms_p50": 44.36483383178711,
+            "occupancy_ms": 2.3734841999999543,
+            "latency_over_occupancy": 18.68414482803589,
+            "latency_over_device": 0.9995762693060417,
+            "dispatch_over_occupancy": 18.675874502956344,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 3.814697265625e-06,
+            "read_median": 8.344650268554688e-07,
+            "read_scale": 6.056552886962891,
+            "read_relative": 6.298462734200464e-07,
+            "state_max": 3.0994415283203125e-06,
+            "state_scale": 4.311625957489014,
+            "state_relative": 7.188567744232971e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 3.814697265625e-06,
+            "read_median": 8.344650268554688e-07,
+            "read_scale": 6.056552886962891,
+            "read_relative": 6.298462734200464e-07,
+            "state_max": 3.0994415283203125e-06,
+            "state_scale": 4.311625957489014,
+            "state_relative": 7.188567744232971e-07,
+            "live_equal": true
+          },
+          "parity_vs_oracle": null,
+          "state_bit_equal_to_eager": false
+        },
+        "chunked_C64": {
+          "description": {
+            "host_launches": 96,
+            "form": "host loop",
+            "twin_chunk": null
+          },
+          "gate_c": {
+            "kernels": 128.0,
+            "device_ms": 1.5393399999999955,
+            "distinct_kernels": 4,
+            "top_kernels": [
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel",
+              "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 11.170213483273983,
+            "latency_ms_p50": 11.089826002717018,
+            "latency_ms_min": 10.998745448887348,
+            "latency_ms_max": 11.390745639801025,
+            "dispatch_ms_mean": 11.150167509913445,
+            "dispatch_ms_p50": 11.069085448980331,
+            "device_ms_mean": 11.18952980041504,
+            "device_ms_p50": 11.108480453491211,
+            "occupancy_ms": 1.5341001999999795,
+            "latency_over_occupancy": 7.228879836347826,
+            "latency_over_device": 0.998273715027745,
+            "dispatch_over_occupancy": 7.215360149865361,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 3.814697265625e-06,
+            "read_median": 9.5367431640625e-07,
+            "read_scale": 6.056552886962891,
+            "read_relative": 6.298462734200464e-07,
+            "state_max": 3.0994415283203125e-06,
+            "state_scale": 4.311625957489014,
+            "state_relative": 7.188567744232971e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": null,
+          "parity_vs_oracle": null,
+          "state_bit_equal_to_eager": false
+        },
+        "chunked_C128": {
+          "description": {
+            "host_launches": 48,
+            "form": "host loop",
+            "twin_chunk": 128
+          },
+          "gate_c": {
+            "kernels": 64.0,
+            "device_ms": 1.3990713333333356,
+            "distinct_kernels": 4,
+            "top_kernels": [
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel",
+              "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 6.6939255222678185,
+            "latency_ms_p50": 6.708739325404167,
+            "latency_ms_min": 6.646669469773769,
+            "latency_ms_max": 6.72041904181242,
+            "dispatch_ms_mean": 6.670303642749786,
+            "dispatch_ms_p50": 6.68535940349102,
+            "device_ms_mean": 6.716518402099609,
+            "device_ms_p50": 6.731264114379883,
+            "occupancy_ms": 1.3987056,
+            "latency_over_occupancy": 4.796391267328999,
+            "latency_over_device": 0.9966362215542016,
+            "dispatch_over_occupancy": 4.779675868525171,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 5.245208740234375e-06,
+            "read_median": 1.1920928955078125e-06,
+            "read_scale": 6.056552886962891,
+            "read_relative": 8.660386259525638e-07,
+            "state_max": 3.0994415283203125e-06,
+            "state_scale": 4.311625957489014,
+            "state_relative": 7.188567744232971e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 5.245208740234375e-06,
+            "read_median": 1.1920928955078125e-06,
+            "read_scale": 6.056552886962891,
+            "read_relative": 8.660386259525638e-07,
+            "state_max": 3.0994415283203125e-06,
+            "state_scale": 4.311625957489014,
+            "state_relative": 7.188567744232971e-07,
+            "live_equal": true
+          },
+          "parity_vs_oracle": null,
+          "state_bit_equal_to_eager": false
+        },
+        "chunked_C256": {
+          "description": {
+            "host_launches": 24,
+            "form": "host loop",
+            "twin_chunk": 256
+          },
+          "gate_c": {
+            "kernels": 32.0,
+            "device_ms": 1.378109,
+            "distinct_kernels": 4,
+            "top_kernels": [
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel",
+              "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 3.465110994875431,
+            "latency_ms_p50": 3.4394850954413414,
+            "latency_ms_min": 3.4247050061821938,
+            "latency_ms_max": 3.5256650298833847,
+            "dispatch_ms_mean": 3.441935032606125,
+            "dispatch_ms_p50": 3.4163249656558037,
+            "device_ms_mean": 3.4876991748809814,
+            "device_ms_p50": 3.461535930633545,
+            "occupancy_ms": 1.3768396000000025,
+            "latency_over_occupancy": 2.498101518463977,
+            "latency_over_device": 0.9935234723888361,
+            "dispatch_over_occupancy": 2.4812802926759208,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 1.1682510375976562e-05,
+            "read_median": 1.9073486328125e-06,
+            "read_scale": 6.056552886962891,
+            "read_relative": 1.928904212348892e-06,
+            "state_max": 3.0994415283203125e-06,
+            "state_scale": 4.311625957489014,
+            "state_relative": 7.188567744232971e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 1.1682510375976562e-05,
+            "read_median": 1.9073486328125e-06,
+            "read_scale": 6.056552886962891,
+            "read_relative": 1.928904212348892e-06,
+            "state_max": 3.0994415283203125e-06,
+            "state_scale": 4.311625957489014,
+            "state_relative": 7.188567744232971e-07,
+            "live_equal": true
+          },
+          "parity_vs_oracle": null,
+          "state_bit_equal_to_eager": false
+        },
+        "chunked_C512": {
+          "description": {
+            "host_launches": 12,
+            "form": "host loop",
+            "twin_chunk": 512
+          },
+          "gate_c": {
+            "kernels": 16.0,
+            "device_ms": 1.419896666666667,
+            "distinct_kernels": 4,
+            "top_kernels": [
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel",
+              "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 1.8695427104830742,
+            "latency_ms_p50": 1.8693916499614716,
+            "latency_ms_min": 1.8578432500362396,
+            "latency_ms_max": 1.8762322142720222,
+            "dispatch_ms_mean": 1.7419001087546349,
+            "dispatch_ms_p50": 1.742691732943058,
+            "device_ms_mean": 1.8913023948669434,
+            "device_ms_p50": 1.8910080194473267,
+            "occupancy_ms": 1.4204712000000006,
+            "latency_over_occupancy": 1.316036291310567,
+            "latency_over_device": 0.9884948676409834,
+            "dispatch_over_occupancy": 1.2268405955312978,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 2.3365020751953125e-05,
+            "read_median": 3.5762786865234375e-06,
+            "read_scale": 6.056552886962891,
+            "read_relative": 3.857808424697784e-06,
+            "state_max": 3.0994415283203125e-06,
+            "state_scale": 4.311625957489014,
+            "state_relative": 7.188567744232971e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 2.3365020751953125e-05,
+            "read_median": 3.5762786865234375e-06,
+            "read_scale": 6.056552886962891,
+            "read_relative": 3.857808424697784e-06,
+            "state_max": 3.0994415283203125e-06,
+            "state_scale": 4.311625957489014,
+            "state_relative": 7.188567744232971e-07,
+            "live_equal": true
+          },
+          "parity_vs_oracle": null,
+          "state_bit_equal_to_eager": false
+        },
+        "graph_C128": {
+          "description": {
+            "host_launches": 1,
+            "form": "one replay",
+            "twin_chunk": 128,
+            "kernels_note": "the pipeline's launches plus the copies the graph captures"
+          },
+          "gate_c": {
+            "kernels": 78.0,
+            "device_ms": 1.4893143333333334,
+            "distinct_kernels": 5,
+            "top_kernels": [
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel",
+              "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 1.544284075498581,
+            "latency_ms_p50": 1.5412820503115654,
+            "latency_ms_min": 1.5401430428028107,
+            "latency_ms_max": 1.5552118420600891,
+            "dispatch_ms_mean": 0.10461397469043732,
+            "dispatch_ms_p50": 0.10199937969446182,
+            "device_ms_mean": 1.5630527973175048,
+            "device_ms_p50": 1.5626879930496216,
+            "occupancy_ms": 1.4906467999999997,
+            "latency_over_occupancy": 1.0339686438877176,
+            "latency_over_device": 0.9879922662554108,
+            "dispatch_over_occupancy": 0.06842625610202352,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 5.245208740234375e-06,
+            "read_median": 1.1920928955078125e-06,
+            "read_scale": 6.056552886962891,
+            "read_relative": 8.660386259525638e-07,
+            "state_max": 3.0994415283203125e-06,
+            "state_scale": 4.311625957489014,
+            "state_relative": 7.188567744232971e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 5.245208740234375e-06,
+            "read_median": 1.1920928955078125e-06,
+            "read_scale": 6.056552886962891,
+            "read_relative": 8.660386259525638e-07,
+            "state_max": 3.0994415283203125e-06,
+            "state_scale": 4.311625957489014,
+            "state_relative": 7.188567744232971e-07,
+            "live_equal": true
+          },
+          "parity_vs_oracle": null,
+          "state_bit_equal_to_eager": false
+        },
+        "graph_C256": {
+          "description": {
+            "host_launches": 1,
+            "form": "one replay",
+            "twin_chunk": 256,
+            "kernels_note": "the pipeline's launches plus the copies the graph captures"
+          },
+          "gate_c": {
+            "kernels": 46.0,
+            "device_ms": 1.4571863333333352,
+            "distinct_kernels": 5,
+            "top_kernels": [
+              "Memcpy DtoD (Device -> Device)",
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 1.5058400109410286,
+            "latency_ms_p50": 1.5059728175401688,
+            "latency_ms_min": 1.503591425716877,
+            "latency_ms_max": 1.5072813257575035,
+            "dispatch_ms_mean": 0.09922441095113754,
+            "dispatch_ms_p50": 0.09885057806968689,
+            "device_ms_mean": 1.524191975593567,
+            "device_ms_p50": 1.5238720178604126,
+            "occupancy_ms": 1.4570974000000012,
+            "latency_over_occupancy": 1.0335429996238876,
+            "latency_over_device": 0.9879595451580885,
+            "dispatch_over_occupancy": 0.06784074837391571,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 1.1682510375976562e-05,
+            "read_median": 1.9073486328125e-06,
+            "read_scale": 6.056552886962891,
+            "read_relative": 1.928904212348892e-06,
+            "state_max": 3.0994415283203125e-06,
+            "state_scale": 4.311625957489014,
+            "state_relative": 7.188567744232971e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 1.1682510375976562e-05,
+            "read_median": 1.9073486328125e-06,
+            "read_scale": 6.056552886962891,
+            "read_relative": 1.928904212348892e-06,
+            "state_max": 3.0994415283203125e-06,
+            "state_scale": 4.311625957489014,
+            "state_relative": 7.188567744232971e-07,
+            "live_equal": true
+          },
+          "parity_vs_oracle": null,
+          "state_bit_equal_to_eager": false
+        },
+        "graph_C512": {
+          "description": {
+            "host_launches": 1,
+            "form": "one replay",
+            "twin_chunk": 512,
+            "kernels_note": "the pipeline's launches plus the copies the graph captures"
+          },
+          "gate_c": {
+            "kernels": 30.0,
+            "device_ms": 1.5272083333333335,
+            "distinct_kernels": 5,
+            "top_kernels": [
+              "Memcpy DtoD (Device -> Device)",
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 1.5780545771121979,
+            "latency_ms_p50": 1.577582210302353,
+            "latency_ms_min": 1.575683243572712,
+            "latency_ms_max": 1.581071875989437,
+            "dispatch_ms_mean": 0.10633375495672226,
+            "dispatch_ms_p50": 0.09775999933481216,
+            "device_ms_mean": 1.5968704223632812,
+            "device_ms_p50": 1.5975680351257324,
+            "occupancy_ms": 1.5256687999999998,
+            "latency_over_occupancy": 1.0340266578843016,
+            "latency_over_device": 0.9882170494314517,
+            "dispatch_over_occupancy": 0.06407681623613996,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 2.3365020751953125e-05,
+            "read_median": 3.5762786865234375e-06,
+            "read_scale": 6.056552886962891,
+            "read_relative": 3.857808424697784e-06,
+            "state_max": 3.0994415283203125e-06,
+            "state_scale": 4.311625957489014,
+            "state_relative": 7.188567744232971e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 2.3365020751953125e-05,
+            "read_median": 3.5762786865234375e-06,
+            "read_scale": 6.056552886962891,
+            "read_relative": 3.857808424697784e-06,
+            "state_max": 3.0994415283203125e-06,
+            "state_scale": 4.311625957489014,
+            "state_relative": 7.188567744232971e-07,
+            "live_equal": true
+          },
+          "parity_vs_oracle": null,
+          "state_bit_equal_to_eager": false
+        },
+        "persistent": {
+          "description": {
+            "host_launches": 1,
+            "form": "one kernel",
+            "twin_chunk": 16,
+            "twin_note": "the per-token oracle, not a chunked path: the persistent kernel walks tokens, not chunks"
+          },
+          "gate_c": {
+            "kernels": 1.0,
+            "device_ms": 0.9863709999999998,
+            "distinct_kernels": 1,
+            "top_kernels": [
+              "_persistent_scan_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 1.1105332523584366,
+            "latency_ms_p50": 1.1086612939834595,
+            "latency_ms_min": 1.1064913123846054,
+            "latency_ms_max": 1.1163922026753426,
+            "dispatch_ms_mean": 0.14079231768846512,
+            "dispatch_ms_p50": 0.1258300617337227,
+            "device_ms_mean": 1.131001591682434,
+            "device_ms_p50": 1.1283199787139893,
+            "occupancy_ms": 0.9864457999999999,
+            "latency_over_occupancy": 1.1238947887288482,
+            "latency_over_device": 0.9819024663850829,
+            "dispatch_over_occupancy": 0.1275590222328715,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 3.6954879760742188e-06,
+            "read_median": 8.344650268554688e-07,
+            "read_scale": 6.056552886962891,
+            "read_relative": 6.101635773756699e-07,
+            "state_max": 3.0994415283203125e-06,
+            "state_scale": 4.311625957489014,
+            "state_relative": 7.188567744232971e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 3.6954879760742188e-06,
+            "read_median": 8.344650268554688e-07,
+            "read_scale": 6.056552886962891,
+            "read_relative": 6.101635773756699e-07,
+            "state_max": 3.0994415283203125e-06,
+            "state_scale": 4.311625957489014,
+            "state_relative": 7.188567744232971e-07,
+            "live_equal": true
+          },
+          "parity_vs_oracle": null,
+          "state_bit_equal_to_eager": false
+        },
+        "persistent_bv16": {
+          "description": {
+            "host_launches": 1,
+            "form": "one kernel",
+            "value_block": 16,
+            "warps": "default"
+          },
+          "gate_c": {
+            "kernels": 1.0,
+            "device_ms": 0.9865323333333332,
+            "distinct_kernels": 1,
+            "top_kernels": [
+              "_persistent_scan_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 1.1084217578172684,
+            "latency_ms_p50": 1.1051008477807045,
+            "latency_ms_min": 1.103011891245842,
+            "latency_ms_max": 1.1169323697686195,
+            "dispatch_ms_mean": 0.12569613754749298,
+            "dispatch_ms_p50": 0.12233108282089233,
+            "device_ms_mean": 1.1279040098190307,
+            "device_ms_p50": 1.1242560148239136,
+            "occupancy_ms": 0.9863886,
+            "latency_over_occupancy": 1.1203503850112466,
+            "latency_over_device": 0.9827270301088049,
+            "dispatch_over_occupancy": 0.12401915717688985,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 3.6954879760742188e-06,
+            "read_median": 8.344650268554688e-07,
+            "read_scale": 6.056552886962891,
+            "read_relative": 6.101635773756699e-07,
+            "state_max": 3.0994415283203125e-06,
+            "state_scale": 4.311625957489014,
+            "state_relative": 7.188567744232971e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": null,
+          "parity_vs_oracle": null,
+          "state_bit_equal_to_eager": false
+        },
+        "persistent_bv32": {
+          "description": {
+            "host_launches": 1,
+            "form": "one kernel",
+            "value_block": 32,
+            "warps": 4
+          },
+          "gate_c": {
+            "kernels": 1.0,
+            "device_ms": 1.1836273333333334,
+            "distinct_kernels": 1,
+            "top_kernels": [
+              "_persistent_scan_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 1.3020720332860947,
+            "latency_ms_p50": 1.29737239331007,
+            "latency_ms_min": 1.2964624911546707,
+            "latency_ms_max": 1.3183020055294037,
+            "dispatch_ms_mean": 0.12205801904201508,
+            "dispatch_ms_p50": 0.11764001101255417,
+            "device_ms_mean": 1.3210495710372925,
+            "device_ms_p50": 1.3162879943847656,
+            "occupancy_ms": 1.1832302000000001,
+            "latency_over_occupancy": 1.096466599069285,
+            "latency_over_device": 0.9856344998951881,
+            "dispatch_over_occupancy": 0.09942275899698483,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 3.814697265625e-06,
+            "read_median": 8.344650268554688e-07,
+            "read_scale": 6.056552886962891,
+            "read_relative": 6.298462734200464e-07,
+            "state_max": 3.0994415283203125e-06,
+            "state_scale": 4.311625957489014,
+            "state_relative": 7.188567744232971e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": null,
+          "parity_vs_oracle": null,
+          "state_bit_equal_to_eager": false
+        },
+        "persistent_bv64": {
+          "description": {
+            "host_launches": 1,
+            "form": "one kernel",
+            "value_block": 64,
+            "warps": "default"
+          },
+          "gate_c": {
+            "kernels": 1.0,
+            "device_ms": 1.431819666666667,
+            "distinct_kernels": 1,
+            "top_kernels": [
+              "_persistent_scan_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 1.5546442940831184,
+            "latency_ms_p50": 1.555432565510273,
+            "latency_ms_min": 1.5499917790293694,
+            "latency_ms_max": 1.5600426122546196,
+            "dispatch_ms_mean": 0.12441407889127731,
+            "dispatch_ms_p50": 0.12434925884008408,
+            "device_ms_mean": 1.5740416049957275,
+            "device_ms_p50": 1.5742080211639404,
+            "occupancy_ms": 1.4316086,
+            "latency_over_occupancy": 1.0864928902426774,
+            "latency_over_device": 0.9876767482822274,
+            "dispatch_over_occupancy": 0.08685981548314538,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 3.933906555175781e-06,
+            "read_median": 8.344650268554688e-07,
+            "read_scale": 6.056552886962891,
+            "read_relative": 6.495289694644228e-07,
+            "state_max": 3.0994415283203125e-06,
+            "state_scale": 4.311625957489014,
+            "state_relative": 7.188567744232971e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": null,
+          "parity_vs_oracle": null,
+          "state_bit_equal_to_eager": false
+        },
+        "persistent_bv128": {
+          "description": {
+            "host_launches": 1,
+            "form": "one kernel",
+            "value_block": 128,
+            "warps": 4
+          },
+          "gate_c": {
+            "kernels": 1.0,
+            "device_ms": 2.028985666666667,
+            "distinct_kernels": 1,
+            "top_kernels": [
+              "_persistent_scan_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 2.1515652537345886,
+            "latency_ms_p50": 2.1479232236742973,
+            "latency_ms_min": 2.1453723311424255,
+            "latency_ms_max": 2.166183665394783,
+            "dispatch_ms_mean": 0.12619644403457642,
+            "dispatch_ms_p50": 0.12242048978805542,
+            "device_ms_mean": 2.1714879989624025,
+            "device_ms_p50": 2.168031930923462,
+            "occupancy_ms": 2.028904,
+            "latency_over_occupancy": 1.0586618310547455,
+            "latency_over_device": 0.9908253026324191,
+            "dispatch_over_occupancy": 0.06033823669727864,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 3.814697265625e-06,
+            "read_median": 8.344650268554688e-07,
+            "read_scale": 6.056552886962891,
+            "read_relative": 6.298462734200464e-07,
+            "state_max": 3.0994415283203125e-06,
+            "state_scale": 4.311625957489014,
+            "state_relative": 7.188567744232971e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": null,
+          "parity_vs_oracle": null,
+          "state_bit_equal_to_eager": false
+        }
+      }
+    },
+    "synthetic_rank512": {
+      "label": "synthetic_rank512",
+      "boundary": "one whole block call: batch 8, 2048 tokens, 2 heads, lanes 2, fp32, forward only; entry state and liveness in, the recorded schedule and read weights are inputs, the tokens' reads and the exit state out -- the same boundary as K23_READ.md \u00a75.3",
+      "shape": {
+        "batch": 8,
+        "tokens": 2048,
+        "heads": 2,
+        "rank": 512,
+        "value_dim": 128,
+        "lanes": 2
+      },
+      "eager_reference": {
+        "gate_c": {
+          "kernels": 1410.0,
+          "device_ms": 5.194729000000019,
+          "distinct_kernels": 40,
+          "top_kernels": [
+            "void (anonymous namespace)::elementwise_kernel_with_index<int, at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>(int, at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}, function_traits<at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>::result_type*)",
+            "void offsetPointerArray_kernel<float>(float**, float const**, int, int, int, float**, float const**, int, int, int, float**, float const**, int, int, int, int, int)",
+            "void at::native::vectorized_elementwise_kernel<4, at::native::exp_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::exp_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>)",
+            "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1})"
+          ]
+        },
+        "gate_d": {
+          "latency_ms_mean": 21.35443004469077,
+          "latency_ms_p50": 21.297240629792213,
+          "latency_ms_min": 21.249609999358654,
+          "latency_ms_max": 21.516439504921436,
+          "dispatch_ms_mean": 21.330256946384907,
+          "dispatch_ms_p50": 21.268920972943306,
+          "device_ms_mean": 21.37567965189616,
+          "device_ms_p50": 21.32204818725586,
+          "occupancy_ms": 5.201926000000028,
+          "latency_over_occupancy": 4.09410680386305,
+          "latency_over_device": 0.999005897938618,
+          "dispatch_over_occupancy": 4.088662732407803,
+          "repeats": 3
+        },
+        "chunk_length_effect": {
+          "16": {
+            "read_max": 2.384185791015625e-07,
+            "read_median": 0.0,
+            "read_scale": 4.982635974884033,
+            "read_relative": 4.784988915573177e-08,
+            "state_max": 1.1920928955078125e-07,
+            "state_scale": 3.7332372665405273,
+            "state_relative": 3.193188137791433e-08,
+            "live_equal": true
+          },
+          "256": {
+            "read_max": 1.1920928955078125e-07,
+            "read_median": 0.0,
+            "read_scale": 4.982635974884033,
+            "read_relative": 2.3924944577865884e-08,
+            "state_max": 1.1920928955078125e-07,
+            "state_scale": 3.7332372665405273,
+            "state_relative": 3.193188137791433e-08,
+            "live_equal": true
+          },
+          "512": {
+            "read_max": 1.1920928955078125e-07,
+            "read_median": 0.0,
+            "read_scale": 4.982635974884033,
+            "read_relative": 2.3924944577865884e-08,
+            "state_max": 1.1920928955078125e-07,
+            "state_scale": 3.7332372665405273,
+            "state_relative": 3.193188137791433e-08,
+            "live_equal": true
+          }
+        }
+      },
+      "paths": {
+        "chunked_C16": {
+          "description": {
+            "host_launches": 384,
+            "form": "host loop",
+            "twin_chunk": 16
+          },
+          "gate_c": {
+            "kernels": 512.0,
+            "device_ms": 3.904777666666691,
+            "distinct_kernels": 4,
+            "top_kernels": [
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel",
+              "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 46.352886222302914,
+            "latency_ms_p50": 45.75805552303791,
+            "latency_ms_min": 45.40870524942875,
+            "latency_ms_max": 48.700288869440556,
+            "dispatch_ms_mean": 46.33198603987694,
+            "dispatch_ms_p50": 45.73637526482344,
+            "device_ms_mean": 46.372301483154295,
+            "device_ms_p50": 45.77824020385742,
+            "occupancy_ms": 4.160659400000091,
+            "latency_over_occupancy": 10.997789322297546,
+            "latency_over_device": 0.9995813177213463,
+            "dispatch_over_occupancy": 10.992578547723094,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 4.291534423828125e-06,
+            "read_median": 9.5367431640625e-07,
+            "read_scale": 4.982635974884033,
+            "read_relative": 8.612980048031719e-07,
+            "state_max": 5.0067901611328125e-06,
+            "state_scale": 3.7332372665405273,
+            "state_relative": 1.3411390178724017e-06,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 4.291534423828125e-06,
+            "read_median": 9.5367431640625e-07,
+            "read_scale": 4.982635974884033,
+            "read_relative": 8.612980048031719e-07,
+            "state_max": 5.0067901611328125e-06,
+            "state_scale": 3.7332372665405273,
+            "state_relative": 1.3411390178724017e-06,
+            "live_equal": true
+          },
+          "parity_vs_oracle": null,
+          "state_bit_equal_to_eager": false
+        },
+        "chunked_C64": {
+          "description": {
+            "host_launches": 96,
+            "form": "host loop",
+            "twin_chunk": null
+          },
+          "gate_c": {
+            "kernels": 128.0,
+            "device_ms": 2.2371033333333252,
+            "distinct_kernels": 4,
+            "top_kernels": [
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel",
+              "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 11.429374292492867,
+            "latency_ms_p50": 11.38810720294714,
+            "latency_ms_min": 11.273736134171486,
+            "latency_ms_max": 11.75776682794094,
+            "dispatch_ms_mean": 11.40949223190546,
+            "dispatch_ms_p50": 11.36864721775055,
+            "device_ms_mean": 11.448595237731933,
+            "device_ms_p50": 11.407232284545898,
+            "occupancy_ms": 2.2190374000000177,
+            "latency_over_occupancy": 5.132003274459028,
+            "latency_over_device": 0.9983211088487329,
+            "dispatch_over_occupancy": 5.123233712847949,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 4.291534423828125e-06,
+            "read_median": 9.5367431640625e-07,
+            "read_scale": 4.982635974884033,
+            "read_relative": 8.612980048031719e-07,
+            "state_max": 5.0067901611328125e-06,
+            "state_scale": 3.7332372665405273,
+            "state_relative": 1.3411390178724017e-06,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": null,
+          "parity_vs_oracle": null,
+          "state_bit_equal_to_eager": false
+        },
+        "chunked_C128": {
+          "description": {
+            "host_launches": 48,
+            "form": "host loop",
+            "twin_chunk": 128
+          },
+          "gate_c": {
+            "kernels": 64.0,
+            "device_ms": 1.9176066666666598,
+            "distinct_kernels": 4,
+            "top_kernels": [
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel",
+              "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 5.849468521773815,
+            "latency_ms_p50": 5.83173893392086,
+            "latency_ms_min": 5.699868313968182,
+            "latency_ms_max": 6.101819686591625,
+            "dispatch_ms_mean": 5.829416401684284,
+            "dispatch_ms_p50": 5.812088958919048,
+            "device_ms_mean": 5.869011306762696,
+            "device_ms_p50": 5.8527679443359375,
+            "occupancy_ms": 1.9014363999999997,
+            "latency_over_occupancy": 3.067017615693515,
+            "latency_over_device": 0.9966701742478564,
+            "dispatch_over_occupancy": 3.056683336302518,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 5.7220458984375e-06,
+            "read_median": 1.1920928955078125e-06,
+            "read_scale": 4.982635974884033,
+            "read_relative": 1.1483973397375625e-06,
+            "state_max": 5.0067901611328125e-06,
+            "state_scale": 3.7332372665405273,
+            "state_relative": 1.3411390178724017e-06,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 5.7220458984375e-06,
+            "read_median": 1.1920928955078125e-06,
+            "read_scale": 4.982635974884033,
+            "read_relative": 1.1483973397375625e-06,
+            "state_max": 5.0067901611328125e-06,
+            "state_scale": 3.7332372665405273,
+            "state_relative": 1.3411390178724017e-06,
+            "live_equal": true
+          },
+          "parity_vs_oracle": null,
+          "state_bit_equal_to_eager": false
+        },
+        "chunked_C256": {
+          "description": {
+            "host_launches": 24,
+            "form": "host loop",
+            "twin_chunk": 256
+          },
+          "gate_c": {
+            "kernels": 32.0,
+            "device_ms": 1.8810390000000028,
+            "distinct_kernels": 4,
+            "top_kernels": [
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel",
+              "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 3.2821547240018845,
+            "latency_ms_p50": 3.2212547957897186,
+            "latency_ms_min": 2.9862141236662865,
+            "latency_ms_max": 3.5777362063527107,
+            "dispatch_ms_mean": 3.255012445151806,
+            "dispatch_ms_p50": 3.196294419467449,
+            "device_ms_mean": 3.302886390686035,
+            "device_ms_p50": 3.243391990661621,
+            "occupancy_ms": 1.8762634000000014,
+            "latency_over_occupancy": 1.7168457242142634,
+            "latency_over_device": 0.9937231668813639,
+            "dispatch_over_occupancy": 1.7035424874073901,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 1.0251998901367188e-05,
+            "read_median": 2.0265579223632812e-06,
+            "read_scale": 4.982635974884033,
+            "read_relative": 2.0575452336964663e-06,
+            "state_max": 5.0067901611328125e-06,
+            "state_scale": 3.7332372665405273,
+            "state_relative": 1.3411390178724017e-06,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 1.0251998901367188e-05,
+            "read_median": 2.0265579223632812e-06,
+            "read_scale": 4.982635974884033,
+            "read_relative": 2.0575452336964663e-06,
+            "state_max": 5.0067901611328125e-06,
+            "state_scale": 3.7332372665405273,
+            "state_relative": 1.3411390178724017e-06,
+            "live_equal": true
+          },
+          "parity_vs_oracle": null,
+          "state_bit_equal_to_eager": false
+        },
+        "chunked_C512": {
+          "description": {
+            "host_launches": 12,
+            "form": "host loop",
+            "twin_chunk": 512
+          },
+          "gate_c": {
+            "kernels": 16.0,
+            "device_ms": 1.9436126666666678,
+            "distinct_kernels": 4,
+            "top_kernels": [
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel",
+              "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 2.149154804646969,
+            "latency_ms_p50": 2.150982618331909,
+            "latency_ms_min": 2.1414831280708313,
+            "latency_ms_max": 2.155812457203865,
+            "dispatch_ms_mean": 1.5466200187802315,
+            "dispatch_ms_p50": 1.5370119363069534,
+            "device_ms_mean": 2.1689728260040284,
+            "device_ms_p50": 2.171776056289673,
+            "occupancy_ms": 1.943385400000001,
+            "latency_over_occupancy": 1.1068224647215668,
+            "latency_over_device": 0.9908629462206906,
+            "dispatch_over_occupancy": 0.7908940430997128,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 1.9788742065429688e-05,
+            "read_median": 3.787688910961151e-06,
+            "read_scale": 4.982635974884033,
+            "read_relative": 3.971540799925737e-06,
+            "state_max": 5.0067901611328125e-06,
+            "state_scale": 3.7332372665405273,
+            "state_relative": 1.3411390178724017e-06,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 1.9788742065429688e-05,
+            "read_median": 3.787688910961151e-06,
+            "read_scale": 4.982635974884033,
+            "read_relative": 3.971540799925737e-06,
+            "state_max": 5.0067901611328125e-06,
+            "state_scale": 3.7332372665405273,
+            "state_relative": 1.3411390178724017e-06,
+            "live_equal": true
+          },
+          "parity_vs_oracle": null,
+          "state_bit_equal_to_eager": false
+        },
+        "graph_C128": {
+          "description": {
+            "host_launches": 1,
+            "form": "one replay",
+            "twin_chunk": 128,
+            "kernels_note": "the pipeline's launches plus the copies the graph captures"
+          },
+          "gate_c": {
+            "kernels": 78.0,
+            "device_ms": 2.0372479999999977,
+            "distinct_kernels": 5,
+            "top_kernels": [
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel",
+              "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 2.069927006959915,
+            "latency_ms_p50": 2.0630424842238426,
+            "latency_ms_min": 2.0628729835152626,
+            "latency_ms_max": 2.097233198583126,
+            "dispatch_ms_mean": 0.09388215839862823,
+            "dispatch_ms_p50": 0.08756015449762344,
+            "device_ms_mean": 2.0854527950286865,
+            "device_ms_p50": 2.078336000442505,
+            "occupancy_ms": 2.0377588,
+            "latency_over_occupancy": 1.0124075941783897,
+            "latency_over_device": 0.9925551956362754,
+            "dispatch_over_occupancy": 0.04296885112095869,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 5.7220458984375e-06,
+            "read_median": 1.1920928955078125e-06,
+            "read_scale": 4.982635974884033,
+            "read_relative": 1.1483973397375625e-06,
+            "state_max": 5.0067901611328125e-06,
+            "state_scale": 3.7332372665405273,
+            "state_relative": 1.3411390178724017e-06,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 5.7220458984375e-06,
+            "read_median": 1.1920928955078125e-06,
+            "read_scale": 4.982635974884033,
+            "read_relative": 1.1483973397375625e-06,
+            "state_max": 5.0067901611328125e-06,
+            "state_scale": 3.7332372665405273,
+            "state_relative": 1.3411390178724017e-06,
+            "live_equal": true
+          },
+          "parity_vs_oracle": null,
+          "state_bit_equal_to_eager": false
+        },
+        "graph_C256": {
+          "description": {
+            "host_launches": 1,
+            "form": "one replay",
+            "twin_chunk": 256,
+            "kernels_note": "the pipeline's launches plus the copies the graph captures"
+          },
+          "gate_c": {
+            "kernels": 46.0,
+            "device_ms": 2.032892333333332,
+            "distinct_kernels": 5,
+            "top_kernels": [
+              "Memcpy DtoD (Device -> Device)",
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 1.976885087788105,
+            "latency_ms_p50": 1.9402429461479187,
+            "latency_ms_min": 1.938173547387123,
+            "latency_ms_max": 2.059623599052429,
+            "dispatch_ms_mean": 0.08522830903530121,
+            "dispatch_ms_p50": 0.08510053157806396,
+            "device_ms_mean": 1.9923839807510375,
+            "device_ms_p50": 1.9551039934158325,
+            "occupancy_ms": 1.9098086000000005,
+            "latency_over_occupancy": 1.0159358095611875,
+            "latency_over_device": 0.9922209307479525,
+            "dispatch_over_occupancy": 0.04455971743873388,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 1.0251998901367188e-05,
+            "read_median": 2.0265579223632812e-06,
+            "read_scale": 4.982635974884033,
+            "read_relative": 2.0575452336964663e-06,
+            "state_max": 5.0067901611328125e-06,
+            "state_scale": 3.7332372665405273,
+            "state_relative": 1.3411390178724017e-06,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 1.0251998901367188e-05,
+            "read_median": 2.0265579223632812e-06,
+            "read_scale": 4.982635974884033,
+            "read_relative": 2.0575452336964663e-06,
+            "state_max": 5.0067901611328125e-06,
+            "state_scale": 3.7332372665405273,
+            "state_relative": 1.3411390178724017e-06,
+            "live_equal": true
+          },
+          "parity_vs_oracle": null,
+          "state_bit_equal_to_eager": false
+        },
+        "graph_C512": {
+          "description": {
+            "host_launches": 1,
+            "form": "one replay",
+            "twin_chunk": 512,
+            "kernels_note": "the pipeline's launches plus the copies the graph captures"
+          },
+          "gate_c": {
+            "kernels": 30.0,
+            "device_ms": 2.007928666666668,
+            "distinct_kernels": 5,
+            "top_kernels": [
+              "Memcpy DtoD (Device -> Device)",
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 2.0471731200814247,
+            "latency_ms_p50": 2.0502638071775436,
+            "latency_ms_min": 2.041253261268139,
+            "latency_ms_max": 2.0511727780103683,
+            "dispatch_ms_mean": 0.09747613221406937,
+            "dispatch_ms_p50": 0.09771063923835754,
+            "device_ms_mean": 2.065484809875488,
+            "device_ms_p50": 2.067840099334717,
+            "occupancy_ms": 2.014623600000001,
+            "latency_over_occupancy": 1.0176907523457694,
+            "latency_over_device": 0.9911344350214963,
+            "dispatch_over_occupancy": 0.048500692257530134,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 1.9788742065429688e-05,
+            "read_median": 3.787688910961151e-06,
+            "read_scale": 4.982635974884033,
+            "read_relative": 3.971540799925737e-06,
+            "state_max": 5.0067901611328125e-06,
+            "state_scale": 3.7332372665405273,
+            "state_relative": 1.3411390178724017e-06,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 1.9788742065429688e-05,
+            "read_median": 3.787688910961151e-06,
+            "read_scale": 4.982635974884033,
+            "read_relative": 3.971540799925737e-06,
+            "state_max": 5.0067901611328125e-06,
+            "state_scale": 3.7332372665405273,
+            "state_relative": 1.3411390178724017e-06,
+            "live_equal": true
+          },
+          "parity_vs_oracle": null,
+          "state_bit_equal_to_eager": false
+        },
+        "persistent": {
+          "description": {
+            "host_launches": 1,
+            "form": "one kernel",
+            "twin_chunk": 16,
+            "twin_note": "the per-token oracle, not a chunked path: the persistent kernel walks tokens, not chunks"
+          },
+          "gate_c": {
+            "kernels": 1.0,
+            "device_ms": 2.151615666666667,
+            "distinct_kernels": 1,
+            "top_kernels": [
+              "_persistent_scan_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 2.2029129788279533,
+            "latency_ms_p50": 2.2028638049960136,
+            "latency_ms_min": 2.19128280878067,
+            "latency_ms_max": 2.2167526185512543,
+            "dispatch_ms_mean": 0.14544222503900528,
+            "dispatch_ms_p50": 0.13055093586444855,
+            "device_ms_mean": 2.2235968112945557,
+            "device_ms_p50": 2.2220799922943115,
+            "occupancy_ms": 2.0728304,
+            "latency_over_occupancy": 1.0627322934843169,
+            "latency_over_device": 0.9906980292643249,
+            "dispatch_over_occupancy": 0.06298196700726144,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 4.291534423828125e-06,
+            "read_median": 8.344650268554688e-07,
+            "read_scale": 4.982635974884033,
+            "read_relative": 8.612980048031719e-07,
+            "state_max": 5.0067901611328125e-06,
+            "state_scale": 3.7332372665405273,
+            "state_relative": 1.3411390178724017e-06,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 4.291534423828125e-06,
+            "read_median": 8.344650268554688e-07,
+            "read_scale": 4.982635974884033,
+            "read_relative": 8.612980048031719e-07,
+            "state_max": 5.0067901611328125e-06,
+            "state_scale": 3.7332372665405273,
+            "state_relative": 1.3411390178724017e-06,
+            "live_equal": true
+          },
+          "parity_vs_oracle": null,
+          "state_bit_equal_to_eager": false
+        },
+        "persistent_bv16": {
+          "description": {
+            "host_launches": 1,
+            "form": "one kernel",
+            "value_block": 16,
+            "warps": "default"
+          },
+          "gate_c": {
+            "kernels": 1.0,
+            "device_ms": 2.0625276666666665,
+            "distinct_kernels": 1,
+            "top_kernels": [
+              "_persistent_scan_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 2.188219130039215,
+            "latency_ms_p50": 2.184594050049782,
+            "latency_ms_min": 2.164253033697605,
+            "latency_ms_max": 2.222202718257904,
+            "dispatch_ms_mean": 0.12912433594465256,
+            "dispatch_ms_p50": 0.12566056102514267,
+            "device_ms_mean": 2.20764799118042,
+            "device_ms_p50": 2.2042880058288574,
+            "occupancy_ms": 2.0643331999999996,
+            "latency_over_occupancy": 1.0582565111338529,
+            "latency_over_device": 0.9911992939006474,
+            "dispatch_over_occupancy": 0.06087222790639742,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 4.291534423828125e-06,
+            "read_median": 8.344650268554688e-07,
+            "read_scale": 4.982635974884033,
+            "read_relative": 8.612980048031719e-07,
+            "state_max": 5.0067901611328125e-06,
+            "state_scale": 3.7332372665405273,
+            "state_relative": 1.3411390178724017e-06,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": null,
+          "parity_vs_oracle": null,
+          "state_bit_equal_to_eager": false
+        },
+        "persistent_bv32": {
+          "description": {
+            "host_launches": 1,
+            "form": "one kernel",
+            "value_block": 32,
+            "warps": 4
+          },
+          "gate_c": {
+            "kernels": 1.0,
+            "device_ms": 3.6618356666666667,
+            "distinct_kernels": 1,
+            "top_kernels": [
+              "_persistent_scan_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 3.7811310961842537,
+            "latency_ms_p50": 3.7818551063537598,
+            "latency_ms_min": 3.7639355286955833,
+            "latency_ms_max": 3.793015144765377,
+            "dispatch_ms_mean": 0.11751372367143631,
+            "dispatch_ms_p50": 0.12310966849327087,
+            "device_ms_mean": 3.8007359981536863,
+            "device_ms_p50": 3.8016319274902344,
+            "occupancy_ms": 3.666564,
+            "latency_over_occupancy": 1.031443909435035,
+            "latency_over_device": 0.9948418143278154,
+            "dispatch_over_occupancy": 0.033576304271048005,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 4.291534423828125e-06,
+            "read_median": 8.344650268554688e-07,
+            "read_scale": 4.982635974884033,
+            "read_relative": 8.612980048031719e-07,
+            "state_max": 5.0067901611328125e-06,
+            "state_scale": 3.7332372665405273,
+            "state_relative": 1.3411390178724017e-06,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": null,
+          "parity_vs_oracle": null,
+          "state_bit_equal_to_eager": false
+        },
+        "persistent_bv64": {
+          "description": {
+            "host_launches": 1,
+            "form": "one kernel",
+            "value_block": 64,
+            "warps": "default"
+          },
+          "gate_c": {
+            "kernels": 1.0,
+            "device_ms": 90.31397833333334,
+            "distinct_kernels": 1,
+            "top_kernels": [
+              "_persistent_scan_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 90.49545377492905,
+            "latency_ms_p50": 90.48034902662039,
+            "latency_ms_min": 90.4532102867961,
+            "latency_ms_max": 90.58853052556515,
+            "dispatch_ms_mean": 0.17523262649774551,
+            "dispatch_ms_p50": 0.14221109449863434,
+            "device_ms_mean": 90.52351379394531,
+            "device_ms_p50": 90.50863647460938,
+            "occupancy_ms": 90.32700160000002,
+            "latency_over_occupancy": 1.001697691984723,
+            "latency_over_device": 0.9996900250792282,
+            "dispatch_over_occupancy": 0.0015744029136314684,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 4.291534423828125e-06,
+            "read_median": 8.344650268554688e-07,
+            "read_scale": 4.982635974884033,
+            "read_relative": 8.612980048031719e-07,
+            "state_max": 5.0067901611328125e-06,
+            "state_scale": 3.7332372665405273,
+            "state_relative": 1.3411390178724017e-06,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": null,
+          "parity_vs_oracle": null,
+          "state_bit_equal_to_eager": false
+        },
+        "persistent_bv128": {
+          "description": {
+            "host_launches": 1,
+            "form": "one kernel",
+            "value_block": 128,
+            "warps": 4
+          },
+          "gate_c": {
+            "kernels": 1.0,
+            "device_ms": 250.335854,
+            "distinct_kernels": 1,
+            "top_kernels": [
+              "_persistent_scan_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 250.48161018639803,
+            "latency_ms_p50": 250.45121740549803,
+            "latency_ms_min": 250.44040847569704,
+            "latency_ms_max": 250.53709838539362,
+            "dispatch_ms_mean": 0.11501610279083252,
+            "dispatch_ms_p50": 0.11281948536634445,
+            "device_ms_mean": 250.5000213623047,
+            "device_ms_p50": 250.46853637695312,
+            "occupancy_ms": 250.38764180000004,
+            "latency_over_occupancy": 1.0002539087194597,
+            "latency_over_device": 0.9999265022980576,
+            "dispatch_over_occupancy": 0.00045057928800040493,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 4.291534423828125e-06,
+            "read_median": 8.940696716308594e-07,
+            "read_scale": 4.982635974884033,
+            "read_relative": 8.612980048031719e-07,
+            "state_max": 5.0067901611328125e-06,
+            "state_scale": 3.7332372665405273,
+            "state_relative": 1.3411390178724017e-06,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": null,
+          "parity_vs_oracle": null,
+          "state_bit_equal_to_eager": false
+        }
+      }
+    },
+    "matrix_append": {
+      "label": "matrix_append",
+      "boundary": "one whole block call: batch 8, 2048 tokens, 2 heads, lanes 2, fp32, forward only; entry state and liveness in, the recorded schedule and read weights are inputs, the tokens' reads and the exit state out -- the same boundary as K23_READ.md \u00a75.3",
+      "shape": {
+        "batch": 8,
+        "tokens": 2048,
+        "heads": 2,
+        "rank": 128,
+        "value_dim": 128,
+        "lanes": 2
+      },
+      "eager_reference": {
+        "gate_c": {
+          "kernels": 1410.0,
+          "device_ms": 4.459990999999905,
+          "distinct_kernels": 40,
+          "top_kernels": [
+            "void (anonymous namespace)::elementwise_kernel_with_index<int, at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>(int, at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}, function_traits<at::native::arange_cuda_out(c10::Scalar const&, c10::Scalar const&, c10::Scalar const&, at::Tensor&)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(long)#1}>::result_type*)",
+            "void offsetPointerArray_kernel<float>(float**, float const**, int, int, int, float**, float const**, int, int, int, float**, float const**, int, int, int, int, int)",
+            "void at::native::vectorized_elementwise_kernel<4, at::native::exp_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::exp_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>)",
+            "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1})"
+          ]
+        },
+        "gate_d": {
+          "latency_ms_mean": 21.02733651796977,
+          "latency_ms_p50": 21.003879606723785,
+          "latency_ms_min": 20.98480984568596,
+          "latency_ms_max": 21.093320101499557,
+          "dispatch_ms_mean": 21.00579005976518,
+          "dispatch_ms_p50": 20.982549525797367,
+          "device_ms_mean": 21.047701517740887,
+          "device_ms_p50": 21.023168563842773,
+          "occupancy_ms": 4.463525333333366,
+          "latency_over_occupancy": 4.705670526807129,
+          "latency_over_device": 0.9990324359287425,
+          "dispatch_over_occupancy": 4.700891774737072,
+          "repeats": 3
+        },
+        "chunk_length_effect": {
+          "16": {
+            "read_max": 0.0,
+            "read_median": 0.0,
+            "read_scale": 3.4194207191467285,
+            "read_relative": 0.0,
+            "state_max": 0.0,
+            "state_scale": 8.309802055358887,
+            "state_relative": 0.0,
+            "live_equal": true
+          },
+          "256": {
+            "read_max": 0.0,
+            "read_median": 0.0,
+            "read_scale": 3.4194207191467285,
+            "read_relative": 0.0,
+            "state_max": 0.0,
+            "state_scale": 8.309802055358887,
+            "state_relative": 0.0,
+            "live_equal": true
+          },
+          "512": {
+            "read_max": 0.0,
+            "read_median": 0.0,
+            "read_scale": 3.4194207191467285,
+            "read_relative": 0.0,
+            "state_max": 0.0,
+            "state_scale": 8.309802055358887,
+            "state_relative": 0.0,
+            "live_equal": true
+          }
+        }
+      },
+      "paths": {
+        "chunked_C16": {
+          "description": {
+            "host_launches": 384,
+            "form": "host loop",
+            "twin_chunk": 16
+          },
+          "gate_c": {
+            "kernels": 512.0,
+            "device_ms": 3.8222276666666333,
+            "distinct_kernels": 4,
+            "top_kernels": [
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel",
+              "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 44.13173142820597,
+            "latency_ms_p50": 44.15474273264408,
+            "latency_ms_min": 43.79090387374163,
+            "latency_ms_max": 44.44464389234781,
+            "dispatch_ms_mean": 44.111559353768826,
+            "dispatch_ms_p50": 44.13501266390085,
+            "device_ms_mean": 44.15101547241211,
+            "device_ms_p50": 44.173728942871094,
+            "occupancy_ms": 3.821528600000113,
+            "latency_over_occupancy": 11.554209677416198,
+            "latency_over_device": 0.9995632253528077,
+            "dispatch_over_occupancy": 11.549046803914944,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 1.5497207641601562e-06,
+            "read_median": 5.364418029785156e-07,
+            "read_scale": 3.4194207191467285,
+            "read_relative": 4.532114914911286e-07,
+            "state_max": 2.384185791015625e-06,
+            "state_scale": 8.309802055358887,
+            "state_relative": 2.869124649579461e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 1.5497207641601562e-06,
+            "read_median": 5.364418029785156e-07,
+            "read_scale": 3.4194207191467285,
+            "read_relative": 4.532114914911286e-07,
+            "state_max": 2.384185791015625e-06,
+            "state_scale": 8.309802055358887,
+            "state_relative": 2.869124649579461e-07,
+            "live_equal": true
+          },
+          "parity_vs_oracle": {
+            "read_max": 9.5367431640625e-07,
+            "read_median": 4.172325134277344e-07,
+            "read_scale": 3.4194211959838867,
+            "read_relative": 2.7889934048672957e-07,
+            "state_max": 0.0,
+            "state_scale": 8.30980396270752,
+            "state_relative": 0.0,
+            "live_equal": null
+          },
+          "state_bit_equal_to_eager": false
+        },
+        "chunked_C64": {
+          "description": {
+            "host_launches": 96,
+            "form": "host loop",
+            "twin_chunk": null
+          },
+          "gate_c": {
+            "kernels": 128.0,
+            "device_ms": 2.019041333333323,
+            "distinct_kernels": 4,
+            "top_kernels": [
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel",
+              "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 12.455794028937817,
+            "latency_ms_p50": 12.181167490780354,
+            "latency_ms_min": 11.039716191589832,
+            "latency_ms_max": 14.647561125457287,
+            "dispatch_ms_mean": 12.43464183062315,
+            "dispatch_ms_p50": 12.157926335930824,
+            "device_ms_mean": 12.476691246032715,
+            "device_ms_p50": 12.203455924987793,
+            "occupancy_ms": 2.010849599999998,
+            "latency_over_occupancy": 6.057721816082299,
+            "latency_over_device": 0.9983250994448113,
+            "dispatch_over_occupancy": 6.046163937835448,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 2.1457672119140625e-06,
+            "read_median": 5.960464477539062e-07,
+            "read_scale": 3.4194207191467285,
+            "read_relative": 6.275236036031011e-07,
+            "state_max": 2.384185791015625e-06,
+            "state_scale": 8.309802055358887,
+            "state_relative": 2.869124649579461e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": null,
+          "parity_vs_oracle": {
+            "read_max": 1.9073486328125e-06,
+            "read_median": 4.76837158203125e-07,
+            "read_scale": 3.4194211959838867,
+            "read_relative": 5.577986809734591e-07,
+            "state_max": 0.0,
+            "state_scale": 8.30980396270752,
+            "state_relative": 0.0,
+            "live_equal": null
+          },
+          "state_bit_equal_to_eager": false
+        },
+        "chunked_C128": {
+          "description": {
+            "host_launches": 48,
+            "form": "host loop",
+            "twin_chunk": 128
+          },
+          "gate_c": {
+            "kernels": 64.0,
+            "device_ms": 1.7528453333333334,
+            "distinct_kernels": 4,
+            "top_kernels": [
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel",
+              "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 5.810888484120369,
+            "latency_ms_p50": 5.914938636124134,
+            "latency_ms_min": 5.608207546174526,
+            "latency_ms_max": 5.973579362034798,
+            "dispatch_ms_mean": 5.7914262637495995,
+            "dispatch_ms_p50": 5.895468406379223,
+            "device_ms_mean": 5.829670429229736,
+            "device_ms_p50": 5.933504104614258,
+            "occupancy_ms": 1.7355629999999955,
+            "latency_over_occupancy": 3.4080806263582186,
+            "latency_over_device": 0.9967782149372981,
+            "dispatch_over_occupancy": 3.396862232243507,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 2.384185791015625e-06,
+            "read_median": 7.152557373046875e-07,
+            "read_scale": 3.4194207191467285,
+            "read_relative": 6.972484484478901e-07,
+            "state_max": 2.384185791015625e-06,
+            "state_scale": 8.309802055358887,
+            "state_relative": 2.869124649579461e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 2.384185791015625e-06,
+            "read_median": 7.152557373046875e-07,
+            "read_scale": 3.4194207191467285,
+            "read_relative": 6.972484484478901e-07,
+            "state_max": 2.384185791015625e-06,
+            "state_scale": 8.309802055358887,
+            "state_relative": 2.869124649579461e-07,
+            "live_equal": true
+          },
+          "parity_vs_oracle": {
+            "read_max": 2.384185791015625e-06,
+            "read_median": 7.152557373046875e-07,
+            "read_scale": 3.4194211959838867,
+            "read_relative": 6.972483512168238e-07,
+            "state_max": 0.0,
+            "state_scale": 8.30980396270752,
+            "state_relative": 0.0,
+            "live_equal": null
+          },
+          "state_bit_equal_to_eager": false
+        },
+        "chunked_C256": {
+          "description": {
+            "host_launches": 24,
+            "form": "host loop",
+            "twin_chunk": 256
+          },
+          "gate_c": {
+            "kernels": 32.0,
+            "device_ms": 1.7078540000000013,
+            "distinct_kernels": 4,
+            "top_kernels": [
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel",
+              "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 2.946217730641365,
+            "latency_ms_p50": 2.909173257648945,
+            "latency_ms_min": 2.8808340430259705,
+            "latency_ms_max": 3.1433142721652985,
+            "dispatch_ms_mean": 2.9243018478155136,
+            "dispatch_ms_p50": 2.8898734599351883,
+            "device_ms_mean": 2.965068817138672,
+            "device_ms_p50": 2.928800106048584,
+            "occupancy_ms": 1.7081623999999984,
+            "latency_over_occupancy": 1.7031010972077054,
+            "latency_over_device": 0.993642276904892,
+            "dispatch_over_occupancy": 1.691802524124867,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 3.814697265625e-06,
+            "read_median": 1.6689300537109375e-06,
+            "read_scale": 3.4194207191467285,
+            "read_relative": 1.1155975175166242e-06,
+            "state_max": 2.384185791015625e-06,
+            "state_scale": 8.309802055358887,
+            "state_relative": 2.869124649579461e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 3.814697265625e-06,
+            "read_median": 1.6689300537109375e-06,
+            "read_scale": 3.4194207191467285,
+            "read_relative": 1.1155975175166242e-06,
+            "state_max": 2.384185791015625e-06,
+            "state_scale": 8.309802055358887,
+            "state_relative": 2.869124649579461e-07,
+            "live_equal": true
+          },
+          "parity_vs_oracle": {
+            "read_max": 3.6954879760742188e-06,
+            "read_median": 1.6689300537109375e-06,
+            "read_scale": 3.4194211959838867,
+            "read_relative": 1.080734944386077e-06,
+            "state_max": 0.0,
+            "state_scale": 8.30980396270752,
+            "state_relative": 0.0,
+            "live_equal": null
+          },
+          "state_bit_equal_to_eager": false
+        },
+        "chunked_C512": {
+          "description": {
+            "host_launches": 12,
+            "form": "host loop",
+            "twin_chunk": 512
+          },
+          "gate_c": {
+            "kernels": 16.0,
+            "device_ms": 1.814550333333333,
+            "distinct_kernels": 4,
+            "top_kernels": [
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel",
+              "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 2.0009951665997505,
+            "latency_ms_p50": 1.9991034641861916,
+            "latency_ms_min": 1.9964128732681274,
+            "latency_ms_max": 2.006783150136471,
+            "dispatch_ms_mean": 1.496756263077259,
+            "dispatch_ms_p50": 1.4877924695611,
+            "device_ms_mean": 2.019379186630249,
+            "device_ms_p50": 2.017184019088745,
+            "occupancy_ms": 1.8110120000000003,
+            "latency_over_occupancy": 1.1038598662991694,
+            "latency_over_device": 0.9908962020841783,
+            "dispatch_over_occupancy": 0.8215254617645271,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 4.0531158447265625e-06,
+            "read_median": 2.0265579223632812e-06,
+            "read_scale": 3.4194207191467285,
+            "read_relative": 1.1853223623614132e-06,
+            "state_max": 2.384185791015625e-06,
+            "state_scale": 8.309802055358887,
+            "state_relative": 2.869124649579461e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 4.0531158447265625e-06,
+            "read_median": 2.0265579223632812e-06,
+            "read_scale": 3.4194207191467285,
+            "read_relative": 1.1853223623614132e-06,
+            "state_max": 2.384185791015625e-06,
+            "state_scale": 8.309802055358887,
+            "state_relative": 2.869124649579461e-07,
+            "live_equal": true
+          },
+          "parity_vs_oracle": {
+            "read_max": 3.6954879760742188e-06,
+            "read_median": 2.0265579223632812e-06,
+            "read_scale": 3.4194211959838867,
+            "read_relative": 1.080734944386077e-06,
+            "state_max": 0.0,
+            "state_scale": 8.30980396270752,
+            "state_relative": 0.0,
+            "live_equal": null
+          },
+          "state_bit_equal_to_eager": false
+        },
+        "graph_C128": {
+          "description": {
+            "host_launches": 1,
+            "form": "one replay",
+            "twin_chunk": 128,
+            "kernels_note": "the pipeline's launches plus the copies the graph captures"
+          },
+          "gate_c": {
+            "kernels": 78.0,
+            "device_ms": 1.9293190000000002,
+            "distinct_kernels": 5,
+            "top_kernels": [
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel",
+              "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1} const&)::{lambda(int)#1})"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 1.9575048238039017,
+            "latency_ms_p50": 1.9559524953365326,
+            "latency_ms_min": 1.955213025212288,
+            "latency_ms_max": 1.962912268936634,
+            "dispatch_ms_mean": 0.08771196007728577,
+            "dispatch_ms_p50": 0.08706096559762955,
+            "device_ms_mean": 1.9732160091400146,
+            "device_ms_p50": 1.971295952796936,
+            "occupancy_ms": 1.9274638000000004,
+            "latency_over_occupancy": 1.0147804048701368,
+            "latency_over_device": 0.9920377772816873,
+            "dispatch_over_occupancy": 0.04516866443750048,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 2.384185791015625e-06,
+            "read_median": 7.152557373046875e-07,
+            "read_scale": 3.4194207191467285,
+            "read_relative": 6.972484484478901e-07,
+            "state_max": 2.384185791015625e-06,
+            "state_scale": 8.309802055358887,
+            "state_relative": 2.869124649579461e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 2.384185791015625e-06,
+            "read_median": 7.152557373046875e-07,
+            "read_scale": 3.4194207191467285,
+            "read_relative": 6.972484484478901e-07,
+            "state_max": 2.384185791015625e-06,
+            "state_scale": 8.309802055358887,
+            "state_relative": 2.869124649579461e-07,
+            "live_equal": true
+          },
+          "parity_vs_oracle": {
+            "read_max": 2.384185791015625e-06,
+            "read_median": 7.152557373046875e-07,
+            "read_scale": 3.4194211959838867,
+            "read_relative": 6.972483512168238e-07,
+            "state_max": 0.0,
+            "state_scale": 8.30980396270752,
+            "state_relative": 0.0,
+            "live_equal": null
+          },
+          "state_bit_equal_to_eager": false
+        },
+        "graph_C256": {
+          "description": {
+            "host_launches": 1,
+            "form": "one replay",
+            "twin_chunk": 256,
+            "kernels_note": "the pipeline's launches plus the copies the graph captures"
+          },
+          "gate_c": {
+            "kernels": 46.0,
+            "device_ms": 1.9556583333333337,
+            "distinct_kernels": 5,
+            "top_kernels": [
+              "Memcpy DtoD (Device -> Device)",
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 1.994149200618267,
+            "latency_ms_p50": 1.9952533766627312,
+            "latency_ms_min": 1.99047289788723,
+            "latency_ms_max": 1.996353268623352,
+            "dispatch_ms_mean": 0.08644796907901764,
+            "dispatch_ms_p50": 0.08624047040939331,
+            "device_ms_mean": 2.0097344398498533,
+            "device_ms_p50": 2.0108799934387207,
+            "occupancy_ms": 1.901474000000002,
+            "latency_over_occupancy": 1.049319305266719,
+            "latency_over_device": 0.9922451250660009,
+            "dispatch_over_occupancy": 0.04535453569672434,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 3.814697265625e-06,
+            "read_median": 1.6689300537109375e-06,
+            "read_scale": 3.4194207191467285,
+            "read_relative": 1.1155975175166242e-06,
+            "state_max": 2.384185791015625e-06,
+            "state_scale": 8.309802055358887,
+            "state_relative": 2.869124649579461e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 3.814697265625e-06,
+            "read_median": 1.6689300537109375e-06,
+            "read_scale": 3.4194207191467285,
+            "read_relative": 1.1155975175166242e-06,
+            "state_max": 2.384185791015625e-06,
+            "state_scale": 8.309802055358887,
+            "state_relative": 2.869124649579461e-07,
+            "live_equal": true
+          },
+          "parity_vs_oracle": {
+            "read_max": 3.6954879760742188e-06,
+            "read_median": 1.6689300537109375e-06,
+            "read_scale": 3.4194211959838867,
+            "read_relative": 1.080734944386077e-06,
+            "state_max": 0.0,
+            "state_scale": 8.30980396270752,
+            "state_relative": 0.0,
+            "live_equal": null
+          },
+          "state_bit_equal_to_eager": false
+        },
+        "graph_C512": {
+          "description": {
+            "host_launches": 1,
+            "form": "one replay",
+            "twin_chunk": 512,
+            "kernels_note": "the pipeline's launches plus the copies the graph captures"
+          },
+          "gate_c": {
+            "kernels": 30.0,
+            "device_ms": 1.8396853333333327,
+            "distinct_kernels": 5,
+            "top_kernels": [
+              "Memcpy DtoD (Device -> Device)",
+              "_k1_state_scan_kernel",
+              "_k23_inter_kernel",
+              "_k23_intra_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 1.8735086545348167,
+            "latency_ms_p50": 1.8733935430645943,
+            "latency_ms_min": 1.8719229847192764,
+            "latency_ms_max": 1.8764222040772438,
+            "dispatch_ms_mean": 0.08597839623689651,
+            "dispatch_ms_p50": 0.08371006697416306,
+            "device_ms_mean": 1.8891263961791993,
+            "device_ms_p50": 1.8882559537887573,
+            "occupancy_ms": 1.8423573999999985,
+            "latency_over_occupancy": 1.0168458861807137,
+            "latency_over_device": 0.9917328233431232,
+            "dispatch_over_occupancy": 0.04543638871272378,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 4.0531158447265625e-06,
+            "read_median": 2.0265579223632812e-06,
+            "read_scale": 3.4194207191467285,
+            "read_relative": 1.1853223623614132e-06,
+            "state_max": 2.384185791015625e-06,
+            "state_scale": 8.309802055358887,
+            "state_relative": 2.869124649579461e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": {
+            "read_max": 4.0531158447265625e-06,
+            "read_median": 2.0265579223632812e-06,
+            "read_scale": 3.4194207191467285,
+            "read_relative": 1.1853223623614132e-06,
+            "state_max": 2.384185791015625e-06,
+            "state_scale": 8.309802055358887,
+            "state_relative": 2.869124649579461e-07,
+            "live_equal": true
+          },
+          "parity_vs_oracle": {
+            "read_max": 3.6954879760742188e-06,
+            "read_median": 2.0265579223632812e-06,
+            "read_scale": 3.4194211959838867,
+            "read_relative": 1.080734944386077e-06,
+            "state_max": 0.0,
+            "state_scale": 8.30980396270752,
+            "state_relative": 0.0,
+            "live_equal": null
+          },
+          "state_bit_equal_to_eager": false
+        },
+        "persistent": {
+          "description": {
+            "host_launches": 1,
+            "form": "one kernel",
+            "twin_chunk": null,
+            "twin_note": "the per-token oracle, not a chunked path: the persistent kernel walks tokens, not chunks"
+          },
+          "gate_c": {
+            "kernels": 1.0,
+            "device_ms": 1.273235,
+            "distinct_kernels": 1,
+            "top_kernels": [
+              "_persistent_scan_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 1.3932621106505394,
+            "latency_ms_p50": 1.395692117512226,
+            "latency_ms_min": 1.3797422870993614,
+            "latency_ms_max": 1.4033922925591469,
+            "dispatch_ms_mean": 0.124376080930233,
+            "dispatch_ms_p50": 0.12600049376487732,
+            "device_ms_mean": 1.4131328105926513,
+            "device_ms_p50": 1.4154560565948486,
+            "occupancy_ms": 1.2721280000000001,
+            "latency_over_occupancy": 1.0971318275458335,
+            "latency_over_device": 0.985938547464779,
+            "dispatch_over_occupancy": 0.09904702495729778,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 1.430511474609375e-06,
+            "read_median": 4.76837158203125e-07,
+            "read_scale": 3.4194207191467285,
+            "read_relative": 4.1834906906873407e-07,
+            "state_max": 2.384185791015625e-06,
+            "state_scale": 8.309802055358887,
+            "state_relative": 2.869124649579461e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": null,
+          "parity_vs_oracle": {
+            "read_max": 4.76837158203125e-07,
+            "read_median": 2.384185791015625e-07,
+            "read_scale": 3.4194211959838867,
+            "read_relative": 1.3944967024336478e-07,
+            "state_max": 0.0,
+            "state_scale": 8.30980396270752,
+            "state_relative": 0.0,
+            "live_equal": null
+          },
+          "state_bit_equal_to_eager": false
+        },
+        "persistent_bv16": {
+          "description": {
+            "host_launches": 1,
+            "form": "one kernel",
+            "value_block": 16,
+            "warps": "default"
+          },
+          "gate_c": {
+            "kernels": 1.0,
+            "device_ms": 1.2727866666666665,
+            "distinct_kernels": 1,
+            "top_kernels": [
+              "_persistent_scan_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 1.3734858483076096,
+            "latency_ms_p50": 1.371251419186592,
+            "latency_ms_min": 1.3696923851966858,
+            "latency_ms_max": 1.3809017837047577,
+            "dispatch_ms_mean": 0.10352600365877151,
+            "dispatch_ms_p50": 0.1012999564409256,
+            "device_ms_mean": 1.39027841091156,
+            "device_ms_p50": 1.3870400190353394,
+            "occupancy_ms": 1.2730994,
+            "latency_over_occupancy": 1.0770969016139604,
+            "latency_over_device": 0.9879214389922518,
+            "dispatch_over_occupancy": 0.0795695579158435,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 1.430511474609375e-06,
+            "read_median": 4.76837158203125e-07,
+            "read_scale": 3.4194207191467285,
+            "read_relative": 4.1834906906873407e-07,
+            "state_max": 2.384185791015625e-06,
+            "state_scale": 8.309802055358887,
+            "state_relative": 2.869124649579461e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": null,
+          "parity_vs_oracle": {
+            "read_max": 4.76837158203125e-07,
+            "read_median": 2.384185791015625e-07,
+            "read_scale": 3.4194211959838867,
+            "read_relative": 1.3944967024336478e-07,
+            "state_max": 0.0,
+            "state_scale": 8.30980396270752,
+            "state_relative": 0.0,
+            "live_equal": null
+          },
+          "state_bit_equal_to_eager": false
+        },
+        "persistent_bv32": {
+          "description": {
+            "host_launches": 1,
+            "form": "one kernel",
+            "value_block": 32,
+            "warps": 4
+          },
+          "gate_c": {
+            "kernels": 1.0,
+            "device_ms": 1.6916433333333332,
+            "distinct_kernels": 1,
+            "top_kernels": [
+              "_persistent_scan_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 1.8006490543484688,
+            "latency_ms_p50": 1.8021529540419579,
+            "latency_ms_min": 1.795383170247078,
+            "latency_ms_max": 1.8079821020364761,
+            "dispatch_ms_mean": 0.10878238826990128,
+            "dispatch_ms_p50": 0.10708067566156387,
+            "device_ms_mean": 1.8186367988586425,
+            "device_ms_p50": 1.819200038909912,
+            "occupancy_ms": 1.691557,
+            "latency_over_occupancy": 1.0653811571480936,
+            "latency_over_device": 0.9901092155830881,
+            "dispatch_over_occupancy": 0.06330302535567166,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 1.430511474609375e-06,
+            "read_median": 4.76837158203125e-07,
+            "read_scale": 3.4194207191467285,
+            "read_relative": 4.1834906906873407e-07,
+            "state_max": 2.384185791015625e-06,
+            "state_scale": 8.309802055358887,
+            "state_relative": 2.869124649579461e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": null,
+          "parity_vs_oracle": {
+            "read_max": 4.76837158203125e-07,
+            "read_median": 2.384185791015625e-07,
+            "read_scale": 3.4194211959838867,
+            "read_relative": 1.3944967024336478e-07,
+            "state_max": 0.0,
+            "state_scale": 8.30980396270752,
+            "state_relative": 0.0,
+            "live_equal": null
+          },
+          "state_bit_equal_to_eager": false
+        },
+        "persistent_bv64": {
+          "description": {
+            "host_launches": 1,
+            "form": "one kernel",
+            "value_block": 64,
+            "warps": "default"
+          },
+          "gate_c": {
+            "kernels": 1.0,
+            "device_ms": 2.120501666666667,
+            "distinct_kernels": 1,
+            "top_kernels": [
+              "_persistent_scan_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 2.2236332297325134,
+            "latency_ms_p50": 2.2228630259633064,
+            "latency_ms_min": 2.220403403043747,
+            "latency_ms_max": 2.2285329177975655,
+            "dispatch_ms_mean": 0.10492224246263504,
+            "dispatch_ms_p50": 0.10383129119873047,
+            "device_ms_mean": 2.240326452255249,
+            "device_ms_p50": 2.2386560440063477,
+            "occupancy_ms": 2.1201574,
+            "latency_over_occupancy": 1.048442453359032,
+            "latency_over_device": 0.9925487544433843,
+            "dispatch_over_occupancy": 0.04897338810728414,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 1.430511474609375e-06,
+            "read_median": 4.76837158203125e-07,
+            "read_scale": 3.4194207191467285,
+            "read_relative": 4.1834906906873407e-07,
+            "state_max": 2.384185791015625e-06,
+            "state_scale": 8.309802055358887,
+            "state_relative": 2.869124649579461e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": null,
+          "parity_vs_oracle": {
+            "read_max": 4.76837158203125e-07,
+            "read_median": 2.384185791015625e-07,
+            "read_scale": 3.4194211959838867,
+            "read_relative": 1.3944967024336478e-07,
+            "state_max": 0.0,
+            "state_scale": 8.30980396270752,
+            "state_relative": 0.0,
+            "live_equal": null
+          },
+          "state_bit_equal_to_eager": false
+        },
+        "persistent_bv128": {
+          "description": {
+            "host_launches": 1,
+            "form": "one kernel",
+            "value_block": 128,
+            "warps": 4
+          },
+          "gate_c": {
+            "kernels": 1.0,
+            "device_ms": 4.7476069999999995,
+            "distinct_kernels": 1,
+            "top_kernels": [
+              "_persistent_scan_kernel"
+            ]
+          },
+          "gate_d": {
+            "latency_ms_mean": 4.850710742175579,
+            "latency_ms_p50": 4.85161691904068,
+            "latency_ms_min": 4.845726303756237,
+            "latency_ms_max": 4.855256527662277,
+            "dispatch_ms_mean": 0.10492783039808273,
+            "dispatch_ms_p50": 0.10538008064031601,
+            "device_ms_mean": 4.867846488952637,
+            "device_ms_p50": 4.867904186248779,
+            "occupancy_ms": 4.747557199999999,
+            "latency_over_occupancy": 1.0219185814213425,
+            "latency_over_device": 0.9964798095387876,
+            "dispatch_over_occupancy": 0.0221966953110783,
+            "repeats": 5
+          },
+          "parity_vs_eager": {
+            "read_max": 1.430511474609375e-06,
+            "read_median": 4.76837158203125e-07,
+            "read_scale": 3.4194207191467285,
+            "read_relative": 4.1834906906873407e-07,
+            "state_max": 2.384185791015625e-06,
+            "state_scale": 8.309802055358887,
+            "state_relative": 2.869124649579461e-07,
+            "live_equal": true
+          },
+          "parity_vs_eager_same_chunk": null,
+          "parity_vs_oracle": {
+            "read_max": 4.76837158203125e-07,
+            "read_median": 2.384185791015625e-07,
+            "read_scale": 3.4194211959838867,
+            "read_relative": 1.3944967024336478e-07,
+            "state_max": 0.0,
+            "state_scale": 8.30980396270752,
+            "state_relative": 0.0,
+            "live_equal": null
+          },
+          "state_bit_equal_to_eager": false
+        }
+      },
+      "sequence_noise_floor": 1.569803563583605e-06
+    }
+  }
+}
