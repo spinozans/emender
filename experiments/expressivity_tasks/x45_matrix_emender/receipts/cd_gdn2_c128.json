@@ -1,0 +1,168 @@
+{
+ "gate": "C+D",
+ "arm": "gdn2",
+ "parameters": 149855670,
+ "summary": {
+  "base_arm": "gdn2",
+  "parameters": {
+   "total": 149855670
+  },
+  "policy": {
+   "lr": 0.0005420185524740253,
+   "microbatch": 8,
+   "beta2": 0.9392004369596886,
+   "weight_decay": 0.20059436743465126
+  }
+ },
+ "microbatches": 8,
+ "windows_per_step": 64,
+ "context": 2048,
+ "tokens": 344027,
+ "steps": 3,
+ "phase_s": {
+  "fwd": 0.005,
+  "bwd": 15.708,
+  "opt": 0.071
+ },
+ "phase_frac": {
+  "fwd": 0.0003,
+  "bwd": 0.9952,
+  "opt": 0.0045
+ },
+ "total_s": 15.784,
+ "tokens_per_s": 21795.3,
+ "bytes_per_step": 131072,
+ "peak_allocated_gb": 4.49,
+ "losses": [
+  4.126391232013702,
+  4.557178598124848,
+  4.494921053623334
+ ],
+ "forbidden_kernels_found": [],
+ "replay_absent": true,
+ "top_kernels": [
+  {
+   "name": "aten::mm",
+   "cuda_ms": 2812.0,
+   "calls": 32448,
+   "cuda_frac": 0.1808
+  },
+  {
+   "name": "aten::copy_",
+   "cuda_ms": 923.285,
+   "calls": 51480,
+   "cuda_frac": 0.0594
+  },
+  {
+   "name": "ChunkGDN2FunctionBackward",
+   "cuda_ms": 855.534,
+   "calls": 648,
+   "cuda_frac": 0.055
+  },
+  {
+   "name": "void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16_copy_kernel_cuda(at::TensorIteratorBase",
+   "cuda_ms": 628.395,
+   "calls": 33120,
+   "cuda_frac": 0.0404
+  },
+  {
+   "name": "ampere_bf16_s1688gemm_bf16_64x128_sliced1x2_ldg8_f2f_tn",
+   "cuda_ms": 601.145,
+   "calls": 2592,
+   "cuda_frac": 0.0387
+  },
+  {
+   "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >",
+   "cuda_ms": 599.217,
+   "calls": 19065,
+   "cuda_frac": 0.0385
+  },
+  {
+   "name": "aten::mul",
+   "cuda_ms": 596.001,
+   "calls": 5883,
+   "cuda_frac": 0.0383
+  },
+  {
+   "name": "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8>(cutlass_80_tensorop_",
+   "cuda_ms": 555.037,
+   "calls": 2592,
+   "cuda_frac": 0.0357
+  },
+  {
+   "name": "aten::add_",
+   "cuda_ms": 538.573,
+   "calls": 19041,
+   "cuda_frac": 0.0346
+  },
+  {
+   "name": "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<c10::BFloat16, c10::BFloat16, c10:",
+   "cuda_ms": 528.826,
+   "calls": 2592,
+   "cuda_frac": 0.034
+  },
+  {
+   "name": "ChunkGDN2Function",
+   "cuda_ms": 471.423,
+   "calls": 1296,
+   "cuda_frac": 0.0303
+  },
+  {
+   "name": "ampere_bf16_s1688gemm_bf16_128x128_ldg8_f2f_stages_32x1_tn",
+   "cuda_ms": 414.623,
+   "calls": 11688,
+   "cuda_frac": 0.0267
+  },
+  {
+   "name": "aten::add",
+   "cuda_ms": 380.468,
+   "calls": 5859,
+   "cuda_frac": 0.0245
+  },
+  {
+   "name": "chunk_gdn2_bwd_kernel_wy_dqkg_fused",
+   "cuda_ms": 379.12,
+   "calls": 648,
+   "cuda_frac": 0.0244
+  },
+  {
+   "name": "ampere_bf16_s1688gemm_bf16_128x128_ldg8_f2f_stages_32x1_nn",
+   "cuda_ms": 345.597,
+   "calls": 7152,
+   "cuda_frac": 0.0222
+  },
+  {
+   "name": "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nn_align8>(cutlass_80_tensorop_",
+   "cuda_ms": 317.751,
+   "calls": 1296,
+   "cuda_frac": 0.0204
+  },
+  {
+   "name": "ampere_bf16_s1688gemm_bf16_128x64_sliced1x2_ldg8_f2f_tn",
+   "cuda_ms": 299.496,
+   "calls": 1296,
+   "cuda_frac": 0.0193
+  },
+  {
+   "name": "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{la",
+   "cuda_ms": 281.508,
+   "calls": 16296,
+   "cuda_frac": 0.0181
+  },
+  {
+   "name": "aten::_fused_rms_norm_backward",
+   "cuda_ms": 279.968,
+   "calls": 1320,
+   "cuda_frac": 0.018
+  },
+  {
+   "name": "void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>, 4, Tr",
+   "cuda_ms": 244.778,
+   "calls": 2592,
+   "cuda_frac": 0.0157
+  }
+ ],
+ "cuda_total_ms": 15552.2,
+ "registered_gdn2_tokens_per_s": 35875.6,
+ "capacity": 150003984
+}

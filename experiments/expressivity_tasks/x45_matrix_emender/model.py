@@ -45,6 +45,8 @@ REFERENCE_DEPTH = 24
 # enough that stale rows leave the read on their own.
 DECAY_HORIZON_TOKENS = 64
 DECAY_FLOOR = 1e-4
+# See MatrixMixer: the chunk loop is launch-bound, so it is compiled and graphed.
+COMPILE_MODE = "reduce-overhead"
 
 
 @dataclass(frozen=True)
@@ -115,7 +117,8 @@ class SwiGLU(nn.Module):
 class MatrixMixer(nn.Module):
     """The store: query/value/output projections plus the DECAY gate and the scan."""
 
-    def __init__(self, shape: MatrixShape, policy: RoutingPolicy, chunk_tokens: int):
+    def __init__(self, shape: MatrixShape, policy: RoutingPolicy, chunk_tokens: int,
+                 compile_scan: bool = False):
         super().__init__()
         value_dim = shape.heads * shape.value_dim
         self.heads = shape.heads
@@ -131,9 +134,30 @@ class MatrixMixer(nn.Module):
         with torch.no_grad():
             lam0 = math.exp(-1.0 / DECAY_HORIZON_TOKENS)
             self.decay.bias.fill_(math.log(lam0 / (1.0 - lam0)))
+        # Telemetry is opt-in: keeping the scan's tensors alive would pin the
+        # CUDA-graph static pool and trip "output of CUDAGraphs overwritten".
+        self.collect_telemetry = False
         self.telemetry = None
+        # The chunk loop is launch-bound (measured 43 s/step eager against 5-9 s/step
+        # compiled at chunk 128), so the train path compiles it and captures it in a
+        # CUDA graph ("reduce-overhead"): the binding cost is the per-kernel launch
+        # count, not bytes or FLOPs.  Compiling the whole 24-layer forward instead is
+        # impractical — a single graph that large did not finish compiling in 50 min.
+        self.compiled = (torch.compile(self._forward_impl, mode=COMPILE_MODE,
+                                       dynamic=False) if compile_scan else None)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        if self.compiled is not None:
+            return self.compiled(x)
+        return self._forward_impl(x)
+
+    def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
+        out, result = self.mix(x)
+        if self.collect_telemetry:
+            self.telemetry = result
+        return out
+
+    def mix(self, x: torch.Tensor):
         batch, tokens, _ = x.shape
         query = self.query(x).view(batch, tokens, self.heads, self.value_dim)
         payload = self.value(x).view(batch, tokens, self.heads, self.value_dim)
@@ -141,18 +165,16 @@ class MatrixMixer(nn.Module):
         result = routed_chunk_scan(
             query, payload, decay, router=route_chunk, policy=self.policy,
             rank=self.rank, rank_max=self.rank_max, chunk_tokens=self.chunk_tokens)
-        self.telemetry = result
-        return self.out(result.reads.reshape(batch, tokens, self.heads * self.value_dim))
+        return (self.out(result.reads.reshape(batch, tokens, self.heads * self.value_dim)),
+                result)
 
 
 class MatrixBlock(nn.Module):
     def __init__(self, shape: MatrixShape, policy: RoutingPolicy, chunk_tokens: int,
-                 checkpointing: bool = False):
+                 compile_scan: bool = False):
         super().__init__()
-        if checkpointing:
-            raise ValueError("the matrix arm forbids activation checkpointing: it is replay")
         self.norm1 = nn.RMSNorm(shape.width, eps=1e-5)
-        self.mixer = MatrixMixer(shape, policy, chunk_tokens)
+        self.mixer = MatrixMixer(shape, policy, chunk_tokens, compile_scan)
         self.norm2 = nn.RMSNorm(shape.width, eps=1e-5)
         self.mlp = SwiGLU(shape.width, shape.hidden)
 
@@ -163,7 +185,7 @@ class MatrixBlock(nn.Module):
 
 class MatrixModel(nn.Module):
     def __init__(self, shape: MatrixShape, policy: RoutingPolicy, chunk_tokens: int = 64,
-                 init_scale: float = 1.0):
+                 init_scale: float = 1.0, compile_scan: bool = True):
         super().__init__()
         self.shape = shape
         self.policy = policy
@@ -171,7 +193,8 @@ class MatrixModel(nn.Module):
         self.norm = nn.RMSNorm(shape.width, eps=1e-5)
         self.head = nn.Linear(shape.width, shape.vocab, bias=False)
         self.blocks = nn.ModuleList(
-            MatrixBlock(shape, policy, chunk_tokens) for _ in range(shape.depth))
+            MatrixBlock(shape, policy, chunk_tokens, compile_scan)
+            for _ in range(shape.depth))
         with torch.no_grad():
             for module in self.modules():
                 if isinstance(module, (nn.Linear, nn.Embedding)):
@@ -198,6 +221,11 @@ class MatrixModel(nn.Module):
         return dict(total=total, trainable=sum(p.numel() for p in self.parameters()
                                                if p.requires_grad))
 
+    def collect_telemetry(self, enabled: bool = True) -> "MatrixModel":
+        for block in self.blocks:
+            block.mixer.collect_telemetry = enabled
+        return self
+
     def rank_trajectory(self) -> list:
         blocks = [block.mixer.telemetry for block in self.blocks
                   if block.mixer.telemetry is not None]
@@ -207,8 +235,8 @@ class MatrixModel(nn.Module):
 
 
 def model_for(shape: MatrixShape, policy: RoutingPolicy, chunk_tokens: int = 64,
-              init_scale: float = 1.0) -> MatrixModel:
-    model = MatrixModel(shape, policy, chunk_tokens, init_scale)
+              init_scale: float = 1.0, compile_scan: bool = True) -> MatrixModel:
+    model = MatrixModel(shape, policy, chunk_tokens, init_scale, compile_scan)
     observed = model.counts()
     expected = parameter_count(shape)
     if observed["total"] != expected["total"]:

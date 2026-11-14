@@ -24,12 +24,16 @@ chunk-entry state plus the in-chunk injection:
 
     o_t = exp(gc_{s0-1}) w_t^T H + sum_{u<s0} exp(gc_{s0-1}-gc_u) w_t[j_u] d_u .
 
-Every state arithmetic step is a *dense* matmul with a one-hot / mask tensor: the
-rows a chunk addresses are ``onehot @ state`` and the injection is
-``onehot^T @ delta``.  Slot addressability is chosen by the schedule; no in-place
-index write is used on the state, which is what keeps the block autograd-friendly
-and graph-capturable (the only index op left is the integer liveness bookkeeping,
-an ``amax`` scatter).
+Addressing is device-side and out-of-place: the rows a chunk addresses are
+``state[.., slot]`` (a gather), the injection is accumulated into a fresh zeros
+tensor with ``scatter_add_``, and the read addresses the weight channel with a
+gather.  Measured reason (see ``RESULT_MATRIX_EMENDER.md``): expressing the same
+three operations as one-hot *matmuls* -- ``onehot @ state`` and
+``onehot^T @ delta`` -- costs ``rank`` times the arithmetic (128x at rank 128),
+and took the arm from 21k to 9k tokens/s with no change in semantics.  None of the
+ops here need a host synchronisation or a dynamic shape, so the block stays
+capturable and autograd-friendly; the only index write is onto freshly allocated
+temporaries.
 
 No division of an accumulated quantity appears: the decay channel is a *sum* scan
 in log space (the gate is floored strictly positive) and the erase/overwrite zeros
@@ -129,9 +133,10 @@ def chunk_scan(state, live, weights, decay, schedule):
     gc = torch.cumsum(lam.log(), dim=-1)                        # (b, h, steps)
     zero = torch.zeros((), dtype=dtype, device=state.device)
 
-    # One-hot address mask of this chunk: every state arithmetic step is dense.
-    onehot = (slot.unsqueeze(-1) == torch.arange(rank, device=state.device)).to(dtype)
-    entry_rows = onehot @ state                                 # (b, h, steps, V)
+    # The rows this chunk addresses (a gather: the store's rows are the keys).
+    b_index = torch.arange(batch, device=state.device)[:, None, None]
+    h_index = torch.arange(heads, device=state.device)[None, :, None]
+    entry_rows = state[b_index, h_index, slot]                  # (b, h, steps, V)
 
     # Triangular coupling (block-diagonal by slot) and its solve.
     same = slot.unsqueeze(-1) == slot.unsqueeze(-2)             # (b, h, steps, steps)
@@ -147,7 +152,8 @@ def chunk_scan(state, live, weights, decay, schedule):
     read_index = torch.arange(tokens, device=state.device) * lanes - 1
     inside = (read_index >= 0).unsqueeze(0).unsqueeze(0)
     gc_read = torch.where(inside, gc[:, :, read_index.clamp(min=0)], zero)
-    addressed = weights @ onehot.transpose(-1, -2)              # w_t[j_u], dense
+    addressed = weights.gather(
+        3, slot.unsqueeze(2).expand(batch, heads, tokens, steps))   # w_t[j_u]
     before = (torch.arange(tokens, device=state.device).unsqueeze(-1) * lanes
               > order.unsqueeze(0)).unsqueeze(0).unsqueeze(0)   # (1, 1, tokens, steps)
     read_matrix = torch.where(before, torch.exp(gc_read.unsqueeze(-1) - gc.unsqueeze(-2)),
@@ -156,8 +162,9 @@ def chunk_scan(state, live, weights, decay, schedule):
 
     # Exit state: exact carry (decayed entry state plus the masked injection).
     injection = torch.exp(gc[:, :, -1:] - gc).unsqueeze(-1) * delta
-    new_state = torch.exp(gc[:, :, -1])[:, :, None, None] * state \
-        + onehot.transpose(-1, -2) @ injection
+    scattered = torch.zeros_like(state).scatter_add_(
+        2, slot.unsqueeze(-1).expand(batch, heads, steps, value_dim), injection)
+    new_state = torch.exp(gc[:, :, -1])[:, :, None, None] * state + scattered
 
     # Liveness at the chunk exit: the last lane touching a slot decides it.
     # (Integer bookkeeping only -- an amax, so it stays deterministic.)

@@ -41,15 +41,18 @@ REGISTERED_GDN2_TOKENS_PER_S = 96_903_492 / 2_701.096692122519
 MATRIX_ARMS = ("matrix_append", "matrix_ops")
 
 
-def build(arm, microbatch, rank, rank_max, grow, chunk_tokens, seed):
+def build(arm, microbatch, rank, rank_max, grow, chunk_tokens, seed, compile_scan=True):
     configure_production()
     torch.set_num_threads(1)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     if arm in MATRIX_ARMS:
+        # Growth receipts need the eager path (it keeps the per-chunk telemetry).
         policy = RoutingPolicy(ops=arm == "matrix_ops", grow=grow)
+        compile_scan = compile_scan and not grow
         shape = matrix_config(rank=rank, rank_max=rank_max if rank_max else rank)
-        model = matrix_model_for(shape, policy, chunk_tokens).cuda().train()
+        model = matrix_model_for(shape, policy, chunk_tokens,
+                                 compile_scan=compile_scan).cuda().train()
         lr = 5.42e-4          # the registered gdn2 nomination's optimizer settings
         betas, weight_decay = (0.9, 0.9392004369596886), 0.20059436743465126
         summary = dict(shape=shape.__dict__, parameters=parameter_count(shape),
@@ -78,6 +81,8 @@ def main():
     parser.add_argument("--chunk-tokens", type=int, default=64)
     parser.add_argument("--seed", type=int, default=3401)
     parser.add_argument("--profile", action="store_true", default=True)
+    parser.add_argument("--eager", action="store_true",
+                        help="run the chunk loop without torch.compile")
     parser.add_argument("--out", default=None)
     args = parser.parse_args()
 
@@ -87,7 +92,7 @@ def main():
     L.assert_flagship_stream(stream)
     model, lr, betas, weight_decay, summary = build(
         args.arm, args.microbatch, args.rank, args.rank_max, args.grow,
-        args.chunk_tokens, args.seed)
+        args.chunk_tokens, args.seed, compile_scan=not args.eager)
     parameters = sum(p.numel() for p in model.parameters())
     optimizer = torch.optim.AdamW((p for p in model.parameters() if p.requires_grad), lr=lr,
                                   betas=betas, weight_decay=weight_decay, fused=True)
@@ -107,6 +112,10 @@ def main():
             mark = time.monotonic()
         loss_sum = 0.0
         for x, y, valid in groups:
+            # Required before every graphed invocation in a training loop: without it
+            # the cudagraph trees take the slow path ("pending, uninvoked backwards")
+            # and the captured timing is not the captured path.
+            torch.compiler.cudagraph_mark_step_begin()
             loss = model.loss(x, y)
             (loss * (valid / count)).backward()
             loss_sum += float(loss.detach()) * valid / count

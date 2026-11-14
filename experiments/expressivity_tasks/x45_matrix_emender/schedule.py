@@ -179,12 +179,10 @@ def route_chunk(index, token_offset, state, live, query, payload, policy, rank):
     # Payloads: the incoming value for APPEND/CORRECT, zero for POP and for an
     # inactive lane, and for MERGE a norm-weighted blend of the two stored rows
     # (weights detached, content attached so gradients reach what was stored).
-    # The row accesses are dense one-hot matmuls, never a gather.
-    addresses = torch.arange(rank, device=device)
-    first_mask = (best_index.unsqueeze(-1) == addresses).to(dtype)
-    second_mask = (second_index.unsqueeze(-1) == addresses).to(dtype)
-    first_row = first_mask @ rows
-    second_row = second_mask @ rows
+    b_index = torch.arange(batch, device=device)[:, None, None]
+    h_index = torch.arange(heads, device=device)[None, :, None]
+    first_row = rows[b_index, h_index, best_index]
+    second_row = rows[b_index, h_index, second_index]
     first_weight = strength.gather(-1, best_index).clamp_min(EPS)
     second_weight = strength.gather(-1, second_index).clamp_min(EPS)
     total = first_weight + second_weight
