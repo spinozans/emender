@@ -336,6 +336,10 @@ SCALE2_CONFIGS = {
                     description="registered path at microbatch 4 (the fused path's memory-matched twin)"),
     "on_mb4": dict(fused_backward=True, compile_scan=False, microbatch=4,
                    description="fused path at microbatch 4 (the largest power of two whose trajectory store fits the card)"),
+    "off_mb2": dict(fused_backward=False, compile_scan=True, microbatch=2,
+                    description="registered path at microbatch 2 (the largest microbatch at which the fused path's trajectory store fits the card)"),
+    "on_mb2": dict(fused_backward=True, compile_scan=False, microbatch=2,
+                   description="fused path at microbatch 2 -- the largest microbatch whose 24-layer trajectory store fits the card (mb 8 and 4 OOM, receipted)"),
 }
 
 
