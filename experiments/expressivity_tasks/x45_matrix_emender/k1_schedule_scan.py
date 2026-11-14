@@ -82,6 +82,17 @@ NONE_CODE = tl.constexpr(int(NONE))
 MAX_TILE_VALUE_DIM = 256
 
 
+FORWARD_ONLY = ("K1 is forward only: the fused walk has no backward, so a graph through "
+                "it would keep the read's gradient and silently drop the state's. "
+                "Use the eager path, or call under torch.no_grad().")
+
+
+def check_no_grad(*tensors: torch.Tensor) -> None:
+    """Refuse to build a graph through a stage that has no backward."""
+    if torch.is_grad_enabled() and any(t.requires_grad for t in tensors):
+        raise RuntimeError(FORWARD_ONLY)
+
+
 def check_k1_shapes(state: torch.Tensor, schedule: MatrixSchedule) -> None:
     value_dim = schedule.payload.shape[-1]
     if state.shape[-1] != value_dim:
@@ -250,6 +261,7 @@ def k1_state_scan(state: torch.Tensor, live: torch.Tensor, decay: torch.Tensor,
     copy of the decision data is needed.
     """
     check_k1_shapes(state, schedule)
+    check_no_grad(state, decay, schedule.payload)
     batch, heads, rank, value_dim = state.shape
     tokens, lane_count = schedule.tokens, schedule.lanes
     if decay.shape != (batch, tokens, heads):
@@ -319,10 +331,11 @@ def k1_chunk(state: torch.Tensor, live: torch.Tensor, weights: torch.Tensor,
     kernel indexes the schedule's ``(batch, tokens, heads)`` layout, and that
     permutation is a view -- no copy, no launch.
     """
+    check_no_grad(weights)
     chunk = k1_state_scan(state, live, decay.permute(0, 2, 1), schedule)
     reads = _reads_from_injections(weights, state, chunk, schedule)
     return reads, chunk.state, chunk.live
 
 
-__all__ = ['K1Chunk', 'MAX_TILE_VALUE_DIM', 'check_k1_shapes', 'k1_state_scan',
-           'k1_chunk']
+__all__ = ['FORWARD_ONLY', 'K1Chunk', 'MAX_TILE_VALUE_DIM', 'check_k1_shapes',
+           'check_no_grad', 'k1_state_scan', 'k1_chunk']

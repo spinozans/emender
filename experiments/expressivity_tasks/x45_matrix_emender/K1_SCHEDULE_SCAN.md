@@ -35,7 +35,7 @@ claimed.
 | file | role |
 | --- | --- |
 | `k1_schedule_scan.py` | the kernel, `k1_state_scan` (one chunk, one launch) and `k1_chunk` (the `chunk_scan` drop-in) |
-| `test_k1_schedule_scan.py` | 20 tests = gates A, B, E and the flag |
+| `test_k1_schedule_scan.py` | 22 tests = gates A, B, E, the flag and the forward-only guard |
 | `k1_gate_receipt.py` | measures gates A and B into `receipts/k1_gates.json` |
 | `bench_k1_scan.py` | measures gates C and D into `receipts/k1_schedule_scan.json` |
 | `scan.py`, `model.py` | the `fused` flag on `chunk_scan` / `chunked_scan` / `routed_chunk_scan` / `MatrixMixer` / `MatrixModel`, default off |
@@ -112,7 +112,8 @@ reference retained.
 ## 2. Gate A — the scalar channels are bit-exact
 
 `python -m pytest experiments/expressivity_tasks/x45_matrix_emender/test_k1_schedule_scan.py -q`
-→ **20 passed** (all gates). The module needs CUDA; without a device every test skips.
+→ **22 passed** (all gates; 55 passed for the whole package). The module needs CUDA;
+without a device every test skips.
 
 Oracle: `algebra.sequential_matrix_scan`, the per-token semantics of record. Tolerance:
 **none** — `torch.equal`.
@@ -281,6 +282,7 @@ All of these are in `test_k1_schedule_scan.py`, all compared to the oracle with
 | chunk length not dividing the token count (13 tokens, chunk 2/3/4/5/13) | state and liveness bit-identical at every boundary; reads within 1e-5 and within 8× the measured floor |
 | rank at both ends of the precompiled set (64 and 2048) | bit-identical; at rank 2048 the grid is 64 slot blocks of 32, so the block mask and the ownership rule are exercised at a full store |
 | determinism across slot blocks | two runs bit-identical on every channel, at rank 64 (several blocks) |
+| the arm behind the flag | `MatrixMixer(fused_scan=True).mix(x)` matches the eager mixer on the *same* weights to 1e-4 relative (routing included), and refuses `compile_scan=True` + `fused_scan=True` |
 
 ---
 
@@ -309,11 +311,14 @@ All of these are in `test_k1_schedule_scan.py`, all compared to the oracle with
    unimplemented: hoisting the constant index tensors (`order`, `read_index`, `inside`,
    `before`) out of the per-chunk call would remove ~6 of the 23, and the whole reduction
    is one `tl.dot`-shaped kernel per `(row, head, token_block)`.
-5. **No CUDA graph, no `torch.compile`, no backward.** K1 is one eager launch per chunk;
-   `MatrixMixer` refuses `fused_scan=True` together with `compile_scan=True` rather than
-   composing two opaque paths. The backward of the fused walk does not exist yet; the arm's
-   default path keeps autograd through the eager scan. This is stage 1 by scope, not by
-   oversight.
+5. **No CUDA graph, no `torch.compile`, no backward** — and the forward-only scope is
+   *enforced*, not documented. The read reduction is differentiable and the walk is not,
+   so autograd through the fused path would keep the read's gradient and silently drop the
+   state's: `check_no_grad` raises `FORWARD_ONLY` when any input requires grad while
+   autograd is enabled (`test_the_fused_path_refuses_to_build_a_graph_it_cannot_backward`).
+   `MatrixMixer` also refuses `fused_scan=True` together with `compile_scan=True` rather
+   than composing two opaque paths. K1 is one eager launch per chunk; the arm's default
+   path keeps autograd through the eager scan.
 6. **The timed `matrix_ops` chunk is write-sparse and has no CORRECT/POP/MERGE.** That is
    the real routing's regime at this seed: the store fills, then most tokens are NONE under
    capacity pressure. `matrix_append` (a write on every step) is measured alongside as the
@@ -346,7 +351,7 @@ All of these are in `test_k1_schedule_scan.py`, all compared to the oracle with
 ## 9. Commands
 
 ```bash
-python -m pytest experiments/expressivity_tasks/x45_matrix_emender/ -q            # 53 passed
+python -m pytest experiments/expressivity_tasks/x45_matrix_emender/ -q            # 55 passed
 eval "$(GPU_LEASE_VISIBLE=0,1 scripts/gpu_lease.sh acquire 1 --wait)"
 python -m experiments.expressivity_tasks.x45_matrix_emender.k1_gate_receipt \
     --out experiments/expressivity_tasks/x45_matrix_emender/receipts/k1_gates.json

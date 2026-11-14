@@ -509,6 +509,58 @@ def test_the_fused_path_is_default_off_and_the_reference_is_unchanged():
 
 
 @needs_cuda
+def test_the_fused_path_refuses_to_build_a_graph_it_cannot_backward():
+    """Forward-only is enforced, not documented: a graph here would be silently wrong.
+
+    The read is differentiable, the walk is not, so autograd through the fused path
+    would keep the read's gradient and drop the state's.  Fail closed, and accept the
+    call under ``torch.no_grad()``.
+    """
+    from experiments.expressivity_tasks.x45_matrix_emender.k1_schedule_scan import (
+        FORWARD_ONLY)
+
+    schedule, query, _, decay = random_schedule(1, 8, 1, 5, 3, lanes=1, seed=27)
+    state, live = entry_state(1, 1, 5, 3, seed=9)
+    weights = query.permute(0, 2, 1, 3)
+    chunk_decay = decay.permute(0, 2, 1)
+    graded_state = state.clone().requires_grad_(True)
+    with pytest.raises(RuntimeError, match="forward only"):
+        k1_state_scan(graded_state, live, decay, schedule)
+    with pytest.raises(RuntimeError, match="forward only"):
+        chunk_scan(state, live, weights.clone().requires_grad_(True), chunk_decay, schedule,
+                   fused=True)
+    with torch.no_grad():
+        reads, final, final_live = chunk_scan(state, live, weights.clone().requires_grad_(True),
+                                             chunk_decay, schedule, fused=True)
+    assert torch.isfinite(reads).all() and reads.abs().max() > 0
+    assert not reads.requires_grad
+    assert "no backward" in FORWARD_ONLY
+
+
+@needs_cuda
+def test_the_arm_runs_the_fused_scan_behind_the_flag():
+    """``MatrixMixer(fused_scan=True)`` against the eager mixer on the same weights."""
+    from experiments.expressivity_tasks.x45_matrix_emender.model import (
+        MatrixMixer, MatrixShape)
+
+    shape = MatrixShape(width=48, depth=1, hidden=96, heads=2, value_dim=8, rank=8)
+    policy = RoutingPolicy(ops=True)
+    generator = torch.Generator().manual_seed(37)
+    x = torch.randn(2, 32, shape.width, generator=generator).to(DEVICE)
+    eager = MatrixMixer(shape, policy, chunk_tokens=8, fused_scan=False).cuda()
+    fused = MatrixMixer(shape, policy, chunk_tokens=8, fused_scan=True).cuda()
+    fused.load_state_dict(eager.state_dict())
+    with torch.no_grad():
+        reference, _ = eager.mix(x)
+        observed, result = fused.mix(x)
+    deviation = float((reference - observed).abs().max())
+    assert deviation <= 1e-4 * max(1.0, float(reference.abs().max())), deviation
+    assert result.reads.shape == (2, 32, shape.heads, shape.value_dim)
+    with pytest.raises(ValueError, match="do not torch.compile"):
+        MatrixMixer(shape, policy, chunk_tokens=8, compile_scan=True, fused_scan=True)
+
+
+@needs_cuda
 def test_the_kernel_rejects_a_value_dim_it_is_not_compiled_for():
     schedule, query, _, decay = random_schedule(1, 4, 1, 5, 3, lanes=1, seed=21)
     wide = MAX_TILE_VALUE_DIM * 2
