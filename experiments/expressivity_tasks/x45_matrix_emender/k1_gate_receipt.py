@@ -50,7 +50,8 @@ def routed(batch=2, tokens=64, heads=2, rank=5, value_dim=8, chunk=16, seed=23,
     decay = torch.full((batch, tokens, heads), 0.95, device=DEVICE)
     policy = RoutingPolicy(ops=True) if policy is None else policy
     result = routed_chunk_scan(query, payload, decay, router=route_chunk, policy=policy,
-                              rank=rank, rank_max=rank, chunk_tokens=chunk, collect=True)
+                              rank=rank, rank_max=rank, chunk_tokens=chunk, collect=True,
+                              fused=False)
     return result, decay, query, payload, policy, rank
 
 
@@ -99,7 +100,7 @@ def gate_b(result, decay, chunks=(1, 2, 3, 4, 16)):
         reads, state, live = chunked_scan(result.weights, decay, result.schedule,
                                          chunk_tokens=chunk, fused=True)
         eager_reads, eager_state, eager_live = chunked_scan(
-            result.weights, decay, result.schedule, chunk_tokens=chunk)
+            result.weights, decay, result.schedule, chunk_tokens=chunk, fused=False)
         rows.append(dict(
             chunk=chunk,
             read_deviation=float((reads - reference_reads).abs().max()),

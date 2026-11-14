@@ -229,7 +229,7 @@ def test_k1_matches_the_chunked_reference_within_the_measured_noise_floor(chunk)
     assert floor > 0.0
     reads, state, live = chunked_scan(query, decay, schedule, chunk_tokens=chunk, fused=True)
     eager_reads, eager_state, eager_live = chunked_scan(query, decay, schedule,
-                                                        chunk_tokens=chunk)
+                                                        chunk_tokens=chunk, fused=False)
     read_deviation = float((reads - reference_reads).abs().max())
     state_deviation = float((state - reference_state).abs().max())
     assert read_deviation <= NOISE_FACTOR * floor, (chunk, read_deviation, floor)
@@ -273,7 +273,8 @@ def test_k1_and_the_reference_agree_on_a_real_routed_schedule():
     fixture = routed_fixture()
     chunk = fixture.chunk_tokens
     weights = fixture.result.weights                      # (batch, tokens, heads, rank)
-    eager = chunked_scan(weights, fixture.decay, fixture.schedule, chunk_tokens=chunk)
+    eager = chunked_scan(weights, fixture.decay, fixture.schedule, chunk_tokens=chunk,
+                         fused=False)
     fused = chunked_scan(weights, fixture.decay, fixture.schedule, chunk_tokens=chunk,
                         fused=True)
     floor, reference_state, reference_reads = sequential_noise_floor(
@@ -370,7 +371,7 @@ def test_a_whole_chunk_of_pops():
     assert float((reads - expected_reads).abs().max()) <= 1e-6 * scale
     reference_reads, reference_state, _ = chunked_scan(
         query, decay, schedule, chunk_tokens=tokens, initial_state=state,
-        initial_live=live.clone())
+        initial_live=live.clone(), fused=False)
     assert float((final - reference_state).abs().max()) <= 1e-6
 
 
@@ -492,18 +493,26 @@ def test_the_fused_path_is_bit_deterministic_across_slot_blocks():
 # ------------------------------------------------------------------- the flag itself
 
 @needs_cuda
-def test_the_fused_path_is_default_off_and_the_reference_is_unchanged():
-    assert FUSED_SCAN_DEFAULT is False
+def test_the_reference_path_is_reachable_and_the_liveness_is_unchanged():
+    """Since K2/K3 the default is the fused path; ``fused=False`` is still the oracle.
+
+    The liveness channel is K1's and is bit-exact on either path, so the flag cannot
+    change a death boundary; the reads are the two paths' own business and are held to
+    the measured floor by ``test_k23_read.py``.
+    """
+    assert FUSED_SCAN_DEFAULT is True
     schedule, query, _, decay = random_schedule(1, 12, 1, 5, 3, lanes=1, seed=19)
     default = chunked_scan(query, decay, schedule, chunk_tokens=4)
-    explicit = chunked_scan(query, decay, schedule, chunk_tokens=4, fused=False)
+    explicit = chunked_scan(query, decay, schedule, chunk_tokens=4, fused=True)
     for left, right in zip(default, explicit):
         assert torch.equal(left, right)
+    eager = chunked_scan(query, decay, schedule, chunk_tokens=4, fused=False)
+    assert torch.equal(default[2], eager[2])
     state = torch.zeros(1, 1, 5, 3, device=DEVICE)
     live = torch.zeros(1, 1, 5, dtype=torch.bool, device=DEVICE)
     weights = query.permute(0, 2, 1, 3)
     chunk_decay = decay.permute(0, 2, 1)
-    reference = chunk_scan(state, live, weights, chunk_decay, schedule)
+    reference = chunk_scan(state, live, weights, chunk_decay, schedule, fused=False)
     fused = chunk_scan(state, live, weights, chunk_decay, schedule, fused=True)
     assert torch.equal(fused[2], reference[2])
 

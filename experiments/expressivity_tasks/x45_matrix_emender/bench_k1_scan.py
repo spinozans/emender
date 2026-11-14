@@ -7,8 +7,10 @@ recorded schedule:
 ``eager``     ``scan.chunk_scan``, the reference this lane has been running;
 ``kernel``    ``k1_schedule_scan.k1_state_scan`` -- one launch: the state walk, the
               injection list and the exit channels;
-``k1_chunk``  the same kernel plus the read reduction over the emitted injection
-              list, i.e. ``scan.chunk_scan(..., fused=True)``, the drop-in path.
+``k1_chunk``  stage K1 alone: the state walk plus the *torch* read reduction over the
+              emitted injection list (``k1_schedule_scan.k1_chunk``).  The stage-K2/K3
+              drop-in -- the same walk plus the two read kernels -- is measured by
+              ``bench_k23_read``, so this row keeps its K1-only meaning.
 
 Gate D times one chunk and one whole 2048-token block call, device and wall, with
 the boundary stated in the receipt.  The shape is the brief's: batch 8, heads 2,
@@ -42,7 +44,7 @@ import torch
 from experiments.expressivity_tasks.x45_matrix_emender.algebra import (
     empty_schedule, op_histogram)
 from experiments.expressivity_tasks.x45_matrix_emender.k1_schedule_scan import (
-    k1_state_scan)
+    k1_chunk, k1_state_scan)
 from experiments.expressivity_tasks.x45_matrix_emender.scan import chunk_scan
 from experiments.expressivity_tasks.x45_matrix_emender.schedule import (
     RoutingPolicy, route_chunk)
@@ -91,7 +93,8 @@ def recorded(policy, query, payload, decay, pieces):
         states.append(state)
         lives.append(live)
         _, state, live = chunk_scan(state, live, chunk_weights,
-                                    decay[:, start:stop].permute(0, 2, 1), piece)
+                                    decay[:, start:stop].permute(0, 2, 1), piece,
+                                    fused=False)
     return schedule, weights, states, lives
 
 
@@ -135,7 +138,7 @@ def timed(fn, repeats: int = 5, warmup: int = 2) -> dict:
 
 
 def fused_chunk(state, live, weights, decay, piece):
-    return chunk_scan(state, live, weights, decay, piece, fused=True)
+    return k1_chunk(state, live, weights, decay, piece)
 
 
 def measure_case(label: str, policy, query, payload, decay, pieces, repeats: int) -> dict:
@@ -151,7 +154,8 @@ def measure_case(label: str, policy, query, payload, decay, pieces, repeats: int
                  steps=int((stop - start) * piece.lanes))
 
     def eager():
-        return chunk_scan(entry_state, entry_live, chunk_weights, chunk_decay, piece)
+        return chunk_scan(entry_state, entry_live, chunk_weights, chunk_decay, piece,
+                          fused=False)
 
     def kernel():
         return k1_state_scan(entry_state, entry_live, decay[:, start:stop], piece)

@@ -180,7 +180,8 @@ def test_chunked_matches_sequential(chunk):
     schedule, q, values, decay = random_schedule(2, 48, 2, 9, 5, lanes=2, seed=7, decay=0.9)
     floor, reference_state, reference_reads = sequential_noise_floor(q, decay, schedule)
     assert floor > 0.0
-    reads, state, live = chunked_scan(q, decay, schedule, chunk_tokens=chunk)
+    reads, state, live = chunked_scan(q, decay, schedule, chunk_tokens=chunk,
+                                      fused=False)
     read_deviation = float((reads - reference_reads).abs().max())
     state_deviation = float((state - reference_state).abs().max())
     assert read_deviation <= NOISE_FACTOR * floor, (chunk, read_deviation, floor)
@@ -203,7 +204,7 @@ def test_liveness_is_bit_exact_at_every_chunk_boundary(chunk):
         stop = min(start + chunk, q.shape[1])
         _, state, live = chunk_scan(state, live, q[:, start:stop].permute(0, 2, 1, 3),
                                     decay[:, start:stop].permute(0, 2, 1),
-                                    schedule.chunk(start, stop))
+                                    schedule.chunk(start, stop), fused=False)
         assert torch.equal(live, trajectory[stop - 1]), (chunk, stop)
 
 
@@ -211,7 +212,8 @@ def test_single_token_and_empty_writes():
     schedule, q, values, decay = random_schedule(1, 1, 1, 4, 3, lanes=1, seed=2)
     floor, reference_state, reference_reads = sequential_noise_floor(q, decay, schedule)
     for chunk in (1, 2, 8):
-        reads, state, _ = chunked_scan(q, decay, schedule, chunk_tokens=chunk)
+        reads, state, _ = chunked_scan(q, decay, schedule, chunk_tokens=chunk,
+                                      fused=False)
         assert float((reads - reference_reads).abs().max()) <= NOISE_FACTOR * floor
 
     silent = MatrixSchedule(
@@ -223,7 +225,8 @@ def test_single_token_and_empty_writes():
     q_silent = torch.zeros(1, 5, 1, 4)
     values_silent = torch.zeros(1, 5, 1, 3)
     decay_silent = torch.full((1, 5, 1), 0.5)
-    reads, state, _ = chunked_scan(q_silent, decay_silent, silent, chunk_tokens=2)
+    reads, state, _ = chunked_scan(q_silent, decay_silent, silent, chunk_tokens=2,
+                                  fused=False)
     assert float(state.abs().max()) == 0.0 and float(reads.abs().max()) == 0.0
 
 
@@ -231,7 +234,8 @@ def test_chunk_length_not_dividing_token_count():
     schedule, q, values, decay = random_schedule(1, 13, 2, 6, 4, lanes=2, seed=5)
     floor, reference_state, reference_reads = sequential_noise_floor(q, decay, schedule)
     for chunk in (2, 3, 4, 5, 13):
-        reads, state, _ = chunked_scan(q, decay, schedule, chunk_tokens=chunk)
+        reads, state, _ = chunked_scan(q, decay, schedule, chunk_tokens=chunk,
+                                      fused=False)
         assert float((reads - reference_reads).abs().max()) <= NOISE_FACTOR * floor
 
 
@@ -255,7 +259,8 @@ def test_pop_then_reallocation_of_the_same_slot():
     decay = torch.ones(1, tokens, 1)
     floor, reference_state, reference_reads = sequential_noise_floor(q, decay, schedule)
     for chunk in (1, 2, 3, 6):
-        reads, state, _ = chunked_scan(q, decay, schedule, chunk_tokens=chunk)
+        reads, state, _ = chunked_scan(q, decay, schedule, chunk_tokens=chunk,
+                                      fused=False)
         assert float((reads - reference_reads).abs().max()) <= NOISE_FACTOR * floor
         assert torch.equal(state[:, :, 2:], torch.zeros(1, 1, rank - 2, 4))
 
@@ -270,7 +275,8 @@ def test_backward_through_the_chunked_scan_matches_the_gradient_oracle():
         gate = decay.clone().requires_grad_(True)
         graded = MatrixSchedule(slot=schedule.slot, erase=schedule.erase, payload=payload,
                                 op=schedule.op, live_after=schedule.live_after)
-        reads = (chunked_scan(weights, gate, graded, chunk_tokens=4)[0] if chunked
+        reads = (chunked_scan(weights, gate, graded, chunk_tokens=4, fused=False)[0]
+                 if chunked
                  else sequential_matrix_scan(weights, gate, graded)[0])
         return torch.autograd.grad((reads ** 2).sum(), (weights, payload, gate))
 
@@ -295,7 +301,7 @@ def test_routing_is_deterministic_and_reproducible_from_its_record():
     for _ in range(2):
         outputs.append(routed_chunk_scan(
             q, payload, decay, router=route_chunk, policy=policy, rank=rank,
-            rank_max=rank, chunk_tokens=8, collect=True))
+            rank_max=rank, chunk_tokens=8, collect=True, fused=False))
     first, second = outputs
     assert torch.equal(first.reads, second.reads)
     assert torch.equal(first.state, second.state)
@@ -304,7 +310,8 @@ def test_routing_is_deterministic_and_reproducible_from_its_record():
 
     # The recorded schedule *and* read-weight channel reproduce the trajectory
     # without routing: that is the determinism claim (gate E).
-    reads, state, live = chunked_scan(first.weights, decay, first.schedule, chunk_tokens=8)
+    reads, state, live = chunked_scan(first.weights, decay, first.schedule,
+                                     chunk_tokens=8, fused=False)
     assert torch.equal(reads, first.reads)
     assert torch.equal(state, first.state)
     assert torch.equal(live, first.live)
@@ -314,7 +321,7 @@ def test_routing_is_deterministic_and_reproducible_from_its_record():
     # dtype-promoted but value-identical run reproduces it exactly.
     again = routed_chunk_scan(q.detach() * 1.0, payload.detach(), decay, router=route_chunk,
                               policy=policy, rank=rank, rank_max=rank, chunk_tokens=8,
-                              collect=True)
+                              collect=True, fused=False)
     assert torch.equal(again.schedule.slot, first.schedule.slot)
     assert torch.equal(again.weights, first.weights)
 
@@ -327,7 +334,8 @@ def test_append_only_policy_never_pops_and_uses_every_slot():
     decay = torch.ones(batch, tokens, heads, device=DEVICE)
     policy = RoutingPolicy(ops=False)
     result = routed_chunk_scan(q, payload, decay, router=route_chunk, policy=policy,
-                               rank=rank, rank_max=rank, chunk_tokens=8, collect=True)
+                               rank=rank, rank_max=rank, chunk_tokens=8, collect=True,
+                               fused=False)
     assert result.schedule.op.unique().tolist() == [APPEND]
     assert bool(result.live.all()), "append-only control must leave every slot live"
     expected = (torch.arange(tokens, device=DEVICE) % rank).view(1, tokens, 1)
@@ -360,7 +368,8 @@ def test_growth_fires_at_chunk_boundaries_and_stays_in_the_precompiled_set():
     policy = RoutingPolicy(ops=False, grow=True, grow_trigger=0.3, grow_window=2,
                            grow_window_tokens=32)
     result = routed_chunk_scan(q, payload, decay, router=route_chunk, policy=policy,
-                               rank=rank, rank_max=rank_max, chunk_tokens=16, collect=False)
+                               rank=rank, rank_max=rank_max, chunk_tokens=16,
+                               collect=False, fused=False)
     state, rank_final, stats = result.state, result.rank, result.stats
     events = stats.growth_events
     assert events, "the growth trigger never fired under saturation"

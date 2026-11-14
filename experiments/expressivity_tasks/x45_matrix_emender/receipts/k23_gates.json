@@ -1,0 +1,161 @@
+{
+  "gate_a": {
+    "fixture": {
+      "tokens": 64,
+      "rank": 5,
+      "heads": 2,
+      "batch": 2,
+      "chunk_tokens": 16,
+      "seed": 23,
+      "lanes": 2
+    },
+    "ops": {
+      "none": 295,
+      "append": 26,
+      "correct": 125,
+      "pop": 32,
+      "merge": 34
+    },
+    "floor": 5.785935268676212e-07,
+    "allowed": 4.62874821494097e-06,
+    "read_scale": 5.940439224243164,
+    "rows": [
+      {
+        "chunk": 1,
+        "read_max_vs_eager": 4.76837158203125e-07,
+        "read_median_vs_eager": 1.1920928955078125e-07,
+        "read_max_vs_oracle": 4.76837158203125e-07,
+        "read_median_vs_oracle": 1.1920928955078125e-07,
+        "state_max_vs_oracle": 0.0,
+        "liveness_equal": true,
+        "read_ratio_of_floor": 0.8241315121249577
+      },
+      {
+        "chunk": 2,
+        "read_max_vs_eager": 1.430511474609375e-06,
+        "read_median_vs_eager": 3.5762786865234375e-07,
+        "read_max_vs_oracle": 4.76837158203125e-07,
+        "read_median_vs_oracle": 1.1920928955078125e-07,
+        "state_max_vs_oracle": 0.0,
+        "liveness_equal": true,
+        "read_ratio_of_floor": 0.8241315121249577
+      },
+      {
+        "chunk": 3,
+        "read_max_vs_eager": 1.1920928955078125e-06,
+        "read_median_vs_eager": 2.980232238769531e-07,
+        "read_max_vs_oracle": 9.5367431640625e-07,
+        "read_median_vs_oracle": 1.1920928955078125e-07,
+        "state_max_vs_oracle": 0.0,
+        "liveness_equal": true,
+        "read_ratio_of_floor": 1.6482630242499154
+      },
+      {
+        "chunk": 4,
+        "read_max_vs_eager": 9.5367431640625e-07,
+        "read_median_vs_eager": 2.384185791015625e-07,
+        "read_max_vs_oracle": 9.5367431640625e-07,
+        "read_median_vs_oracle": 1.1920928955078125e-07,
+        "state_max_vs_oracle": 0.0,
+        "liveness_equal": true,
+        "read_ratio_of_floor": 1.6482630242499154
+      },
+      {
+        "chunk": 16,
+        "read_max_vs_eager": 9.5367431640625e-07,
+        "read_median_vs_eager": 2.384185791015625e-07,
+        "read_max_vs_oracle": 9.5367431640625e-07,
+        "read_median_vs_oracle": 2.384185791015625e-07,
+        "state_max_vs_oracle": 0.0,
+        "liveness_equal": true,
+        "read_ratio_of_floor": 1.6482630242499154
+      }
+    ]
+  },
+  "gate_b": {
+    "no_writes": {
+      "injection_scale": 0.0,
+      "intra_scale": 0.0,
+      "read_scale": 2.7038612365722656,
+      "deviation_vs_inter_term": 5.960464477539063e-08
+    },
+    "write_every_token": {
+      "injection_scale": 1.927678108215332,
+      "inter_scale": 0.0,
+      "intra_scale": 2.3461084365844727,
+      "read_scale": 2.3461084365844727,
+      "deviation_vs_intra_term": 1.6391277313232422e-07
+    },
+    "slot_dies_mid_chunk": {
+      "pop_at": 4,
+      "read_scale_before_pop": 1.5,
+      "residue_after_pop": 5.960464477539063e-08,
+      "residue_ratio": 3.9736429850260414e-08,
+      "slot3_live_at_exit": false
+    },
+    "only_an_injection": {
+      "entry_term_scale": 0.0,
+      "token0_read": 0.0,
+      "token1_read": [
+        0.75,
+        1.5,
+        2.25
+      ],
+      "token1_closed_form": [
+        0.75,
+        1.5,
+        2.25
+      ],
+      "token1_deviation": 0.0,
+      "token2_read": [
+        0.6749999523162842,
+        1.3499999046325684,
+        2.0249998569488525
+      ],
+      "token2_deviation": 0.0
+    }
+  },
+  "union_read": {
+    "routed_fixture": {
+      "boundary": "the routed fixture; registered weights (chunk-entry softmax) vs read_weights recomputed from the state live at each token; delta is normalised by the row's own read scale",
+      "rows": {
+        "from_empty_store": {
+          "read_scale": 5.940438270568848,
+          "max_delta": 8.248644828796387,
+          "median_delta": 1.9211018085479736,
+          "max_relative": 1.3885582936974965,
+          "median_relative": 0.3233939519354709
+        },
+        "from_populated_store": {
+          "read_scale": 5.940438270568848,
+          "max_delta": 6.1430559158325195,
+          "median_delta": 1.8517217636108398,
+          "max_relative": 1.034108198088265,
+          "median_relative": 0.31171467142162923
+        }
+      }
+    },
+    "arm_shape": {
+      "boundary": "the routed fixture; registered weights (chunk-entry softmax) vs read_weights recomputed from the state live at each token; delta is normalised by the row's own read scale",
+      "rows": {
+        "from_empty_store": {
+          "read_scale": 1.5071840286254883,
+          "max_delta": 34.506141662597656,
+          "median_delta": 0.4320901036262512,
+          "max_relative": 22.894444876825254,
+          "median_relative": 0.2866870238933635
+        },
+        "from_populated_store": {
+          "read_scale": 1.5071841478347778,
+          "max_delta": 0.4815337359905243,
+          "median_delta": 0.20220761001110077,
+          "max_relative": 0.3194923040308619,
+          "median_relative": 0.13416251113149805
+        }
+      }
+    }
+  },
+  "noise_factor": 8.0,
+  "device": "NVIDIA RTX 6000 Ada Generation",
+  "torch": "2.9.1+cu128"
+}

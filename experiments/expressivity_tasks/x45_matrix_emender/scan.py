@@ -53,9 +53,13 @@ import torch
 from .algebra import MAX_LANES, NONE, empty_schedule, op_histogram
 
 DEFAULT_CHUNK_TOKENS = 64
-# Stage K1 (``k1_schedule_scan``) is default-OFF: the eager path below is the reference
-# the fused one is held to, so the flag cannot hide a divergence from its own oracle.
-FUSED_SCAN_DEFAULT = False
+# The kernel lane (K1 scan + K3 inter term + K2 intra interaction) is the default since
+# gates A and B passed (``K23_READ.md`` §4): the eager path below is the oracle it is
+# held to, and it is still one keyword away (``fused=False``).  It is forward only, so a
+# caller that needs a graph must ask for the eager path; ``MatrixMixer`` does exactly
+# that (``fused_scan=False``), which is why the registered arm's training path is
+# unchanged by this default.
+FUSED_SCAN_DEFAULT = True
 
 
 class RoutedResult(NamedTuple):
@@ -122,14 +126,15 @@ def chunk_scan(state, live, weights, decay, schedule, fused: bool = FUSED_SCAN_D
     channel (the only carrier of the write payloads).  Returns ``(reads, state,
     live)`` with ``reads`` ``(batch, heads, tokens, d_v)``.
 
-    ``fused=True`` runs stage K1 instead: one Triton kernel per chunk that walks
-    the chunk's steps per slot in registers and emits the injection list, then the
-    same read reduction over it (``k1_schedule_scan.k1_chunk``).  It is default-off
-    -- the eager path below *is* the reference the fused one is held to.
+    ``fused=True`` runs the kernel lane instead: stage K1 walks the chunk's steps per
+    slot in registers and emits the injection list, then K3 and K2 reduce it into the
+    read (``k23_read.k23_chunk`` -- three launches per chunk).  The eager path below
+    *is* the reference the fused one is held to, and it is the only one with a
+    backward, so anything that needs a graph must ask for it explicitly.
     """
     if fused:
-        from .k1_schedule_scan import k1_chunk
-        return k1_chunk(state, live, weights, decay, schedule)
+        from .k23_read import k23_chunk
+        return k23_chunk(state, live, weights, decay, schedule)
     dtype = torch.float32
     batch, heads, rank, value_dim = state.shape
     tokens = weights.shape[2]
