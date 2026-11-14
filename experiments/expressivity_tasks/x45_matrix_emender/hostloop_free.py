@@ -92,10 +92,12 @@ def value_block(rank: int, value_dim: int, limit: int = MAX_PERSISTENT_TILE) -> 
     be blocked -- that is what would need a cross-program reduction per token -- so a rank
     whose whole tile does not fit is refused rather than split.
 
-    Narrow beats wide at every shape measured (rank 64/128/512 at a block of 8/16/32/64):
+    Narrow beats wide at every shape measured (rank 64/128/512 at a block of 16/32/64/128):
     the per-token latency of the serial walk is set by the rank axis and the global loads,
-    not by the value width, so a narrow block only buys more programs.  8 is refused
-    because the read store degenerates into 8-float transactions.
+    not by the value width, so a narrow block only buys more programs.  Nothing narrower
+    than ``MIN_VALUE_BLOCK`` is compiled: a program would then own fewer value columns than
+    one store transaction carries, so the per-token read store would dominate.  That
+    boundary is a design choice, not a measurement -- the sweep starts at 16.
     """
     if not persistent_available(rank, value_dim, limit):
         raise ValueError(
