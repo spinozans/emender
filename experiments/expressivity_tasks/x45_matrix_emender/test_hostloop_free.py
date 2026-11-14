@@ -112,13 +112,20 @@ def test_persistent_scan_reproduces_the_oracle_on_a_real_routed_schedule():
                               schedule.payload.shape[-1])
 
     reads, exit_state, exit_live = persistent_scan(state, live, weights, decay, schedule)
+    # ``sequential_noise_floor`` does not report the exit liveness channel, so the oracle
+    # is run once more for it -- a tautological liveness assertion would be worse than none.
+    _, _, oracle_live, _ = sequential_matrix_scan(
+        fixture.result.weights, fixture.decay, schedule, initial_state=state.clone(),
+        initial_live=live, return_liveness=True)
     expected_reads = oracle_reads_tokens_major.permute(0, 2, 1, 3)
     peak, median = per_token_deviation(reads, expected_reads)
     print(f"floor {floor:.3e} allowance {NOISE_FACTOR * floor:.3e}; "
           f"read max {peak:.3e} ({peak / floor:.2f}x floor) median {median:.3e}; "
-          f"state {float((exit_state - oracle_state).abs().max()):.3e}")
+          f"state {float((exit_state - oracle_state).abs().max()):.3e}; "
+          f"live {int((exit_live != oracle_live).sum())} differing slots")
     assert torch.equal(exit_state, oracle_state)
-    assert torch.equal(exit_live, torch.zeros_like(exit_live) | exit_live)
+    assert torch.equal(exit_live, oracle_live)
+    assert bool(exit_live.any()) and not bool(exit_live.all()), "the fixture must not be trivial"
     assert peak <= NOISE_FACTOR * floor, (peak, floor)
     assert median <= NOISE_FACTOR * floor, (median, floor)
     # The read is the oracle's read: a per-token reduction over the rank axis, in the

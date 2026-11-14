@@ -424,6 +424,9 @@ next lever is **sequencing, not arithmetic**: either a CUDA graph over the whole
 compiled-scan machinery and knows the graph-fault history) or one kernel for the whole block
 whose grid carries the chunk axis with the state walk kept sequential inside it. Both are
 strictly forward-only and would show up in exactly the metric that did not move here
-(wall/occupancy, 5.7× → ?). The fused **backward** is the other large stage and is
-independent of this one; attempt it only with its own gate discipline, and not in the same
-lane as either of the above.
+(wall/occupancy, 5.7× → ?). **Taken, and answered with numbers, in
+[`NO_HOST_LOOP.md`](NO_HOST_LOOP.md)**: one persistent kernel for the whole block call is
+1 launch and 0.98 ms at 4.60× → 1.12×, a captured graph is 1.27–1.39 ms at 1.02×, and a
+wider chunk (C = 512) alone takes the loop to 12 launches and 1.56 ms at 1.23×. The fused
+**backward** is the other large stage and is independent of this one; attempt it only with
+its own gate discipline, and not in the same lane as either of the above.

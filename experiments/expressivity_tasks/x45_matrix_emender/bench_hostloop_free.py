@@ -72,8 +72,12 @@ GRAPH_CHUNKS = (128, 256, 512)
 # the persistent kernel at a rank where no per-token oracle is measured: it is the finest
 # chunked grouping available, i.e. the closest twin a chunked path can offer.
 EAGER_CHUNKS = (16, 128, 256, 512)
-# The value blocks / warp counts the persistent kernel's default came from (§4).
-SWEEP = ((16, None), (32, 4), (64, None), (128, 4))
+# The persistent kernel's tuning sweep (``NO_HOST_LOOP.md`` §4).  ``(value_block,
+# warps, stages)``: ``None`` takes the measured default.  Narrow blocks beat wide ones,
+# 4 warps beats 2/8 at and above a 2 048-float tile, and the pipelined loop is ~1.3x the
+# unpipelined one -- each of those is a row here rather than a claim.
+SWEEP = ((16, None, 3), (32, None, 3), (64, None, 3), (128, None, 3),
+         (16, 2, 3), (16, 8, 3), (16, None, 1))
 
 
 def head_major(decay):
@@ -246,18 +250,27 @@ def measure_block(label: str, state, live, weights, decay, schedule, repeats: in
             dict(host_launches=1, form="one replay", twin_chunk=chunk,
                  kernels_note="the pipeline's launches plus the copies the graph captures"),
             (lambda graph=graph: graph.run(state, live, weights, decay, schedule)))
+        # The same replay with the outputs copied out of the graph's static buffers.  A
+        # caller that keeps the reads has to pay this (the next replay overwrites them),
+        # so it is measured rather than assumed away.
+        paths[f"graph_C{chunk}_clone"] = (
+            dict(host_launches=1, form="one replay + output clone", twin_chunk=chunk),
+            (lambda graph=graph: graph.run(state, live, weights, decay, schedule,
+                                          clone=True)))
     per_token_twin = dict(host_launches=1, form="one kernel",
                           twin_chunk=None if oracle is not None else min(EAGER_CHUNKS),
                           twin_note=("the per-token oracle, not a chunked path: the "
                                      "persistent kernel walks tokens, not chunks"))
     paths["persistent"] = (per_token_twin,
                            lambda: persistent_scan(state, live, weights, decay, schedule))
-    for block, warps in SWEEP:
-        paths[f"persistent_bv{block}"] = (
+    for block, warps, stages in SWEEP:
+        name = (f"persistent_bv{block}_w{warps or 'auto'}_st{stages}")
+        paths[name] = (
             dict(host_launches=1, form="one kernel", value_block=block,
-                 warps=warps or "default"),
-            (lambda block=block, warps=warps: persistent_scan(
-                state, live, weights, decay, schedule, block=block, warps=warps)))
+                 warps=warps or "default", stages=stages),
+            (lambda block=block, warps=warps, stages=stages: persistent_scan(
+                state, live, weights, decay, schedule, block=block, warps=warps,
+                stages=stages)))
 
     rows = {}
     for name, (description, fn) in paths.items():
