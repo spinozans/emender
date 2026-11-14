@@ -73,11 +73,6 @@ import triton.language as tl
 
 from .algebra import NONE, MatrixSchedule
 
-# The fused path is default-OFF: it is opt-in per call site (``chunk_scan(...,
-# fused=True)``) and the eager reference stays the default until the gates in
-# K1_SCHEDULE_SCAN.md are signed off.
-FUSED_DEFAULT = False
-
 # ``algebra.NONE`` as the kernel sees it: Triton only reads module-level constants
 # that are instantiated as ``tl.constexpr``.
 NONE_CODE = tl.constexpr(int(NONE))
@@ -85,11 +80,6 @@ NONE_CODE = tl.constexpr(int(NONE))
 # The largest value dim the [BS, V] register tile is compiled for.  The arm runs
 # V = 128; the ceiling is a register budget, not a semantic limit.
 MAX_TILE_VALUE_DIM = 256
-
-
-def k1_available() -> bool:
-    """True when the fused path can run here (CUDA device plus Triton)."""
-    return torch.cuda.is_available()
 
 
 def check_k1_shapes(state: torch.Tensor, schedule: MatrixSchedule) -> None:
@@ -136,7 +126,7 @@ def _sub_rn(a, b):
 def _k1_state_scan_kernel(
     state_in, live_in, decay,
     slot, op, erase, live_after, payload,
-    state_out, live_out, strength_out, delta, gate,
+    state_out, live_out, strength_out, delta, log_gate,
     T, R,
     sb, st, sh, sl,
     ob, ot, oh, ol,
@@ -153,6 +143,11 @@ def _k1_state_scan_kernel(
     block of ``BS`` slots.  ``T`` is the token count of the chunk and ``L`` the lane
     count, so the chunk's step axis is ``steps = T*L`` (a token with two lanes is
     two steps, and the DECAY gate sits on lane 0 as in the reference).
+
+    The ``s*``/``o*``/``e*``/``l*``/``p*``/``d*`` arguments are the ``(batch, token,
+    head, lane[, value])`` strides of slot / op / erase / live_after / payload / decay.
+    Taking them as arguments is what lets the decision channel be the router's own
+    permuted view: no host-side permute or copy of the schedule is needed.
     """
     row = tl.program_id(0)
     block = tl.program_id(1)
@@ -184,9 +179,10 @@ def _k1_state_scan_kernel(
             active = tl.load(op + off) != NONE_CODE
             delta_row = delta + (row * steps + t * L + lane) * V + values
             if block == 0:
-                # gc of this step; lane 0 carries the token's log decay, and the
-                # other lanes are neutral steps (log 1 = 0), as in the reference.
-                tl.store(gate + row * steps + t * L + lane, gc)
+                # The step's cumulative log decay: lane 0 carries the token's log
+                # decay, the other lanes are neutral steps (log 1 = 0), as in the
+                # reference.
+                tl.store(log_gate + row * steps + t * L + lane, gc)
             if active:
                 target = tl.load(slot + off).to(tl.int32)
                 erase_here = tl.load(erase + off) != 0
@@ -231,15 +227,16 @@ class K1Chunk:
 
     ``state``/``live``/``strength`` are the exit channels ``(batch, heads, rank)``
     (``strength`` with the trailing value axis reduced away); ``delta``
-    ``(batch, heads, steps, V)`` is the injection list and ``gate``
-    ``(batch, heads, steps)`` its cumulative log decay.
+    ``(batch, heads, steps, V)`` is the injection list and ``log_gate``
+    ``(batch, heads, steps)`` its cumulative log decay, so the decay weight of an
+    injection is ``exp(log_gate_ref - log_gate_u)``.
     """
 
     state: torch.Tensor
     live: torch.Tensor
     strength: torch.Tensor
     delta: torch.Tensor
-    gate: torch.Tensor
+    log_gate: torch.Tensor
     steps: int
 
 
@@ -269,20 +266,20 @@ def k1_state_scan(state: torch.Tensor, live: torch.Tensor, decay: torch.Tensor,
     strength = torch.empty((batch, heads, rank), dtype=state.dtype, device=device)
     delta = torch.empty((batch, heads, steps, value_dim), dtype=state.dtype,
                         device=device)
-    gate = torch.empty((batch, heads, steps), dtype=torch.float32, device=device)
+    log_gate = torch.empty((batch, heads, steps), dtype=torch.float32, device=device)
 
     pointer = schedule
     _k1_state_scan_kernel[(lambda meta: (batch * heads, triton.cdiv(rank, meta['BS'])))](
         state, live.view(torch.int8), decay,
         pointer.slot, pointer.op, pointer.erase.view(torch.int8),
         pointer.live_after.view(torch.int8), pointer.payload,
-        out_state, out_live.view(torch.int8), strength, delta, gate,
+        out_state, out_live.view(torch.int8), strength, delta, log_gate,
         tokens, rank,
         *pointer.slot.stride(), *pointer.op.stride(), *pointer.erase.stride(),
         *pointer.live_after.stride(), *pointer.payload.stride()[:4], *decay.stride(),
         H=heads, L=lane_count, V=value_dim,
         VP=triton.next_power_of_2(value_dim))
-    return K1Chunk(out_state, out_live, strength, delta, gate, steps)
+    return K1Chunk(out_state, out_live, strength, delta, log_gate, steps)
 
 
 def _reads_from_injections(weights: torch.Tensor, entry_state: torch.Tensor,
@@ -301,13 +298,13 @@ def _reads_from_injections(weights: torch.Tensor, entry_state: torch.Tensor,
     read_index = torch.arange(tokens, device=device) * lane_count - 1
     inside = read_index >= 0
     device_zero = torch.zeros((), dtype=torch.float32, device=device)
-    gc_read = torch.where(inside, chunk.gate[..., read_index.clamp(min=0)], device_zero)
+    gc_read = torch.where(inside, chunk.log_gate[..., read_index.clamp(min=0)], device_zero)
     slot = schedule.slot.permute(0, 2, 1, 3).reshape(batch, heads, steps)
     addressed = weights.gather(3, slot.unsqueeze(2).expand(batch, heads, tokens, steps))
     before = (torch.arange(tokens, device=device).unsqueeze(-1) * lane_count
               > order.unsqueeze(0))
     coefficients = torch.where(before,
-                              torch.exp(gc_read.unsqueeze(-1) - chunk.gate.unsqueeze(-2)),
+                              torch.exp(gc_read.unsqueeze(-1) - chunk.log_gate.unsqueeze(-2)),
                               device_zero)
     injected = (coefficients * addressed) @ chunk.delta
     entry_read = (torch.exp(gc_read).unsqueeze(-1) * weights) @ entry_state
@@ -327,5 +324,5 @@ def k1_chunk(state: torch.Tensor, live: torch.Tensor, weights: torch.Tensor,
     return reads, chunk.state, chunk.live
 
 
-__all__ = ['K1Chunk', 'FUSED_DEFAULT', 'MAX_TILE_VALUE_DIM', 'k1_available',
-           'check_k1_shapes', 'k1_state_scan', 'k1_chunk']
+__all__ = ['K1Chunk', 'MAX_TILE_VALUE_DIM', 'check_k1_shapes', 'k1_state_scan',
+           'k1_chunk']

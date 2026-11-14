@@ -122,10 +122,10 @@ def injection_receipt(result, decay, seed=7):
     steps, lane_count = chunk.steps, piece.lanes
     batch, heads = state.shape[0], state.shape[1]
     slot = piece.slot.permute(0, 2, 1, 3).reshape(batch, heads, steps)
-    weight = torch.exp(chunk.gate[..., -1:] - chunk.gate).unsqueeze(-1) * chunk.delta
+    weight = torch.exp(chunk.log_gate[..., -1:] - chunk.log_gate).unsqueeze(-1) * chunk.delta
     injection = torch.zeros_like(state).scatter_add_(
         2, slot.unsqueeze(-1).expand(batch, heads, steps, state.shape[-1]), weight)
-    rebuilt = torch.exp(chunk.gate[..., -1])[:, :, None, None] * state + injection
+    rebuilt = torch.exp(chunk.log_gate[..., -1])[:, :, None, None] * state + injection
     return dict(steps=int(steps),
                 deviation=float((rebuilt - chunk.state).abs().max()),
                 state_scale=float(chunk.state.abs().max()))

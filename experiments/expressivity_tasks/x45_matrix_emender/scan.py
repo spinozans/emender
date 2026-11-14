@@ -53,6 +53,9 @@ import torch
 from .algebra import MAX_LANES, NONE, empty_schedule, op_histogram
 
 DEFAULT_CHUNK_TOKENS = 64
+# Stage K1 (``k1_schedule_scan``) is default-OFF: the eager path below is the reference
+# the fused one is held to, so the flag cannot hide a divergence from its own oracle.
+FUSED_SCAN_DEFAULT = False
 
 
 class RoutedResult(NamedTuple):
@@ -110,7 +113,7 @@ def _steps(schedule, tokens):
     return slot, erase, op, live_after, payload, lanes, steps
 
 
-def chunk_scan(state, live, weights, decay, schedule, fused: bool = False):
+def chunk_scan(state, live, weights, decay, schedule, fused: bool = FUSED_SCAN_DEFAULT):
     """One chunk.
 
     ``state`` ``(batch, heads, rank, d_v)``, ``live`` ``(batch, heads, rank)``,
@@ -210,7 +213,8 @@ def repeat_write_rate(schedule, last_write, step_offset, window_tokens):
 
 def routed_chunk_scan(query, payload, decay, *, router, policy, rank=None,
                       rank_max=None, initial_state=None, initial_live=None,
-                      chunk_tokens=None, collect=False, fused: bool = False):
+                      chunk_tokens=None, collect=False,
+                      fused: bool = FUSED_SCAN_DEFAULT):
     """Chunked scan whose fixed schedule (and read weights) come from ``router``.
 
     ``router(chunk_index, token_offset, state, live, query_chunk, payload_chunk,
@@ -292,7 +296,7 @@ def _write_chunk(schedule, start, stop, chunk):
 
 
 def chunked_scan(weights, decay, schedule, initial_state=None,
-                 initial_live=None, chunk_tokens=None, fused: bool = False):
+                 initial_live=None, chunk_tokens=None, fused: bool = FUSED_SCAN_DEFAULT):
     """Chunked scan of a *given* fixed schedule (the parity twin of the oracle)."""
     chunk_tokens = DEFAULT_CHUNK_TOKENS if chunk_tokens is None else int(chunk_tokens)
     batch, tokens, heads, rank_max = weights.shape

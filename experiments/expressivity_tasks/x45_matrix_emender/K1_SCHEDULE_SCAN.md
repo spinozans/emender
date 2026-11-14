@@ -82,7 +82,7 @@ S_s = exp(gc_s) H + sum_{u<=s} exp(gc_s - gc_u) k_{j_u} d_u^T ,  gc_u = sum_{w<=
 o_t = exp(gc_read) w_t^T H + sum_{u<read} exp(gc_read - gc_u) w_t[j_u] d_u
 ```
 
-`delta` is `(batch, heads, steps, V)` and `gate` is `(batch, heads, steps)`; the
+`delta` is `(batch, heads, steps, V)` and `log_gate` is `(batch, heads, steps)`; the
 injection list is step-major, so it is dense with exact zeros at steps that write nothing
 (compacting it would need an atomic prefix sum and would put the read's own matmul back
 together from a sparse list — no gain). `_reads_from_injections` performs the reduction

@@ -26,9 +26,9 @@ from experiments.expressivity_tasks.x45_matrix_emender.algebra import (
     APPEND, CORRECT, NONE, POP, MatrixSchedule, op_histogram, sequential_matrix_scan,
     update_liveness)
 from experiments.expressivity_tasks.x45_matrix_emender.k1_schedule_scan import (
-    FUSED_DEFAULT, MAX_TILE_VALUE_DIM, k1_state_scan)
+    MAX_TILE_VALUE_DIM, k1_state_scan)
 from experiments.expressivity_tasks.x45_matrix_emender.scan import (
-    chunk_scan, chunked_scan, routed_chunk_scan)
+    FUSED_SCAN_DEFAULT, chunk_scan, chunked_scan, routed_chunk_scan)
 from experiments.expressivity_tasks.x45_matrix_emender.schedule import (
     RoutingPolicy, route_chunk)
 from experiments.expressivity_tasks.x45_matrix_emender.test_matrix_emender import (
@@ -253,10 +253,10 @@ def test_the_injection_list_reconstructs_the_exit_state():
     steps, lanes = chunk.steps, schedule.lanes
     batch, heads = state.shape[0], state.shape[1]
     slot = schedule.slot.permute(0, 2, 1, 3).reshape(batch, heads, steps)
-    weight = torch.exp(chunk.gate[..., -1:] - chunk.gate).unsqueeze(-1) * chunk.delta
+    weight = torch.exp(chunk.log_gate[..., -1:] - chunk.log_gate).unsqueeze(-1) * chunk.delta
     injection = torch.zeros_like(state).scatter_add_(
         2, slot.unsqueeze(-1).expand(batch, heads, steps, state.shape[-1]), weight)
-    reconstructed = torch.exp(chunk.gate[..., -1])[:, :, None, None] * state + injection
+    reconstructed = torch.exp(chunk.log_gate[..., -1])[:, :, None, None] * state + injection
     deviation = float((reconstructed - chunk.state).abs().max())
     assert deviation <= 1e-5 * max(1.0, float(chunk.state.abs().max())), deviation
 
@@ -483,8 +483,8 @@ def test_the_fused_path_is_bit_deterministic_across_slot_blocks():
     state, live = entry_state(2, 2, 64, 8, seed=8)
     one = k1_state_scan(state, live, fixture.decay[:, :8], fixture.schedule.chunk(0, 8))
     two = k1_state_scan(state, live, fixture.decay[:, :8], fixture.schedule.chunk(0, 8))
-    for left, right in zip((one.state, one.live, one.strength, one.delta, one.gate),
-                           (two.state, two.live, two.strength, two.delta, two.gate)):
+    for left, right in zip((one.state, one.live, one.strength, one.delta, one.log_gate),
+                           (two.state, two.live, two.strength, two.delta, two.log_gate)):
         assert torch.equal(left, right)
     assert float(one.delta.abs().max()) > 0.0, "the chunk must write something"
 
@@ -493,7 +493,7 @@ def test_the_fused_path_is_bit_deterministic_across_slot_blocks():
 
 @needs_cuda
 def test_the_fused_path_is_default_off_and_the_reference_is_unchanged():
-    assert FUSED_DEFAULT is False
+    assert FUSED_SCAN_DEFAULT is False
     schedule, query, _, decay = random_schedule(1, 12, 1, 5, 3, lanes=1, seed=19)
     default = chunked_scan(query, decay, schedule, chunk_tokens=4)
     explicit = chunked_scan(query, decay, schedule, chunk_tokens=4, fused=False)
