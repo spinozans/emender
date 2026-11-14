@@ -666,5 +666,230 @@
     "seed": 3401,
     "scale": 2,
     "shape_note": "the registered shape: width 576, depth 24, chunk 64, ~150 M parameters, embedding + head + optimizer included"
+  },
+  "off_mb2": {
+    "label": "off_mb2",
+    "config": {
+      "fused_backward": false,
+      "compile_scan": true,
+      "microbatch": 2,
+      "chunk_tokens": 64,
+      "description": "registered path at microbatch 2 (the largest microbatch at which the fused path's trajectory store fits the card)"
+    },
+    "boundary": "whole model, whole step: prepare + all microbatches' forward and backward + clip/AdamW; flagship-stream read excluded; tokens are measured targets over the same 64-window stream batches for every arm (the gates.py/cd_* protocol)",
+    "precision": "bf16 compute (autocast), fp32 master weights, fused CE -- the registered regime",
+    "session": "same-session (this card, this process)",
+    "parameters": 149981808,
+    "summary": {
+      "shape": {
+        "width": 576,
+        "depth": 24,
+        "hidden": 3352,
+        "heads": 2,
+        "value_dim": 128,
+        "rank": 128,
+        "rank_max": 128,
+        "vocab": 256
+      },
+      "parameters": {
+        "total": 149981808,
+        "trainable": 149981808,
+        "per_layer": 6236930,
+        "mixer": 443522,
+        "mlp": 5792256,
+        "norms": 1152,
+        "embedding": 147456,
+        "head": 147456,
+        "final_norm": 576,
+        "capacity": 150003984,
+        "capacity_relative": -0.00014783607347390593
+      },
+      "routing": {
+        "ops": true,
+        "tau_match": 0.45,
+        "tau_merge": 0.85,
+        "tau_pop": 0.1,
+        "tie_break": 1e-06,
+        "read_scale": 2.0,
+        "grow": false,
+        "grow_trigger": 0.5,
+        "grow_window": 4,
+        "grow_window_tokens": 512,
+        "grow_geometric": 2.0,
+        "grow_stride_floor": 64
+      },
+      "chunk_tokens": 64
+    },
+    "microbatches": 2,
+    "windows_per_step": 64,
+    "context": 2048,
+    "warmup": 2,
+    "steps": 3,
+    "tokens": 318235,
+    "step_walls": [
+      50.952,
+      49.764,
+      50.053
+    ],
+    "phase_s": {
+      "prepare": 0.01,
+      "fwd_bwd": 150.712,
+      "opt": 0.048
+    },
+    "phase_frac": {
+      "prepare": 0.0001,
+      "fwd_bwd": 0.9996,
+      "opt": 0.0003
+    },
+    "total_s": 150.769,
+    "tokens_per_s": 2110.7,
+    "tokens_per_s_steady": 2110.7,
+    "ms_per_step_p50": 50053.0,
+    "peak_allocated_gb": 8.12,
+    "losses": [
+      3.845283,
+      3.958011,
+      3.404217
+    ],
+    "grad_probe": {
+      "finite": true,
+      "nonzero": true,
+      "parameters_probed": 243
+    },
+    "forbidden_kernels_found": [],
+    "replay_absent": true,
+    "top_kernels": [
+      {
+        "name": "## Call CompiledFxGraph f6jrb6c4y5adq6m3seymyuramkdkfsvlya4hz4mxtzrjitvw5kve ##",
+        "cuda_ms": 70740.761,
+        "calls": 2304,
+        "cuda_frac": 0.4087
+      },
+      {
+        "name": "## Call CompiledFxGraph fqo3qjyraaxv7sphcl5baz6whusoejz6cmyielb3pn7pbh3l3ttv ##",
+        "cuda_ms": 64795.915,
+        "calls": 2304,
+        "cuda_frac": 0.3743
+      },
+      {
+        "name": "aten::linalg_solve_triangular",
+        "cuda_ms": 5331.135,
+        "calls": 147456,
+        "cuda_frac": 0.0308
+      },
+      {
+        "name": "void kernel_trsm_l_mul32<float, 8, true, false, false, true>(int, int, float const*, float const*, int, float*",
+        "cuda_ms": 2863.862,
+        "calls": 294912,
+        "cuda_frac": 0.0165
+      },
+      {
+        "name": "aten::mm",
+        "cuda_ms": 2768.165,
+        "calls": 46272,
+        "cuda_frac": 0.016
+      },
+      {
+        "name": "void kernel_trsm_l_mul32<float, 8, true, true, false, true>(int, int, float const*, float const*, int, float*,",
+        "cuda_ms": 2467.325,
+        "calls": 294912,
+        "cuda_frac": 0.0143
+      },
+      {
+        "name": "aten::bmm",
+        "cuda_ms": 1933.865,
+        "calls": 806400,
+        "cuda_frac": 0.0112
+      },
+      {
+        "name": "void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda_scatter_gather_internal_kernel<t",
+        "cuda_ms": 1282.833,
+        "calls": 73728,
+        "cuda_frac": 0.0074
+      },
+      {
+        "name": "aten::scatter_reduce_",
+        "cuda_ms": 1282.824,
+        "calls": 73728,
+        "cuda_frac": 0.0074
+      },
+      {
+        "name": "void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_16x16_128x1_nn_align8>(cutlass_80_wmma_te",
+        "cuda_ms": 1240.908,
+        "calls": 516096,
+        "cuda_frac": 0.0072
+      },
+      {
+        "name": "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8>(cutlass_80_tensorop_",
+        "cuda_ms": 927.633,
+        "calls": 6912,
+        "cuda_frac": 0.0054
+      },
+      {
+        "name": "ampere_bf16_s1688gemm_bf16_64x128_sliced1x2_ldg8_f2f_tn",
+        "cuda_ms": 718.743,
+        "calls": 6912,
+        "cuda_frac": 0.0042
+      },
+      {
+        "name": "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nn_align8>(cutlass_80_tensorop_",
+        "cuda_ms": 656.408,
+        "calls": 9312,
+        "cuda_frac": 0.0038
+      },
+      {
+        "name": "aten::copy_",
+        "cuda_ms": 622.377,
+        "calls": 217728,
+        "cuda_frac": 0.0036
+      },
+      {
+        "name": "void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_16x16_64x1_nt_align8>(cutlass_80_wmma_ten",
+        "cuda_ms": 515.783,
+        "calls": 216576,
+        "cuda_frac": 0.003
+      },
+      {
+        "name": "aten::mul",
+        "cuda_ms": 504.965,
+        "calls": 7107,
+        "cuda_frac": 0.0029
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<c10::BFloat16, c10::BFloat16, c10:",
+        "cuda_ms": 504.744,
+        "calls": 6912,
+        "cuda_frac": 0.0029
+      },
+      {
+        "name": "triton_per_fused__to_copy_arange_exp_index_put_mul_neg_scalar_tensor_sub_sum_tril_unsqueeze_view_where_12",
+        "cuda_ms": 326.536,
+        "calls": 71424,
+        "cuda_frac": 0.0019
+      },
+      {
+        "name": "triton_per_fused__to_copy_arange_exp_index_put_mul_neg_scalar_tensor_sub_sum_tril_unsqueeze_view_where_12",
+        "cuda_ms": 326.536,
+        "calls": 71424,
+        "cuda_frac": 0.0019
+      },
+      {
+        "name": "triton_poi_fused_clone_copy_index_put_mul_scalar_tensor_select_view_where_9",
+        "cuda_ms": 324.918,
+        "calls": 71424,
+        "cuda_frac": 0.0019
+      }
+    ],
+    "cuda_total_ms": 173106.9,
+    "recorded_references": {
+      "gdn2_tokens_per_s": 28124.0,
+      "matrix_ops_tokens_per_s": 13189.7,
+      "matrix_append_tokens_per_s": 15855.9,
+      "source": "receipts/cd_gdn2_c128_rerun.json, receipts/cd_matrix_ops_c128.json, receipts/cd_matrix_append_c128.json -- RECORDED, not same-session"
+    },
+    "oom": null,
+    "seed": 3401,
+    "scale": 2,
+    "shape_note": "the registered shape: width 576, depth 24, chunk 64, ~150 M parameters, embedding + head + optimizer included"
   }
 }

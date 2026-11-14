@@ -345,7 +345,7 @@ SCALE2_CONFIGS = {
 
 def train_run(label: str, chunk_tokens: int, compile_scan: bool, fused_backward: bool,
               microbatch: int, warmup: int, steps: int, min_seconds: float | None,
-              description: str = "", seed: int = 3401) -> dict:
+              description: str = "", seed: int = 3401, profile: bool = True) -> dict:
     """One gate-D-protocol training run: the same loop, phases and stream as gates.py."""
     from experiments.expressivity_tasks.x42_pile_scale import lattice as L
     from experiments.expressivity_tasks.x42_pile_scale.byte_velocity import grouped
@@ -408,13 +408,16 @@ def train_run(label: str, chunk_tokens: int, compile_scan: bool, fused_backward:
     grad_probe = {}
     oom = None
     records = []
-    profiler = torch.profiler.profile(
+    profiler = (torch.profiler.profile(
         activities=[torch.profiler.ProfilerActivity.CUDA,
                     torch.profiler.ProfilerActivity.CPU],
-        record_shapes=False, profile_memory=False)
+        record_shapes=False, profile_memory=False) if profile else None)
     try:
+        began_warmup = time.monotonic()
         for _ in range(warmup):
             one_step(next(batches), False)
+        print(f"[{label}] warmup done in {time.monotonic() - began_warmup:.0f} s",
+              flush=True)
         # Every parameter must carry a finite, non-zero gradient on the fused path
         # (the read weights and payloads stay attached, so nothing is silently cut).
         for name, param in model.named_parameters():
@@ -425,7 +428,8 @@ def train_run(label: str, chunk_tokens: int, compile_scan: bool, fused_backward:
                     finite=bool(grad is None or torch.isfinite(grad).all()),
                     nonzero=bool(grad is None or float(grad.abs().max()) > 0.0))
         torch.cuda.reset_peak_memory_stats()
-        profiler.start()
+        if profiler is not None:
+            profiler.start()
         began = time.monotonic()
         while len(records) < steps and (min_seconds is None
                                         or time.monotonic() - began < min_seconds):
@@ -434,14 +438,18 @@ def train_run(label: str, chunk_tokens: int, compile_scan: bool, fused_backward:
                 tokens=count, loss=round(loss, 6),
                 wall_s=round(sum(phases.values()), 3),
                 phases={key: round(value, 3) for key, value in phases.items()}))
-        profiler.stop()
+            print(f"[{label}] step {len(records)}: {records[-1]['wall_s']:.1f} s "
+                  f"(fwd_bwd {records[-1]['phases']['fwd_bwd']:.1f} s)", flush=True)
+        if profiler is not None:
+            profiler.stop()
     except torch.cuda.OutOfMemoryError as error:
         oom = dict(error=repr(error)[:400],
                    note=("the fused path stores the per-chunk state trajectory for "
                          "the backward; 24 layers of it exceed the card at this "
                          "microbatch"))
         try:
-            profiler.stop()
+            if profiler is not None:
+                profiler.stop()
         except Exception:                                   # pragma: no cover
             pass
 
@@ -453,7 +461,7 @@ def train_run(label: str, chunk_tokens: int, compile_scan: bool, fused_backward:
     phases = {key: round(sum(record["phases"][key] for record in records), 3)
               for key in ("prepare", "fwd_bwd", "opt")}
     kernels = []
-    if not oom:
+    if not oom and profiler is not None:
         for event in profiler.key_averages():
             device = getattr(event, "self_device_time_total", 0) or 0
             if device > 0:
@@ -467,6 +475,8 @@ def train_run(label: str, chunk_tokens: int, compile_scan: bool, fused_backward:
     forbidden = sorted({name for name in
                         ("replaybackward", "reverse_kernel", "replay", "scan_kernel")
                         if any(name in row["name"].lower() for row in kernels)})
+    if profiler is None:
+        forbidden = ["not checked: --no-profile run (per-step walls only)"]
     report = dict(
         label=label,
         config=dict(fused_backward=fused_backward, compile_scan=compile_scan,
@@ -498,7 +508,7 @@ def train_run(label: str, chunk_tokens: int, compile_scan: bool, fused_backward:
                         nonzero=all(v["nonzero"] for v in grad_probe.values()),
                         parameters_probed=len(grad_probe)),
         forbidden_kernels_found=forbidden,
-        replay_absent=not forbidden,
+        replay_absent=(None if profiler is None else not forbidden),
         top_kernels=kernels[:20],
         cuda_total_ms=(round(sum(row["cuda_ms"] for row in kernels), 1)
                        if kernels else None),
@@ -517,7 +527,8 @@ def scale2(args) -> dict:
                        fused_backward=config["fused_backward"],
                        microbatch=config["microbatch"], warmup=args.warmup,
                        steps=args.steps, min_seconds=args.min_seconds,
-                       description=config["description"], seed=args.seed)
+                       description=config["description"], seed=args.seed,
+                       profile=not args.no_profile)
     report["scale"] = 2
     report["shape_note"] = ("the registered shape: width 576, depth 24, chunk 64, "
                             "~150 M parameters, embedding + head + optimizer included")
@@ -530,12 +541,14 @@ SCALE3_CONFIGS = {
                            description=("the registered matrix_ops arm on the cd_* "
                                        "protocol (chunk 128, torch.compile on the "
                                        "one shared scan)")),
-    "registered_mb4": dict(fused_backward=False, compile_scan=True, microbatch=4,
-                           description="the registered arm at microbatch 4 (the fused run's memory-matched twin)"),
+    "registered_mb2": dict(fused_backward=False, compile_scan=True, microbatch=2,
+                           description="the registered arm at microbatch 2 (the fused run's memory-matched twin)"),
     "fused_mb8": dict(fused_backward=True, compile_scan=False, microbatch=8,
                       description="the fused matrix_ops arm at the registered microbatch"),
     "fused_mb4": dict(fused_backward=True, compile_scan=False, microbatch=4,
                       description="the fused matrix_ops arm at microbatch 4"),
+    "fused_mb2": dict(fused_backward=True, compile_scan=False, microbatch=2,
+                      description="the fused matrix_ops arm at microbatch 2 -- the largest microbatch whose 24-layer trajectory store fits the card (mb 8 and 4 OOM, receipted)"),
 }
 
 
@@ -547,7 +560,8 @@ def scale3(args) -> dict:
                        fused_backward=config["fused_backward"],
                        microbatch=config["microbatch"], warmup=args.warmup,
                        steps=args.steps, min_seconds=args.min_seconds,
-                       description=config["description"], seed=args.seed)
+                       description=config["description"], seed=args.seed,
+                       profile=not args.no_profile)
     report["scale"] = 3
     report["shape_note"] = ("the cd_* protocol: chunk 128, 64 flagship windows/step, "
                             "microbatch as stated per config; compared against the "
@@ -570,6 +584,8 @@ def main():
     parser.add_argument("--warmup", type=int, default=2)
     parser.add_argument("--repeats", type=int, default=REPEATS)
     parser.add_argument("--seed", type=int, default=3401)
+    parser.add_argument("--no-profile", action="store_true",
+                        help="skip the torch.profiler pass (per-step walls only; no kernel attribution)")
     arguments = parser.parse_args()
     if arguments.scale == 1:
         report = scale1(arguments)
