@@ -131,8 +131,11 @@ class MatrixMixer(nn.Module):
     """The store: query/value/output projections plus the DECAY gate and the scan."""
 
     def __init__(self, shape: MatrixShape, policy: RoutingPolicy, chunk_tokens: int,
-                 compile_scan: bool = False):
+                 compile_scan: bool = False, fused_scan: bool = False):
         super().__init__()
+        if fused_scan and compile_scan:
+            raise ValueError("the fused K1 scan is one kernel per chunk already; "
+                             "do not torch.compile it (use compile_scan=False)")
         value_dim = shape.heads * shape.value_dim
         self.heads = shape.heads
         self.value_dim = shape.value_dim
@@ -157,6 +160,9 @@ class MatrixMixer(nn.Module):
         # count, not bytes or FLOPs.  Compiling the whole 24-layer forward instead is
         # impractical — a single graph that large did not finish compiling in 50 min.
         self.compile_scan = compile_scan
+        # Stage K1 (``k1_schedule_scan``): the schedule-decoded state scan as one
+        # fused kernel.  Default-off; the eager reference stays the default path.
+        self.fused_scan = fused_scan
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self._forward_impl(x)
@@ -175,17 +181,18 @@ class MatrixMixer(nn.Module):
         scan = compiled_scan(COMPILE_MODE) if self.compile_scan else routed_chunk_scan
         result = scan(
             query, payload, decay, router=route_chunk, policy=self.policy,
-            rank=self.rank, rank_max=self.rank_max, chunk_tokens=self.chunk_tokens)
+            rank=self.rank, rank_max=self.rank_max, chunk_tokens=self.chunk_tokens,
+            fused=self.fused_scan)
         return (self.out(result.reads.reshape(batch, tokens, self.heads * self.value_dim)),
                 result)
 
 
 class MatrixBlock(nn.Module):
     def __init__(self, shape: MatrixShape, policy: RoutingPolicy, chunk_tokens: int,
-                 compile_scan: bool = False):
+                 compile_scan: bool = False, fused_scan: bool = False):
         super().__init__()
         self.norm1 = nn.RMSNorm(shape.width, eps=1e-5)
-        self.mixer = MatrixMixer(shape, policy, chunk_tokens, compile_scan)
+        self.mixer = MatrixMixer(shape, policy, chunk_tokens, compile_scan, fused_scan)
         self.norm2 = nn.RMSNorm(shape.width, eps=1e-5)
         self.mlp = SwiGLU(shape.width, shape.hidden)
 
@@ -196,7 +203,8 @@ class MatrixBlock(nn.Module):
 
 class MatrixModel(nn.Module):
     def __init__(self, shape: MatrixShape, policy: RoutingPolicy, chunk_tokens: int = 64,
-                 init_scale: float = 1.0, compile_scan: bool = True):
+                 init_scale: float = 1.0, compile_scan: bool = True,
+                 fused_scan: bool = False):
         super().__init__()
         self.shape = shape
         self.policy = policy
@@ -204,7 +212,7 @@ class MatrixModel(nn.Module):
         self.norm = nn.RMSNorm(shape.width, eps=1e-5)
         self.head = nn.Linear(shape.width, shape.vocab, bias=False)
         self.blocks = nn.ModuleList(
-            MatrixBlock(shape, policy, chunk_tokens, compile_scan)
+            MatrixBlock(shape, policy, chunk_tokens, compile_scan, fused_scan)
             for _ in range(shape.depth))
         with torch.no_grad():
             for module in self.modules():
@@ -246,8 +254,9 @@ class MatrixModel(nn.Module):
 
 
 def model_for(shape: MatrixShape, policy: RoutingPolicy, chunk_tokens: int = 64,
-              init_scale: float = 1.0, compile_scan: bool = True) -> MatrixModel:
-    model = MatrixModel(shape, policy, chunk_tokens, init_scale, compile_scan)
+              init_scale: float = 1.0, compile_scan: bool = True,
+              fused_scan: bool = False) -> MatrixModel:
+    model = MatrixModel(shape, policy, chunk_tokens, init_scale, compile_scan, fused_scan)
     observed = model.counts()
     expected = parameter_count(shape)
     if observed["total"] != expected["total"]:

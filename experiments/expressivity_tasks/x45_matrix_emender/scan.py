@@ -110,7 +110,7 @@ def _steps(schedule, tokens):
     return slot, erase, op, live_after, payload, lanes, steps
 
 
-def chunk_scan(state, live, weights, decay, schedule):
+def chunk_scan(state, live, weights, decay, schedule, fused: bool = False):
     """One chunk.
 
     ``state`` ``(batch, heads, rank, d_v)``, ``live`` ``(batch, heads, rank)``,
@@ -118,7 +118,15 @@ def chunk_scan(state, live, weights, decay, schedule):
     chunk, ``decay`` ``(batch, heads, tokens)``, ``schedule`` the chunk's decision
     channel (the only carrier of the write payloads).  Returns ``(reads, state,
     live)`` with ``reads`` ``(batch, heads, tokens, d_v)``.
+
+    ``fused=True`` runs stage K1 instead: one Triton kernel per chunk that walks
+    the chunk's steps per slot in registers and emits the injection list, then the
+    same read reduction over it (``k1_schedule_scan.k1_chunk``).  It is default-off
+    -- the eager path below *is* the reference the fused one is held to.
     """
+    if fused:
+        from .k1_schedule_scan import k1_chunk
+        return k1_chunk(state, live, weights, decay, schedule)
     dtype = torch.float32
     batch, heads, rank, value_dim = state.shape
     tokens = weights.shape[2]
@@ -202,7 +210,7 @@ def repeat_write_rate(schedule, last_write, step_offset, window_tokens):
 
 def routed_chunk_scan(query, payload, decay, *, router, policy, rank=None,
                       rank_max=None, initial_state=None, initial_live=None,
-                      chunk_tokens=None, collect=False):
+                      chunk_tokens=None, collect=False, fused: bool = False):
     """Chunked scan whose fixed schedule (and read weights) come from ``router``.
 
     ``router(chunk_index, token_offset, state, live, query_chunk, payload_chunk,
@@ -258,7 +266,7 @@ def routed_chunk_scan(query, payload, decay, *, router, policy, rank=None,
         elif growth:
             window.append(repeat_write_rate(schedule, last_write, start,
                                             policy.grow_window_tokens))
-        chunk_reads, state, live = chunk_scan(state, live, weights, dc, schedule)
+        chunk_reads, state, live = chunk_scan(state, live, weights, dc, schedule, fused)
         reads[:, start:stop] = chunk_reads.permute(0, 2, 1, 3)
         if growth and len(window) >= policy.grow_window and rank_now < rank_max:
             if sum(window[-policy.grow_window:]) / policy.grow_window >= policy.grow_trigger:
@@ -284,7 +292,7 @@ def _write_chunk(schedule, start, stop, chunk):
 
 
 def chunked_scan(weights, decay, schedule, initial_state=None,
-                 initial_live=None, chunk_tokens=None):
+                 initial_live=None, chunk_tokens=None, fused: bool = False):
     """Chunked scan of a *given* fixed schedule (the parity twin of the oracle)."""
     chunk_tokens = DEFAULT_CHUNK_TOKENS if chunk_tokens is None else int(chunk_tokens)
     batch, tokens, heads, rank_max = weights.shape
@@ -299,6 +307,6 @@ def chunked_scan(weights, decay, schedule, initial_state=None,
         stop = min(start + chunk_tokens, tokens)
         chunk_reads, state, live = chunk_scan(
             state, live, weights[:, start:stop].permute(0, 2, 1, 3),
-            decay[:, start:stop].permute(0, 2, 1), schedule.chunk(start, stop))
+            decay[:, start:stop].permute(0, 2, 1), schedule.chunk(start, stop), fused)
         reads[:, start:stop] = chunk_reads.permute(0, 2, 1, 3)
     return reads, state, live
