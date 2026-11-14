@@ -21,9 +21,12 @@ claimed.
 * Kernel *occupancy* per chunk falls 0.302 → 0.046 ms (6.6×): the eager path's
   `[steps × steps]` coupling matrix, triangular solve, gather and scatter-add are gone,
   not merely fused.
-* Default-off. `chunk_scan`/`chunked_scan`/`routed_chunk_scan`/`MatrixMixer` take
-  `fused=False` and the eager reference **is** the gate-B oracle, so the flag cannot
-  hide a divergence from itself.
+* Default-off **at this stage**. `chunk_scan`/`chunked_scan`/`routed_chunk_scan`/
+  `MatrixMixer` took `fused=False` and the eager reference **is** the gate-B oracle, so
+  the flag could not hide a divergence from itself. *Superseded by `K23_READ.md`: stage
+  K2+K3 fused the read, the drop-in path is now three kernels per chunk instead of 24,
+  and the default is on — `MatrixMixer` still passes `fused_scan=False` because the arm
+  needs the backward. Every number in this document is stage-K1 as measured.*
 * One real bug found by gating and fixed: every slot block stored each step's injection,
   so a block that did not own the addressed slot raced the owner with zeros and the
   **reads were run-dependent**. Exactly one block owns a step's injection now.
@@ -105,7 +108,8 @@ gates are defined against, so the mapping is stated instead:
 Everything else in the brief was implemented as written: one program per
 `(row, head, slot_block)`, the chunk in registers, no `[rows, C, rank]` masks, the
 injection list plus the exit state, forward only, default-off behind a flag, Python
-reference retained.
+reference retained.  (The flag was flipped on by stage K2+K3, which also replaced the
+torch read reduction this stage left in place; see `K23_READ.md`.)
 
 ---
 
