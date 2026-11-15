@@ -1,0 +1,414 @@
+{
+  "score": 1.7575972761426653,
+  "nll_heldout": 1.7575972761426653,
+  "eval_split": "calibration",
+  "eval_windows": 7,
+  "eval_targets": 14336,
+  "units": "nats/byte",
+  "status": "completed",
+  "score_eligible": true,
+  "arm": "matrix_ops",
+  "seed": 3401,
+  "train_seconds": 2702.68529888615,
+  "steps": 832,
+  "bytes": 91867164,
+  "bytes_per_s": 33991.069562505465,
+  "identity": {
+    "stream": "flagship_beyond_100gb",
+    "source": "/mnt/nvme2n1/erikg/pile.txt",
+    "source_size": 1307910802540,
+    "manifest": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/documents.jsonl.gz",
+    "manifest_sha256": "48b9095eeccb023ff1cb2a4f6da899a8b3e4eb3b76b2804e730f1d6ad031c414",
+    "registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/registration.json",
+    "registration_sha256": "c36f84cfd1a59530a7991a4be6c1f68b424a79c5b7de169eabfc90d3cd31cc31",
+    "boundary_bytes": 100000000000,
+    "lattice_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_150M_LATTICE.md",
+    "lattice_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c"
+  },
+  "config_sha256": "afdd629e197b2fa48500f579e9d6e76e5c6b3a495e06ebae0aee53696e24323c",
+  "config": {
+    "arm": "matrix_ops",
+    "seed": 3401,
+    "seconds": 2700.0,
+    "eval_split": "calibration",
+    "optimizer": {
+      "lr": 0.0005420185524740253,
+      "betas": [
+        0.9,
+        0.9392004369596886
+      ],
+      "weight_decay": 0.20059436743465126,
+      "warmup_steps": 69,
+      "microbatch": 8
+    },
+    "microbatch": 8,
+    "context": 2048,
+    "windows_per_step": 64,
+    "summary": {
+      "base_arm": "matrix",
+      "shape": {
+        "width": 576,
+        "depth": 24,
+        "hidden": 3352,
+        "heads": 2,
+        "value_dim": 128,
+        "rank": 128,
+        "rank_max": 128,
+        "vocab": 256
+      },
+      "parameters": {
+        "total": 149981808,
+        "trainable": 149981808,
+        "per_layer": 6236930,
+        "mixer": 443522,
+        "mlp": 5792256,
+        "norms": 1152,
+        "embedding": 147456,
+        "head": 147456,
+        "final_norm": 576,
+        "capacity": 150003984,
+        "capacity_relative": -0.00014783607347390593
+      },
+      "routing": {
+        "ops": true,
+        "tau_match": 0.45,
+        "tau_merge": 0.85,
+        "tau_pop": 0.1,
+        "tie_break": 1e-06,
+        "read_scale": 2.0,
+        "grow": false,
+        "grow_trigger": 0.5,
+        "grow_window": 4,
+        "grow_window_tokens": 512,
+        "grow_geometric": 2.0,
+        "grow_stride_floor": 64
+      },
+      "chunk_tokens": 128,
+      "compile_scan": true,
+      "compile_mode": "default",
+      "fused_whole_scan": true,
+      "fused_scan": false,
+      "fused_backward": false,
+      "fused_routing": false,
+      "fused_routing_diff": false,
+      "optimizer_note": "the registered gdn2 nomination's optimizer settings (gates.py / profile_step_vs_gdn2.py)"
+    },
+    "identity": {
+      "stream": "flagship_beyond_100gb",
+      "source": "/mnt/nvme2n1/erikg/pile.txt",
+      "source_size": 1307910802540,
+      "manifest": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/documents.jsonl.gz",
+      "manifest_sha256": "48b9095eeccb023ff1cb2a4f6da899a8b3e4eb3b76b2804e730f1d6ad031c414",
+      "registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/registration.json",
+      "registration_sha256": "c36f84cfd1a59530a7991a4be6c1f68b424a79c5b7de169eabfc90d3cd31cc31",
+      "boundary_bytes": 100000000000,
+      "lattice_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_150M_LATTICE.md",
+      "lattice_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c"
+    },
+    "bindings": {
+      "matrix_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_MATRIX_EMENDER.md",
+      "matrix_registration_sha256": "20a163c9a1eb7c79d73289d8d8a55763748b0fd0bf83252fb29a40d66374dec2",
+      "lattice_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_150M_LATTICE.md",
+      "lattice_registration_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c",
+      "k5b_whole_scan_receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k5b_whole_scan.json",
+      "k5b_whole_scan_sha256": "5f2c54ab299b47fc859cab780b645a02c2162991472490705f4a037ab2111dee",
+      "k5b_step_metric_receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k5b_step_metric.json",
+      "k5b_step_metric_sha256": "2668e0eeaf37a1ae150cce4787728277afa200b8864073f104cb1fe77bbccd1d",
+      "k5b_doc": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/K5B_WHOLE_SCAN.md",
+      "k5b_doc_sha256": "04cbb61554f80eb39b0b0089ebeaab7b932c0f05dbf73d2266c95d1f7329ebaf",
+      "recorded_cd_receipts": {
+        "gdn2_c128_rerun": "ac60726997076202f7dee8b708c19aa2914a1967ccc64283794f7139b52ea1b1",
+        "matrix_append_c128": "27c9793b5e2b309d1ce15751f1abb85b96e6b6a44d9a4284d82d566c9129b241",
+        "matrix_ops_c128": "7c38ebf34b8d54657ecebc4e945bd9f5aeaef8cef4465b58eb6e3ca8635c2794"
+      },
+      "recorded_150m_gdn2_result": "8cacac01f89c88061cc2e6bdfa8fcf8e2e2db6be9b97ebfc1bb8f752e0d94316"
+    },
+    "git": {
+      "commit": "b9d6402fd50c1070a80eefda02f69ca9abc12cf6",
+      "relevant_paths_dirty": "",
+      "branch": "main"
+    },
+    "stopping_rule": "2700 active seconds (the registered rule): the clock starts at step 1 and includes the stream read, any compile/capture, fwd/bwd, clip, AdamW; no untimed warmup steps for any arm",
+    "matched": "matched-TIME, not matched-exposure: steps and bytes are first-class deconfound columns"
+  },
+  "session": {
+    "host": "lambda01",
+    "card": "0",
+    "device": "NVIDIA RTX 6000 Ada Generation",
+    "card_gib": 47.38,
+    "torch": "2.9.1+cu128",
+    "triton": "3.5.1"
+  },
+  "peak_allocated_gb": 21.71,
+  "whole_scan_dispatch": {
+    "fwd_calls": 159744,
+    "bwd_calls": 159744,
+    "fwd_graph_replays": 159720,
+    "bwd_graph_replays": 159720,
+    "fwd_eager": 24,
+    "bwd_eager": 24,
+    "fwd_captures": 24,
+    "bwd_captures": 24,
+    "fallbacks": 0
+  },
+  "trajectory": [
+    {
+      "step": 1,
+      "active_seconds": 10.62762029375881,
+      "bytes": 117712,
+      "loss": 5.704413737986778
+    },
+    {
+      "step": 2,
+      "active_seconds": 13.754756016656756,
+      "bytes": 248784,
+      "loss": 5.516731917858124
+    },
+    {
+      "step": 3,
+      "active_seconds": 16.89625803101808,
+      "bytes": 364722,
+      "loss": 5.164129829971845
+    },
+    {
+      "step": 4,
+      "active_seconds": 20.08920112811029,
+      "bytes": 461739,
+      "loss": 5.015377017212795
+    },
+    {
+      "step": 5,
+      "active_seconds": 23.26391024980694,
+      "bytes": 567019,
+      "loss": 4.469598235013274
+    },
+    {
+      "step": 25,
+      "active_seconds": 87.53473149519414,
+      "bytes": 2920934,
+      "loss": 3.1307600390885177
+    },
+    {
+      "step": 50,
+      "active_seconds": 169.43522557336837,
+      "bytes": 5640425,
+      "loss": 2.7274531743221107
+    },
+    {
+      "step": 75,
+      "active_seconds": 252.02236684504896,
+      "bytes": 8340023,
+      "loss": 2.5465395152568817
+    },
+    {
+      "step": 100,
+      "active_seconds": 334.5357698947191,
+      "bytes": 11089562,
+      "loss": 2.8509711790572285
+    },
+    {
+      "step": 125,
+      "active_seconds": 416.64403737243265,
+      "bytes": 13866716,
+      "loss": 2.653460595065722
+    },
+    {
+      "step": 150,
+      "active_seconds": 498.6053616916761,
+      "bytes": 16597785,
+      "loss": 3.0049664965838123
+    },
+    {
+      "step": 175,
+      "active_seconds": 580.4689140571281,
+      "bytes": 19507355,
+      "loss": 2.850322287724804
+    },
+    {
+      "step": 200,
+      "active_seconds": 662.0926587814465,
+      "bytes": 22220910,
+      "loss": 3.1558275757613217
+    },
+    {
+      "step": 225,
+      "active_seconds": 743.4952633483335,
+      "bytes": 25035772,
+      "loss": 2.943818353978168
+    },
+    {
+      "step": 250,
+      "active_seconds": 824.5747259734198,
+      "bytes": 27800387,
+      "loss": 2.3223447501659393
+    },
+    {
+      "step": 275,
+      "active_seconds": 905.7178723011166,
+      "bytes": 30562689,
+      "loss": 2.614467905060249
+    },
+    {
+      "step": 300,
+      "active_seconds": 986.7570150187239,
+      "bytes": 33372509,
+      "loss": 2.6995563083268035
+    },
+    {
+      "step": 325,
+      "active_seconds": 1067.8156315740198,
+      "bytes": 36086998,
+      "loss": 2.726831099585354
+    },
+    {
+      "step": 350,
+      "active_seconds": 1148.8183381306008,
+      "bytes": 38758119,
+      "loss": 2.561632827453387
+    },
+    {
+      "step": 375,
+      "active_seconds": 1229.815000376664,
+      "bytes": 41517809,
+      "loss": 2.4747458092744443
+    },
+    {
+      "step": 400,
+      "active_seconds": 1310.6552084200084,
+      "bytes": 44346003,
+      "loss": 2.2137670064416684
+    },
+    {
+      "step": 425,
+      "active_seconds": 1391.315883051604,
+      "bytes": 47019865,
+      "loss": 2.4474531289477106
+    },
+    {
+      "step": 450,
+      "active_seconds": 1472.0699005564675,
+      "bytes": 49829955,
+      "loss": 2.467851707041715
+    },
+    {
+      "step": 475,
+      "active_seconds": 1552.907399286516,
+      "bytes": 52599177,
+      "loss": 2.203353330982549
+    },
+    {
+      "step": 500,
+      "active_seconds": 1633.786675262265,
+      "bytes": 55425169,
+      "loss": 2.27574386590774
+    },
+    {
+      "step": 525,
+      "active_seconds": 1714.591851956211,
+      "bytes": 58169795,
+      "loss": 2.188837921436407
+    },
+    {
+      "step": 550,
+      "active_seconds": 1795.3716988619417,
+      "bytes": 60936982,
+      "loss": 2.2973434556119336
+    },
+    {
+      "step": 575,
+      "active_seconds": 1875.9710324332118,
+      "bytes": 63578002,
+      "loss": 2.0872216690487724
+    },
+    {
+      "step": 600,
+      "active_seconds": 1956.4502062713727,
+      "bytes": 66234327,
+      "loss": 2.130285358081426
+    },
+    {
+      "step": 625,
+      "active_seconds": 2036.903405757621,
+      "bytes": 69024477,
+      "loss": 2.2222760634686707
+    },
+    {
+      "step": 650,
+      "active_seconds": 2117.3694538017735,
+      "bytes": 71732942,
+      "loss": 2.0040278855583
+    },
+    {
+      "step": 675,
+      "active_seconds": 2197.8149018883705,
+      "bytes": 74469137,
+      "loss": 2.1738420637451794
+    },
+    {
+      "step": 700,
+      "active_seconds": 2278.010328068398,
+      "bytes": 77119034,
+      "loss": 2.050130328741551
+    },
+    {
+      "step": 725,
+      "active_seconds": 2358.4132166150957,
+      "bytes": 79817619,
+      "loss": 1.8963714591489775
+    },
+    {
+      "step": 750,
+      "active_seconds": 2438.847786905244,
+      "bytes": 82615060,
+      "loss": 1.8194556509734259
+    },
+    {
+      "step": 775,
+      "active_seconds": 2519.1937563829124,
+      "bytes": 85438762,
+      "loss": 2.1453027818831814
+    },
+    {
+      "step": 800,
+      "active_seconds": 2599.59917385038,
+      "bytes": 88219042,
+      "loss": 2.171846259433562
+    },
+    {
+      "step": 825,
+      "active_seconds": 2680.1428571157157,
+      "bytes": 91098795,
+      "loss": 2.0815275577729238
+    },
+    {
+      "step": 828,
+      "active_seconds": 2689.7973379278556,
+      "bytes": 91426111,
+      "loss": 2.064191577811634
+    },
+    {
+      "step": 829,
+      "active_seconds": 2693.028888790868,
+      "bytes": 91534861,
+      "loss": 2.0707757114125394
+    },
+    {
+      "step": 830,
+      "active_seconds": 2696.2548599764705,
+      "bytes": 91653869,
+      "loss": 1.949965618328402
+    },
+    {
+      "step": 831,
+      "active_seconds": 2699.4637695662677,
+      "bytes": 91751599,
+      "loss": 2.180087757188662
+    },
+    {
+      "step": 832,
+      "active_seconds": 2702.68529888615,
+      "bytes": 91867164,
+      "loss": 1.9313466911339021
+    }
+  ]
+}
