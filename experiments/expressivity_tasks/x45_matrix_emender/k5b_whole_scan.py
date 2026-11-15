@@ -667,10 +667,16 @@ def compiled_whole_scan(mode: str = "default"):
     """The whole-scan wrapper, compiled once and shared (the ``compiled_scan``
     pattern): dynamo traces the wrapper, hosts the op pair as opaque calls and
     traces the registered backward into the joint graph, exactly as it hosts
-    the K4/K5A pairs."""
+    the K4/K5A pairs.
+
+    ``dynamic=True`` on purpose: the one thing that varies across the model's
+    24 mixers is the ``slot_id`` (each mixer owns its graph buffers), and a
+    static compile would specialize on it -- 24 near-identical one-op graphs
+    and a recompile-limit fallback.  One symbolic-int graph serves every
+    mixer; the op stays opaque and the slot id flows through as a runtime
+    argument."""
     if mode not in _COMPILE_CACHE:
-        _COMPILE_CACHE[mode] = torch.compile(whole_scan, mode=mode,
-                                             dynamic=False)
+        _COMPILE_CACHE[mode] = torch.compile(whole_scan, mode=mode, dynamic=True)
     return _COMPILE_CACHE[mode]
 
 
