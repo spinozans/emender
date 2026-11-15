@@ -691,34 +691,40 @@
     "windows_per_step": 64,
     "context": 2048,
     "warmup": 2,
-    "steps": 4,
-    "tokens": 420384,
+    "steps": 7,
+    "tokens": 810875,
     "step_walls": [
-      78.066,
-      64.525,
-      64.993,
-      64.069
+      71.776,
+      63.499,
+      63.729,
+      63.912,
+      64.321,
+      65.857,
+      64.251
     ],
     "phase_s": {
-      "prepare": 0.019,
-      "fwd_bwd": 271.578,
-      "opt": 0.056
+      "prepare": 0.023,
+      "fwd_bwd": 457.22,
+      "opt": 0.101
     },
     "phase_frac": {
       "prepare": 0.0001,
       "fwd_bwd": 0.9997,
       "opt": 0.0002
     },
-    "total_s": 271.653,
-    "tokens_per_s": 1547.5,
-    "tokens_per_s_steady": 1607.2,
-    "ms_per_step_p50": 64759.0,
+    "total_s": 457.345,
+    "tokens_per_s": 1773.0,
+    "tokens_per_s_steady": 1856.5,
+    "ms_per_step_p50": 64251.0,
     "peak_allocated_gb": 32.81,
     "losses": [
       4.272288,
       3.987054,
       3.295372,
-      3.469195
+      3.469195,
+      2.99522,
+      2.987954,
+      2.734436
     ],
     "grad_probe": {
       "finite": true,
@@ -730,127 +736,127 @@
     "top_kernels": [
       {
         "name": "_persistent_bwd_kernel",
-        "cuda_ms": 1742.706,
+        "cuda_ms": 1742.569,
         "calls": 12288.0,
         "cuda_frac": 0.1744
       },
       {
         "name": "_persistent_scan_trajectory_kernel",
-        "cuda_ms": 1137.775,
+        "cuda_ms": 1137.571,
         "calls": 12288.0,
         "cuda_frac": 0.1138
       },
       {
         "name": "void (anonymous namespace)::indexing_backward_kernel<float, 4>(long const*, long const*, float const*, float*,",
-        "cuda_ms": 379.041,
+        "cuda_ms": 378.991,
         "calls": 23040.0,
         "cuda_frac": 0.0379
       },
       {
         "name": "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8>(cutlass_80_tensorop_",
-        "cuda_ms": 309.426,
+        "cuda_ms": 309.38,
         "calls": 2304.0,
         "cuda_frac": 0.031
       },
       {
         "name": "ampere_bf16_s1688gemm_bf16_64x128_sliced1x2_ldg8_f2f_tn",
-        "cuda_ms": 242.363,
+        "cuda_ms": 242.521,
         "calls": 2304.0,
-        "cuda_frac": 0.0242
+        "cuda_frac": 0.0243
       },
       {
         "name": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float",
-        "cuda_ms": 227.633,
+        "cuda_ms": 227.576,
         "calls": 131328.0,
         "cuda_frac": 0.0228
       },
       {
         "name": "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nn_align8>(cutlass_80_tensorop_",
-        "cuda_ms": 219.827,
+        "cuda_ms": 219.732,
         "calls": 3104.0,
         "cuda_frac": 0.022
       },
       {
         "name": "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{la",
-        "cuda_ms": 206.663,
+        "cuda_ms": 206.613,
         "calls": 83840.0,
         "cuda_frac": 0.0207
       },
       {
         "name": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float",
-        "cuda_ms": 197.871,
+        "cuda_ms": 197.819,
         "calls": 106752.0,
         "cuda_frac": 0.0198
       },
       {
         "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl<at::native::BinaryFunctor<float, float",
-        "cuda_ms": 196.214,
+        "cuda_ms": 196.16,
         "calls": 49152.0,
         "cuda_frac": 0.0196
       },
       {
         "name": "void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16_copy_kernel_cuda(at::TensorIteratorBase",
-        "cuda_ms": 189.137,
+        "cuda_ms": 189.046,
         "calls": 122976.0,
         "cuda_frac": 0.0189
       },
       {
         "name": "void at::native::reduce_kernel<128, 4, at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::nativ",
-        "cuda_ms": 176.495,
+        "cuda_ms": 176.475,
         "calls": 47648.0,
         "cuda_frac": 0.0177
       },
       {
         "name": "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<c10::BFloat16, c10::BFloat16, c10:",
-        "cuda_ms": 175.886,
+        "cuda_ms": 175.97,
         "calls": 2304.0,
         "cuda_frac": 0.0176
       },
       {
         "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >",
-        "cuda_ms": 167.128,
+        "cuda_ms": 167.073,
         "calls": 82093.0,
         "cuda_frac": 0.0167
       },
       {
         "name": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespac",
-        "cuda_ms": 149.446,
+        "cuda_ms": 149.412,
         "calls": 84480.0,
         "cuda_frac": 0.015
       },
       {
         "name": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_",
-        "cuda_ms": 139.213,
+        "cuda_ms": 139.212,
         "calls": 98304.0,
         "cuda_frac": 0.0139
       },
       {
         "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_",
-        "cuda_ms": 126.121,
+        "cuda_ms": 126.087,
         "calls": 61440.0,
         "cuda_frac": 0.0126
       },
       {
         "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int",
-        "cuda_ms": 125.079,
+        "cuda_ms": 125.055,
         "calls": 132993.0,
         "cuda_frac": 0.0125
       },
       {
         "name": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_",
-        "cuda_ms": 120.101,
+        "cuda_ms": 120.052,
         "calls": 72960.0,
         "cuda_frac": 0.012
       },
       {
         "name": "void at::native::vectorized_elementwise_kernel<2, at::native::(anonymous namespace)::where_kernel_impl(at::Ten",
-        "cuda_ms": 117.142,
+        "cuda_ms": 117.15,
         "calls": 86016.0,
         "cuda_frac": 0.0117
       }
     ],
-    "cuda_total_ms": 9994.8,
-    "device_busy_ms_per_step": 9994.8,
+    "cuda_total_ms": 9993.4,
+    "device_busy_ms_per_step": 9993.4,
     "kernel_count_per_step": 3191126.0,
     "profile_mode": "cuda",
     "profiled_steps": 1,
