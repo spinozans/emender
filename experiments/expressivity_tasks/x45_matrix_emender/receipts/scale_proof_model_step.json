@@ -891,5 +891,240 @@
     "seed": 3401,
     "scale": 2,
     "shape_note": "the registered shape: width 576, depth 24, chunk 64, ~150 M parameters, embedding + head + optimizer included"
+  },
+  "on_mb2": {
+    "label": "on_mb2",
+    "config": {
+      "fused_backward": true,
+      "compile_scan": false,
+      "microbatch": 2,
+      "chunk_tokens": 64,
+      "description": "fused path at microbatch 2 -- the largest microbatch whose 24-layer trajectory store fits the card (mb 8 and 4 OOM, receipted)"
+    },
+    "boundary": "whole model, whole step: prepare + all microbatches' forward and backward + clip/AdamW; flagship-stream read excluded; tokens are measured targets over the same 64-window stream batches for every arm (the gates.py/cd_* protocol)",
+    "precision": "bf16 compute (autocast), fp32 master weights, fused CE -- the registered regime",
+    "session": "same-session (this card, this process)",
+    "parameters": 149981808,
+    "summary": {
+      "shape": {
+        "width": 576,
+        "depth": 24,
+        "hidden": 3352,
+        "heads": 2,
+        "value_dim": 128,
+        "rank": 128,
+        "rank_max": 128,
+        "vocab": 256
+      },
+      "parameters": {
+        "total": 149981808,
+        "trainable": 149981808,
+        "per_layer": 6236930,
+        "mixer": 443522,
+        "mlp": 5792256,
+        "norms": 1152,
+        "embedding": 147456,
+        "head": 147456,
+        "final_norm": 576,
+        "capacity": 150003984,
+        "capacity_relative": -0.00014783607347390593
+      },
+      "routing": {
+        "ops": true,
+        "tau_match": 0.45,
+        "tau_merge": 0.85,
+        "tau_pop": 0.1,
+        "tie_break": 1e-06,
+        "read_scale": 2.0,
+        "grow": false,
+        "grow_trigger": 0.5,
+        "grow_window": 4,
+        "grow_window_tokens": 512,
+        "grow_geometric": 2.0,
+        "grow_stride_floor": 64
+      },
+      "chunk_tokens": 64
+    },
+    "microbatches": 2,
+    "windows_per_step": 64,
+    "context": 2048,
+    "warmup": 2,
+    "steps": 6,
+    "tokens": 679803,
+    "step_walls": [
+      149.226,
+      131.932,
+      133.757,
+      130.721,
+      133.726,
+      131.812
+    ],
+    "phase_s": {
+      "prepare": 0.022,
+      "fwd_bwd": 811.003,
+      "opt": 0.147
+    },
+    "phase_frac": {
+      "prepare": 0.0,
+      "fwd_bwd": 0.9998,
+      "opt": 0.0002
+    },
+    "total_s": 811.174,
+    "tokens_per_s": 838.0,
+    "tokens_per_s_steady": 880.8,
+    "ms_per_step_p50": 132829.0,
+    "peak_allocated_gb": 32.97,
+    "losses": [
+      3.842341,
+      3.961568,
+      3.408135,
+      3.468704,
+      3.024806,
+      3.149219
+    ],
+    "grad_probe": {
+      "finite": true,
+      "nonzero": true,
+      "parameters_probed": 243
+    },
+    "forbidden_kernels_found": [],
+    "replay_absent": true,
+    "top_kernels": [
+      {
+        "name": "_persistent_bwd_kernel",
+        "cuda_ms": 1665.426,
+        "calls": 24576.0,
+        "cuda_frac": 0.1115
+      },
+      {
+        "name": "_persistent_scan_trajectory_kernel",
+        "cuda_ms": 1079.576,
+        "calls": 24576.0,
+        "cuda_frac": 0.0723
+      },
+      {
+        "name": "void (anonymous namespace)::indexing_backward_kernel<float, 4>(long const*, long const*, float const*, float*,",
+        "cuda_ms": 594.381,
+        "calls": 47616.0,
+        "cuda_frac": 0.0398
+      },
+      {
+        "name": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float",
+        "cuda_ms": 444.49,
+        "calls": 266496.0,
+        "cuda_frac": 0.0298
+      },
+      {
+        "name": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float",
+        "cuda_ms": 405.48,
+        "calls": 217344.0,
+        "cuda_frac": 0.0272
+      },
+      {
+        "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl<at::native::BinaryFunctor<float, float",
+        "cuda_ms": 392.911,
+        "calls": 98304.0,
+        "cuda_frac": 0.0263
+      },
+      {
+        "name": "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{la",
+        "cuda_ms": 364.847,
+        "calls": 157568.0,
+        "cuda_frac": 0.0244
+      },
+      {
+        "name": "void at::native::reduce_kernel<128, 4, at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::nativ",
+        "cuda_ms": 333.811,
+        "calls": 96800.0,
+        "cuda_frac": 0.0224
+      },
+      {
+        "name": "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8>(cutlass_80_tensorop_",
+        "cuda_ms": 309.606,
+        "calls": 2304.0,
+        "cuda_frac": 0.0207
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16_copy_kernel_cuda(at::TensorIteratorBase",
+        "cuda_ms": 308.747,
+        "calls": 233568.0,
+        "cuda_frac": 0.0207
+      },
+      {
+        "name": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespac",
+        "cuda_ms": 289.512,
+        "calls": 170496.0,
+        "cuda_frac": 0.0194
+      },
+      {
+        "name": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_",
+        "cuda_ms": 275.348,
+        "calls": 196608.0,
+        "cuda_frac": 0.0184
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >",
+        "cuda_ms": 253.01,
+        "calls": 155821.0,
+        "cuda_frac": 0.0169
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int",
+        "cuda_ms": 250.592,
+        "calls": 268161.0,
+        "cuda_frac": 0.0168
+      },
+      {
+        "name": "ampere_bf16_s1688gemm_bf16_64x128_sliced1x2_ldg8_f2f_tn",
+        "cuda_ms": 242.317,
+        "calls": 2304.0,
+        "cuda_frac": 0.0162
+      },
+      {
+        "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_",
+        "cuda_ms": 241.513,
+        "calls": 122880.0,
+        "cuda_frac": 0.0162
+      },
+      {
+        "name": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_",
+        "cuda_ms": 230.534,
+        "calls": 146688.0,
+        "cuda_frac": 0.0154
+      },
+      {
+        "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespac",
+        "cuda_ms": 225.11,
+        "calls": 99072.0,
+        "cuda_frac": 0.0151
+      },
+      {
+        "name": "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nn_align8>(cutlass_80_tensorop_",
+        "cuda_ms": 220.166,
+        "calls": 3104.0,
+        "cuda_frac": 0.0147
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<4, at::native::bitwise_not_kernel_cuda(at::TensorIteratorBase&)",
+        "cuda_ms": 216.873,
+        "calls": 172032.0,
+        "cuda_frac": 0.0145
+      }
+    ],
+    "cuda_total_ms": 14930.5,
+    "device_busy_ms_per_step": 14930.5,
+    "kernel_count_per_step": 6349142.0,
+    "profile_mode": "cuda",
+    "profiled_steps": 1,
+    "recorded_references": {
+      "gdn2_tokens_per_s": 28124.0,
+      "matrix_ops_tokens_per_s": 13189.7,
+      "matrix_append_tokens_per_s": 15855.9,
+      "source": "receipts/cd_gdn2_c128_rerun.json, receipts/cd_matrix_ops_c128.json, receipts/cd_matrix_append_c128.json -- RECORDED, not same-session"
+    },
+    "oom": null,
+    "seed": 3401,
+    "scale": 2,
+    "shape_note": "the registered shape: width 576, depth 24, chunk 64, ~150 M parameters, embedding + head + optimizer included"
   }
 }
