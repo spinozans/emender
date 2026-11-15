@@ -1,0 +1,46 @@
+{
+ "arm": "matrix_append",
+ "board": "150M matched-quality arms (RESULT_150M_MATCHED_ARMS.md)",
+ "status": "DNF — deterministically diverged before the stopping-rule boundary",
+ "ruling": "supervisor decision (Option A): the registered fail-closed rule (clip_grad_norm error_if_nonfinite=True) is not bent mid-experiment; the divergence itself is receipted as the append arm's result and as C1 stability evidence",
+ "configuration": {
+  "scan_path": "registered cd-protocol path verbatim (compile_scan=True on ONE shared scan, fused_whole_scan=False)",
+  "chunk_tokens": 128,
+  "microbatch": 8,
+  "seed": 3401,
+  "optimizer": "the registered gdn2 nomination's settings: lr 5.42e-4, warmup 69 steps, betas (0.9, 0.9392004369596886), weight_decay 0.20059436743465126, fused AdamW, clip 1.0 error_if_nonfinite=True",
+  "stream": "flagship_beyond_100gb, same prefix in same order as every other arm",
+  "routing": "RoutingPolicy(ops=False) — the append-only control"
+ },
+ "failure": {
+  "what": "non-finite total gradient norm at step 56 (loss finite, 2.76 at the last completed step 55; lr mid-warmup at 56/69 x 5.42e-4 = 4.4e-4)",
+  "where": "torch.nn.utils.clip_grad_norm_ error_if_nonfinite=True — the registered fail-closed path; the harness raised, no update was applied at step 56, no number was massaged",
+  "last_completed_step": 55,
+  "active_seconds_at_crash": 170.5,
+  "bytes_at_crash": 6163209
+ },
+ "reproducibility": {
+  "runs": 2,
+  "claim": "bit-identical loss/bytes/step channels through step 55 (e.g. step 50 loss 2.7157, step 55 loss 2.7641528076442088 in both runs), same crash at step 56 in both",
+  "run_dirs": ["runs_150m_matched/matrix_append (2700s request, crashed)", "runs_150m_matched/matrix_append_repro (240s cap, same crash)"],
+  "consoles": ["runs_150m_matched/matrix_append.console.txt"],
+  "note": "the two logs differ only in wall-clock fields (active_seconds, time_ns); every loss, byte count and step index is bit-identical"
+ },
+ "cross_arm_contrast": {
+  "claim": "at the SAME seed, optimizer, stream and stopping rule, matrix_ops (the five-op policy, K5B whole-scan path) sailed through the same step-56 prefix and completed 832 steps / 91,867,164 bytes / 2702.7 s with finite gradients throughout; the append-only control deterministically diverges at step 56 under the same protocol",
+  "scope": "single seed (3401), stated: this is a stability contrast, not an error-barred claim",
+  "c1_reading": "the five-op configuration trains stably at optimizer settings under which the append-only control deterministically dies — management stabilises training in the matrix form at 150M"
+ },
+ "cross_path_fact": {
+  "claim": "the first (killed) append launch ran the same model on the K5B fallback path (the per-chunk K5A+K4 stack; decisions bit-identical to the registered router, read weights within the measured bf16 noise floor) and was healthy at step 72 (loss 2.80, ~11.9 s/step) when stopped",
+  "reading": "a noise-floor reduction-order difference decides whether this configuration diverges: the append-only arm is numerically fragile and knife-edged near this training point. This is implementation-precision sensitivity of an already-fragile configuration — NOT evidence the registered path is broken, and NOT a license to substitute paths (supervisor ruling: the registered gate-E refusal semantics are correct as receipted)"
+ },
+ "exposure_note": {
+  "claim": "unprofiled on this session's card the registered append path ran at ~37.3k bytes/s over steps 6-55 (2.95 s/step median), not the recorded cd receipt's 15,856 tok/s — that figure was measured WITH torch.profiler attached on a slow host draw",
+  "consequence": "even a completed append row would have been nearly exposure-matched to gdn2 (91.75MB) and matrix_ops (91.87MB) at matched time; the DNF is not hiding behind an exposure confound"
+ },
+ "disclosures": {
+  "first_launch": "the first matrix_append launch (K5B fast path requested) ran on the registered fallback (whole_scan refuses ops=False by its gate-E semantics) at ~11.9 s/step; it was stopped at ~step 72 as a dominated configuration, its partial run directory deliberately discarded, and its console log was not retained (deleted in the relaunch); the observed facts from it are recorded in cross_path_fact above from the operator transcript",
+  "matched_exposure_twin": "operator ruling: SKIPPED — in the matrix form, ops-off removes not just management but DEATH itself (death is a schedule/POP decision; with ops off no slot ever dies and reads forever spread over dead rows), so the append control is whole-vs-crippled, not a clean ablation; the twin's marginal value does not justify its cost"
+ }
+}

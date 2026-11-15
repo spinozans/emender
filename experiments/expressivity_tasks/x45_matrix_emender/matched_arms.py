@@ -18,13 +18,23 @@ Arms:
 ``matrix_append``  the x45 matrix arm, APPEND only (``RoutingPolicy(ops=False)``).
 ``matrix_ops``     the x45 matrix arm, the five-op registered policy.
 
-Both matrix arms run **with the K5B fast path enabled**
+``matrix_ops`` runs **with the K5B fast path enabled**
 (``fused_whole_scan=True`` behind the compiled wrapper): a host-cost knob whose
 schedule, reads, state, liveness and gradients are bit-equal to the registered
-per-chunk path by construction (``receipts/k5b_whole_scan.json``).  The
-recorded gate-D receipts (``cd_*.json``) measured this model at 13.2 k / 15.9 k
-tok/s against gdn2's 28.1 k; the K5B path removes the host gap, which is what
-makes matched-time arms no longer confounded by a 3x throughput handicap.
+per-chunk path by construction (``receipts/k5b_whole_scan.json``; the chunk-128
+parity row is in this board's own receipt).  The recorded gate-D receipts
+(``cd_*.json``) measured this model at 13.2 k / 15.9 k tok/s against gdn2's
+28.1 k; the K5B path removes the host gap, which is what makes matched-time
+arms no longer confounded by a 3x throughput handicap.
+
+``matrix_append`` CANNOT take that path: the K5B whole-scan op refuses the
+append-only control by its registered gate-E semantics (``ops=False`` takes
+the per-chunk stack verbatim), so the append arm runs the registered
+cd-protocol path verbatim (``--scan-path registered``: ``compile_scan=True``
+the mode of the ``cd_matrix_append_c128`` receipt, ~15.9 k tok/s).  Its lower
+exposure at matched time is stated in the board table itself, and the C1
+core pairwise (ops vs append) gets the registration's matched-EXPOSURE twin
+(``--bytes``): the same registered path trained to matrix_ops' byte count.
 
 Matched-TIME, not matched-exposure (stated as the 150 M board did): every arm
 trains for the same 2700 active seconds, so the faster arm sees more bytes.
@@ -40,7 +50,13 @@ Subcommands:
 
 ``train``    one arm, one 2700 s run, ``start.json`` + ``training.jsonl`` +
              ``result.json`` in the output directory (the ``runs_150m``
-             convention).
+             convention).  ``--scan-path registered`` runs a matrix arm on the
+             registered cd-protocol path verbatim (``compile_scan=True`` on
+             the ONE shared scan, NO whole-scan op) -- required for the
+             append-only control, which the K5B whole-scan path refuses by
+             its registered gate-E semantics.  ``--bytes N`` replaces the
+             2700 s rule with the registration's matched-EXPOSURE rule
+             (train until N bytes seen; the honest elapsed wall is reported).
 ``parity``   the K5B gate-A construction claim re-asserted at the run's chunk
              length (the banked receipts are at chunk 64; the cd-protocol
              configuration is chunk 128): the whole-scan op pair bit-equal to
@@ -177,8 +193,15 @@ def build_gdn2(seed: int):
     return model, optimizer, summary
 
 
-def build_matrix(arm: str, chunk_tokens: int, seed: int):
-    """A matrix arm with the K5B fast path enabled, the gates.build order verbatim.
+def build_matrix(arm: str, chunk_tokens: int, seed: int, k5b: bool = True):
+    """A matrix arm, the gates.build order verbatim.
+
+    ``k5b=True`` (default): the K5B fast path, one whole-scan op per (layer,
+    window) scan behind the compiled wrapper.  ``k5b=False``: the registered
+    cd-protocol path verbatim (``compile_scan=True`` on ONE shared scan, no
+    whole-scan op) -- the mode of the ``cd_matrix_append_c128`` receipt, and
+    the only registered mode that hosts the append-only control (the K5B
+    path refuses ``ops=False`` by its gate-E semantics).
 
     The optimizer is the registered gdn2 nomination's settings (the x45 lane's
     standing deconfound, identical numbers to the cd gate receipts).
@@ -191,7 +214,7 @@ def build_matrix(arm: str, chunk_tokens: int, seed: int):
     policy = RoutingPolicy(ops=arm == "matrix_ops")
     shape = matrix_config(rank=RANK)
     model = matrix_model_for(shape, policy, chunk_tokens, compile_scan=True,
-                             fused_whole_scan=True).cuda().train()
+                             fused_whole_scan=k5b).cuda().train()
     optimizer = dict(lr=nomination_policy.lr,
                     betas=(0.9, nomination_policy.beta2),
                     weight_decay=nomination_policy.weight_decay,
@@ -200,7 +223,9 @@ def build_matrix(arm: str, chunk_tokens: int, seed: int):
     summary = dict(base_arm="matrix", shape=shape.__dict__,
                    parameters=parameter_count(shape), routing=policy.record(),
                    chunk_tokens=chunk_tokens, compile_scan=True,
-                   compile_mode=COMPILE_MODE, fused_whole_scan=True,
+                   compile_mode=COMPILE_MODE, fused_whole_scan=k5b,
+                   scan_path=("k5b_whole_scan" if k5b else
+                              "registered_compiled_scan (cd-protocol mode)"),
                    fused_scan=False, fused_backward=False,
                    fused_routing=False, fused_routing_diff=False,
                    optimizer_note=("the registered gdn2 nomination's optimizer "
@@ -235,24 +260,38 @@ def train(args) -> dict:
     if args.arm == "gdn2":
         model, optimizer_config, summary = build_gdn2(args.seed)
         microbatch = optimizer_config["microbatch"]
+        is_matrix = False
+        k5b = False
     elif args.arm in ("matrix_append", "matrix_ops"):
+        k5b = args.scan_path == "k5b"
         model, optimizer_config, summary = build_matrix(args.arm, args.chunk_tokens,
-                                                         args.seed)
+                                                         args.seed, k5b=k5b)
         microbatch = optimizer_config["microbatch"]
+        is_matrix = True
     else:
         raise ValueError(f"unknown arm {args.arm!r}; expected {ARMS}")
 
+    if args.bytes is not None:
+        stopping_rule = (f"matched-EXPOSURE: train until {int(args.bytes)} bytes "
+                         "seen (the registration's twin rule); the honest "
+                         "elapsed wall is reported first-class")
+        matched = ("matched-EXPOSURE (bytes), not matched-time: elapsed wall is "
+                   "the deconfound column")
+    else:
+        stopping_rule = (f"{args.seconds:g} active seconds (the registered "
+                         "rule): the clock starts at step 1 and includes the "
+                         "stream read, any compile/capture, fwd/bwd, clip, AdamW; "
+                         "no untimed warmup steps for any arm")
+        matched = ("matched-TIME, not matched-exposure: steps and bytes are "
+                   "first-class deconfound columns")
+
     config = dict(arm=args.arm, seed=args.seed, seconds=args.seconds,
+                  bytes_target=args.bytes,
                   eval_split=args.eval_split, optimizer=optimizer_config,
                   microbatch=microbatch, context=L.CONTEXT,
                   windows_per_step=64, summary=summary, identity=identity,
                   bindings=registration_bindings(), git=git_state(),
-                  stopping_rule=("2700 active seconds (the registered rule): the "
-                                 "clock starts at step 1 and includes the stream "
-                                 "read, any compile/capture, fwd/bwd, clip, AdamW; "
-                                 "no untimed warmup steps for any arm"),
-                  matched=("matched-TIME, not matched-exposure: steps and bytes "
-                           "are first-class deconfound columns"))
+                  stopping_rule=stopping_rule, matched=matched)
     out = Path(args.output)
     out.mkdir(parents=True, exist_ok=False)
     atomic_json(out / "start.json", dict(
@@ -273,9 +312,13 @@ def train(args) -> dict:
     elapsed = 0.0
     step = targets = 0
     log_rows = []
-    is_matrix = args.arm != "gdn2"
     with (out / "training.jsonl").open("w", buffering=1) as log:
-        while elapsed < args.seconds:
+        # The registered rule: matched-time arms stop on 2700 active seconds;
+        # matched-exposure twins stop on the byte target.  The clock is the same
+        # honest clock either way (started before the stream read, synchronize
+        # before the ledger read).
+        while (targets < args.bytes if args.bytes is not None
+               else elapsed < args.seconds):
             torch.cuda.synchronize()
             start = time.monotonic()
             try:
@@ -314,7 +357,7 @@ def train(args) -> dict:
             if step % 25 == 0:
                 print(f"  {args.arm} step {step} {elapsed:.0f}s {targets/1e6:.1f}MB "
                       f"loss {loss_sum:.4f}", flush=True)
-    if is_matrix:
+    if is_matrix and k5b:
         from experiments.expressivity_tasks.x45_matrix_emender.k5b_whole_scan \
             import DISPATCH
         dispatch = dict(DISPATCH)
@@ -404,11 +447,17 @@ def main():
     t = sub.add_parser("train")
     t.add_argument("--arm", required=True, choices=ARMS)
     t.add_argument("--seconds", type=float, default=2700.)
+    t.add_argument("--bytes", type=float, default=None,
+                   help="matched-exposure stopping rule: train until N bytes seen")
     t.add_argument("--seed", type=int, default=3401)
     t.add_argument("--output", required=True)
     t.add_argument("--eval-split", default="calibration")
     t.add_argument("--device", default=None)
     t.add_argument("--chunk-tokens", type=int, default=CHUNK_TOKENS)
+    t.add_argument("--scan-path", choices=("k5b", "registered"), default="k5b",
+                   help="matrix arms: the K5B whole-scan fast path, or the "
+                        "registered cd-protocol compiled scan (required for "
+                        "the append-only control, which K5B refuses by name)")
     p = sub.add_parser("parity")
     p.add_argument("--chunk-tokens", type=int, default=CHUNK_TOKENS)
     p.add_argument("--out", default=str(RUNS / "k5b_chunk128_parity.json"))

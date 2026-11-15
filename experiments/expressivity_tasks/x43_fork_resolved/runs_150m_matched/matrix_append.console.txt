@@ -1,0 +1,26 @@
+gpu_lease: granted GPUs: 0 (pid 3161943)
+leased card: 0
+{"arm": "matrix_append", "card": "0", "seed": 3401, "parameters": 149981808}
+  matrix_append step 25 80s 2.9MB loss 3.1299
+  matrix_append step 50 155s 5.6MB loss 2.7157
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/matched_arms.py", line 472, in <module>
+    main()
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/matched_arms.py", line 466, in main
+    train(a)
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/matched_arms.py", line 346, in train
+    torch.nn.utils.clip_grad_norm_(model.parameters(), 1.,
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/utils/clip_grad.py", line 43, in _no_grad_wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/utils/clip_grad.py", line 231, in clip_grad_norm_
+    total_norm = _get_total_norm(grads, norm_type, error_if_nonfinite, foreach)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/utils/clip_grad.py", line 43, in _no_grad_wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/utils/clip_grad.py", line 111, in _get_total_norm
+    raise RuntimeError(
+RuntimeError: The total norm of order 2.0 for gradients from `parameters` is non-finite, so it cannot be clipped. To disable this error and scale the gradients by the non-finite norm anyway, set `error_if_nonfinite=False`
