@@ -4,7 +4,8 @@
     "card_gib": 47.38,
     "torch": "2.9.1+cu128",
     "triton": "3.5.1",
-    "ndm_pin_triton_autotune": "1"
+    "ndm_pin_triton_autotune": "1",
+    "raw_traces": "chrome traces of the two full-mode profiled steps were parsed into each arm's step_profile (top kernels/launchers/components) and then deleted (829 MB); rerun profile_step_vs_gdn2.py --suite core to regenerate"
   },
   "gdn2_mb8": {
     "label": "gdn2_mb8",
@@ -859,9 +860,6 @@
       "source": "receipts/cd_gdn2_c128_rerun.json, receipts/cd_matrix_ops_c128.json, receipts/scale_proof_model_step.json -- RECORDED, not same-session"
     }
   },
-  "routing_split_microbench_failed": {
-    "error": "Traceback (most recent call last):\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/profile_step_vs_gdn2.py\", line 790, in run_stage\n    return fn()\n           ^^^^\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/profile_step_vs_gdn2.py\", line 837, in routing_split\n    report = measure_routing_split(model, batches, 8, args.out)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/profile_step_vs_gdn2.py\", line 634, in measure_routing_split\n    records, weights_full, decay_hm, schedule_full = _record_window(\n                                                     ^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/profile_step_vs_gdn2.py\", line 586, in _record_window\n    routed_chunk_scan(query, payload, decay, router=router, policy=policy,\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/scan.py\", line 271, in routed_chunk_scan\n    schedule, weights = router(index, start, state, live, qc, pc, policy, rank_now)\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/profile_step_vs_gdn2.py\", line 578, in router\n    schedule, weights = route_chunk(index, token_offset, state, live, qc, pc,\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/schedule.py\", line 121, in route_chunk\n    weights[:, :, :, :rank] = read_weights(query, rows, active, policy.read_scale)\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/read.py\", line 67, in read_weights\n    return attention_probs(query, rows, live, scale) * row_strength(rows, live).unsqueeze(-2)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/read.py\", line 58, in attention_probs\n    scores = match_scores(query, rows, live, scale)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/read.py\", line 52, in match_scores\n    scores = scale * (unit(query) @ unit(rows).transpose(-1, -2))\n                      ~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nRuntimeError: expected scalar type BFloat16 but found Float\n"
-  },
   "routing_split_microbench": {
     "label": "routing_split_microbench",
     "boundary": "ONE mixer scan call at the registered microbatch shape (batch as stated, 2048 tokens, chunk 64, rank 128): forward AND backward, attached read weights and payloads; routing = routed_chunk_scan minus the eager chunk scan over the SAME recorded schedule.  x is a real captured block-0 activation; the schedule was recorded by the arm's own router against its own chunk-entry states.",
@@ -1006,5 +1004,605 @@
       "x45_off_mb2_tokens_per_s_steady": 2110.7,
       "source": "receipts/cd_gdn2_c128_rerun.json, receipts/cd_matrix_ops_c128.json, receipts/scale_proof_model_step.json -- RECORDED, not same-session"
     }
+  },
+  "x45_off_mb2": {
+    "label": "x45_off_mb2",
+    "boundary": "whole model, whole step: prepare + all microbatches' forward and backward + clip/AdamW; flagship-stream read excluded; tokens are measured targets over the same 64-window stream batches for every arm (the gates.py/cd_* protocol)",
+    "precision": "bf16 compute (autocast), fp32 master weights, fused CE -- the registered regime",
+    "session": "same-session (this card, this process)",
+    "parameters": 149981808,
+    "summary": {
+      "shape": {
+        "width": 576,
+        "depth": 24,
+        "hidden": 3352,
+        "heads": 2,
+        "value_dim": 128,
+        "rank": 128,
+        "rank_max": 128,
+        "vocab": 256
+      },
+      "parameters": {
+        "total": 149981808,
+        "trainable": 149981808,
+        "per_layer": 6236930,
+        "mixer": 443522,
+        "mlp": 5792256,
+        "norms": 1152,
+        "embedding": 147456,
+        "head": 147456,
+        "final_norm": 576,
+        "capacity": 150003984,
+        "capacity_relative": -0.00014783607347390593
+      },
+      "routing": {
+        "ops": true,
+        "tau_match": 0.45,
+        "tau_merge": 0.85,
+        "tau_pop": 0.1,
+        "tie_break": 1e-06,
+        "read_scale": 2.0,
+        "grow": false,
+        "grow_trigger": 0.5,
+        "grow_window": 4,
+        "grow_window_tokens": 512,
+        "grow_geometric": 2.0,
+        "grow_stride_floor": 64
+      },
+      "chunk_tokens": 64
+    },
+    "microbatches": 2,
+    "windows_per_step": 64,
+    "context": 2048,
+    "warmup": 2,
+    "steps": 2,
+    "tokens": 212955,
+    "step_walls": [
+      29.732,
+      29.77
+    ],
+    "phase_s": {
+      "prepare": 0.004,
+      "fwd_bwd": 59.474,
+      "opt": 0.022
+    },
+    "ms_per_step_p50": 29751.0,
+    "total_s": 59.502,
+    "tokens_per_s": 3579.0,
+    "tokens_per_s_steady": 3579.0,
+    "peak_allocated_gb": 8.11,
+    "losses": [
+      3.844956,
+      3.958561
+    ],
+    "step_profile": {
+      "kernels": 1590614,
+      "device_busy_ms": 6277.612,
+      "note": "CUDA-activity-only profile of one steady step; component buckets are name-classified (no launching-op chains at this event volume)",
+      "components_ms": {
+        "a_scan_triangular_solve": 1775.121,
+        "c_head_cross_entropy": 0.653,
+        "c_matmul_backbone": 1558.571,
+        "memcpy": 3.745,
+        "z_other_elementwise": 2939.521
+      },
+      "top_kernels": [
+        {
+          "name": "void kernel_trsm_l_mul32<float, 8, true, false, false, true>(int, int, float const*, float const*, int, float*",
+          "device_ms": 952.944,
+          "calls": 98304
+        },
+        {
+          "name": "void kernel_trsm_l_mul32<float, 8, true, true, false, true>(int, int, float const*, float const*, int, float*,",
+          "device_ms": 822.177,
+          "calls": 98304
+        },
+        {
+          "name": "void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda_scatter_gather_internal_kernel<t",
+          "device_ms": 449.876,
+          "calls": 24576
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_16x16_128x1_nn_align8>(cutlass_80_wmma_te",
+          "device_ms": 412.579,
+          "calls": 172032
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8>(cutlass_80_tensorop_",
+          "device_ms": 306.045,
+          "calls": 2304
+        },
+        {
+          "name": "ampere_bf16_s1688gemm_bf16_64x128_sliced1x2_ldg8_f2f_tn",
+          "device_ms": 234.485,
+          "calls": 2304
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nn_align8>(cutlass_80_tensorop_",
+          "device_ms": 218.222,
+          "calls": 3104
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_16x16_64x1_nt_align8>(cutlass_80_wmma_ten",
+          "device_ms": 171.384,
+          "calls": 72192
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<c10::BFloat16, c10::BFloat16, c10:",
+          "device_ms": 168.148,
+          "calls": 2304
+        },
+        {
+          "name": "triton_poi_fused_clone_copy_index_put_mul_scalar_tensor_select_view_where_9",
+          "device_ms": 113.398,
+          "calls": 23808
+        },
+        {
+          "name": "triton_per_fused__to_copy_arange_exp_index_put_mul_neg_scalar_tensor_sub_sum_tril_unsqueeze_view_where_12",
+          "device_ms": 112.046,
+          "calls": 23808
+        },
+        {
+          "name": "triton_poi_fused_bitwise_and_bitwise_not_copy_exp_expand_gather_ge_lt_masked_fill_mul_scatter_add_select_slice",
+          "device_ms": 108.89,
+          "calls": 24576
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_",
+          "device_ms": 93.785,
+          "calls": 49152
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >",
+          "device_ms": 83.1,
+          "calls": 11437
+        },
+        {
+          "name": "triton_red_fused__to_copy_add_arange_argmax_bitwise_and_bitwise_not_bitwise_or_clamp_min_copy_div_eq_full_like",
+          "device_ms": 75.925,
+          "calls": 24576
+        },
+        {
+          "name": "triton_poi_fused__to_copy_add_clamp_min_div_eq_ge_masked_fill_mul_permute_scalar_tensor_slice_slice_backward_v",
+          "device_ms": 75.91,
+          "calls": 768
+        },
+        {
+          "name": "ampere_bf16_s1688gemm_bf16_64x128_sliced1x2_ldg8_f2f_nn",
+          "device_ms": 75.013,
+          "calls": 768
+        },
+        {
+          "name": "triton_red_fused__to_copy_add_clamp_min_div_eq_exp_ge_masked_fill_mul_neg_scalar_tensor_select_squeeze_sum_tra",
+          "device_ms": 64.743,
+          "calls": 23808
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16_copy_kernel_cuda(at::TensorIteratorBase",
+          "device_ms": 64.283,
+          "calls": 12384
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::(anonymous namespace)::silu_backward_kernel(at::",
+          "device_ms": 62.018,
+          "calls": 768
+        },
+        {
+          "name": "triton_red_fused__to_copy_add_exp_expand_gather_mul_slice_sub_sum_unsqueeze_view_1",
+          "device_ms": 59.085,
+          "calls": 24576
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_16x16_128x1_tn_align8>(cutlass_80_wmma_te",
+          "device_ms": 59.034,
+          "calls": 24576
+        },
+        {
+          "name": "triton_poi_fused__to_copy_clamp_min_div_linalg_vector_norm_transpose_view_141",
+          "device_ms": 55.249,
+          "calls": 49152
+        },
+        {
+          "name": "triton_red_fused_mul_sum_49",
+          "device_ms": 51.207,
+          "calls": 24576
+        },
+        {
+          "name": "triton_per_fused__to_copy_add_exp_mul_sum_unsqueeze_view_7",
+          "device_ms": 50.642,
+          "calls": 23808
+        }
+      ]
+    },
+    "cprofile_step": {
+      "boundary": "one steady training step under cProfile (host python only; the wall here is inflated by the tracer and is NOT the arm's tokens/s)",
+      "wall_s": 41.968,
+      "interesting_frames": [
+        "3107    0.008    0.000   39.376    0.013 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py:1039(_fn)",
+        "2304/1536    0.021    0.000   39.311    0.026 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/utils.py:119(call_func_at_runtime_with_args)",
+        "2/1    0.032    0.016   32.728   32.728 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/profile_step_vs_gdn2.py:164(one_step)",
+        "32    0.001    0.000   21.792    0.681 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:242(loss)",
+        "768    0.046    0.000   21.734    0.028 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:210(forward)",
+        "32    0.002    0.000   21.662    0.677 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:236(features)",
+        "768    0.004    0.000   21.385    0.028 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:176(forward)",
+        "768    0.005    0.000   21.382    0.028 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:179(_forward_impl)",
+        "768    0.019    0.000   21.376    0.028 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:185(mix)",
+        "768    0.033    0.000   21.010    0.027 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py:791(compile_wrapper)",
+        "768    0.004    0.000   20.958    0.027 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/scan.py:219(routed_chunk_scan)",
+        "800    0.003    0.000   20.943    0.026 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py:565(apply)",
+        "768    0.002    0.000   20.936    0.027 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/aot_autograd.py:1126(forward)",
+        "768    0.008    0.000   20.934    0.027 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:310(runtime_wrapper)",
+        "768    0.001    0.000   20.909    0.027 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/utils.py:102(g)",
+        "768    0.143    0.000   20.792    0.027 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:2083(forward)",
+        "768    0.001    0.000   20.251    0.026 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:512(wrapper)",
+        "32    0.000    0.000   20.112    0.628 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:243(backward)",
+        "32    0.000    0.000   20.110    0.628 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/graph.py:832(_engine_run_backward)",
+        "800    0.004    0.000   18.738    0.023 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py:300(apply)",
+        "768    0.196    0.000   18.716    0.024 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:2239(backward)",
+        "768    0.002    0.000   18.419    0.024 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:2288(impl_fn)",
+        "768    0.008    0.000   18.414    0.024 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:2330(_backward_impl)",
+        "1099008    3.323    0.000    3.323    0.000 {built-in method torch._C._dynamo.guards._empty_strided_cuda}",
+        "1072896    1.470    0.000    1.470    0.000 {built-in method torch._C._dynamo.guards._reinterpret_tensor}",
+        "5376    0.007    0.000    0.453    0.000 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/linear.py:130(forward)",
+        "862464    0.427    0.000    0.427    0.000 {built-in method torch._C._dynamo.guards.assert_size_stride}",
+        "768    0.020    0.000    0.228    0.000 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:126(forward)",
+        "810240    0.133    0.000    0.184    0.000 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:2135(<genexpr>)",
+        "768    0.066    0.000    0.100    0.000 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:1598(_backward_prologue_functional)",
+        "1538    0.010    0.000    0.076    0.000 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/profiler.py:789(__exit__)"
+      ],
+      "top_frames": [
+        "",
+        "ncalls  tottime  percall  cumtime  percall filename:lineno(function)",
+        "3107    0.008    0.000   39.376    0.013 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py:1039(_fn)",
+        "2304/1536    0.021    0.000   39.311    0.026 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/utils.py:119(call_func_at_runtime_with_args)",
+        "1536    0.017    0.000   38.630    0.025 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_inductor/output_code.py:590(__call__)",
+        "1536    0.121    0.000   38.459    0.025 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_inductor/utils.py:3013(run)",
+        "2/1    0.032    0.016   32.728   32.728 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/profile_step_vs_gdn2.py:164(one_step)",
+        "32    0.001    0.000   21.792    0.681 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:242(loss)",
+        "9312/864    0.020    0.000   21.783    0.025 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py:1771(_wrapped_call_impl)",
+        "9312/864    0.029    0.000   21.781    0.025 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py:1779(_call_impl)",
+        "768    0.046    0.000   21.734    0.028 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:210(forward)",
+        "32    0.002    0.000   21.662    0.677 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:236(features)",
+        "768    0.004    0.000   21.385    0.028 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:176(forward)",
+        "768    0.005    0.000   21.382    0.028 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:179(_forward_impl)",
+        "768    0.019    0.000   21.376    0.028 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:185(mix)",
+        "768    0.033    0.000   21.010    0.027 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py:791(compile_wrapper)",
+        "768    0.004    0.000   20.958    0.027 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/scan.py:219(routed_chunk_scan)",
+        "800    0.003    0.000   20.943    0.026 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py:565(apply)"
+      ]
+    },
+    "dynamo_counters": {
+      "frames": {
+        "total": 1,
+        "ok": 1
+      },
+      "inline_call": {},
+      "unimplemented": {},
+      "stats": {
+        "calls_captured": 8835,
+        "unique_graphs": 1
+      },
+      "inductor": {
+        "triton_bundler_load_static_autotuner": 250,
+        "async_compile_cache_miss": 879,
+        "async_compile_cache_hit": 543,
+        "pattern_matcher_count": 32,
+        "pattern_matcher_nodes": 128,
+        "extern_calls": 510,
+        "fxgraph_cache_hit": 2
+      },
+      "aot_autograd": {
+        "total": 1,
+        "autograd_cache_hit": 1,
+        "ok": 1
+      }
+    },
+    "recorded_references": {
+      "gdn2_tokens_per_s": 28124.0,
+      "matrix_ops_tokens_per_s": 13189.7,
+      "x45_registered_mb8_tokens_per_s_steady": 9306.3,
+      "x45_on_mb2_tokens_per_s_steady": 880.8,
+      "x45_off_mb2_tokens_per_s_steady": 2110.7,
+      "source": "receipts/cd_gdn2_c128_rerun.json, receipts/cd_matrix_ops_c128.json, receipts/scale_proof_model_step.json -- RECORDED, not same-session"
+    }
+  },
+  "x45_on_mb2": {
+    "label": "x45_on_mb2",
+    "boundary": "whole model, whole step: prepare + all microbatches' forward and backward + clip/AdamW; flagship-stream read excluded; tokens are measured targets over the same 64-window stream batches for every arm (the gates.py/cd_* protocol)",
+    "precision": "bf16 compute (autocast), fp32 master weights, fused CE -- the registered regime",
+    "session": "same-session (this card, this process)",
+    "parameters": 149981808,
+    "summary": {
+      "shape": {
+        "width": 576,
+        "depth": 24,
+        "hidden": 3352,
+        "heads": 2,
+        "value_dim": 128,
+        "rank": 128,
+        "rank_max": 128,
+        "vocab": 256
+      },
+      "parameters": {
+        "total": 149981808,
+        "trainable": 149981808,
+        "per_layer": 6236930,
+        "mixer": 443522,
+        "mlp": 5792256,
+        "norms": 1152,
+        "embedding": 147456,
+        "head": 147456,
+        "final_norm": 576,
+        "capacity": 150003984,
+        "capacity_relative": -0.00014783607347390593
+      },
+      "routing": {
+        "ops": true,
+        "tau_match": 0.45,
+        "tau_merge": 0.85,
+        "tau_pop": 0.1,
+        "tie_break": 1e-06,
+        "read_scale": 2.0,
+        "grow": false,
+        "grow_trigger": 0.5,
+        "grow_window": 4,
+        "grow_window_tokens": 512,
+        "grow_geometric": 2.0,
+        "grow_stride_floor": 64
+      },
+      "chunk_tokens": 64
+    },
+    "microbatches": 2,
+    "windows_per_step": 64,
+    "context": 2048,
+    "warmup": 2,
+    "steps": 2,
+    "tokens": 212955,
+    "step_walls": [
+      121.694,
+      122.746
+    ],
+    "phase_s": {
+      "prepare": 0.004,
+      "fwd_bwd": 244.399,
+      "opt": 0.036
+    },
+    "ms_per_step_p50": 122220.0,
+    "total_s": 244.44,
+    "tokens_per_s": 871.2,
+    "tokens_per_s_steady": 871.2,
+    "peak_allocated_gb": 32.96,
+    "losses": [
+      3.842341,
+      3.961568
+    ],
+    "step_profile": {
+      "kernels": 6349058,
+      "device_busy_ms": 15048.055,
+      "note": "CUDA-activity-only profile of one steady step; component buckets are name-classified (no launching-op chains at this event volume)",
+      "components_ms": {
+        "a_fused_scan_bwd": 1681.866,
+        "a_fused_scan_trajectory_fwd": 1090.147,
+        "c_head_cross_entropy": 0.652,
+        "c_matmul_backbone": 1145.902,
+        "memcpy": 203.177,
+        "z_other_elementwise": 10926.311
+      },
+      "top_kernels": [
+        {
+          "name": "_persistent_bwd_kernel",
+          "device_ms": 1681.866,
+          "calls": 24576
+        },
+        {
+          "name": "_persistent_scan_trajectory_kernel",
+          "device_ms": 1090.147,
+          "calls": 24576
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float",
+          "device_ms": 849.605,
+          "calls": 483840
+        },
+        {
+          "name": "void (anonymous namespace)::indexing_backward_kernel<float, 4>(long const*, long const*, float const*, float*,",
+          "device_ms": 719.327,
+          "calls": 47616
+        },
+        {
+          "name": "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{la",
+          "device_ms": 553.89,
+          "calls": 255904
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_",
+          "device_ms": 505.54,
+          "calls": 343296
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespac",
+          "device_ms": 412.342,
+          "calls": 197376
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::(anonymous namespac",
+          "device_ms": 407.988,
+          "calls": 242688
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl<at::native::BinaryFunctor<float, float",
+          "device_ms": 390.923,
+          "calls": 98304
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_",
+          "device_ms": 350.365,
+          "calls": 196608
+        },
+        {
+          "name": "void at::native::reduce_kernel<128, 4, at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::nativ",
+          "device_ms": 338.514,
+          "calls": 96832
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16_copy_kernel_cuda(at::TensorIteratorBase",
+          "device_ms": 308.294,
+          "calls": 233561
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8>(cutlass_80_tensorop_",
+          "device_ms": 304.147,
+          "calls": 2304
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >",
+          "device_ms": 253.5,
+          "calls": 155821
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int",
+          "device_ms": 250.541,
+          "calls": 268159
+        },
+        {
+          "name": "void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda_scatter_gather_internal_kernel<f",
+          "device_ms": 247.122,
+          "calls": 122880
+        },
+        {
+          "name": "ampere_bf16_s1688gemm_bf16_64x128_sliced1x2_ldg8_f2f_tn",
+          "device_ms": 234.894,
+          "calls": 2304
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nn_align8>(cutlass_80_tensorop_",
+          "device_ms": 218.096,
+          "calls": 3104
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<float, float, float, at::native::b",
+          "device_ms": 216.027,
+          "calls": 170496
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::bitwise_not_kernel_cuda(at::TensorIteratorBase&)",
+          "device_ms": 215.274,
+          "calls": 172032
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<bool, bool, bool, at::native::Bitw",
+          "device_ms": 213.915,
+          "calls": 172032
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<2, at::native::(anonymous namespace)::where_kernel_impl(at::Ten",
+          "device_ms": 213.245,
+          "calls": 172032
+        },
+        {
+          "name": "void at_cuda_detail::cub::DeviceRadixSortSingleTileKernel<at_cuda_detail::cub::DeviceRadixSortPolicy<long, at:",
+          "device_ms": 211.459,
+          "calls": 47616
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<2, at::native::FillFunctor<long>, std::array<char*, 1ul> >(int,",
+          "device_ms": 209.555,
+          "calls": 221184
+        },
+        {
+          "name": "Memcpy DtoD (Device -> Device)",
+          "device_ms": 199.762,
+          "calls": 147488
+        }
+      ]
+    },
+    "cprofile_step": {
+      "boundary": "one steady training step under cProfile (host python only; the wall here is inflated by the tracer and is NOT the arm's tokens/s)",
+      "wall_s": 130.547,
+      "interesting_frames": [
+        "2/1    0.940    0.470  123.790  123.790 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/profile_step_vs_gdn2.py:164(one_step)",
+        "32    0.001    0.000   74.709    2.335 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:242(loss)",
+        "32    0.002    0.000   74.660    2.333 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:236(features)",
+        "768    0.040    0.000   74.588    0.097 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:210(forward)",
+        "768    0.004    0.000   74.244    0.097 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:176(forward)",
+        "768    0.005    0.000   74.181    0.097 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:179(_forward_impl)",
+        "768    0.022    0.000   74.153    0.097 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:185(mix)",
+        "768    2.656    0.003   73.584    0.096 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/scan.py:219(routed_chunk_scan)",
+        "24576   25.153    0.001   62.572    0.003 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/schedule.py:103(route_chunk)",
+        "32    0.001    0.000   50.854    1.589 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:243(backward)",
+        "32    0.001    0.000   50.850    1.589 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/graph.py:832(_engine_run_backward)",
+        "24576    0.456    0.000   14.129    0.001 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/read.py:65(read_weights)",
+        "24576    0.543    0.000   11.694    0.000 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/read.py:56(attention_probs)",
+        "24576    3.612    0.000    8.075    0.000 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/read.py:49(match_scores)",
+        "24608    0.138    0.000    7.439    0.000 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py:300(apply)",
+        "24576    0.062    0.000    7.301    0.000 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k4_fused_backward.py:513(trainable_block_scan)",
+        "24576    0.445    0.000    7.277    0.000 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k4_fused_backward.py:441(backward)",
+        "24576    0.049    0.000    7.005    0.000 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k4_fused_backward.py:473(fused_block_scan)",
+        "24608    0.101    0.000    6.991    0.000 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py:565(apply)",
+        "24576    0.421    0.000    6.111    0.000 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k4_fused_backward.py:367(persistent_scan_backward)",
+        "24576    0.127    0.000    5.942    0.000 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k4_fused_backward.py:428(forward)",
+        "24576    0.453    0.000    5.659    0.000 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k4_fused_backward.py:189(persistent_scan_trajectory)",
+        "49152    0.839    0.000    3.207    0.000 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/read.py:39(unit)",
+        "24576    0.449    0.000    1.845    0.000 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/read.py:44(row_strength)",
+        "24576    0.186    0.000    1.798    0.000 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/schedule.py:83(_blank)"
+      ],
+      "top_frames": [
+        "",
+        "ncalls  tottime  percall  cumtime  percall filename:lineno(function)",
+        "2/1    0.940    0.470  123.790  123.790 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/profile_step_vs_gdn2.py:164(one_step)",
+        "32    0.001    0.000   74.709    2.335 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:242(loss)",
+        "9312/864    0.019    0.000   74.695    0.086 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py:1771(_wrapped_call_impl)",
+        "9312/864    0.027    0.000   74.693    0.086 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py:1779(_call_impl)",
+        "32    0.002    0.000   74.660    2.333 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:236(features)",
+        "768    0.040    0.000   74.588    0.097 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:210(forward)",
+        "768    0.004    0.000   74.244    0.097 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:176(forward)",
+        "768    0.005    0.000   74.181    0.097 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:179(_forward_impl)",
+        "768    0.022    0.000   74.153    0.097 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:185(mix)",
+        "768    2.656    0.003   73.584    0.096 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/scan.py:219(routed_chunk_scan)",
+        "24576   25.153    0.001   62.572    0.003 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/schedule.py:103(route_chunk)",
+        "32    0.219    0.007   54.840    1.714 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_tensor.py:570(backward)",
+        "32    0.001    0.000   50.854    1.589 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:243(backward)",
+        "32    0.001    0.000   50.850    1.589 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/graph.py:832(_engine_run_backward)",
+        "32   43.953    1.374   50.849    1.589 {method 'run_backward' of 'torch._C._EngineBase' objects}",
+        "24576    0.456    0.000   14.129    0.001 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/read.py:65(read_weights)"
+      ]
+    },
+    "dynamo_counters": {
+      "frames": {
+        "total": 1,
+        "ok": 1
+      },
+      "inline_call": {},
+      "unimplemented": {},
+      "stats": {
+        "calls_captured": 8835,
+        "unique_graphs": 1
+      },
+      "inductor": {
+        "triton_bundler_load_static_autotuner": 250,
+        "async_compile_cache_miss": 879,
+        "async_compile_cache_hit": 543,
+        "pattern_matcher_count": 32,
+        "pattern_matcher_nodes": 128,
+        "extern_calls": 510,
+        "fxgraph_cache_hit": 2
+      },
+      "aot_autograd": {
+        "total": 1,
+        "autograd_cache_hit": 1,
+        "ok": 1
+      }
+    },
+    "recorded_references": {
+      "gdn2_tokens_per_s": 28124.0,
+      "matrix_ops_tokens_per_s": 13189.7,
+      "x45_registered_mb8_tokens_per_s_steady": 9306.3,
+      "x45_on_mb2_tokens_per_s_steady": 880.8,
+      "x45_off_mb2_tokens_per_s_steady": 2110.7,
+      "source": "receipts/cd_gdn2_c128_rerun.json, receipts/cd_matrix_ops_c128.json, receipts/scale_proof_model_step.json -- RECORDED, not same-session"
+    }
+  },
+  "x45_on_mb2_compile_route_failed": {
+    "error": "  ^^^^^\n  File \"/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py\", line 845, in compile_wrapper\n    raise e.remove_dynamo_frames() from None  # see TORCHDYNAMO_VERBOSE=1\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_inductor/compile_fx.py\", line 990, in _compile_fx_inner\n    raise InductorError(e, currentframe()).with_traceback(\n  File \"/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_inductor/compile_fx.py\", line 974, in _compile_fx_inner\n    mb_compiled_graph = fx_codegen_and_compile(\n                        ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_inductor/compile_fx.py\", line 1695, in fx_codegen_and_compile\n    return scheme.codegen_and_compile(gm, example_inputs, inputs_to_check, graph_kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_inductor/compile_fx.py\", line 1420, in codegen_and_compile\n    graph.run(*example_inputs)\n  File \"/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_inductor/graph.py\", line 937, in run\n    return super().run(*args)\n           ^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/fx/interpreter.py\", line 174, in run\n    self.env[node] = self.run_node(node)\n                     ^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_inductor/graph.py\", line 1624, in run_node\n    result = super().run_node(n)\n             ^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/fx/interpreter.py\", line 256, in run_node\n    return getattr(self, n.op)(n.target, args, kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_inductor/graph.py\", line 1289, in call_function\n    raise LoweringException(e, target, args, kwargs).with_traceback(\n  File \"/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_inductor/graph.py\", line 1279, in call_function\n    out = lowerings[target](*args, **kwargs)  # type: ignore[index]\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_inductor/lowering.py\", line 488, in wrapped\n    out = decomp_fn(*args, **kwargs)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_inductor/lowering.py\", line 838, in _view_dtype\n    return to_dtype_bitcast(x, dtype)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_inductor/lowering.py\", line 823, in to_dtype_bitcast\n    src_bits = _get_primitive_bitwidth(x_dtype)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_inductor/lowering.py\", line 821, in _get_primitive_bitwidth\n    return torch.iinfo(dtype).bits\n           ^^^^^^^^^^^^^^^^^^\ntorch._inductor.exc.InductorError: LoweringException: TypeError: torch.bool is not supported by torch.iinfo\n  target: aten.view.dtype\n  args[0]: TensorBox(StorageBox(\n    Pointwise(\n      'cuda',\n      torch.bool,\n      def inner_fn(index):\n          i0, i1, i2 = index\n          tmp0 = ops.constant(False, torch.bool)\n          return tmp0\n      ,\n      ranges=[2, 2, 128],\n      origin_node=full_1,\n      origins=OrderedSet([full_1]),\n      stack_traces = {,\n        File \"/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/scan.py\", line 255, in routed_chunk_scan,\n          live = (torch.zeros(batch, heads, rank_max, dtype=torch.bool, device=device),\n      ,\n      }\n    )\n  ))\n  args[1]: torch.int8\n\nSet TORCHDYNAMO_VERBOSE=1 for the internal stack trace (please do this especially if you're reporting a bug to PyTorch). For even more developer context, set TORCH_LOGS=\"+dynamo\"\n\n"
   }
 }
