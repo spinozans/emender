@@ -96,6 +96,7 @@ gate tests assert two replays are bit-identical.
 """
 from __future__ import annotations
 
+import contextlib
 import threading
 from typing import Tuple
 
@@ -123,6 +124,28 @@ MAX_SLOT_ENTRIES = 192
 # and their intermediates die inside each own replay before the next begins.
 _BWD_POOL = [None]
 _BWD_POOL_LOCK = threading.Lock()
+
+# The autocast regime, encoded explicitly: ``torch.compile`` runs a custom-op
+# impl with ambient autocast DISABLED (inductor bakes the casts into the
+# traced graph; an opaque impl never sees them), so the wrapper captures the
+# caller's regime -- dynamo guards the autocast state, so the traced value is
+# the caller's -- and the op runs its body under exactly that context, eager
+# or compiled, and the slot key carries it instead of an ambient read.
+_CAST_CODES = {None: 0, torch.bfloat16: 1, torch.float16: 2, torch.float32: 3}
+_CAST_DTYPES = {code: dtype for dtype, code in _CAST_CODES.items() if code}
+
+
+def _ambient_cast_code() -> int:
+    """The caller's CUDA autocast regime (traced as a constant under compile)."""
+    if not torch.is_autocast_enabled("cuda"):
+        return 0
+    return _CAST_CODES.get(torch.get_autocast_dtype("cuda"), 0)
+
+
+def _autocast_context(cast_code: int):
+    if not cast_code:
+        return contextlib.nullcontext()
+    return torch.autocast("cuda", dtype=_CAST_DTYPES[int(cast_code)])
 
 # The op-dispatch ledger the step receipt reads: per-scan host cost is the
 # thing this stage moves, so the counts are first-class evidence.  Reset only
@@ -321,15 +344,13 @@ class _ScanSlot:
 
 
 def _slot_key(query, payload, decay, policy, rank, rank_max, chunk_tokens,
-              slot_id):
-    # The ambient autocast state is part of the key: the captured
-    # preprocessing's dtypes (bf16 norms/bmm under autocast, fp32 without)
-    # are baked into the graph.
+              slot_id, cast_code):
+    # The effective autocast regime (an explicit argument, not an ambient
+    # read) is part of the key: the captured preprocessing's dtypes are baked
+    # into the graph.
     return (int(slot_id), tuple(query.shape), query.dtype, payload.dtype,
             decay.dtype, query.device.index, int(rank), int(rank_max),
-            int(chunk_tokens), policy,
-            bool(torch.is_autocast_enabled("cuda")),
-            torch.get_autocast_dtype("cuda"))
+            int(chunk_tokens), policy, int(cast_code))
 
 
 def _slot_for(key, query, payload, decay, rank_max):
@@ -383,7 +404,7 @@ def _whole_scan_fwd_op(
     query: torch.Tensor, payload: torch.Tensor, decay: torch.Tensor,
     rank: int, rank_max: int, chunk_tokens: int, tau_match: float,
     tau_merge: float, tau_pop: float, tie_break: float, scale: float,
-    slot_id: int,
+    cast_code: int, slot_id: int,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, int]:
     """The whole (layer, window) routing+scan region as ONE opaque op.
 
@@ -391,16 +412,18 @@ def _whole_scan_fwd_op(
     the walk is captured into a CUDA graph and replayed.  Later calls: three
     input copies and one replay.  The kernels are the per-chunk K5A+K4
     stack's, so the outputs are bit-identical to that arm by construction.
-    The fourth output is the slot TOKEN the backward must use -- the slot
-    key contains the forward's ambient autocast state (the captured
-    preprocessing's dtypes are baked), which the backward cannot rebuild, so
-    the token travels through the graph instead of a key.
+    ``cast_code`` is the caller's autocast regime passed EXPLICITLY
+    (``torch.compile`` runs this impl with ambient autocast disabled, and the
+    preprocessing's dtypes are the decision semantics).  The fourth output
+    is the slot TOKEN the backward must use -- the slot key contains the
+    regime, which the backward cannot rebuild, so the token travels through
+    the graph instead of a key.
     """
     policy = RoutingPolicy(ops=True, tau_match=tau_match, tau_merge=tau_merge,
                            tau_pop=tau_pop, tie_break=tie_break,
                            read_scale=scale)
     key = _slot_key(query, payload, decay, policy, rank, rank_max,
-                    chunk_tokens, slot_id)
+                    chunk_tokens, slot_id, cast_code)
     slot = _slot_for(key, query, payload, decay, rank_max)
     slot.fwd_calls += 1
     DISPATCH["fwd_calls"] += 1
@@ -413,7 +436,7 @@ def _whole_scan_fwd_op(
         return (*slot.fwd_outputs, slot.token)
 
     def body():
-        with torch.no_grad():
+        with torch.no_grad(), _autocast_context(cast_code):
             return _fwd_body(slot.query_static, slot.payload_static,
                              slot.decay_static, policy, rank, rank_max,
                              chunk_tokens)
@@ -434,7 +457,7 @@ def _whole_scan_fwd_op(
         return (*slot.fwd_outputs, slot.token)
 
     DISPATCH["fwd_eager"] += 1
-    with torch.no_grad():
+    with torch.no_grad(), _autocast_context(cast_code):
         reads, state, live, saves = _fwd_body(query, payload, decay, policy,
                                              rank, rank_max, chunk_tokens)
     slot.last_inputs = (query, payload, decay)
@@ -444,7 +467,7 @@ def _whole_scan_fwd_op(
 
 @_whole_scan_fwd_op.register_fake
 def _(query, payload, decay, rank, rank_max, chunk_tokens, tau_match,
-      tau_merge, tau_pop, tie_break, scale, slot_id):
+      tau_merge, tau_pop, tie_break, scale, cast_code, slot_id):
     batch, tokens, heads, value_dim = query.shape
     device = query.device
     return (torch.empty((batch, tokens, heads, value_dim), dtype=torch.float32,
@@ -517,7 +540,7 @@ def _(query, payload, decay, dreads, rank, chunk_tokens, scale, slot_token):
 
 def _whole_scan_setup(ctx, inputs, output):
     query, payload, decay, rank, rank_max, chunk_tokens, tau_match, \
-        tau_merge, tau_pop, tie_break, scale, slot_id = inputs
+        tau_merge, tau_pop, tie_break, scale, cast_code, slot_id = inputs
     # The slot token is the forward's own fourth output: the backward cannot
     # rebuild the slot key (it contains the forward's ambient autocast state,
     # and autograd runs the backward outside it), so the token travels through
@@ -546,7 +569,7 @@ def _whole_scan_backward(ctx, *grads):
         query, payload, decay, dreads, ctx.rank, ctx.chunk_tokens, ctx.scale,
         ctx.slot_token)
     return dquery, dpayload, ddecay, None, None, None, None, None, None, \
-        None, None, None
+        None, None, None, None
 
 
 torch.library.register_autograd("x45::whole_scan_fwd", _whole_scan_backward,
@@ -576,6 +599,11 @@ def whole_scan(query, payload, decay, *, policy: RoutingPolicy, rank=None,
         rank_max = int(value_dim if rank is None else rank)
     rank_max = int(rank_max)
     rank_now = rank_max if rank is None else int(rank)
+    # The caller's autocast regime, captured HERE (dynamo guards the state,
+    # so under torch.compile this is the traced constant the op needs:
+    # inductor runs a custom-op impl with ambient autocast disabled, and the
+    # preprocessing's dtypes are the decision semantics).
+    cast_code = _ambient_cast_code()
     if (not policy.ops or policy.grow or not query.is_cuda
             or initial_state is not None or initial_live is not None
             or rank_now > K5A_MAX_RANK
@@ -583,15 +611,18 @@ def whole_scan(query, payload, decay, *, policy: RoutingPolicy, rank=None,
             or chunk_tokens < 1 or tokens < 1
             or query.shape != payload.shape):
         DISPATCH["fallbacks"] += 1
-        return routed_chunk_scan(
-            query, payload, decay, router=routing_diff_route_chunk,
-            policy=policy, rank=rank, rank_max=rank_max,
-            chunk_tokens=chunk_tokens, initial_state=initial_state,
-            initial_live=initial_live, fused=False, trainable_fused=True)
+        # the per-chunk stack runs under the SAME explicit regime the op
+        # would have -- the fallback must not silently change dtype either
+        with _autocast_context(cast_code):
+            return routed_chunk_scan(
+                query, payload, decay, router=routing_diff_route_chunk,
+                policy=policy, rank=rank, rank_max=rank_max,
+                chunk_tokens=chunk_tokens, initial_state=initial_state,
+                initial_live=initial_live, fused=False, trainable_fused=True)
     reads, state, live, _token = _whole_scan_fwd_op(
         query, payload, decay, rank_now, rank_max, chunk_tokens,
         policy.tau_match, policy.tau_merge, policy.tau_pop, policy.tie_break,
-        policy.read_scale, int(slot_id))
+        policy.read_scale, int(cast_code), int(slot_id))
     return RoutedResult(reads, state, live, rank_now, ScanStats(), None, None)
 
 
@@ -613,7 +644,7 @@ def whole_scan_record(query, payload, decay, *, policy: RoutingPolicy,
         rank_max = int(value_dim if rank is None else rank)
     rank_max = int(rank_max)
     rank_now = rank_max if rank is None else int(rank)
-    with torch.no_grad():
+    with torch.no_grad(), _autocast_context(_ambient_cast_code()):
         reads, state, live, saves = _fwd_body(query, payload, decay, policy,
                                               rank_now, rank_max, chunk_tokens)
     lanes = saves[0]["schedule"].lanes if saves else 1
