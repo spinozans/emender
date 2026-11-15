@@ -189,7 +189,11 @@ def _norm_defined(x: torch.Tensor, dim: int, width: int) -> torch.Tensor:
 
 
 def _fp32(x: torch.Tensor) -> torch.Tensor:
-    return x.to(torch.float32) if x.dtype != torch.float32 else x
+    """Upcast to the spec's fp32 -- but never DOWN: the fp64 oracle twin (the
+    floor reference and the gradcheck instrument) must stay fp64."""
+    if x.dtype in (torch.bfloat16, torch.float16):
+        return x.to(torch.float32)
+    return x
 
 
 def _round_f32(value: float) -> float:
@@ -644,7 +648,8 @@ def sequential_oracle_scan(query, payload, decay, *, policy: RoutingPolicy,
                          "rank_max (the registered shape); a rank prefix is "
                          "refused by name")
     device = query.device
-    state = (torch.zeros(batch, heads, rank, value_dim, dtype=torch.float32,
+    compute_dtype = torch.promote_types(_fp32(query).dtype, torch.float32)
+    state = (torch.zeros(batch, heads, rank, value_dim, dtype=compute_dtype,
                          device=device) if initial_state is None
              else initial_state)
     live = (torch.zeros(batch, heads, rank, dtype=torch.bool, device=device)
@@ -659,7 +664,7 @@ def sequential_oracle_scan(query, payload, decay, *, policy: RoutingPolicy,
     tie = _round_f32(policy.tie_break)
     scale = _round_f32(policy.read_scale)
     lanes = 2 if policy.ops else 1
-    reads = torch.empty(batch, tokens, heads, value_dim, dtype=torch.float32,
+    reads = torch.empty(batch, tokens, heads, value_dim, dtype=compute_dtype,
                         device=device)
     fields = dict(
         slot=torch.zeros(batch, tokens, heads, lanes, dtype=torch.int64,
@@ -667,13 +672,13 @@ def sequential_oracle_scan(query, payload, decay, *, policy: RoutingPolicy,
         erase=torch.zeros(batch, tokens, heads, lanes, dtype=torch.bool,
                           device=device),
         payload=torch.zeros(batch, tokens, heads, lanes, value_dim,
-                             dtype=torch.float32, device=device),
+                            dtype=compute_dtype, device=device),
         op=torch.zeros(batch, tokens, heads, lanes, dtype=torch.int64,
                        device=device),
         live_after=torch.zeros(batch, tokens, heads, lanes, dtype=torch.bool,
                                device=device))
     weights_out = (torch.zeros(batch, tokens, heads, rank,
-                               dtype=torch.float32, device=device)
+                               dtype=compute_dtype, device=device)
                    if collect else None)
     live_pre_out = (torch.zeros(batch, tokens, heads, rank, dtype=torch.bool,
                                 device=device) if collect else None)
@@ -767,7 +772,8 @@ def sequential_oracle_scan(query, payload, decay, *, policy: RoutingPolicy,
             live = live.index_put(
                 (b_index.expand(batch, heads), h_index.expand(batch, heads),
                  sel["second_index"]),
-                torch.full_like(sel["second_index"], False))
+                torch.zeros(batch, heads, dtype=torch.bool,
+                            device=live.device))
     schedule = MatrixSchedule(**fields)
     return dict(reads=reads, state=state, live=live, schedule=schedule,
                 weights=weights_out, live_pre=live_pre_out, rank=int(rank))
