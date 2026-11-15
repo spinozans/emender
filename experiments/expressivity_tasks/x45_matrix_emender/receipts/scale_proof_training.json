@@ -1,0 +1,390 @@
+{
+  "registered_mb8": {
+    "label": "registered_mb8",
+    "config": {
+      "fused_backward": false,
+      "compile_scan": true,
+      "microbatch": 8,
+      "chunk_tokens": 128,
+      "description": "the registered matrix_ops arm on the cd_* protocol (chunk 128, torch.compile on the one shared scan)"
+    },
+    "boundary": "whole model, whole step: prepare + all microbatches' forward and backward + clip/AdamW; flagship-stream read excluded; tokens are measured targets over the same 64-window stream batches for every arm (the gates.py/cd_* protocol)",
+    "precision": "bf16 compute (autocast), fp32 master weights, fused CE -- the registered regime",
+    "session": "same-session (this card, this process)",
+    "parameters": 149981808,
+    "summary": {
+      "shape": {
+        "width": 576,
+        "depth": 24,
+        "hidden": 3352,
+        "heads": 2,
+        "value_dim": 128,
+        "rank": 128,
+        "rank_max": 128,
+        "vocab": 256
+      },
+      "parameters": {
+        "total": 149981808,
+        "trainable": 149981808,
+        "per_layer": 6236930,
+        "mixer": 443522,
+        "mlp": 5792256,
+        "norms": 1152,
+        "embedding": 147456,
+        "head": 147456,
+        "final_norm": 576,
+        "capacity": 150003984,
+        "capacity_relative": -0.00014783607347390593
+      },
+      "routing": {
+        "ops": true,
+        "tau_match": 0.45,
+        "tau_merge": 0.85,
+        "tau_pop": 0.1,
+        "tie_break": 1e-06,
+        "read_scale": 2.0,
+        "grow": false,
+        "grow_trigger": 0.5,
+        "grow_window": 4,
+        "grow_window_tokens": 512,
+        "grow_geometric": 2.0,
+        "grow_stride_floor": 64
+      },
+      "chunk_tokens": 128
+    },
+    "microbatches": 8,
+    "windows_per_step": 64,
+    "context": 2048,
+    "warmup": 2,
+    "steps": 30,
+    "tokens": 3430640,
+    "step_walls": [
+      9.293,
+      9.503,
+      9.008,
+      9.238,
+      9.076,
+      9.039,
+      9.036,
+      9.132,
+      9.39,
+      9.217,
+      9.247,
+      9.064,
+      9.37,
+      9.628,
+      9.329,
+      9.221,
+      9.645,
+      9.383,
+      9.493,
+      9.067,
+      9.273,
+      9.322,
+      9.002,
+      9.263,
+      9.495,
+      9.312,
+      9.038,
+      9.634,
+      9.447,
+      9.162
+    ],
+    "phase_s": {
+      "prepare": 0.039,
+      "fwd_bwd": 277.73,
+      "opt": 0.551
+    },
+    "phase_frac": {
+      "prepare": 0.0001,
+      "fwd_bwd": 0.9979,
+      "opt": 0.002
+    },
+    "total_s": 278.327,
+    "tokens_per_s": 12325.9,
+    "tokens_per_s_steady": 12398.1,
+    "ms_per_step_p50": 9268.0,
+    "peak_allocated_gb": 25.07,
+    "losses": [
+      4.272354,
+      3.98704,
+      3.295254,
+      3.468947,
+      2.994921,
+      2.987699,
+      2.73435,
+      2.573991,
+      2.322945,
+      2.43884,
+      2.643014,
+      2.979433,
+      3.000032,
+      3.113065,
+      2.941349,
+      2.663051,
+      3.398114,
+      3.645658,
+      3.01516,
+      2.806082,
+      2.923777,
+      3.041483,
+      3.069432,
+      3.082607,
+      2.98381,
+      2.97288,
+      2.894245,
+      3.055488,
+      3.887057,
+      2.972491
+    ],
+    "grad_probe": {
+      "finite": true,
+      "nonzero": true,
+      "parameters_probed": 243
+    },
+    "forbidden_kernels_found": [],
+    "replay_absent": true,
+    "top_kernels": [
+      {
+        "name": "## Call CompiledFxGraph f3u46ozu74zfqynmbolyiox3dqehqjv6vqvbijdzmkt5ovbupdkw ##",
+        "cuda_ms": 128597.568,
+        "calls": 5760,
+        "cuda_frac": 0.3284
+      },
+      {
+        "name": "## Call CompiledFxGraph fcfasltfaragn3dqhwh7yt4uxccsv4jfgvymcu37qsg24pjw4foj ##",
+        "cuda_ms": 90649.455,
+        "calls": 5760,
+        "cuda_frac": 0.2315
+      },
+      {
+        "name": "aten::mm",
+        "cuda_ms": 24382.583,
+        "calls": 115680,
+        "cuda_frac": 0.0623
+      },
+      {
+        "name": "aten::linalg_solve_triangular",
+        "cuda_ms": 20112.948,
+        "calls": 184320,
+        "cuda_frac": 0.0514
+      },
+      {
+        "name": "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8>(cutlass_80_tensorop_",
+        "cuda_ms": 10281.321,
+        "calls": 299520,
+        "cuda_frac": 0.0263
+      },
+      {
+        "name": "void batch_trsm_left_kernel<float, 64, 4, 3, false, false, true>(cublasTrsmBatchParams2<float>, float, float c",
+        "cuda_ms": 7629.958,
+        "calls": 368640,
+        "cuda_frac": 0.0195
+      },
+      {
+        "name": "aten::mul",
+        "cuda_ms": 6514.393,
+        "calls": 17790,
+        "cuda_frac": 0.0166
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<c10::BFloat16, c10::BFloat16, c10:",
+        "cuda_ms": 6513.855,
+        "calls": 17280,
+        "cuda_frac": 0.0166
+      },
+      {
+        "name": "void batch_trsm_left_kernel<float, 64, 4, 3, false, true, true>(cublasTrsmBatchParams2<float>, float, float co",
+        "cuda_ms": 5538.732,
+        "calls": 368640,
+        "cuda_frac": 0.0141
+      },
+      {
+        "name": "ampere_bf16_s1688gemm_bf16_64x128_sliced1x2_ldg8_f2f_nn",
+        "cuda_ms": 4835.614,
+        "calls": 11520,
+        "cuda_frac": 0.0123
+      },
+      {
+        "name": "ampere_bf16_s16816gemm_bf16_128x64_ldg8_f2f_tn",
+        "cuda_ms": 4074.126,
+        "calls": 11520,
+        "cuda_frac": 0.0104
+      },
+      {
+        "name": "aten::bmm",
+        "cuda_ms": 3559.694,
+        "calls": 1002240,
+        "cuda_frac": 0.0091
+      },
+      {
+        "name": "aten::copy_",
+        "cuda_ms": 3193.097,
+        "calls": 360000,
+        "cuda_frac": 0.0082
+      },
+      {
+        "name": "ampere_sgemm_128x128_tn",
+        "cuda_ms": 2868.463,
+        "calls": 276480,
+        "cuda_frac": 0.0073
+      },
+      {
+        "name": "ampere_sgemm_128x128_nn",
+        "cuda_ms": 2860.943,
+        "calls": 276480,
+        "cuda_frac": 0.0073
+      },
+      {
+        "name": "void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda_scatter_gather_internal_kernel<t",
+        "cuda_ms": 2777.714,
+        "calls": 92160,
+        "cuda_frac": 0.0071
+      },
+      {
+        "name": "aten::scatter_reduce_",
+        "cuda_ms": 2777.651,
+        "calls": 92160,
+        "cuda_frac": 0.0071
+      },
+      {
+        "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >",
+        "cuda_ms": 2753.556,
+        "calls": 80310,
+        "cuda_frac": 0.007
+      },
+      {
+        "name": "aten::add_",
+        "cuda_ms": 2753.297,
+        "calls": 80070,
+        "cuda_frac": 0.007
+      },
+      {
+        "name": "ampere_bf16_s1688gemm_bf16_64x128_sliced1x2_ldg8_f2f_tn",
+        "cuda_ms": 2440.042,
+        "calls": 5760,
+        "cuda_frac": 0.0062
+      }
+    ],
+    "cuda_total_ms": 391606.6,
+    "device_busy_ms_per_step": null,
+    "kernel_count_per_step": null,
+    "profile_mode": "full",
+    "profiled_steps": 0,
+    "recorded_references": {
+      "gdn2_tokens_per_s": 28124.0,
+      "matrix_ops_tokens_per_s": 13189.7,
+      "matrix_append_tokens_per_s": 15855.9,
+      "source": "receipts/cd_gdn2_c128_rerun.json, receipts/cd_matrix_ops_c128.json, receipts/cd_matrix_append_c128.json -- RECORDED, not same-session"
+    },
+    "oom": null,
+    "seed": 3401,
+    "scale": 3,
+    "shape_note": "the cd_* protocol: chunk 128, 64 flagship windows/step, microbatch as stated per config; compared against the RECORDED gate-D receipts (gdn2 28,124 / matrix_ops 13,190) and the same-session runs in this receipt"
+  },
+  "fused_mb8": {
+    "label": "fused_mb8",
+    "config": {
+      "fused_backward": true,
+      "compile_scan": false,
+      "microbatch": 8,
+      "chunk_tokens": 128,
+      "description": "the fused matrix_ops arm at the registered microbatch"
+    },
+    "boundary": "whole model, whole step: prepare + all microbatches' forward and backward + clip/AdamW; flagship-stream read excluded; tokens are measured targets over the same 64-window stream batches for every arm (the gates.py/cd_* protocol)",
+    "precision": "bf16 compute (autocast), fp32 master weights, fused CE -- the registered regime",
+    "session": "same-session (this card, this process)",
+    "parameters": 149981808,
+    "summary": {
+      "shape": {
+        "width": 576,
+        "depth": 24,
+        "hidden": 3352,
+        "heads": 2,
+        "value_dim": 128,
+        "rank": 128,
+        "rank_max": 128,
+        "vocab": 256
+      },
+      "parameters": {
+        "total": 149981808,
+        "trainable": 149981808,
+        "per_layer": 6236930,
+        "mixer": 443522,
+        "mlp": 5792256,
+        "norms": 1152,
+        "embedding": 147456,
+        "head": 147456,
+        "final_norm": 576,
+        "capacity": 150003984,
+        "capacity_relative": -0.00014783607347390593
+      },
+      "routing": {
+        "ops": true,
+        "tau_match": 0.45,
+        "tau_merge": 0.85,
+        "tau_pop": 0.1,
+        "tie_break": 1e-06,
+        "read_scale": 2.0,
+        "grow": false,
+        "grow_trigger": 0.5,
+        "grow_window": 4,
+        "grow_window_tokens": 512,
+        "grow_geometric": 2.0,
+        "grow_stride_floor": 64
+      },
+      "chunk_tokens": 128
+    },
+    "microbatches": 8,
+    "windows_per_step": 64,
+    "context": 2048,
+    "warmup": 2,
+    "steps": 0,
+    "tokens": 0,
+    "step_walls": [],
+    "phase_s": {
+      "prepare": 0,
+      "fwd_bwd": 0,
+      "opt": 0
+    },
+    "phase_frac": {
+      "prepare": 0.0,
+      "fwd_bwd": 0.0,
+      "opt": 0.0
+    },
+    "total_s": 0,
+    "tokens_per_s": null,
+    "tokens_per_s_steady": null,
+    "ms_per_step_p50": null,
+    "peak_allocated_gb": 50.29,
+    "losses": [],
+    "grad_probe": {
+      "finite": true,
+      "nonzero": true,
+      "parameters_probed": 0
+    },
+    "forbidden_kernels_found": [
+      "not checked: profile off (per-step walls only)"
+    ],
+    "replay_absent": null,
+    "top_kernels": [],
+    "cuda_total_ms": null,
+    "device_busy_ms_per_step": null,
+    "kernel_count_per_step": null,
+    "profile_mode": "off",
+    "profiled_steps": 0,
+    "recorded_references": {
+      "gdn2_tokens_per_s": 28124.0,
+      "matrix_ops_tokens_per_s": 13189.7,
+      "matrix_append_tokens_per_s": 15855.9,
+      "source": "receipts/cd_gdn2_c128_rerun.json, receipts/cd_matrix_ops_c128.json, receipts/cd_matrix_append_c128.json -- RECORDED, not same-session"
+    },
+    "oom": {
+      "error": "OutOfMemoryError('CUDA out of memory. Tried to allocate 128.00 MiB. GPU 0 has a total capacity of 47.38 GiB of which 18.69 MiB is free. Including non-PyTorch memory, this process has 47.36 GiB memory in use. Of the allocated memory 46.83 GiB is allocated by PyTorch, and 32.08 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF",
+      "note": "the fused path stores the per-chunk state trajectory for the backward; 24 layers of it exceed the card at this microbatch"
+    },
+    "seed": 3401,
+    "scale": 3,
+    "shape_note": "the cd_* protocol: chunk 128, 64 flagship windows/step, microbatch as stated per config; compared against the RECORDED gate-D receipts (gdn2 28,124 / matrix_ops 13,190) and the same-session runs in this receipt"
+  }
+}
