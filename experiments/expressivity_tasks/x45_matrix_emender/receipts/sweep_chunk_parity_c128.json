@@ -1,0 +1,105 @@
+{
+ "gate": "A (re-asserted at the board's chunk length)",
+ "chunk_tokens": 128,
+ "fixture": {
+  "batch": 8,
+  "tokens": 2048,
+  "heads": 2,
+  "rank": 128,
+  "value_dim": 128,
+  "distinct": 512,
+  "seed": 77,
+  "precision": "bf16 autocast"
+ },
+ "bit_equal_channels": [
+  "slot",
+  "erase",
+  "op",
+  "live_after",
+  "payload",
+  "weights",
+  "reads",
+  "state",
+  "live"
+ ],
+ "bit_equal_gradients": [
+  "dquery",
+  "dpayload",
+  "ddecay"
+ ],
+ "call_forms_checked": [
+  "eager",
+  "capture+replay",
+  "replay"
+ ],
+ "calls_checked": 3,
+ "op_histogram": {
+  "none": 43036,
+  "append": 6129,
+  "correct": 1646,
+  "pop": 14515,
+  "merge": 210
+ },
+ "dispatch_ledger": {
+  "fwd_calls": 3,
+  "bwd_calls": 3,
+  "fwd_graph_replays": 2,
+  "bwd_graph_replays": 2,
+  "fwd_eager": 1,
+  "bwd_eager": 1,
+  "fwd_captures": 1,
+  "bwd_captures": 1,
+  "fallbacks": 0
+ },
+ "bindings": {
+  "matrix_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_MATRIX_EMENDER.md",
+  "matrix_registration_sha256": "20a163c9a1eb7c79d73289d8d8a55763748b0fd0bf83252fb29a40d66374dec2",
+  "lattice_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_150M_LATTICE.md",
+  "lattice_registration_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c",
+  "k5b_whole_scan_receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k5b_whole_scan.json",
+  "k5b_whole_scan_sha256": "5f2c54ab299b47fc859cab780b645a02c2162991472490705f4a037ab2111dee",
+  "k5b_step_metric_receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k5b_step_metric.json",
+  "k5b_step_metric_sha256": "2668e0eeaf37a1ae150cce4787728277afa200b8864073f104cb1fe77bbccd1d",
+  "k5b_doc": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/K5B_WHOLE_SCAN.md",
+  "k5b_doc_sha256": "04cbb61554f80eb39b0b0089ebeaab7b932c0f05dbf73d2266c95d1f7329ebaf",
+  "recorded_cd_receipts": {
+   "gdn2_c128_rerun": "ac60726997076202f7dee8b708c19aa2914a1967ccc64283794f7139b52ea1b1",
+   "matrix_append_c128": "27c9793b5e2b309d1ce15751f1abb85b96e6b6a44d9a4284d82d566c9129b241",
+   "matrix_ops_c128": "7c38ebf34b8d54657ecebc4e945bd9f5aeaef8cef4465b58eb6e3ca8635c2794"
+  },
+  "recorded_150m_gdn2_result": "8cacac01f89c88061cc2e6bdfa8fcf8e2e2db6be9b97ebfc1bb8f752e0d94316"
+ },
+ "git": {
+  "commit": "081513a3459f0dbdfac17e60a423006cb9ef39a8",
+  "relevant_paths_dirty": "M experiments/expressivity_tasks/x45_matrix_emender/matched_arms.py\n M experiments/expressivity_tasks/x45_matrix_emender/run_matched_arms_leased.sh\n?? experiments/expressivity_tasks/x45_matrix_emender/cmaes_diagnosis.py\n?? experiments/expressivity_tasks/x45_matrix_emender/cmaes_search.py\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/cmaes_evals.jsonl\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/cmaes_probes/\n?? experiments/expressivity_tasks/x45_matrix_emender/run_cmaes_search_leased.sh\n?? experiments/expressivity_tasks/x45_matrix_emender/sweep_runs/",
+  "branch": "main"
+ },
+ "note": "the K5B construction claim (receipts/k5b_whole_scan.json) is chunk-agnostic: the whole-scan body is the per-chunk stack walked in one function; this row re-asserts it at chunk 128, the cd-protocol configuration the 2700 s arms run",
+ "registered_eager_path_check": {
+  "gate": "decision flip test (A-phase's bar), re-run at this chunk size",
+  "reference": "routing_diff_route_chunk (the router the whole-scan walk runs) vs route_chunk (the registered eager router), on the same pinned chunk-entry states from a real routed scan",
+  "fixture": {
+   "batch": 8,
+   "tokens": 2048,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "distinct": 512,
+   "seed": 77,
+   "precision": "bf16 autocast"
+  },
+  "chunks": 16,
+  "flips": 0,
+  "lanes": 8650752,
+  "per_field_flips": {
+   "slot": 0,
+   "erase": 0,
+   "op": 0,
+   "live_after": 0,
+   "payload": 0
+  },
+  "note": "with the whole-scan-record-vs-per-chunk-arm bit-equality above, this pins the fast path's decisions to the registered eager router's at this chunk size; the continuous channels' deviations against the eager scan are the banked K1/K23/K4 kernel-lane floors, not re-gated here"
+ },
+ "parity_wall_seconds": 2.6,
+ "sweep_note": "the chunk-size sequentiality sweep's per-arm parity gate, run before the arm's clock starts"
+}
