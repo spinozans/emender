@@ -32,6 +32,7 @@ import torch
 from torch import nn
 
 from .k5_routing_fusion import fused_route_chunk
+from .k5a_routing_diff import routing_diff_route_chunk
 from .scan import routed_chunk_scan
 from .schedule import RoutingPolicy, route_chunk
 
@@ -133,7 +134,8 @@ class MatrixMixer(nn.Module):
 
     def __init__(self, shape: MatrixShape, policy: RoutingPolicy, chunk_tokens: int,
                  compile_scan: bool = False, fused_scan: bool = False,
-                 fused_backward: bool = False, fused_routing: bool = False):
+                 fused_backward: bool = False, fused_routing: bool = False,
+                 fused_routing_diff: bool = False):
         super().__init__()
         if fused_scan and compile_scan:
             raise ValueError("the fused K1 scan is one kernel per chunk already; "
@@ -181,6 +183,15 @@ class MatrixMixer(nn.Module):
         # ``receipts/k5_routing_fusion.json``), so this is a launch-count knob and
         # not a semantics knob.
         self.fused_routing = fused_routing
+        # Stage K5A (``k5a_routing_diff``): the routing region's DIFFERENTIABLE
+        # channels (read weights, payload lanes, their adjoint) plus the decision
+        # chain, as one fused forward/backward pair -- the item that owns the
+        # step's remaining host gap (K5_LAUNCH_COUNT.md gate D).  **Default
+        # off**; the fused router's decisions, slots, op codes and payloads are
+        # bit-identical to ``route_chunk``'s by construction (it consumes the
+        # eager preprocessing's own similarity/strength), and the read weights
+        # are held to the measured-floor discipline of the K23 precedent.
+        self.fused_routing_diff = fused_routing_diff
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self._forward_impl(x)
@@ -197,7 +208,12 @@ class MatrixMixer(nn.Module):
         payload = self.value(x).view(batch, tokens, self.heads, self.value_dim)
         decay = torch.sigmoid(self.decay(x)).clamp(min=DECAY_FLOOR, max=1.0 - 1e-6)
         scan = compiled_scan(COMPILE_MODE) if self.compile_scan else routed_chunk_scan
-        router = fused_route_chunk if self.fused_routing else route_chunk
+        if self.fused_routing_diff:
+            router = routing_diff_route_chunk
+        elif self.fused_routing:
+            router = fused_route_chunk
+        else:
+            router = route_chunk
         result = scan(
             query, payload, decay, router=router, policy=self.policy,
             rank=self.rank, rank_max=self.rank_max, chunk_tokens=self.chunk_tokens,
@@ -209,11 +225,12 @@ class MatrixMixer(nn.Module):
 class MatrixBlock(nn.Module):
     def __init__(self, shape: MatrixShape, policy: RoutingPolicy, chunk_tokens: int,
                  compile_scan: bool = False, fused_scan: bool = False,
-                 fused_backward: bool = False, fused_routing: bool = False):
+                 fused_backward: bool = False, fused_routing: bool = False,
+                 fused_routing_diff: bool = False):
         super().__init__()
         self.norm1 = nn.RMSNorm(shape.width, eps=1e-5)
         self.mixer = MatrixMixer(shape, policy, chunk_tokens, compile_scan, fused_scan,
-                                 fused_backward, fused_routing)
+                                 fused_backward, fused_routing, fused_routing_diff)
         self.norm2 = nn.RMSNorm(shape.width, eps=1e-5)
         self.mlp = SwiGLU(shape.width, shape.hidden)
 
@@ -226,7 +243,7 @@ class MatrixModel(nn.Module):
     def __init__(self, shape: MatrixShape, policy: RoutingPolicy, chunk_tokens: int = 64,
                  init_scale: float = 1.0, compile_scan: bool = True,
                  fused_scan: bool = False, fused_backward: bool = False,
-                 fused_routing: bool = False):
+                 fused_routing: bool = False, fused_routing_diff: bool = False):
         super().__init__()
         self.shape = shape
         self.policy = policy
@@ -235,7 +252,7 @@ class MatrixModel(nn.Module):
         self.head = nn.Linear(shape.width, shape.vocab, bias=False)
         self.blocks = nn.ModuleList(
             MatrixBlock(shape, policy, chunk_tokens, compile_scan, fused_scan,
-                        fused_backward, fused_routing)
+                        fused_backward, fused_routing, fused_routing_diff)
             for _ in range(shape.depth))
         with torch.no_grad():
             for module in self.modules():
@@ -279,9 +296,11 @@ class MatrixModel(nn.Module):
 def model_for(shape: MatrixShape, policy: RoutingPolicy, chunk_tokens: int = 64,
               init_scale: float = 1.0, compile_scan: bool = True,
               fused_scan: bool = False, fused_backward: bool = False,
-              fused_routing: bool = False) -> MatrixModel:
-    model = MatrixModel(shape, policy, chunk_tokens, init_scale, compile_scan, fused_scan,
-                        fused_backward, fused_routing)
+              fused_routing: bool = False,
+              fused_routing_diff: bool = False) -> MatrixModel:
+    model = MatrixModel(shape, policy, chunk_tokens, init_scale, compile_scan,
+                        fused_scan, fused_backward, fused_routing,
+                        fused_routing_diff)
     observed = model.counts()
     expected = parameter_count(shape)
     if observed["total"] != expected["total"]:
