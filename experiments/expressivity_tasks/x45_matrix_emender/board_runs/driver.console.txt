@@ -1,0 +1,61 @@
+gpu_lease: granted GPUs: 4 (pid 3410063)
+leased card: 4
+{
+ "chunk_tokens": 8,
+ "bit_equal_channels": [
+  "slot",
+  "erase",
+  "op",
+  "live_after",
+  "payload",
+  "weights",
+  "reads",
+  "state",
+  "live"
+ ],
+ "op_histogram": {
+  "none": 35829,
+  "append": 13918,
+  "correct": 1872,
+  "pop": 13887,
+  "merge": 30
+ }
+}
+{"arm": "matrix_ops", "chunk_tokens": 8, "card": "4", "seed": 3401, "seconds": 2700.0, "parameters": 149981808}
+W1115 22:30:35.479000 3410124 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8] torch._dynamo hit config.recompile_limit (8)
+W1115 22:30:35.479000 3410124 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8]    function: 'whole_scan' (/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k5b_whole_scan.py:582)
+W1115 22:30:35.479000 3410124 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8]    last reason: 0/7: slot_id == 9  # reads, state, live, _token = _whole_scan_fwd_op(  # experiments/expressivity_tasks/x45_matrix_emender/k5b_whole_scan.py:622 in whole_scan (experiments/expressivity_tasks/x45_matrix_emender/k5b_whole_scan.py:479 in _)
+W1115 22:30:35.479000 3410124 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8] To log all recompilation reasons, use TORCH_LOGS="recompiles".
+W1115 22:30:35.479000 3410124 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8] To diagnose recompilation issues, see https://pytorch.org/docs/main/torch.compiler_troubleshooting.html
+  chunk 8 step 25 189s 2.9MB loss 3.1588
+  chunk 8 step 50 329s 5.6MB loss 2.6979
+  chunk 8 step 75 469s 8.3MB loss 2.4573
+  chunk 8 step 100 608s 11.1MB loss 2.7004
+  chunk 8 step 125 748s 13.9MB loss 2.4741
+  chunk 8 step 150 888s 16.6MB loss 2.7553
+  chunk 8 step 175 1028s 19.5MB loss 2.6577
+  chunk 8 step 200 1168s 22.2MB loss 2.9871
+  chunk 8 step 225 1307s 25.0MB loss 2.7631
+  chunk 8 step 250 1447s 27.8MB loss 2.0826
+  chunk 8 step 275 1587s 30.6MB loss 2.3995
+  chunk 8 step 300 1726s 33.4MB loss 2.5084
+  chunk 8 step 325 1866s 36.1MB loss 2.5020
+  chunk 8 step 350 2006s 38.8MB loss 2.3392
+  chunk 8 step 375 2146s 41.5MB loss 2.2803
+  chunk 8 step 400 2286s 44.3MB loss 2.0099
+  chunk 8 step 425 2425s 47.0MB loss 2.2236
+  chunk 8 step 450 2565s 49.8MB loss 2.2302
+  chunk 8 step 475 2704s 52.6MB loss 1.9282
+{
+ "chunk_tokens": 8,
+ "eval_nll_nats_per_byte": 1.7336158071245467,
+ "exposure_bytes": 52599177,
+ "exposure_steps": 475,
+ "bytes_per_s": 19449.326865869873,
+ "walls": {
+  "parity_seconds": 7.8,
+  "train_seconds": 2704.4,
+  "probe_seconds": 42.1,
+  "eval_seconds": 1.5
+ }
+}
