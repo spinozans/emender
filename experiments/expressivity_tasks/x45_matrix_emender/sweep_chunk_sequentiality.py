@@ -12,8 +12,18 @@ dial that interpolates sequentiality WITHOUT touching registered semantics:
 chunk 128 = decisions every 128 tokens and reads blind to in-chunk writes for 128
 tokens; chunk 8 = near-per-token behaviour at the same thresholds.
 
-Four arms of the SAME ``matrix_ops`` model, ONLY ``chunk_tokens`` varying:
-**128, 64, 32, 8**.  Everything else is the matched-arms discipline verbatim
+Six arms of the SAME ``matrix_ops`` model, ONLY ``chunk_tokens`` varying:
+**128, 64, 32, 8, 4, 2**.  The sweep landed in two phases: the committed
+128/64/32/8 arms confirmed the monotone gradient (2.4173 -> 2.3287 -> 2.2462
+-> 2.2186 nats/byte); 4 and 2 extend it toward the per-token limit of the
+dial -- at chunk 2 decisions are taken every 2 tokens and reads score against
+nearly-current state, close to the tape form's per-token character, with ZERO
+semantics change.  The chunk-2 walls are budgeted honestly: the arm is
+several-fold slower per token and its chunk-entry checkpoint set is 4x the
+chunk-8 arm's, so if the full 20M arm does not fit the session the honest outs
+are the half-exposure budget (10M targets, receipted and labelled NOT
+comparable to the 20M rows) or a not-run-with-reason report.  Everything
+else is the matched-arms discipline verbatim
 (``matched_arms.py``): the registered flagship stream (hash-bound), the
 transferred gdn2-nomination optimizer, seed 3401, the K5B whole-scan fast path
 (the host-cost knob whose schedule/reads/state/gradients are bit-equal to the
@@ -87,7 +97,9 @@ from experiments.expressivity_tasks.x45_matrix_emender.scan import routed_chunk_
 ROOT = Path(__file__).resolve().parent
 RECEIPTS = ROOT / "receipts"
 RUNS = ROOT / "sweep_runs"
-CHUNKS = (128, 64, 32, 8)
+CHUNKS = (128, 64, 32, 8, 4, 2)
+# 128/64/32/8 are the committed phase (its four arms are already receipted);
+# 4 and 2 are the extension toward the per-token limit of the dial.
 # The standing seed, the matched arms' own; identical across every arm, so the
 # four arms share init, data order and LR schedule and differ ONLY by chunk size.
 SEED = 3401
@@ -396,10 +408,21 @@ def train_arm(args) -> dict:
     out = Path(args.runs_dir) / f"chunk_{chunk}"
     out.mkdir(parents=True, exist_ok=False)
     exposure = int(args.bytes)
-    stopping_rule = (f"matched-EXPOSURE: train until {exposure} targets seen "
-                     "(~20M, the probe exposure; see the module docstring for "
-                     "the defence); the honest elapsed wall is reported "
-                     "first-class")
+    if exposure >= EXPOSURE_TARGETS:
+        exposure_regime = ("full: the sweep's matched 20M exposure, "
+                           "comparable with the other full-exposure rows")
+        stopping_rule = (f"matched-EXPOSURE: train until {exposure} targets "
+                         "seen (~20M, the probe exposure; see the module "
+                         "docstring for the defence); the honest elapsed wall "
+                         "is reported first-class")
+    else:
+        exposure_regime = (f"half exposure ({exposure} targets): the "
+                           "chunk-2 wall budget -- NOT comparable to the "
+                           "20,022,866-target full-exposure rows")
+        stopping_rule = (f"matched-EXPOSURE at HALF budget: train until "
+                         f"{exposure} targets seen (the chunk-2 wall rule; "
+                         "NOT comparable to the 20M full-exposure arms); the "
+                         "honest elapsed wall is reported first-class")
     within_sweep = ("WITHIN-SWEEP comparison at ONE transferred LR (the gdn2 "
                     "nomination's, verbatim from the matched arms): the sweep "
                     "says what chunk size does at that LR; the tuned-LR "
@@ -490,12 +513,20 @@ def train_arm(args) -> dict:
         sweep="chunk_sequentiality", arm="matrix_ops", chunk_tokens=chunk,
         seed=args.seed, within_sweep=within_sweep, stopping_rule=stopping_rule,
         exposure_bytes=targets, exposure_steps=step,
+        exposure_regime=exposure_regime,
         exposure_note=("~20M targets ~= 22% of the 2700 s matched arms' "
                        "exposure (91.9 MB): enough that the 13%-of-read-scale "
                        "chunk-constant-read effect (K23_READ.md section 7) is "
                        "far above the 14,336-target eval's resolution, and "
                        "small enough that the several-fold-slower chunk-8 arm "
-                       "fits the session"),
+                       "fits the session"
+                       if exposure >= EXPOSURE_TARGETS else
+                       f"{exposure} targets (~{exposure / 1e6:.0f}M): the "
+                       "half-exposure budget the chunk-2 wall rule allows; "
+                       "this row is labelled NOT comparable to the 20M rows -- "
+                       "at half exposure the optimisation progress and the "
+                       "warmup fraction both differ, so it is evidence about "
+                       "the chunk-2 wall and direction only"),
         eval_nll_nats_per_byte=result["score"], eval_split=result["eval_split"],
         eval_windows=result["eval_windows"], eval_targets=result["eval_targets"],
         walls=dict(parity_seconds=parity["parity_wall_seconds"],
@@ -539,6 +570,9 @@ def _update_gradient_table(receipts_dir: str) -> dict:
         rows.append(dict(chunk_tokens=r["chunk_tokens"],
                          eval_nll_nats_per_byte=r["eval_nll_nats_per_byte"],
                          exposure_bytes=r["exposure_bytes"],
+                         exposure_regime=r.get("exposure_regime", "full: the "
+                             "sweep's matched 20M exposure, comparable with "
+                             "the other full-exposure rows"),
                          exposure_steps=r["exposure_steps"],
                          train_seconds=r["walls"]["train_seconds"],
                          bytes_per_s=r["bytes_per_s"],

@@ -1,18 +1,21 @@
 #!/usr/bin/env bash
 # Detached leased driver for the chunk-size sequentiality sweep (cards 4/5).
-#   usage: run_sweep_chunk_leased.sh [CHUNKS...]   (default: 128 64 32 8)
-# Acquires ONE lease from the dev-pool cards 4/5 (0/1 are the matched-arms
-# lane's, 2/3 the CMA-ES lane's -- never touched here), then runs each arm in
-# its own process (fresh graph slots and dispatch ledger per arm) and COMMITS
-# AFTER EACH ARM (receipts + run dir + the running gradient table) so the
-# sweep survives an attended-session ceiling.  Run this DETACHED (setsid +
-# redirected stdio, the long-session survival playbook): the arms and the lease
-# owner survive the session that launched them.
+#   usage: run_sweep_chunk_leased.sh [CHUNKS...]   (default: 128 64 32 8 4 2)
+# Each chunk arg is either a bare chunk size (N) or N:BYTES to override that
+# arm's exposure budget (e.g. 2:10000000 for the chunk-2 half-exposure row
+# the wall rule allows -- the receipt labels it NOT comparable to the 20M
+# rows).  Acquires ONE lease from the dev-pool cards 4/5 (0/1 are the
+# matched-arms lane's, 2/3 the CMA-ES lane's -- never touched here), then runs
+# each arm in its own process (fresh graph slots and dispatch ledger per arm)
+# and COMMITS AFTER EACH ARM (receipts + run dir + the running gradient table)
+# so the sweep survives an attended-session ceiling.  Run this DETACHED
+# (setsid + redirected stdio, the long-session survival playbook): the arms and
+# the lease owner survive the session that launched them.
 set -uo pipefail
 cd /home/erikg/emender
 PY=/home/erikg/emender/.venv/bin/python
 X45=experiments/expressivity_tasks/x45_matrix_emender
-CHUNKS=${*:-"128 64 32 8"}
+CHUNKS=${*:-"128 64 32 8 4 2"}
 
 export GPU_LEASE_VISIBLE="${GPU_LEASE_VISIBLE:-4,5}"
 eval "$(scripts/gpu_lease.sh acquire 1 --wait)" || exit 1
@@ -54,10 +57,17 @@ print(f"{r["eval_nll_nats_per_byte"]:.4f} nats/byte, "
 }
 
 status=0
-for chunk in $CHUNKS; do
-  echo "=== arm chunk $chunk ==="
+for spec in $CHUNKS; do
+  chunk=${spec%%:*}
+  bytes=${spec##*:}
+  if [ "$bytes" = "$spec" ]; then
+    bytes_opt=""
+  else
+    bytes_opt="--bytes $bytes"
+  fi
+  echo "=== arm chunk $chunk (exposure override: ${bytes_opt:-none}) ==="
   if $PY -m experiments.expressivity_tasks.x45_matrix_emender.sweep_chunk_sequentiality \
-      arm --chunk-tokens "$chunk"; then
+      arm --chunk-tokens "$chunk" $bytes_opt; then
     commit_arm "$chunk" || status=1
   else
     echo "arm chunk $chunk FAILED; continuing with the remaining arms"

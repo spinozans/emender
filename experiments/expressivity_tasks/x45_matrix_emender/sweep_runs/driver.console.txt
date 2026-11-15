@@ -1,8 +1,8 @@
-gpu_lease: granted GPUs: 4 (pid 3206508)
+gpu_lease: granted GPUs: 4 (pid 3309786)
 leased card: 4
-=== arm chunk 128 ===
+=== arm chunk 4 (exposure override: none) ===
 {
- "chunk_tokens": 128,
+ "chunk_tokens": 4,
  "bit_equal_channels": [
   "slot",
   "erase",
@@ -15,204 +15,41 @@ leased card: 4
   "live"
  ],
  "op_histogram": {
-  "none": 43036,
-  "append": 6129,
-  "correct": 1646,
-  "pop": 14515,
-  "merge": 210
+  "none": 35210,
+  "append": 14712,
+  "correct": 1900,
+  "pop": 13696,
+  "merge": 18
  }
 }
-{"chunk_tokens": 128, "card": "4", "seed": 3401, "exposure": 20000000, "parameters": 149981808}
-W1115 20:03:15.788000 3206577 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8] torch._dynamo hit config.recompile_limit (8)
-W1115 20:03:15.788000 3206577 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8]    function: 'whole_scan' (/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k5b_whole_scan.py:582)
-W1115 20:03:15.788000 3206577 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8]    last reason: 0/7: slot_id == 9  # reads, state, live, _token = _whole_scan_fwd_op(  # experiments/expressivity_tasks/x45_matrix_emender/k5b_whole_scan.py:622 in whole_scan (experiments/expressivity_tasks/x45_matrix_emender/k5b_whole_scan.py:479 in _)
-W1115 20:03:15.788000 3206577 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8] To log all recompilation reasons, use TORCH_LOGS="recompiles".
-W1115 20:03:15.788000 3206577 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8] To diagnose recompilation issues, see https://pytorch.org/docs/main/torch.compiler_troubleshooting.html
-  chunk 128 step 10 40s 1.2MB loss 3.1588
-  chunk 128 step 20 72s 2.4MB loss 3.6459
-  chunk 128 step 30 104s 3.5MB loss 3.0634
-  chunk 128 step 40 136s 4.5MB loss 2.8731
-  chunk 128 step 50 169s 5.6MB loss 2.7275
-  chunk 128 step 60 201s 6.7MB loss 2.9063
-  chunk 128 step 70 234s 7.8MB loss 2.8992
-  chunk 128 step 80 266s 8.9MB loss 2.9205
-  chunk 128 step 90 298s 10.0MB loss 2.7672
-  chunk 128 step 100 331s 11.1MB loss 2.8510
-  chunk 128 step 110 364s 12.2MB loss 2.7463
-  chunk 128 step 120 396s 13.3MB loss 2.6732
-  chunk 128 step 130 428s 14.4MB loss 2.6943
-  chunk 128 step 140 460s 15.5MB loss 2.8634
-  chunk 128 step 150 493s 16.6MB loss 3.0050
-  chunk 128 step 160 525s 17.7MB loss 2.6924
-  chunk 128 step 170 557s 19.0MB loss 3.0966
-  chunk 128 step 180 589s 20.0MB loss 2.8070
+{"chunk_tokens": 4, "card": "4", "seed": 3401, "exposure": 20000000, "parameters": 149981808}
+W1115 21:18:44.188000 3309839 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8] torch._dynamo hit config.recompile_limit (8)
+W1115 21:18:44.188000 3309839 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8]    function: 'whole_scan' (/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k5b_whole_scan.py:582)
+W1115 21:18:44.188000 3309839 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8]    last reason: 0/7: slot_id == 9  # reads, state, live, _token = _whole_scan_fwd_op(  # experiments/expressivity_tasks/x45_matrix_emender/k5b_whole_scan.py:622 in whole_scan (experiments/expressivity_tasks/x45_matrix_emender/k5b_whole_scan.py:479 in _)
+W1115 21:18:44.188000 3309839 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8] To log all recompilation reasons, use TORCH_LOGS="recompiles".
+W1115 21:18:44.188000 3309839 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8] To diagnose recompilation issues, see https://pytorch.org/docs/main/torch.compiler_troubleshooting.html
+  chunk 4 step 10 176s 1.2MB loss 3.1783
+  chunk 4 step 20 264s 2.4MB loss 3.6854
+  chunk 4 step 30 352s 3.5MB loss 3.1216
+  chunk 4 step 40 440s 4.5MB loss 2.9214
+  chunk 4 step 50 528s 5.6MB loss 2.6763
+  chunk 4 step 60 616s 6.7MB loss 2.8135
+  chunk 4 step 70 704s 7.8MB loss 2.8232
+  chunk 4 step 80 792s 8.9MB loss 3.1322
+  chunk 4 step 90 880s 10.0MB loss 2.6639
+  chunk 4 step 100 968s 11.1MB loss 2.6812
+  chunk 4 step 110 1057s 12.2MB loss 2.5808
+  chunk 4 step 120 1145s 13.3MB loss 2.4456
+  chunk 4 step 130 1233s 14.4MB loss 2.4740
+  chunk 4 step 140 1321s 15.5MB loss 2.6418
+  chunk 4 step 150 1409s 16.6MB loss 2.7187
+  chunk 4 step 160 1497s 17.7MB loss 2.4654
+  chunk 4 step 170 1586s 19.0MB loss 3.0534
+  chunk 4 step 180 1674s 20.0MB loss 2.5968
 {
- "chunk_tokens": 128,
- "eval_nll_nats_per_byte": 2.417311123439244,
+ "chunk_tokens": 4,
+ "eval_nll_nats_per_byte": 2.179114648274013,
  "exposure_bytes": 20022866,
  "exposure_steps": 180,
- "bytes_per_s": 34012.23849524874
+ "bytes_per_s": 11963.38074777816
 }
-committed chunk 128: 2.4173 nats/byte, 20.0MB exposure in 589s (34.0k tok/s)
-=== arm chunk 64 ===
-{
- "chunk_tokens": 64,
- "bit_equal_channels": [
-  "slot",
-  "erase",
-  "op",
-  "live_after",
-  "payload",
-  "weights",
-  "reads",
-  "state",
-  "live"
- ],
- "op_histogram": {
-  "none": 43697,
-  "append": 6532,
-  "correct": 1345,
-  "pop": 13872,
-  "merge": 90
- }
-}
-{"chunk_tokens": 64, "card": "4", "seed": 3401, "exposure": 20000000, "parameters": 149981808}
-W1115 20:13:23.544000 3217329 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8] torch._dynamo hit config.recompile_limit (8)
-W1115 20:13:23.544000 3217329 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8]    function: 'whole_scan' (/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k5b_whole_scan.py:582)
-W1115 20:13:23.544000 3217329 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8]    last reason: 0/7: slot_id == 9  # reads, state, live, _token = _whole_scan_fwd_op(  # experiments/expressivity_tasks/x45_matrix_emender/k5b_whole_scan.py:622 in whole_scan (experiments/expressivity_tasks/x45_matrix_emender/k5b_whole_scan.py:479 in _)
-W1115 20:13:23.544000 3217329 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8] To log all recompilation reasons, use TORCH_LOGS="recompiles".
-W1115 20:13:23.544000 3217329 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8] To diagnose recompilation issues, see https://pytorch.org/docs/main/torch.compiler_troubleshooting.html
-  chunk 64 step 10 44s 1.2MB loss 3.1215
-  chunk 64 step 20 77s 2.4MB loss 3.6304
-  chunk 64 step 30 110s 3.5MB loss 3.0545
-  chunk 64 step 40 144s 4.5MB loss 2.8798
-  chunk 64 step 50 177s 5.6MB loss 2.7100
-  chunk 64 step 60 210s 6.7MB loss 2.8718
-  chunk 64 step 70 244s 7.8MB loss 2.8722
-  chunk 64 step 80 277s 8.9MB loss 2.9514
-  chunk 64 step 90 310s 10.0MB loss 2.7471
-  chunk 64 step 100 343s 11.1MB loss 2.8126
-  chunk 64 step 110 376s 12.2MB loss 2.7011
-  chunk 64 step 120 409s 13.3MB loss 2.5948
-  chunk 64 step 130 441s 14.4MB loss 2.6206
-  chunk 64 step 140 474s 15.5MB loss 2.7665
-  chunk 64 step 150 507s 16.6MB loss 2.8865
-  chunk 64 step 160 539s 17.7MB loss 2.6330
-  chunk 64 step 170 572s 19.0MB loss 3.0738
-  chunk 64 step 180 605s 20.0MB loss 2.7063
-{
- "chunk_tokens": 64,
- "eval_nll_nats_per_byte": 2.328705447060721,
- "exposure_bytes": 20022866,
- "exposure_steps": 180,
- "bytes_per_s": 33097.90830814392
-}
-committed chunk 64: 2.3287 nats/byte, 20.0MB exposure in 605s (33.1k tok/s)
-=== arm chunk 32 ===
-{
- "chunk_tokens": 32,
- "bit_equal_channels": [
-  "slot",
-  "erase",
-  "op",
-  "live_after",
-  "payload",
-  "weights",
-  "reads",
-  "state",
-  "live"
- ],
- "op_histogram": {
-  "none": 39460,
-  "append": 10295,
-  "correct": 1689,
-  "pop": 14012,
-  "merge": 80
- }
-}
-{"chunk_tokens": 32, "card": "4", "seed": 3401, "exposure": 20000000, "parameters": 149981808}
-W1115 20:23:54.361000 3232268 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8] torch._dynamo hit config.recompile_limit (8)
-W1115 20:23:54.361000 3232268 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8]    function: 'whole_scan' (/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k5b_whole_scan.py:582)
-W1115 20:23:54.361000 3232268 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8]    last reason: 0/7: slot_id == 9  # reads, state, live, _token = _whole_scan_fwd_op(  # experiments/expressivity_tasks/x45_matrix_emender/k5b_whole_scan.py:622 in whole_scan (experiments/expressivity_tasks/x45_matrix_emender/k5b_whole_scan.py:479 in _)
-W1115 20:23:54.361000 3232268 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8] To log all recompilation reasons, use TORCH_LOGS="recompiles".
-W1115 20:23:54.361000 3232268 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8] To diagnose recompilation issues, see https://pytorch.org/docs/main/torch.compiler_troubleshooting.html
-  chunk 32 step 10 52s 1.2MB loss 3.1240
-  chunk 32 step 20 86s 2.4MB loss 3.6165
-  chunk 32 step 30 121s 3.5MB loss 3.0860
-  chunk 32 step 40 155s 4.5MB loss 2.9087
-  chunk 32 step 50 189s 5.6MB loss 2.6917
-  chunk 32 step 60 224s 6.7MB loss 2.8437
-  chunk 32 step 70 258s 7.8MB loss 2.8491
-  chunk 32 step 80 292s 8.9MB loss 2.8979
-  chunk 32 step 90 326s 10.0MB loss 2.6782
-  chunk 32 step 100 361s 11.1MB loss 2.7219
-  chunk 32 step 110 395s 12.2MB loss 2.6410
-  chunk 32 step 120 429s 13.3MB loss 2.5122
-  chunk 32 step 130 463s 14.4MB loss 2.5344
-  chunk 32 step 140 497s 15.5MB loss 2.7038
-  chunk 32 step 150 531s 16.6MB loss 2.8080
-  chunk 32 step 160 565s 17.7MB loss 2.5310
-  chunk 32 step 170 599s 19.0MB loss 3.0018
-  chunk 32 step 180 633s 20.0MB loss 2.6390
-{
- "chunk_tokens": 32,
- "eval_nll_nats_per_byte": 2.2462442943028043,
- "exposure_bytes": 20022866,
- "exposure_steps": 180,
- "bytes_per_s": 31627.22603108699
-}
-committed chunk 32: 2.2462 nats/byte, 20.0MB exposure in 633s (31.6k tok/s)
-=== arm chunk 8 ===
-{
- "chunk_tokens": 8,
- "bit_equal_channels": [
-  "slot",
-  "erase",
-  "op",
-  "live_after",
-  "payload",
-  "weights",
-  "reads",
-  "state",
-  "live"
- ],
- "op_histogram": {
-  "none": 35829,
-  "append": 13918,
-  "correct": 1872,
-  "pop": 13887,
-  "merge": 30
- }
-}
-{"chunk_tokens": 8, "card": "4", "seed": 3401, "exposure": 20000000, "parameters": 149981808}
-W1115 20:34:52.394000 3244065 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8] torch._dynamo hit config.recompile_limit (8)
-W1115 20:34:52.394000 3244065 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8]    function: 'whole_scan' (/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k5b_whole_scan.py:582)
-W1115 20:34:52.394000 3244065 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8]    last reason: 0/7: slot_id == 9  # reads, state, live, _token = _whole_scan_fwd_op(  # experiments/expressivity_tasks/x45_matrix_emender/k5b_whole_scan.py:622 in whole_scan (experiments/expressivity_tasks/x45_matrix_emender/k5b_whole_scan.py:479 in _)
-W1115 20:34:52.394000 3244065 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8] To log all recompilation reasons, use TORCH_LOGS="recompiles".
-W1115 20:34:52.394000 3244065 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8] To diagnose recompilation issues, see https://pytorch.org/docs/main/torch.compiler_troubleshooting.html
-  chunk 8 step 10 100s 1.2MB loss 3.1469
-  chunk 8 step 20 156s 2.4MB loss 3.6625
-  chunk 8 step 30 211s 3.5MB loss 3.1245
-  chunk 8 step 40 267s 4.5MB loss 2.9026
-  chunk 8 step 50 323s 5.6MB loss 2.6979
-  chunk 8 step 60 379s 6.7MB loss 2.8389
-  chunk 8 step 70 435s 7.8MB loss 2.8414
-  chunk 8 step 80 491s 8.9MB loss 2.8874
-  chunk 8 step 90 547s 10.0MB loss 2.6627
-  chunk 8 step 100 603s 11.1MB loss 2.7004
-  chunk 8 step 110 659s 12.2MB loss 2.6042
-  chunk 8 step 120 715s 13.3MB loss 2.4668
-  chunk 8 step 130 771s 14.4MB loss 2.5021
-  chunk 8 step 140 827s 15.5MB loss 2.6753
-  chunk 8 step 150 883s 16.6MB loss 2.7553
-  chunk 8 step 160 939s 17.7MB loss 2.4884
-  chunk 8 step 170 995s 19.0MB loss 3.0182
-  chunk 8 step 180 1050s 20.0MB loss 2.6062
-{
- "chunk_tokens": 8,
- "eval_nll_nats_per_byte": 2.218625783920288,
- "exposure_bytes": 20022866,
- "exposure_steps": 180,
- "bytes_per_s": 19061.666187294082
-}
-committed chunk 8: 2.2186 nats/byte, 20.0MB exposure in 1050s (19.1k tok/s)
