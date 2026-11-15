@@ -1,0 +1,130 @@
+{
+  "sweep": "chunk_sequentiality",
+  "arm": "matrix_ops",
+  "chunk_tokens": 8,
+  "seed": 3401,
+  "exposure_targets": 20000000,
+  "chunks_registered_sweep": [
+    128,
+    64,
+    32,
+    8
+  ],
+  "optimizer": {
+    "lr": 0.0005420185524740253,
+    "betas": [
+      0.9,
+      0.9392004369596886
+    ],
+    "weight_decay": 0.20059436743465126,
+    "warmup_steps": 69,
+    "microbatch": 8
+  },
+  "microbatch": 8,
+  "context": 2048,
+  "windows_per_step": 64,
+  "summary": {
+    "base_arm": "matrix",
+    "shape": {
+      "width": 576,
+      "depth": 24,
+      "hidden": 3352,
+      "heads": 2,
+      "value_dim": 128,
+      "rank": 128,
+      "rank_max": 128,
+      "vocab": 256
+    },
+    "parameters": {
+      "total": 149981808,
+      "trainable": 149981808,
+      "per_layer": 6236930,
+      "mixer": 443522,
+      "mlp": 5792256,
+      "norms": 1152,
+      "embedding": 147456,
+      "head": 147456,
+      "final_norm": 576,
+      "capacity": 150003984,
+      "capacity_relative": -0.00014783607347390593
+    },
+    "routing": {
+      "ops": true,
+      "tau_match": 0.45,
+      "tau_merge": 0.85,
+      "tau_pop": 0.1,
+      "tie_break": 1e-06,
+      "read_scale": 2.0,
+      "grow": false,
+      "grow_trigger": 0.5,
+      "grow_window": 4,
+      "grow_window_tokens": 512,
+      "grow_geometric": 2.0,
+      "grow_stride_floor": 64
+    },
+    "chunk_tokens": 8,
+    "compile_scan": true,
+    "compile_mode": "default",
+    "fused_whole_scan": true,
+    "scan_path": "k5b_whole_scan",
+    "fused_scan": false,
+    "fused_backward": false,
+    "fused_routing": false,
+    "fused_routing_diff": false,
+    "optimizer_note": "the registered gdn2 nomination's optimizer settings (gates.py / profile_step_vs_gdn2.py)"
+  },
+  "identity": {
+    "stream": "flagship_beyond_100gb",
+    "source": "/mnt/nvme2n1/erikg/pile.txt",
+    "source_size": 1307910802540,
+    "manifest": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/documents.jsonl.gz",
+    "manifest_sha256": "48b9095eeccb023ff1cb2a4f6da899a8b3e4eb3b76b2804e730f1d6ad031c414",
+    "registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/registration.json",
+    "registration_sha256": "c36f84cfd1a59530a7991a4be6c1f68b424a79c5b7de169eabfc90d3cd31cc31",
+    "boundary_bytes": 100000000000,
+    "lattice_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_150M_LATTICE.md",
+    "lattice_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c"
+  },
+  "bindings": {
+    "matrix_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_MATRIX_EMENDER.md",
+    "matrix_registration_sha256": "20a163c9a1eb7c79d73289d8d8a55763748b0fd0bf83252fb29a40d66374dec2",
+    "lattice_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_150M_LATTICE.md",
+    "lattice_registration_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c",
+    "k5b_whole_scan_receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k5b_whole_scan.json",
+    "k5b_whole_scan_sha256": "5f2c54ab299b47fc859cab780b645a02c2162991472490705f4a037ab2111dee",
+    "k5b_step_metric_receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k5b_step_metric.json",
+    "k5b_step_metric_sha256": "2668e0eeaf37a1ae150cce4787728277afa200b8864073f104cb1fe77bbccd1d",
+    "k5b_doc": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/K5B_WHOLE_SCAN.md",
+    "k5b_doc_sha256": "04cbb61554f80eb39b0b0089ebeaab7b932c0f05dbf73d2266c95d1f7329ebaf",
+    "recorded_cd_receipts": {
+      "gdn2_c128_rerun": "ac60726997076202f7dee8b708c19aa2914a1967ccc64283794f7139b52ea1b1",
+      "matrix_append_c128": "27c9793b5e2b309d1ce15751f1abb85b96e6b6a44d9a4284d82d566c9129b241",
+      "matrix_ops_c128": "7c38ebf34b8d54657ecebc4e945bd9f5aeaef8cef4465b58eb6e3ca8635c2794"
+    },
+    "recorded_150m_gdn2_result": "8cacac01f89c88061cc2e6bdfa8fcf8e2e2db6be9b97ebfc1bb8f752e0d94316"
+  },
+  "git": {
+    "commit": "b9881253d094fd0f4cc3a983ef304ae4a2bf0dfd",
+    "relevant_paths_dirty": "M experiments/expressivity_tasks/x45_matrix_emender/sweep_runs/driver.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/cmaes_diagnosis.py\n?? experiments/expressivity_tasks/x45_matrix_emender/cmaes_search.py\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/cmaes_evals.jsonl\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/cmaes_probes/\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/sweep_chunk_parity_c8.json\n?? experiments/expressivity_tasks/x45_matrix_emender/run_cmaes_followups_leased.sh\n?? experiments/expressivity_tasks/x45_matrix_emender/run_cmaes_search_leased.sh",
+    "branch": "main"
+  },
+  "stopping_rule": "matched-EXPOSURE: train until 20000000 targets seen (~20M, the probe exposure; see the module docstring for the defence); the honest elapsed wall is reported first-class",
+  "within_sweep": "WITHIN-SWEEP comparison at ONE transferred LR (the gdn2 nomination's, verbatim from the matched arms): the sweep says what chunk size does at that LR; the tuned-LR confirmation is the named follow-up",
+  "parity_receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/sweep_chunk_parity_c8.json",
+  "parity_receipt_sha256": "e06e7de912fd97b7d0853271345977ac469f434a66e4d35ecfd804dac65091a9",
+  "config_sha256": "fb91721aade8710bb8f9a153de2d93c630cd0e6cef778a0f1e50ec7a0a8a2687",
+  "pid": 3244065,
+  "session": {
+    "host": "lambda01",
+    "card": "4",
+    "device": "NVIDIA RTX 6000 Ada Generation",
+    "card_gib": 47.38,
+    "torch": "2.9.1+cu128",
+    "triton": "3.5.1"
+  },
+  "started_ns": 1794774888341516094,
+  "parameters": {
+    "total": 149981808,
+    "trainable": 149981808
+  }
+}
