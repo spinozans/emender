@@ -582,7 +582,7 @@ def _record_window(query, payload, decay, policy: RoutingPolicy, rank: int,
                             schedule=schedule, weights=weights))
         return schedule, weights
 
-    with torch.no_grad():
+    with torch.no_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
         routed_chunk_scan(query, payload, decay, router=router, policy=policy,
                           rank=rank, rank_max=rank, chunk_tokens=chunk_tokens,
                           fused=False)
@@ -609,7 +609,7 @@ def measure_routing_split(model, batches, microbatch: int, out: str,
     mixer = model.blocks[0].mixer
     captured = {}
 
-    def hook(module, inputs):
+    def hook(module, inputs, output):
         captured.setdefault("x", inputs[0].detach())
 
     handle = mixer.register_forward_hook(hook)
@@ -640,12 +640,12 @@ def measure_routing_split(model, batches, microbatch: int, out: str,
     scans_per_step = len(model.blocks) * (64 // microbatch)
 
     def fresh(*tensors):
-        return tuple(t.detach().clone().requires_grad_(t.requires_grad)
-                     for t in tensors)
+        return tuple(t.detach().clone().requires_grad_(True) for t in tensors)
 
     def eager_full():
         cq, cp, cd = fresh(q, p, d)
-        result = routed_chunk_scan(cq, cp, cd, router=route_chunk, policy=policy,
+        with torch.autocast("cuda", dtype=torch.bfloat16):
+            result = routed_chunk_scan(cq, cp, cd, router=route_chunk, policy=policy,
                                     rank=rank, rank_max=rank_max,
                                     chunk_tokens=chunk_tokens, fused=False)
         (result.reads.sum() + result.state.sum()).backward()
@@ -699,6 +699,9 @@ def measure_routing_split(model, batches, microbatch: int, out: str,
     scan_only_form = "loop"
     try:
         compiled_scan_only_fn = torch.compile(make_scan_only_runner(), dynamic=False)
+        # force the (lazy) compile now so a failure lands in this guarded block
+        with torch.no_grad():
+            compiled_scan_only_fn(weights_full, decay_hm, state0, live0)
 
         def compiled_scan_only():
             (cw,) = fresh(weights_full)
@@ -821,6 +824,27 @@ def suite_core(args) -> dict:
     return json.loads(Path(args.out).read_text())
 
 
+def suite_routing(args) -> dict:
+    """Rerun only the routing/scan differential (the model arms are banked)."""
+    torch.set_num_threads(1)
+    if not Path(args.out).exists():
+        dump(args.out, {})
+    data = json.loads(Path(args.out).read_text())
+    if "session" not in data:
+        data["session"] = session_meta()
+        dump(args.out, data)
+
+    def routing_split():
+        model, _, _, _, _ = build_x45("x45_registered_mb8")
+        batches = make_batches()
+        report = measure_routing_split(model, batches, 8, args.out)
+        del model
+        torch.cuda.empty_cache()
+        return report
+    run_stage(args.out, "routing_split_microbench", routing_split)
+    return json.loads(Path(args.out).read_text())
+
+
 def suite_mb2(args) -> dict:
     torch.set_num_threads(1)
     data = {}
@@ -840,7 +864,7 @@ def suite_mb2(args) -> dict:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--suite", choices=("core", "mb2"), required=True)
+    parser.add_argument("--suite", choices=("core", "mb2", "routing"), required=True)
     parser.add_argument("--out", required=True)
     parser.add_argument("--steps", type=int, default=3,
                         help="steady wall steps per arm (the fused mb2 arm is ~133 s/step)")
@@ -849,6 +873,8 @@ def main():
     configure_production()
     if arguments.suite == "core":
         suite_core(arguments)
+    elif arguments.suite == "routing":
+        suite_routing(arguments)
     else:
         suite_mb2(arguments)
     print(f"receipt written to {arguments.out}")
