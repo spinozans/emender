@@ -5,17 +5,27 @@ receipt `receipts/profile_step_vs_gdn2.json`): the registered x45 step at mb8 is
 **9.29 s wall against a 3.32 s device floor**, because it issues **434,357
 kernels/step** (GDN-2: 59,294) whose device work sums to 3.32 s — the host needs
 5.97 s to issue them, so the GPU idles 64 % of the step.  The plan: three ranked
-fixes, one receipted gate at a time.
+fixes, one receipted gate at a time.  **Outcome, stated up front:** gates B and
+C removed the receipted blocker and the memory wall — the fused arm runs at mb8
+at **parity with its registered twin** (the scale proof's open question) with
+**2.1× fewer kernel launches** and the device floor reached; the 32 k tok/s
+target is **not** reached, because the launch storm the profile attributed to
+routing's decision machinery actually lives in routing's *differentiable*
+channels (gate A's measurement corrects the profile's attribution), and that
+fusion — approved, K23-precedent — is the named next item, not a mystery.
 
 | gate | fix | state |
 |---|---|---|
 | A | routing fusion — the decision chain as one Triton kernel, bit-identical decisions | **landed** (below) |
 | B | K4 compile hosting — the fused scan as a `torch.library` op under `torch.compile` | **landed** (below) |
 | C | trajectory recompute-over-store — mb8 for the fused path | **landed** (below) |
-| D | the step metric — honest un-profiled walls, kernels/step, distance to 32 k tok/s | in flight |
+| D | the step metric — honest un-profiled walls, kernels/step, distance to 32 k tok/s | **landed** (below) |
 
 Every number below is from this stage's own receipts (session metadata inside
-each): `receipts/k5_routing_fusion.json` for gate A.
+each): `receipts/k5_routing_fusion.json` (gate A),
+`receipts/k5_k4_compile_hosting.json` (gate B),
+`receipts/k5_recompute_over_store.json` (gate C),
+`receipts/k5_step_metric.json` (gate D).
 
 ## Gate B — the K4 fused scan, compiled: the receipted blocker removed
 
@@ -188,18 +198,66 @@ eager" can mean inside `torch.compile`: identical *within* a regime, by
 construction; across regimes, whatever inductor's bf16 bmm does — unchanged by
 K5 either way.
 
-## The kernels/step table (updated per gate)
+## Gate D — the step metric, and the honest distance to the 32 k target
 
-| per step (mb8, 64 windows, registered regime) | baseline | after gate A |
+Same boundary as the diagnosis, all three arms in ONE session
+(``receipts/k5_step_metric.json``): the registered arm's path unchanged
+(``compile_scan=True``, autograd through the compiled chunk arithmetic), the
+gate B+C fused arm, and the full K5 stack (fused + gate A's routing kernel).
+Steady walls are un-profiled; the device decomposition is one profiled steady
+step, attributed kernel-by-kernel.
+
+| per step (mb8, 64 windows, this session) | registered | fused (B+C) | fused + K5 routing |
+|---|---:|---:|---:|
+| step wall, p50 (un-profiled) | 7.40 s | 7.99 s | 7.28 s |
+| kernels/step | **434,366** | **207,987** | 219,493 |
+| device busy | 3.33 s | 3.05 s | 3.54 s |
+| host gap (wall − busy) | 4.07 s | 4.94 s | 3.74 s |
+| tokens/s (steady) | 13,807 | 12,862 | 13,932 |
+| peak allocated | 24.31 GB | 21.28 GB | 21.28 GB |
+
+Session honesty: this session's card runs ~20 % faster than the profile session
+(the registered arm measures 7.40 s here against 9.29 s there), but the
+session-invariant numbers reproduce exactly — 434,366 vs 434,357 kernels/step,
+3.33 vs 3.32 s device busy — so the matched pair is read same-session.
+
+**The matched pair, answered.**  The scale proof's open question was whether
+the fused path reaches its own registered twin once the integration is fixed.
+At mb8, same session, same protocol: **yes, parity** — the three arms' walls
+(7.40 / 7.99 / 7.28 s) sit inside the step-to-step spread at n=3, and the fused
+path *no longer regresses* where it used to be 4.1× slower and mb8-impossible.
+What the fused path definitively buys is the launch count: **434 k → 208 k
+kernels/step (−52 %)**, the device floor reached (3.05 s busy), and 3 GB less
+peak memory.  What it does not yet buy is wall time: the step is still
+host-gap-bound.
+
+**The honest distance to 32 k tok/s: not reached, and the residual is named.**
+Best steady arm: 13,932 tok/s against the ~32 k device floor.  The device busy
+is already at the floor class (3.05–3.54 s; at zero host gap the fused arm would
+run ~35 k tok/s, *above* the target).  The residual is the **host gap, 3.7 s**,
+and the receipt attributes it: the routing region's **differentiable channels**
+(read-weights forward+backward, payload lanes, similarity preprocessing — ~40
+compiled kernels per chunk, 6,144 chunks/step) plus the compiled backbone's own
+dispatch.  Gate A's discrete-chain fusion moved ~0 of it (measured, gate A) and
+its kernel as built *costs* 0.50 s of device time per step (6,144 launches at
+~82 µs — one program per (batch, head) row, a latency-bound 64-token serial
+walk), which is why ``fused_routing`` stays default-off: the A-phase extension
+approved by the supervisor — one Triton forward/backward pair for the read
+weights and payloads, K23-precedent floor discipline on the weights, decisions
+and payloads still bit-exact — is the item that owns the remaining 3.7 s, and
+the decision kernel should be folded into it (or parallelised over token
+blocks) rather than shipped alone.
+
+## The kernels/step table (final)
+
+| per step (mb8, 64 windows) | profile session | this session |
 |---|---:|---:|
-| step wall, p50 (un-profiled) | 9.29 s | unchanged (not yet re-measured; gate D) |
-| kernels/step | 434,357 | unchanged (decision fusion is ~0 in the compiled regime) |
-| routing region host ms/scan (compiled) | 28.5 (profile fixture) | ~same |
-| routing region kernels/chunk (compiled) | 41.0 → 40.9 | 39.9 |
-| route_chunk, eager fwd kernels/chunk | 136 | 65 |
-
-## The honest distance to the 32 k target
-
-To be measured at gate D after gates B and C.  The decomposition this stage will
-attribute the residual with: routing's differentiable channels (the known
-survivor), the scan region, the backbone, and the launch-independent host floor.
+| registered arm: kernels/step | 434,357 | 434,366 |
+| registered arm: device busy | 3.32 s | 3.33 s |
+| registered arm: step wall | 9.29 s | 7.40 s |
+| fused arm (B+C): kernels/step | — | **207,987** |
+| fused arm (B+C): device busy | — | **3.05 s** |
+| fused arm (B+C): step wall | — | 7.99 s (8.26 s in gate C's session) |
+| fused mb2 arm (the old 122.2 s / 881 tok/s) | 6,349,058 kernels | **832,558 kernels, 28.5 s/step** (gate B) |
+| routing region kernels/chunk (compiled) | 23 (profile's differential) | 41.0 → 39.9 (gate A, this fixture) |
+| route_chunk, eager fwd kernels/chunk | 243 (incl. backward) | 136 → **65** (gate A) |
