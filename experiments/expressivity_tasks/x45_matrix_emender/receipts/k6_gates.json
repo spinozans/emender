@@ -1,0 +1,225 @@
+{
+ "reproducibility": {
+  "note": "the spec's correctness-roundness claim, measured: libdevice.exp IS torch's exp (0 mismatches) while Triton's default tl.exp is not; sqrt.rn/div.rn match torch's IEEE ops",
+  "samples": 2000000,
+  "libdevice_exp_vs_torch_exp_mismatches": 0,
+  "tl_exp_vs_torch_exp_mismatches": 1768840,
+  "sqrt_rn_vs_torch_sqrt_mismatches": 0,
+  "div_rn_vs_torch_div_mismatches": 0,
+  "tree_fold_bit_equal": true
+ },
+ "gate_a": {
+  "gate": "A: decision flip test at the K5A bar's registered fixture",
+  "fixture": {
+   "batch": 8,
+   "tokens": 2048,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "distinct": 512,
+   "seed": 77,
+   "precision": "bf16 inputs, fp32 defined-order math",
+   "segment_tokens": 64
+  },
+  "flips": 0,
+  "lanes": 17039360,
+  "per_field_flips": {
+   "slot": 0,
+   "erase": 0,
+   "op": 0,
+   "live_after": 0,
+   "payload": 0,
+   "weights": 0,
+   "live_pre": 0
+  },
+  "bit_equal_state": true,
+  "bit_equal_live": true,
+  "op_histogram": {
+   "none": 32768,
+   "append": 16464,
+   "correct": 1878,
+   "pop": 14426,
+   "merge": 0
+  },
+  "read": {
+   "floor_fp32_vs_fp64": 3.814697265625e-06,
+   "kernel_deviation": 9.5367431640625e-07,
+   "read_scale": 43.80010986328125,
+   "deviation_over_floor": 0.25,
+   "within_noise_factor": true,
+   "note": "the read's rank-axis reduction is a native sum (the K1/K23 precedent: decisions bit-exact, reads at the measured fp32 floor)"
+  },
+  "walls": {
+   "kernel_seconds": 0.04,
+   "oracle_seconds": 5.1
+  },
+  "kernel": {
+   "registers": 255,
+   "spills": 0,
+   "warps": 8,
+   "max_seq_tile": 16384,
+   "size_gate": true
+  }
+ },
+ "gate_b_grads": {
+  "gate": "B: gradients vs the eager oracle's autograd, floor first",
+  "fixture": {
+   "batch": 2,
+   "tokens": 256,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "segment_tokens": 64,
+   "note": "a registered-class shape; the full 2048-token oracle autograd graph is not needed for the gate -- the adjoint's structure is token-local"
+  },
+  "floor_definition": "the fp32 oracle against its own fp64 twin, per output, measured on the same fixture",
+  "noise_factor": 8.0,
+  "outputs": [
+   {
+    "output": "dquery",
+    "floor": 9.5367431640625e-07,
+    "deviation": 1.1920928955078125e-06,
+    "oracle_scale": 7.1741204261779785,
+    "deviation_over_floor": 1.25,
+    "within_noise_factor": true
+   },
+   {
+    "output": "dpayload",
+    "floor": 3.814697265625e-06,
+    "deviation": 7.62939453125e-06,
+    "oracle_scale": 49.249855041503906,
+    "deviation_over_floor": 2.0,
+    "within_noise_factor": true
+   },
+   {
+    "output": "ddecay",
+    "floor": 2.288818359375e-05,
+    "deviation": 4.57763671875e-05,
+    "oracle_scale": 237.39981079101562,
+    "deviation_over_floor": 2.0,
+    "within_noise_factor": true
+   },
+   {
+    "output": "dstate",
+    "floor": 3.814697265625e-06,
+    "deviation": 5.7220458984375e-06,
+    "oracle_scale": 44.324867248535156,
+    "deviation_over_floor": 1.5,
+    "within_noise_factor": true
+   }
+  ],
+  "bit_exact_note": "none of the four is bit-exact BY DESIGN at this stage: the read-weight adjoint's cross-axis reductions (dw, the softmax denominator's adjoint, duq) are autograd-ordered on the oracle side, so the adjoint is not exact-replayable; all four sit at the floor (see deviation_over_floor)"
+ },
+ "gate_b_memory": {
+  "gate": "B: the coarse-checkpoint memory arithmetic (measured + stated)",
+  "fixture": {
+   "batch": 8,
+   "tokens": 2048,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "segment_tokens": 64,
+   "microbatch": 8
+  },
+  "arithmetic": {
+   "segment_checkpoints": "32 x 1.0 MB = 32.0 MB per scan",
+   "segment_trajectory_scratch": "one segment at a time: 64.0 MB",
+   "dial_chunk2_chunk_entry_saves": "1024 x 1.0 MB = 1024 MB per scan (the OOM wall)",
+   "note": "decision granularity and checkpoint granularity are independent knobs: the per-token decisions cost NO checkpoint memory; the backward keeps 64-token segments"
+  },
+  "measured": {
+   "peak_forward_mb": 119.3,
+   "peak_forward_plus_backward_mb": 371.3
+  },
+  "mb8_fits": true
+ },
+ "gate_d_timing": {
+  "gate": "D: the sequential-decision cost, stated honestly",
+  "fixture": {
+   "batch": 8,
+   "tokens": 2048,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "segment_tokens": 64,
+   "reps": 5
+  },
+  "forward": {
+   "wall_s_p50": 0.0265,
+   "device_s_p50": 0.0265
+  },
+  "backward": {
+   "wall_s_p50": 0.0157,
+   "device_s_p50": 0.0157
+  },
+  "launches_per_scan_fwd_plus_bwd": 216,
+  "kernel_table": {
+   "void at::native::vectorized_elementwise_kernel<4, at::native": {
+    "count": 2,
+    "device_ms": 50.945
+   },
+   "_k6_seq_fwd_kernel": {
+    "count": 1,
+    "device_ms": 26232.747
+   },
+   "Memset (Device)": {
+    "count": 1,
+    "device_ms": 0.736
+   },
+   "void at::native::reduce_kernel<512, 1, at::native::ReduceOp<": {
+    "count": 1,
+    "device_ms": 8.032
+   },
+   "void at::native::vectorized_elementwise_kernel<2, at::native": {
+    "count": 2,
+    "device_ms": 1.792
+   },
+   "void at::native::unrolled_elementwise_kernel<at::native::dir": {
+    "count": 1,
+    "device_ms": 3.84
+   },
+   "void at::native::elementwise_kernel<128, 2, at::native::gpu_": {
+    "count": 34,
+    "device_ms": 61.923
+   },
+   "_persistent_scan_trajectory_kernel": {
+    "count": 32,
+    "device_ms": 3060.521
+   },
+   "_k6_bwd_prep_kernel": {
+    "count": 32,
+    "device_ms": 4872.74
+   },
+   "_k6_bwd_walk_kernel": {
+    "count": 32,
+    "device_ms": 6355.574
+   },
+   "void at::native::reduce_kernel<128, 4, at::native::ReduceOp<": {
+    "count": 32,
+    "device_ms": 99.681
+   },
+   "void at::native::elementwise_kernel<128, 4, at::native::gpu_": {
+    "count": 1,
+    "device_ms": 2.592
+   }
+  },
+  "tok_per_s_forward": 617162.8624566842,
+  "note": "a per-token decision walk cannot be as fast as a chunk-128 whole scan; the number is the honest cost of decisions and reads against the current state at every token"
+ },
+ "gate_d_step_smoke": {
+  "gate": "D: the 150 M arm step smoke",
+  "steps": 3,
+  "microbatch": 8,
+  "context": 2048,
+  "walls_s": [
+   1.135,
+   0.975,
+   0.974
+  ],
+  "steady_step_s": 1.135,
+  "projected_tok_per_s": 14440,
+  "peak_allocated_gb": 18.05,
+  "parameters": 149981808
+ },
+ "walls_seconds_total": 22.3
+}
