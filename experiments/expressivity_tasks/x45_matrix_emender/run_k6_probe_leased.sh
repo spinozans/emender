@@ -25,13 +25,11 @@ fi
 
 if $PY -m experiments.expressivity_tasks.x45_matrix_emender.k6_probe_sequentiality \
     arm $bytes_opt; then
-  summary=$($PY -c '
-import json, sys
+  summary=$($PY -c 'import json, sys
 r = json.load(open(sys.argv[1]))
-print(f"{r[\"eval_nll_nats_per_byte\"]:.4f} nats/byte, "
-      f"{r[\"exposure_bytes\"]/1e6:.1f}MB exposure in "
-      f"{r[\"walls\"][\"train_seconds\"]:.0f}s "
-      f"({r[\"bytes_per_s\"]/1e3:.1f}k tok/s)")' \
+print("%.4f nats/byte, %.1fMB exposure in %.0fs (%.1fk tok/s)" % (
+    r["eval_nll_nats_per_byte"], r["exposure_bytes"] / 1e6,
+    r["walls"]["train_seconds"], r["bytes_per_s"] / 1e3))' \
       "$X45/receipts/k6_probe.json") || summary="receipt unreadable"
   attempt=0
   until git add "$X45/k6_probe_sequentiality.py" \
