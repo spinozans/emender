@@ -10,12 +10,54 @@ fixes, one receipted gate at a time.
 | gate | fix | state |
 |---|---|---|
 | A | routing fusion — the decision chain as one Triton kernel, bit-identical decisions | **landed** (below) |
-| B | K4 compile hosting — the fused scan as a `torch.library` op under `torch.compile` | in flight |
-| C | trajectory recompute-over-store — mb8 for the fused path | pending |
+| B | K4 compile hosting — the fused scan as a `torch.library` op under `torch.compile` | **landed** (below) |
+| C | trajectory recompute-over-store — mb8 for the fused path | in flight |
 | D | the step metric — honest un-profiled walls, kernels/step, distance to 32 k tok/s | pending |
 
 Every number below is from this stage's own receipts (session metadata inside
 each): `receipts/k5_routing_fusion.json` for gate A.
+
+## Gate B — the K4 fused scan, compiled: the receipted blocker removed
+
+**The blocker** (`PROFILE_STEP_VS_GDN2.md` §5): `compile_scan=True` +
+`fused_backward=True` raised `InductorError` (`torch.bool` is not supported by
+`torch.iinfo`, on `aten.view.dtype`) because dynamo traces *into* a custom
+`torch.autograd.Function` and inductor cannot lower the kernels' `bool -> int8`
+views — forcing the fused arm to `compile_scan=False` and eager routing: 243
+kernels/chunk, 5.98 M routing launches per mb2 step, `route_chunk` cum 62.6 s of
+a 130.5 s traced step, and the whole arm at **122.2 s/step (881 tok/s)**.
+
+**The fix** (`k4_fused_backward.py`): the block call is re-exposed as a proper
+`torch.library` custom op (`x45::fused_block_scan`) with `register_autograd`, so
+dynamo emits one opaque call per chunk and the routing compiles *around* it —
+and, because `torch.compile` traces a registered backward *into* the joint
+graph rather than dispatching it at runtime, the reverse walk is its own opaque
+op (`x45::fused_block_scan_bwd`).  The Triton launches stay out of both traces;
+the forward and backward arithmetic are byte-for-byte the K4 kernels, which is
+why the grad gates re-run unchanged.
+
+**Receipt** (`receipts/k5_k4_compile_hosting.json`, gate B):
+
+* the configuration **compiles**: one dynamo graph for the routed scan with the
+  fused path ON (`unique_graphs: 1`, no skipped frames), and the kernel census of
+  a compiled forward+backward shows the persistent K4 kernels — one
+  `_persistent_scan_trajectory_kernel` and one `_persistent_bwd_kernel` per
+  chunk, 32 of each per scan — inside the compiled region, 947 kernels/scan
+  fwd+bwd against the eager-scan compiled path's 2,262 (profile's own figure);
+* the **K4 grad parity gates re-run and unchanged**: `test_k4_fused_backward.py`
+  14 passed, subprocess, summary captured verbatim in the receipt;
+* the **honest fused-mb2 step wall** (gates.py protocol, un-profiled steady
+  walls): **28.5 s/step p50 (3,699 tok/s)** at 21.4 GB peak, against the recorded
+  122.2 s (881 tok/s) fused compile-off baseline — a 4.3× step-wall improvement
+  from removing the blocker alone, and the profiled step's kernel count drops
+  6.35 M → 0.83 M (7.6×) with device busy 15.05 s → 5.57 s.
+
+At mb2 the hosted fused arm now lands at parity with the compiled eager-scan
+arm's own recorded 29.75 s — the fused path is no longer the 4.1× regression it
+was; the question the scale proof left open (does the fused arm reach its own
+registered twin once the integration is fixed?) is answered *yes at mb2*, and
+**mb8 needs gate C** (the 2.15 GB/layer trajectory store still forces
+microbatch 2: 21.4 GB peak at mb2 is mostly trajectory).
 
 ## Gate A — routing fusion, landed and honestly measured
 

@@ -96,6 +96,8 @@ here so nobody has to discover it from a traceback.
 """
 from __future__ import annotations
 
+from typing import Tuple
+
 import torch
 import triton
 import triton.language as tl
@@ -414,60 +416,151 @@ def persistent_scan_backward(trajectory: torch.Tensor, weights: torch.Tensor,
 # ------------------------------------------------------------ the autograd boundary
 
 
-class _FusedBlockScan(torch.autograd.Function):
-    """The whole block call as one autograd node: the trajectory forward + the walk.
+def _block_scan_shapes(state: torch.Tensor, live: torch.Tensor, weights: torch.Tensor,
+                        decay: torch.Tensor, payload: torch.Tensor, slot: torch.Tensor,
+                        erase: torch.Tensor, op: torch.Tensor, live_after: torch.Tensor) -> None:
+    """Build the block's schedule and refuse anything the kernel cannot express."""
+    schedule = MatrixSchedule(slot=slot, erase=erase, payload=payload, op=op,
+                              live_after=live_after)
+    check_block_shapes(state, live, weights, decay, schedule)
+    batch, heads, tokens = weights.shape[:3]
+    if schedule.payload.shape != (batch, tokens, heads, schedule.lanes,
+                                  state.shape[3]):
+        raise ValueError("the schedule's payload does not belong to this block")
+
+
+@torch.library.custom_op("x45::fused_block_scan", mutates_args=())
+def _fused_block_scan_op(
+    state: torch.Tensor, live: torch.Tensor, weights: torch.Tensor,
+    decay: torch.Tensor, payload: torch.Tensor, slot: torch.Tensor,
+    erase: torch.Tensor, op: torch.Tensor, live_after: torch.Tensor,
+    block: int, warps: int, stages: int,
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """The whole block call as ONE opaque ``torch.library`` op: the compile host.
+
+    Why an op and not the ``torch.autograd.Function`` this replaces: under
+    ``compile_scan=True`` dynamo *traces into* a custom Function's ``apply``
+    (it does not graph-break there), and inside the traced region the kernels'
+    ``bool -> int8`` views become ``aten.view.dtype`` bitcasts inductor cannot
+    lower -- ``InductorError: torch.bool is not supported by torch.iinfo`` --
+    which is the receipted blocker that forced the fused arm to
+    ``compile_scan=False`` and eager routing (243 kernels/chunk, 5.98 M routing
+    launches per mb2 step; ``PROFILE_STEP_VS_GDN2.md`` §5, receipt
+    ``x45_on_mb2_compile_route_failed``).  A proper ``torch.library`` custom op
+    is opaque to dynamo -- one call in the graph, the rest of the model keeps
+    compiling around it, and the ``register_autograd`` backward runs at runtime
+    through the dispatcher (never traced, so the Triton launches inside are
+    safe).  The trajectory is the fourth output so the backward can save it;
+    nothing downstream consumes it, so its incoming gradient is always ``None``.
 
     Inputs: ``state``, ``weights``, ``decay`` and the schedule's ``payload``
     carry gradient; ``live`` and the decision channel (``slot``/``erase``/
-    ``op``/``live_after``) are passed through for shape checking and are
-    returned ``None`` by the backward -- the recorded-schedule doctrine.  The
-    bool liveness output is non-differentiable and its incoming gradient is
-    ignored.
+    ``op``/``live_after``) do not, by the recorded-schedule doctrine.  The bool
+    liveness output is non-differentiable and its incoming gradient is ignored.
     """
+    schedule = MatrixSchedule(slot=slot, erase=erase, payload=payload, op=op,
+                             live_after=live_after)
+    reads, out_state, out_live, trajectory = persistent_scan_trajectory(
+        state, live, weights, decay, schedule, block, warps, stages)
+    return reads, out_state, out_live, trajectory
 
-    @staticmethod
-    def forward(ctx, state, live, weights, decay, payload, slot, erase, op,
-                live_after, block, warps, stages):
-        schedule = MatrixSchedule(slot=slot, erase=erase, payload=payload, op=op,
-                                  live_after=live_after)
-        reads, out_state, out_live, trajectory = persistent_scan_trajectory(
-            state, live, weights, decay, schedule, block, warps, stages)
-        ctx.save_for_backward(weights, decay, slot, erase, op)
-        ctx.trajectory = trajectory
-        ctx.lanes = schedule.lanes
-        ctx.tuning = (block, warps, stages)
-        return reads, out_state, out_live
 
-    @staticmethod
-    def backward(ctx, dreads, dstate_out, dlive):
-        weights, decay, slot, erase, op = ctx.saved_tensors
-        block, warps, stages = ctx.tuning
-        batch, heads, tokens, rank = weights.shape
-        value_dim = ctx.trajectory.shape[-1]
-        if dreads is None:
-            dreads = torch.zeros((batch, heads, tokens, value_dim),
+@_fused_block_scan_op.register_fake
+def _(state, live, weights, decay, payload, slot, erase, op, live_after, block,
+      warps, stages):
+    batch, heads, tokens, rank = weights.shape
+    value_dim = state.shape[3]
+    device = state.device
+    return (torch.empty((batch, heads, tokens, value_dim), dtype=state.dtype,
+                        device=device),
+            torch.empty_like(state),
+            torch.empty((batch, heads, rank), dtype=torch.bool, device=device),
+            torch.empty((batch, heads, tokens, rank, value_dim),
+                        dtype=state.dtype, device=device))
+
+
+def _fused_block_scan_setup(ctx, inputs, output):
+    """Save what the reverse walk needs: the recorded channel and the trajectory."""
+    state, live, weights, decay, payload, slot, erase, op, live_after, block, \
+        warps, stages = inputs
+    reads, out_state, out_live, trajectory = output
+    ctx.save_for_backward(weights, decay, slot, erase, op)
+    ctx.trajectory = trajectory
+    ctx.lanes = int(slot.shape[-1])
+    ctx.tuning = (int(block), int(warps), int(stages))
+
+
+@torch.library.custom_op("x45::fused_block_scan_bwd", mutates_args=())
+def _fused_block_scan_bwd_op(
+    trajectory: torch.Tensor, weights: torch.Tensor, decay: torch.Tensor,
+    slot: torch.Tensor, erase: torch.Tensor, op: torch.Tensor,
+    dreads: torch.Tensor, dstate_out: torch.Tensor,
+    lanes: int, block: int, warps: int, stages: int,
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """The reverse walk as its own opaque op.
+
+    ``torch.compile`` traces a ``register_autograd`` backward *into* the joint
+    graph (it does not dispatch it at runtime), so the backward's Triton launch
+    needs the same hosting the forward got -- otherwise inductor meets a
+    FakeTensor inside the kernel launcher ("erroneously tracing into a custom
+    kernel").  Everything the walk needs is passed in; the dummy schedule the
+    kernel wrapper wants is rebuilt inside, out of the trace.
+    """
+    batch, heads, tokens, rank = weights.shape
+    value_dim = trajectory.shape[-1]
+    schedule = MatrixSchedule(slot=slot, erase=erase,
+                              payload=torch.empty(batch, tokens, heads, lanes,
+                                                  value_dim, dtype=torch.float32,
+                                                  device=weights.device),
+                              op=op,
+                              live_after=torch.zeros(batch, tokens, heads, lanes,
+                                                     dtype=torch.bool,
+                                                     device=weights.device))
+    return persistent_scan_backward(trajectory, weights, decay, schedule, dreads,
+                                    dstate_out, block, warps, stages)
+
+
+@_fused_block_scan_bwd_op.register_fake
+def _(trajectory, weights, decay, slot, erase, op, dreads, dstate_out, lanes,
+      block, warps, stages):
+    batch, heads, tokens, rank = weights.shape
+    value_dim = trajectory.shape[-1]
+    device = weights.device
+    return (torch.empty((batch, heads, rank, value_dim), dtype=torch.float32,
+                        device=device),
+            torch.empty((batch, heads, tokens, rank), dtype=torch.float32,
+                        device=device),
+            torch.empty((batch, heads, tokens), dtype=torch.float32,
+                        device=device),
+            torch.empty(slot.shape[0], slot.shape[1], slot.shape[2], lanes,
+                        value_dim, dtype=torch.float32, device=device))
+
+
+def _fused_block_scan_backward(ctx, dreads, dstate_out, dlive, dtrajectory):
+    """The reverse walk, verbatim from the K4 ``autograd.Function`` it replaces."""
+    weights, decay, slot, erase, op = ctx.saved_tensors
+    block, warps, stages = ctx.tuning
+    batch, heads, tokens, rank = weights.shape
+    value_dim = ctx.trajectory.shape[-1]
+    if dreads is None:
+        dreads = torch.zeros((batch, heads, tokens, value_dim),
+                             dtype=torch.float32, device=weights.device)
+    if dstate_out is None:
+        dstate_out = torch.zeros((batch, heads, rank, value_dim),
                                  dtype=torch.float32, device=weights.device)
-        if dstate_out is None:
-            dstate_out = torch.zeros((batch, heads, rank, value_dim),
-                                     dtype=torch.float32, device=weights.device)
-        # The walk indexes ``dstate_out`` directly, so it must be contiguous;
-        # an autograd grad can arrive as any layout.
-        if not dstate_out.is_contiguous():
-            dstate_out = dstate_out.contiguous()
-        schedule = MatrixSchedule(slot=slot, erase=erase,
-                                  payload=torch.empty(batch, tokens, heads,
-                                                      ctx.lanes, value_dim,
-                                                      dtype=torch.float32,
-                                                      device=weights.device),
-                                  op=op,
-                                  live_after=torch.zeros(batch, tokens, heads,
-                                                          ctx.lanes, dtype=torch.bool,
-                                                          device=weights.device))
-        dstate, dweights, ddecay, dpayload = persistent_scan_backward(
-            ctx.trajectory, weights, decay, schedule, dreads, dstate_out,
-            block, warps, stages)
-        return dstate, None, dweights, ddecay, dpayload, None, None, None, None, \
-            None, None, None
+    # The walk indexes ``dstate_out`` directly, so it must be contiguous; an
+    # autograd grad can arrive as any layout.
+    if not dstate_out.is_contiguous():
+        dstate_out = dstate_out.contiguous()
+    dstate, dweights, ddecay, dpayload = _fused_block_scan_bwd_op(
+        ctx.trajectory, weights, decay, slot, erase, op, dreads, dstate_out,
+        ctx.lanes, int(ctx.tuning[0]), int(ctx.tuning[1]), int(ctx.tuning[2]))
+    return dstate, None, dweights, ddecay, dpayload, None, None, None, None, \
+        None, None, None
+
+
+torch.library.register_autograd("x45::fused_block_scan", _fused_block_scan_backward,
+                                setup_context=_fused_block_scan_setup)
 
 
 def fused_block_scan(state: torch.Tensor, live: torch.Tensor, weights: torch.Tensor,
@@ -479,11 +572,22 @@ def fused_block_scan(state: torch.Tensor, live: torch.Tensor, weights: torch.Ten
     This is the opt-in path -- the flag the arm would flip after its gates
     pass.  It refuses a store that does not fit one program by name (rank 2048
     at ``d_v`` 128: ``ValueError ... does not fit, so it must take the chunked
-    path``), exactly as ``persistent_scan`` does.
+    path``), exactly as ``persistent_scan`` does -- the refusal happens in this
+    wrapper, before the op, so the eager call site sees the same error it
+    always did.
     """
-    return _FusedBlockScan.apply(state, live, weights, decay, schedule.payload,
-                                 schedule.slot, schedule.erase, schedule.op,
-                                 schedule.live_after, block, warps, stages)
+    _block_scan_shapes(state, live, weights, decay, schedule.payload,
+                       schedule.slot, schedule.erase, schedule.op,
+                       schedule.live_after)
+    block = value_block(state.shape[2], state.shape[3]) if block is None \
+        else int(block)
+    warps = warp_count(triton.next_power_of_2(state.shape[2]) * block) \
+        if warps is None else int(warps)
+    reads, out_state, out_live, _trajectory = _fused_block_scan_op(
+        state, live, weights, decay, schedule.payload, schedule.slot,
+        schedule.erase, schedule.op, schedule.live_after, int(block), int(warps),
+        int(stages))
+    return reads, out_state, out_live
 
 
 def eager_block_scan(state: torch.Tensor, live: torch.Tensor, weights: torch.Tensor,
