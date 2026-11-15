@@ -1,0 +1,306 @@
+{
+  "session": {
+    "device": "NVIDIA RTX 6000 Ada Generation",
+    "card_gib": 47.38,
+    "torch": "2.9.1+cu128",
+    "triton": "3.5.1"
+  },
+  "gate": "K5A",
+  "pinned_chunk_parity": {
+    "fixture": "fp32, distinct directions, rank 8, chunk 32",
+    "rows": [
+      {
+        "chunk": 0,
+        "slot": true,
+        "erase": true,
+        "op": true,
+        "live_after": true,
+        "payload": true,
+        "weights_floor": 0.0,
+        "weights_max_deviation": 0.0,
+        "weights_median_deviation": 0.0,
+        "weights_within_floor": true
+      },
+      {
+        "chunk": 1,
+        "slot": true,
+        "erase": true,
+        "op": true,
+        "live_after": true,
+        "payload": true,
+        "weights_floor": 4.470348358154297e-08,
+        "weights_max_deviation": 8.940696716308594e-08,
+        "weights_median_deviation": 5.587935447692871e-09,
+        "weights_within_floor": true
+      },
+      {
+        "chunk": 2,
+        "slot": true,
+        "erase": true,
+        "op": true,
+        "live_after": true,
+        "payload": true,
+        "weights_floor": 2.384185791015625e-07,
+        "weights_max_deviation": 3.5762786865234375e-07,
+        "weights_median_deviation": 0.0,
+        "weights_within_floor": true
+      },
+      {
+        "chunk": 3,
+        "slot": true,
+        "erase": true,
+        "op": true,
+        "live_after": true,
+        "payload": true,
+        "weights_floor": 2.384185791015625e-07,
+        "weights_max_deviation": 1.7881393432617188e-07,
+        "weights_median_deviation": 7.450580596923828e-09,
+        "weights_within_floor": true
+      }
+    ]
+  },
+  "flip_test": {
+    "fixture": "real routed scan, batch 8, 2048 tokens, rank 128, chunk 64, bf16 autocast, 32 chunks",
+    "differing_lanes": {
+      "slot": 0,
+      "erase": 0,
+      "op": 0,
+      "live_after": 0,
+      "payload": 0
+    },
+    "lanes": 8650752,
+    "flips": 0,
+    "zero_flips": true,
+    "construction": "the fused router consumes the eager preprocessing's own similarity and strength tensors, so decisions are bit-equal by construction; this test is the proof, and the probe rows below are the reason the similarity is not recomputed in-kernel"
+  },
+  "similarity_probe": {
+    "shape": {
+      "batch": 8,
+      "chunk_tokens": 64,
+      "heads": 2,
+      "rank": 128,
+      "value_dim": 128,
+      "autocast": "bf16"
+    },
+    "eager_rerun_bit_equal": "131072/131072",
+    "inductor_bit_equal": "130979/131072",
+    "note": "the eager similarity is bit-stable rerun-to-rerun, but a Triton reproduction of the bf16 norm/bmm chain matched only ~48% of entries in the K5A probe (and the bf16 payload norm 0/1024), so recomputing it in-kernel would put decisions at flip risk; the chain is therefore consumed, not recomputed",
+    "eager_preprocessing_kernels_uncompiled": 10.0
+  },
+  "floors": [
+    {
+      "label": "fp32_small",
+      "chunks": 2,
+      "weights_floor": 7.450580596923828e-09,
+      "weights_max_deviation": 1.4901161193847656e-08,
+      "weights_median_deviation": 9.313225746154785e-10,
+      "weights_within_floor": true,
+      "all_schedule_bit_equal": true
+    },
+    {
+      "label": "registered_bf16",
+      "chunks": 8,
+      "weights_floor": 0.0011424422264099121,
+      "weights_max_deviation": 0.0011424422264099121,
+      "weights_median_deviation": 9.663403034210205e-06,
+      "weights_within_floor": true,
+      "all_schedule_bit_equal": true
+    }
+  ],
+  "gradient_floors": [
+    {
+      "label": "fp32",
+      "gradient_floor": 5.333420226349972e-06,
+      "dquery": {
+        "deviation": 5.960464477539062e-07,
+        "bit_equal": false,
+        "within_floor": true
+      },
+      "dpayload": {
+        "deviation": 0.0,
+        "bit_equal": true,
+        "within_floor": true
+      },
+      "dstate": {
+        "deviation": 1.1444091796875e-05,
+        "bit_equal": false,
+        "within_floor": true
+      },
+      "dpayload_bit_exact": true
+    },
+    {
+      "label": "bf16",
+      "gradient_floor": 0.8975961386533413,
+      "dquery": {
+        "deviation": 0.004692494869232178,
+        "bit_equal": false,
+        "within_floor": true
+      },
+      "dpayload": {
+        "deviation": 0.0,
+        "bit_equal": true,
+        "within_floor": true
+      },
+      "dstate": {
+        "deviation": 0.897552490234375,
+        "bit_equal": false,
+        "within_floor": true
+      },
+      "dpayload_bit_exact": true
+    }
+  ],
+  "eager_chunk": {
+    "shape": {
+      "batch": 8,
+      "chunk_tokens": 64,
+      "heads": 2,
+      "rank": 128,
+      "value_dim": 128
+    },
+    "route_chunk": {
+      "kernels_per_chunk": 136.0,
+      "timing_ms": {
+        "latency_ms_mean": 2.5735337287187576,
+        "latency_ms_p50": 2.574753947556019,
+        "latency_ms_min": 2.5592027232050896,
+        "latency_ms_max": 2.5889845564961433,
+        "dispatch_ms_mean": 2.5479277595877647,
+        "dispatch_ms_p50": 2.550044097006321,
+        "device_ms_mean": 2.6015615940093992,
+        "device_ms_p50": 2.601855993270874,
+        "occupancy_ms": 0.24847680000000408,
+        "latency_over_occupancy": 10.362150299569121,
+        "latency_over_device": 0.9892265225027994,
+        "dispatch_over_occupancy": 10.262704997031028,
+        "repeats": 5
+      }
+    },
+    "routing_diff_route_chunk": {
+      "kernels_per_chunk": 13.0,
+      "timing_ms": {
+        "latency_ms_mean": 0.5825668573379517,
+        "latency_ms_p50": 0.5845017731189728,
+        "latency_ms_min": 0.5749808624386787,
+        "latency_ms_max": 0.5890708416700363,
+        "dispatch_ms_mean": 0.5610169842839241,
+        "dispatch_ms_p50": 0.5613910034298897,
+        "device_ms_mean": 0.6048319935798645,
+        "device_ms_p50": 0.6088320016860962,
+        "occupancy_ms": 0.05034879999999967,
+        "latency_over_occupancy": 11.609050724525243,
+        "latency_over_device": 0.9631878993203873,
+        "dispatch_over_occupancy": 11.150037407642154,
+        "repeats": 5
+      }
+    }
+  },
+  "compiled_differential": {
+    "shape": {
+      "batch": 8,
+      "tokens": 2048,
+      "heads": 2,
+      "rank": 128,
+      "value_dim": 128,
+      "chunk_tokens": 64,
+      "chunks_per_scan": 32
+    },
+    "arms": {
+      "eager_router": {
+        "host_dispatch_ms_p50": 45.668985694646835,
+        "latency_ms_p50": 45.701815746724606,
+        "device_ms_p50": 45.73219299316406,
+        "kernels_per_scan": 2172.0,
+        "kernels_per_chunk": 67.875
+      },
+      "k5a_router": {
+        "host_dispatch_ms_p50": 54.021457210183144,
+        "latency_ms_p50": 54.05339691787958,
+        "device_ms_p50": 54.078304290771484,
+        "kernels_per_scan": 1805.0,
+        "kernels_per_chunk": 56.40625
+      },
+      "scan_only": {
+        "host_dispatch_ms_p50": 20.06300911307335,
+        "latency_ms_p50": 20.096869207918644,
+        "device_ms_p50": 20.123743057250977,
+        "kernels_per_scan": 860.0,
+        "kernels_per_chunk": 26.875
+      }
+    },
+    "routing_differential": {
+      "eager_router": {
+        "kernels_per_scan": 1312.0,
+        "kernels_per_chunk": 41.0,
+        "host_ms_per_scan": 25.605976581573486,
+        "device_ms_per_scan": 25.608449935913086
+      },
+      "k5a_router": {
+        "kernels_per_scan": 945.0,
+        "kernels_per_chunk": 29.53125,
+        "host_ms_per_scan": 33.958448097109795,
+        "device_ms_per_scan": 33.95456123352051
+      },
+      "reference": "K5's gate A instrument (receipts/k5_routing_fusion.json) recorded eager routing compiled = 41.0 kernels/chunk and the fused decision-only router 39.9 -- the differentiable channels were the named residual this stage fuses"
+    },
+    "k5_reference": {
+      "eager_router_kernels_per_chunk": 40.96875,
+      "gate_a_fused_router_kernels_per_chunk": 39.9375,
+      "source": "receipts/k5_routing_fusion.json"
+    }
+  },
+  "gate_suites_rerun": [
+    {
+      "suite": "test_k4_fused_backward.py",
+      "command": ".venv/bin/python -m pytest -q experiments/expressivity_tasks/x45_matrix_emender/test_k4_fused_backward.py",
+      "returncode": 0,
+      "wall_s": 8.2,
+      "summary": "============================== 14 passed in 6.97s =============================="
+    },
+    {
+      "suite": "test_k5_recompute.py",
+      "command": ".venv/bin/python -m pytest -q experiments/expressivity_tasks/x45_matrix_emender/test_k5_recompute.py",
+      "returncode": 0,
+      "wall_s": 7.4,
+      "summary": "============================== 5 passed in 6.14s ==============================="
+    },
+    {
+      "suite": "test_k5_routing_fusion.py",
+      "command": ".venv/bin/python -m pytest -q experiments/expressivity_tasks/x45_matrix_emender/test_k5_routing_fusion.py",
+      "returncode": 0,
+      "wall_s": 22.3,
+      "summary": "============================= 14 passed in 19.83s =============================="
+    },
+    {
+      "suite": "test_k5a_routing_diff.py",
+      "command": ".venv/bin/python -m pytest -q experiments/expressivity_tasks/x45_matrix_emender/test_k5a_routing_diff.py",
+      "returncode": 0,
+      "wall_s": 24.0,
+      "summary": "============================= 18 passed in 21.34s =============================="
+    }
+  ],
+  "cd_protocol_fixture": {
+    "fixture": "registered matrix_ops model, block 0's mixer on a real flagship-stream 64-window batch, bf16 autocast",
+    "shape": {
+      "batch": 8,
+      "tokens": 2048,
+      "heads": 2,
+      "rank": 128,
+      "value_dim": 128,
+      "chunk_tokens": 64,
+      "chunks": 32
+    },
+    "schedule_bit_parity_all_chunks": true,
+    "training_step": {
+      "note": "one eager-scan step per router; the eager scan's duplicate-slot scatter_add_ is atomics-nondeterministic, so the fused arm is compared against the eager arm's own rerun deviation",
+      "loss_eager": 5.742613792419434,
+      "loss_eager_rerun": 5.742225646972656,
+      "loss_fused": 5.7426018714904785,
+      "grad_scale_eager": 30183.174832560122,
+      "grad_scale_eager_rerun": 30185.194349355996,
+      "grad_scale_fused": 30188.13009314984,
+      "grad_scale_fused_deviation": 4.955260589718819,
+      "grad_scale_eager_rerun_baseline": 2.019516795873642,
+      "within_baseline": true
+    }
+  }
+}

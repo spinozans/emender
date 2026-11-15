@@ -248,6 +248,16 @@ and payloads still bit-exact — is the item that owns the remaining 3.7 s, and
 the decision kernel should be folded into it (or parallelised over token
 blocks) rather than shipped alone.
 
+**Follow-up (K5A, landed):** that extension is built and gated in
+`K5A_ROUTING_DIFF.md` -- decisions bit-exact by construction with **zero flips
+in 8.65 M lanes**, the step's launch count down to **125,033 kernels/step**
+(-71 % vs registered), gate A's 0.50 s decision kernel gone -- and the honest
+step verdict: the wall does **not** improve, because the step is no longer
+launch-bound; the residual host gap is owned by per-chunk Python op dispatch
+(the custom-op boundary K4 and K5A cross four times per chunk), not by
+launches.  The 32 k target is not reached and the owning component is named
+there.
+
 ## The kernels/step table (final)
 
 | per step (mb8, 64 windows) | profile session | this session |

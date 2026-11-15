@@ -109,6 +109,24 @@ from .schedule import EPS, route_chunk
 # both reduce over it); rank 128 is the registered shape and rank 512 is
 # refused to the eager router by name.
 K5A_MAX_RANK = 128
+# The dtype-rounded thresholds are pure functions of frozen policy constants,
+# so they are memoised: the op body would round five scalars per chunk, and
+# under compile that is per-chunk Python the graph cannot hoist.
+_ROUND_CACHE: dict = {}
+
+
+def _cached_thresholds(tau_match, tau_merge, tau_pop, tie_break, dtype):
+    key = (tau_match, tau_merge, tau_pop, tie_break, dtype)
+    rounded = _ROUND_CACHE.get(key)
+    if rounded is None:
+        rounded = (_round_threshold(tau_match, dtype),
+                   _round_threshold(tau_merge, dtype),
+                   _round_threshold(tau_pop, dtype),
+                   struct.unpack("<f", struct.pack("<f", tie_break))[0])
+        _ROUND_CACHE[key] = rounded
+    return rounded
+
+
 # Triton constants for the op codes.
 _NONE_CODE = tl.constexpr(int(NONE))
 _APPEND_CODE = tl.constexpr(int(APPEND))
@@ -149,10 +167,7 @@ def _k5a_prep_kernel(
     abs_, ahs, ars,
     sbs, shs, sts, srs,
     tbs, ths, trs,
-    wbs, whs, wts, wrs,
-    kbs, khs, kts,
-    fbs, fhs, fts,
-    bbs, bhs, bts, bvs,
+    wmax,
     NB,
     tau_match, tau_merge, tau_pop, tie_break, scale,
     H: tl.constexpr, V: tl.constexpr, BT: tl.constexpr, BK: tl.constexpr,
@@ -223,9 +238,14 @@ def _k5a_prep_kernel(
     strength_row = tl.load(strength + batch_index * tbs + head_index * ths
                            + ranks * trs, mask=keep_r, other=0.0)
     w = probs * strength_row[None, :]
-    tl.store(weights + batch_index * wbs + head_index * whs
-             + toks[:, None] * wts + ranks[None, :] * wrs, w,
-             mask=keep_t[:, None] & keep_r[None, :])
+    # the full register width is stored (the columns above the active rank are
+    # exact zeros: their probs are zero by the live-mask), so the weights
+    # buffer needs no separate zero-fill kernel at the registered shape.  The
+    # internal buffers are contiguous, so their strides are computed in-kernel
+    # from the shapes rather than passed per launch.
+    wrow = weights + row.to(tl.int64) * T * wmax
+    tl.store(wrow + toks[:, None] * wmax + ranks[None, :], w,
+             mask=keep_t[:, None] & (ranks[None, :] < wmax))
 
     # the selections, from the eager router's own similarity (never recomputed)
     sim = tl.load(similarity + batch_index * sbs + head_index * shs
@@ -258,16 +278,16 @@ def _k5a_prep_kernel(
 
     flags = (correct.to(tl.int32) | (merge.to(tl.int32) << 1)
              | (need.to(tl.int32) << 2))
-    scratch_base = batch_index * kbs + head_index * khs
-    tl.store(scratch_i32 + scratch_base + toks * kts + 0, best.to(tl.int32),
+    scratch_base = row.to(tl.int64) * T * 4
+    tl.store(scratch_i32 + scratch_base + toks * 4 + 0, best.to(tl.int32),
              mask=keep_t)
-    tl.store(scratch_i32 + scratch_base + toks * kts + 1, second.to(tl.int32),
+    tl.store(scratch_i32 + scratch_base + toks * 4 + 1, second.to(tl.int32),
              mask=keep_t)
-    tl.store(scratch_i32 + scratch_base + toks * kts + 2, worst.to(tl.int32),
+    tl.store(scratch_i32 + scratch_base + toks * 4 + 2, worst.to(tl.int32),
              mask=keep_t)
-    tl.store(scratch_i32 + scratch_base + toks * kts + 3, flags, mask=keep_t)
-    tl.store(scratch_f32 + batch_index * fbs + head_index * fhs + toks * fts,
-             worst_value, mask=keep_t)
+    tl.store(scratch_i32 + scratch_base + toks * 4 + 3, flags, mask=keep_t)
+    tl.store(scratch_f32 + row.to(tl.int64) * T + toks, worst_value,
+             mask=keep_t)
 
     # the MERGE blend: gathered rows weighted by the torch strength, with the
     # eager expression's exact rounding (no FMA contraction).
@@ -290,8 +310,8 @@ def _k5a_prep_kernel(
                              mask=keep_t[:, None] & keep_v[None, :], other=0.0)
         piece = _add_rn(_mul_rn(a[:, None], first_row),
                         _mul_rn(b[:, None], second_row))
-        tl.store(blend + batch_index * bbs + head_index * bhs
-                 + toks[:, None] * bts + vals[None, :] * bvs, piece,
+        blend_row = blend + row.to(tl.int64) * T * V
+        tl.store(blend_row + toks[:, None] * V + vals[None, :], piece,
                  mask=keep_t[:, None] & keep_v[None, :])
 
 
@@ -302,9 +322,6 @@ def _k5a_emit_kernel(
     T, R, NB,
     abs_, ahs, ars,
     pbs, phs, pts, pvs,
-    bbs, bhs, bts, bvs,
-    kbs, khs, kts,
-    fbs, fhs, fts,
     tau_pop,
     H: tl.constexpr, V: tl.constexpr, BT: tl.constexpr, BK: tl.constexpr,
     RP: tl.constexpr,
@@ -325,20 +342,20 @@ def _k5a_emit_kernel(
     for i in range(0, block):
         prefix += tl.load(counts + row * NB + i)
 
-    scratch_base = batch_index * kbs + head_index * khs
-    best = tl.load(scratch_i32 + scratch_base + toks * kts + 0, mask=keep_t,
+    scratch_base = row.to(tl.int64) * T * 4
+    best = tl.load(scratch_i32 + scratch_base + toks * 4 + 0, mask=keep_t,
                    other=0)
-    second = tl.load(scratch_i32 + scratch_base + toks * kts + 1,
+    second = tl.load(scratch_i32 + scratch_base + toks * 4 + 1,
                      mask=keep_t, other=0)
-    worst = tl.load(scratch_i32 + scratch_base + toks * kts + 2,
+    worst = tl.load(scratch_i32 + scratch_base + toks * 4 + 2,
                     mask=keep_t, other=0)
-    flags = tl.load(scratch_i32 + scratch_base + toks * kts + 3,
+    flags = tl.load(scratch_i32 + scratch_base + toks * 4 + 3,
                     mask=keep_t, other=0)
     correct = (flags & 1) != 0
     merge = (flags & 2) != 0
     need = (flags & 4) != 0
-    worst_value = tl.load(scratch_f32 + batch_index * fbs + head_index * fhs
-                          + toks * fts, mask=keep_t, other=0.0)
+    worst_value = tl.load(scratch_f32 + row.to(tl.int64) * T + toks,
+                          mask=keep_t, other=0.0)
 
     act = tl.load(active + batch_index * abs_ + head_index * ahs
                   + ranks * ars, mask=keep_r, other=0) != 0
@@ -388,7 +405,7 @@ def _k5a_emit_kernel(
     # bit is written back into the scratch (bit 3) because the payload's
     # adjoint needs the POST-ordinal op, which only exists here.
     carries = (op0 == _APPEND_CODE) | (op0 == _CORRECT_CODE)
-    tl.store(scratch_i32 + scratch_base + toks * kts + 3,
+    tl.store(scratch_i32 + scratch_base + toks * 4 + 3,
              flags | (carries.to(tl.int32) << 3), mask=keep_t)
     pay_base = row.to(tl.int64) * T * 2 * V
     for k0 in range(0, V, BK):
@@ -398,8 +415,8 @@ def _k5a_emit_kernel(
                       + toks[:, None] * pts + vals[None, :] * pvs,
                       mask=keep_t[:, None] & keep_v[None, :], other=0.0) \
             .to(tl.float32)
-        piece = tl.load(blend + batch_index * bbs + head_index * bhs
-                        + toks[:, None] * bts + vals[None, :] * bvs,
+        blend_row = blend + row.to(tl.int64) * T * V
+        piece = tl.load(blend_row + toks[:, None] * V + vals[None, :],
                         mask=keep_t[:, None] & keep_v[None, :], other=0.0)
         lane0 = tl.where(carries[:, None], pay, 0.0)
         lane0 = tl.where(merge[:, None], piece, lane0)
@@ -426,9 +443,6 @@ def _k5a_bwd_scores_kernel(
     kbs, khs, kts,
     gbs, ghs, gts, grs,
     dbs, dhs, dts, dls, dvs,
-    xbs, xhs, xts, xrs,
-    ybs, yhs, yts, yvs,
-    zbs, zhs, zts, zvs,
     scale,
     H: tl.constexpr, V: tl.constexpr, BT: tl.constexpr, BK: tl.constexpr,
     RP: tl.constexpr,
@@ -500,8 +514,8 @@ def _k5a_bwd_scores_kernel(
     dprobs = w_grad * strength_row[None, :]
     dsum = tl.sum(dprobs * probs, axis=1)
     dscores = probs * (dprobs - dsum[:, None])
-    tl.store(dscores_scratch + batch_index * xbs + head_index * xhs
-             + toks[:, None] * xts + ranks[None, :] * xrs, dscores,
+    xrow = dscores_scratch + row.to(tl.int64) * T * R
+    tl.store(xrow + toks[:, None] * R + ranks[None, :], dscores,
              mask=keep_t[:, None] & keep_r[None, :])
     # per-block partials of the two rank-axis reductions the row adjoint needs.
     dstrength = tl.sum(w_grad * probs, axis=0)
@@ -530,8 +544,8 @@ def _k5a_bwd_scores_kernel(
         # query would turn 0/0 into NaN and 0*NaN is still NaN.
         dq = du / cq[:, None] - uq * tl.where(nq >= _EPS, duu / nq,
                                              0.0)[:, None]
-        tl.store(dquery + batch_index * ybs + head_index * yhs
-                 + toks[:, None] * yts + vals[None, :] * yvs,
+        yrow = dquery + row.to(tl.int64) * T * V
+        tl.store(yrow + toks[:, None] * V + vals[None, :],
                  dq.to(query.dtype.element_ty),
                  mask=keep_t[:, None] & keep_v[None, :])
         dpay = tl.load(dpay_field + batch_index * dbs + head_index * dhs
@@ -539,8 +553,8 @@ def _k5a_bwd_scores_kernel(
                        mask=keep_t[:, None] & keep_v[None, :], other=0.0) \
             .to(tl.float32)
         dpay = tl.where(carries[:, None], dpay, 0.0)
-        tl.store(dpayload + batch_index * zbs + head_index * zhs
-                 + toks[:, None] * zts + vals[None, :] * zvs,
+        zrow = dpayload + row.to(tl.int64) * T * V
+        tl.store(zrow + toks[:, None] * V + vals[None, :],
                  dpay.to(dpayload.dtype.element_ty),
                  mask=keep_t[:, None] & keep_v[None, :])
 
@@ -557,7 +571,6 @@ def _k5a_bwd_rows_kernel(
     tbs, ths, trs,
     kbs, khs, kts,
     dbs, dhs, dts, dls, dvs,
-    gbs, ghs, gts, grs,
     scale,
     H: tl.constexpr, V: tl.constexpr, BT: tl.constexpr, BK: tl.constexpr,
     BV: tl.constexpr, RP: tl.constexpr,
@@ -622,9 +635,8 @@ def _k5a_bwd_rows_kernel(
     for block in range(0, NBT):
         toks = block * BT + tl.arange(0, BT)
         keep_t = toks < T
-        dscores = tl.load(dscores_scratch + batch_index * gbs
-                          + head_index * ghs + toks[:, None] * gts
-                          + ranks[None, :] * grs,
+        dscores = tl.load(dscores_scratch + row.to(tl.int64) * T * R
+                          + toks[:, None] * R + ranks[None, :],
                           mask=keep_t[:, None] & keep_r[None, :], other=0.0)
         # the query norms, then uq for this block's value block
         sq = tl.zeros((BT,), dtype=tl.float32)
@@ -669,21 +681,17 @@ def _k5a_bwd_rows_kernel(
                              + vals[None, :] * dvs,
                              mask=keep_t[:, None] & keep_v[None, :],
                              other=0.0).to(tl.float32)
-        step = tl.arange(0, BT)
-        for t in tl.static_range(BT):
-            picked = step == t
-            best_t = tl.sum(tl.where(picked, best, 0), 0)
-            second_t = tl.sum(tl.where(picked, second, 0), 0)
-            a_t = tl.sum(tl.where(picked, a, 0.0), 0)
-            b_t = tl.sum(tl.where(picked, b, 0.0), 0)
-            merge_t = tl.sum(tl.where(picked, merge.to(tl.int32), 0), 0)
-            dpay_t = tl.sum(tl.where(picked[:, None], dpay_chunk, 0.0), 0)
-            hit1 = ranks == best_t
-            hit2 = ranks == second_t
-            dr += tl.where((hit1 & (merge_t != 0))[:, None],
-                           a_t * dpay_t[None, :], 0.0)
-            dr += tl.where((hit2 & (merge_t != 0))[:, None],
-                           b_t * dpay_t[None, :], 0.0)
+        # the MERGE blend scatter as its true algebra: a per-token one-hot
+        # against the addressed rank, so dr += M @ dpay is one deterministic
+        # dot instead of a serial per-token masked-add walk.  A token's best
+        # and second rows are distinct, so the two one-hots are disjoint and
+        # their sum is a single (rank, tokens) matrix.
+        merge_f = merge.to(tl.float32)
+        onehot = tl.where(ranks[:, None] == best[None, :],
+                          a[None, :] * merge_f[None, :], 0.0) \
+            + tl.where(ranks[:, None] == second[None, :],
+                       b[None, :] * merge_f[None, :], 0.0)
+        dr += tl.dot(onehot, dpay_chunk, input_precision='ieee')
 
     tl.store(drows + row.to(tl.int64) * R * V + ranks[:, None] * V
              + vals[None, :], dr, mask=keep_r[:, None] & keep_v[None, :])
@@ -734,11 +742,9 @@ def _routing_diff_fwd_op(
     _prep_shape_checks(query, payload, rows, active, similarity, strength, rank)
     batch, heads, tokens, value_dim = query.shape
     device = query.device
-    dtype = similarity.dtype
-    tau_match = _round_threshold(tau_match, dtype)
-    tau_merge = _round_threshold(tau_merge, dtype)
-    tau_pop = _round_threshold(tau_pop, dtype)
-    tie_break = struct.unpack("<f", struct.pack("<f", tie_break))[0]
+    tau_match, tau_merge, tau_pop, tie_break = _cached_thresholds(
+        tau_match, tau_merge, tau_pop, tie_break, similarity.dtype)
+    RP = max(triton.next_power_of_2(rank), 16)
 
     slot = torch.empty((batch, heads, tokens, 2), dtype=torch.int64,
                        device=device)
@@ -750,8 +756,14 @@ def _routing_diff_fwd_op(
                        device=device)
     payload_field = torch.empty((batch, heads, tokens, 2, value_dim),
                                 dtype=torch.float32, device=device)
-    weights = torch.zeros((batch, heads, tokens, rank_max), dtype=torch.float32,
-                          device=device)
+    # the prep kernel stores the full register width with exact zeros above
+    # the active rank, so the buffer needs its own zero-fill only when the
+    # allocated rank is wider than one register tile.
+    weights = (torch.empty((batch, heads, tokens, rank_max),
+                           dtype=torch.float32, device=device)
+               if rank_max <= RP else
+               torch.zeros((batch, heads, tokens, rank_max),
+                           dtype=torch.float32, device=device))
     scratch_i32 = torch.empty((batch, heads, tokens, 4), dtype=torch.int32,
                               device=device)
     scratch_f32 = torch.empty((batch, heads, tokens, 1), dtype=torch.float32,
@@ -762,15 +774,13 @@ def _routing_diff_fwd_op(
     counts = torch.empty((batch * heads, nblocks), dtype=torch.int32,
                          device=device)
 
-    RP = max(triton.next_power_of_2(rank), 16)
     _k5a_prep_kernel[(batch * heads, nblocks)](
         query, rows, active, similarity, strength,
         weights, scratch_i32, scratch_f32, blend, counts,
         tokens, rank,
         *query.stride(), *rows.stride(), *active.stride(),
         *similarity.stride(), *strength.stride(),
-        *weights.stride(), *scratch_i32.stride()[:3], *scratch_f32.stride()[:3],
-        *blend.stride(), nblocks,
+        rank_max, nblocks,
         tau_match=tau_match, tau_merge=tau_merge, tau_pop=tau_pop,
         tie_break=tie_break, scale=scale,
         H=heads, V=value_dim, BT=BT_DEFAULT, BK=BK_DEFAULT, RP=RP,
@@ -780,8 +790,7 @@ def _routing_diff_fwd_op(
         slot, op, erase.view(torch.int8), live.view(torch.int8),
         payload_field,
         tokens, rank, nblocks,
-        *active.stride(), *payload.stride(), *blend.stride(),
-        *scratch_i32.stride()[:3], *scratch_f32.stride()[:3],
+        *active.stride(), *payload.stride(),
         tau_pop=tau_pop,
         H=heads, V=value_dim, BT=BT_DEFAULT, BK=BK_DEFAULT, RP=RP,
         num_warps=4)
@@ -848,8 +857,7 @@ def _routing_diff_bwd_op(
         tokens, rank, nblocks,
         *query.stride(), *rows.stride(), *active.stride(), *strength.stride(),
         *scratch_i32.stride()[:3],
-        *dweights.stride(), *dpay_field.stride(), *dscores.stride(),
-        *dquery.stride(), *dpayload.stride(),
+        *dweights.stride(), *dpay_field.stride(),
         scale=scale,
         H=heads, V=value_dim, BT=BT_DEFAULT, BK=BK_DEFAULT, RP=RP, num_warps=8)
     _k5a_bwd_rows_kernel[(batch * heads, nvalue)](
@@ -858,7 +866,7 @@ def _routing_diff_bwd_op(
         drows,
         tokens, rank, nblocks,
         *query.stride(), *rows.stride(), *active.stride(), *strength.stride(),
-        *scratch_i32.stride()[:3], *dpay_field.stride(), *dscores.stride(),
+        *scratch_i32.stride()[:3], *dpay_field.stride(),
         scale=scale,
         H=heads, V=value_dim, BT=BT_DEFAULT, BK=BK_DEFAULT, BV=BV_DEFAULT,
         RP=RP, num_warps=8)
@@ -944,10 +952,20 @@ def routing_diff_route_chunk(index, token_offset, state, live, query, payload,
     active = live[:, :, :rank]
     rows = state[:, :, :rank]
     frozen_rows = rows.detach()
-    # The eager router's own preprocessing, verbatim (the decision inputs).
+    # The eager router's own preprocessing, verbatim in VALUES -- and built
+    # from detached inputs, because nothing differentiable ever consumed it:
+    # similarity feeds only argmax/gather-into-comparison, a branch that is
+    # grad-dead in the registered path too (the eager engine prunes it at
+    # runtime).  Under torch.compile the dead branch is NOT pruned from the
+    # joint graph, so leaving it attached would compile and run a dead
+    # backward (measured: ~3 bf16 gemms plus their pointer-array setup per
+    # chunk) for gradients that are provably zero.  Detaching removes it
+    # without changing any gradient.
+    payload_value = payload.detach()
     strength = frozen_rows.norm(dim=-1) * active.to(torch.float32)
     stored = frozen_rows / strength.clamp_min(EPS).unsqueeze(-1)
-    value = payload / payload.norm(dim=-1, keepdim=True).clamp_min(EPS)
+    value = payload_value / payload_value.norm(dim=-1,
+                                              keepdim=True).clamp_min(EPS)
     similarity = value @ stored.transpose(-1, -2)
 
     slot, op, erase, live_after, payload_field, weights, _scratch = \
