@@ -1,0 +1,477 @@
+{
+  "x45_fused_mb8_k5b": {
+    "label": "x45_fused_mb8_k5b",
+    "boundary": "whole model, whole step: prepare + all microbatches' forward and backward + clip/AdamW; flagship-stream read excluded; tokens are measured targets over the same 64-window stream batches for every arm (the gates.py/cd_* protocol)",
+    "precision": "bf16 compute (autocast), fp32 master weights, fused CE -- the registered regime",
+    "session": "same-session (this card, this process)",
+    "parameters": 149981808,
+    "summary": {
+      "shape": {
+        "width": 576,
+        "depth": 24,
+        "hidden": 3352,
+        "heads": 2,
+        "value_dim": 128,
+        "rank": 128,
+        "rank_max": 128,
+        "vocab": 256
+      },
+      "parameters": {
+        "total": 149981808,
+        "trainable": 149981808,
+        "per_layer": 6236930,
+        "mixer": 443522,
+        "mlp": 5792256,
+        "norms": 1152,
+        "embedding": 147456,
+        "head": 147456,
+        "final_norm": 576,
+        "capacity": 150003984,
+        "capacity_relative": -0.00014783607347390593
+      },
+      "routing": {
+        "ops": true,
+        "tau_match": 0.45,
+        "tau_merge": 0.85,
+        "tau_pop": 0.1,
+        "tie_break": 1e-06,
+        "read_scale": 2.0,
+        "grow": false,
+        "grow_trigger": 0.5,
+        "grow_window": 4,
+        "grow_window_tokens": 512,
+        "grow_geometric": 2.0,
+        "grow_stride_floor": 64
+      },
+      "chunk_tokens": 64,
+      "fused_backward": false,
+      "fused_routing_diff": false,
+      "fused_whole_scan": true
+    },
+    "microbatches": 8,
+    "windows_per_step": 64,
+    "context": 2048,
+    "warmup": 2,
+    "steps": 2,
+    "tokens": 212955,
+    "step_walls": [
+      3.194,
+      3.201
+    ],
+    "phase_s": {
+      "prepare": 0.002,
+      "fwd_bwd": 6.371,
+      "opt": 0.022
+    },
+    "ms_per_step_p50": 3197.5,
+    "total_s": 6.395,
+    "tokens_per_s": 33300.2,
+    "tokens_per_s_steady": 33300.2,
+    "peak_allocated_gb": 22.12,
+    "losses": [
+      3.845574,
+      3.9578
+    ],
+    "step_profile": {
+      "kernels": 193342,
+      "device_busy_ms": 3169.992,
+      "device_streams": [
+        "(0, 7)"
+      ],
+      "unattributed_device_ms": 0.0,
+      "components_ms": {
+        "a_fused_scan_bwd": 271.223,
+        "a_fused_scan_trajectory_fwd": 381.185,
+        "a_mixer_graph_aten": 577.937,
+        "a_mixer_graph_matmul": 4.833,
+        "backbone_norms": 109.689,
+        "c_embedding": 0.957,
+        "c_head_cross_entropy": 0.617,
+        "c_matmul_backbone": 826.953,
+        "d_optimizer": 6.835,
+        "memcpy": 4.102,
+        "z_other_elementwise": 985.661
+      },
+      "phase_components_ms": {
+        "b_fwd_bwd": {
+          "a_fused_scan_bwd": 271.223,
+          "a_fused_scan_trajectory_fwd": 381.185,
+          "a_mixer_graph_aten": 577.937,
+          "a_mixer_graph_matmul": 4.833,
+          "backbone_norms": 109.689,
+          "c_embedding": 0.957,
+          "c_head_cross_entropy": 0.617,
+          "c_matmul_backbone": 826.953,
+          "memcpy": 3.994,
+          "z_other_elementwise": 983.548
+        },
+        "d_opt": {
+          "d_optimizer": 6.835,
+          "memcpy": 0.001,
+          "z_other_elementwise": 2.114
+        },
+        "e_prepare": {
+          "memcpy": 0.106
+        }
+      },
+      "top_kernels": [
+        {
+          "name": "_persistent_scan_trajectory_kernel",
+          "device_ms": 575.192,
+          "calls": 6144
+        },
+        {
+          "name": "_persistent_bwd_kernel",
+          "device_ms": 412.533,
+          "calls": 6144
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8>(cutlass_80_tensorop_",
+          "device_ms": 313.266,
+          "calls": 1152
+        },
+        {
+          "name": "_persistent_scan_kernel",
+          "device_ms": 229.119,
+          "calls": 6144
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<c10::BFloat16, c10::BFloat16, c10:",
+          "device_ms": 217.09,
+          "calls": 576
+        },
+        {
+          "name": "ampere_bf16_s1688gemm_bf16_64x128_sliced1x2_ldg8_f2f_nn",
+          "device_ms": 155.031,
+          "calls": 384
+        },
+        {
+          "name": "ampere_bf16_s16816gemm_bf16_128x64_ldg8_f2f_tn",
+          "device_ms": 137.781,
+          "calls": 384
+        },
+        {
+          "name": "_k5a_bwd_rows_kernel",
+          "device_ms": 107.972,
+          "calls": 6144
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >",
+          "device_ms": 100.928,
+          "calls": 8821
+        },
+        {
+          "name": "ampere_bf16_s1688gemm_bf16_64x128_sliced1x2_ldg8_f2f_tn",
+          "device_ms": 82.214,
+          "calls": 192
+        },
+        {
+          "name": "_k5a_bwd_scores_kernel",
+          "device_ms": 80.763,
+          "calls": 6144
+        },
+        {
+          "name": "ampere_bf16_s16816gemm_bf16_128x64_ldg8_f2f_nn",
+          "device_ms": 79.018,
+          "calls": 192
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::(anonymous namespace)::silu_backward_kernel(at::",
+          "device_ms": 72.009,
+          "calls": 192
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16_copy_kernel_cuda(at::TensorIteratorBase",
+          "device_ms": 55.876,
+          "calls": 15576
+        },
+        {
+          "name": "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{la",
+          "device_ms": 52.006,
+          "calls": 8872
+        },
+        {
+          "name": "_k5a_prep_kernel",
+          "device_ms": 47.427,
+          "calls": 6144
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::(anonymous namespace)::silu_kernel(at::TensorIte",
+          "device_ms": 45.4,
+          "calls": 192
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::layer_norm_grad_input_kernel_vectorized<float, float, true>(float cons",
+          "device_ms": 36.195,
+          "calls": 392
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_",
+          "device_ms": 35.061,
+          "calls": 18432
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_",
+          "device_ms": 32.015,
+          "calls": 18624
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::GammaBetaBackwardCUDAKernelTemplate<float, float, 32u, 32u, 256u, fals",
+          "device_ms": 31.093,
+          "calls": 392
+        },
+        {
+          "name": "void at::native::reduce_kernel<128, 4, at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::nativ",
+          "device_ms": 30.911,
+          "calls": 12304
+        },
+        {
+          "name": "void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>, 4, Tr",
+          "device_ms": 30.17,
+          "calls": 384
+        },
+        {
+          "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl<at::native::BinaryFunctor<float, float",
+          "device_ms": 21.535,
+          "calls": 6144
+        },
+        {
+          "name": "ampere_bf16_s1688gemm_bf16_128x128_ldg8_f2f_stages_32x1_nn",
+          "device_ms": 17.578,
+          "calls": 584
+        }
+      ],
+      "top_launchers": [
+        {
+          "name": "x45::whole_scan_bwd",
+          "device_ms": 1260.1,
+          "calls": 67968
+        },
+        {
+          "name": "aten::mm",
+          "device_ms": 813.18,
+          "calls": 5776
+        },
+        {
+          "name": "GeneratedBackwardFor_x45_whole_scan_fwd_default",
+          "device_ms": 301.985,
+          "calls": 69888
+        },
+        {
+          "name": "aten::mul",
+          "device_ms": 217.11,
+          "calls": 593
+        },
+        {
+          "name": "x45::whole_scan_fwd",
+          "device_ms": 153.154,
+          "calls": 34944
+        },
+        {
+          "name": "aten::add_",
+          "device_ms": 91.726,
+          "calls": 2669
+        },
+        {
+          "name": "aten::copy_",
+          "device_ms": 88.798,
+          "calls": 6816
+        },
+        {
+          "name": "aten::silu_backward",
+          "device_ms": 72.009,
+          "calls": 192
+        },
+        {
+          "name": "aten::_fused_rms_norm_backward",
+          "device_ms": 67.288,
+          "calls": 784
+        },
+        {
+          "name": "aten::silu",
+          "device_ms": 45.4,
+          "calls": 192
+        },
+        {
+          "name": "aten::add",
+          "device_ms": 30.389,
+          "calls": 393
+        },
+        {
+          "name": "aten::_fused_rms_norm",
+          "device_ms": 10.096,
+          "calls": 392
+        },
+        {
+          "name": "aten::_fused_adamw_",
+          "device_ms": 6.83,
+          "calls": 8
+        },
+        {
+          "name": "aten::addmm",
+          "device_ms": 4.1,
+          "calls": 208
+        },
+        {
+          "name": "aten::_foreach_mul_",
+          "device_ms": 1.389,
+          "calls": 8
+        },
+        {
+          "name": "aten::sum",
+          "device_ms": 1.107,
+          "calls": 216
+        },
+        {
+          "name": "aten::embedding_dense_backward",
+          "device_ms": 0.798,
+          "calls": 232
+        },
+        {
+          "name": "FusedLinearCrossEntropyFunction",
+          "device_ms": 0.751,
+          "calls": 16
+        },
+        {
+          "name": "aten::_foreach_norm",
+          "device_ms": 0.708,
+          "calls": 9
+        },
+        {
+          "name": "aten::fill_",
+          "device_ms": 0.696,
+          "calls": 553
+        },
+        {
+          "name": "aten::where",
+          "device_ms": 0.403,
+          "calls": 192
+        },
+        {
+          "name": "aten::sigmoid",
+          "device_ms": 0.309,
+          "calls": 192
+        },
+        {
+          "name": "aten::ge",
+          "device_ms": 0.254,
+          "calls": 192
+        },
+        {
+          "name": "FusedLinearCrossEntropyFunctionBackward",
+          "device_ms": 0.253,
+          "calls": 16
+        },
+        {
+          "name": "aten::clamp",
+          "device_ms": 0.227,
+          "calls": 193
+        }
+      ]
+    },
+    "cprofile_step": null,
+    "dynamo_counters": {
+      "frames": {
+        "total": 9,
+        "ok": 8
+      },
+      "inline_call": {},
+      "stats": {
+        "calls_captured": 32,
+        "unique_graphs": 8
+      },
+      "inductor": {
+        "fxgraph_cache_miss": 16,
+        "extern_calls": 64
+      },
+      "aot_autograd": {
+        "total": 8,
+        "autograd_cache_miss": 8,
+        "ok": 8,
+        "autograd_cache_saved": 8
+      },
+      "graph_break": {},
+      "unimplemented": {
+        "recompile_limit reached": 1
+      }
+    },
+    "recorded_references": {
+      "gdn2_tokens_per_s": 28124.0,
+      "matrix_ops_tokens_per_s": 13189.7,
+      "x45_registered_mb8_tokens_per_s_steady": 9306.3,
+      "x45_on_mb2_tokens_per_s_steady": 880.8,
+      "x45_off_mb2_tokens_per_s_steady": 2110.7,
+      "source": "receipts/cd_gdn2_c128_rerun.json, receipts/cd_matrix_ops_c128.json, receipts/scale_proof_model_step.json -- RECORDED, not same-session"
+    }
+  },
+  "session": {
+    "device": "NVIDIA RTX 6000 Ada Generation",
+    "card_gib": 47.38,
+    "torch": "2.9.1+cu128",
+    "triton": "3.5.1"
+  },
+  "gate": "D (K5B)",
+  "baseline": {
+    "registered_step_wall_s": 7.819,
+    "registered_kernels_per_step": 434366,
+    "registered_device_busy_s": 3.348,
+    "fused_bc_step_wall_s": 8.53,
+    "fused_bc_kernels_per_step": 207985,
+    "fused_bc_device_busy_s": 3.06,
+    "k5a_step_wall_s": 9.08,
+    "k5a_kernels_per_step": 125033,
+    "k5a_device_busy_s": 3.1,
+    "k5a_host_gap_s": 5.98,
+    "k5a_tokens_per_s_steady": 11210.7,
+    "gdn2_tokens_per_s_steady": 28124.0,
+    "device_floor_tokens_per_s": 32000,
+    "source": "receipts/k5a_step_metric.json (its own session) -- this receipt re-measures the matched four arms in ONE session with the K5B arm"
+  },
+  "boundary": "whole model, whole step: prepare + all microbatches' forward and backward + clip/AdamW; flagship-stream read excluded; tokens are measured targets over the same 64-window stream batches for every arm (the gates.py/cd_* protocol)",
+  "arms": {
+    "x45_fused_mb8_k5b": {
+      "step_wall_s": 3.1975,
+      "kernels_per_step": 193342,
+      "device_busy_s": 3.169992,
+      "host_gap_s": 0.027507999999999644,
+      "tokens_per_s": 33300.2,
+      "tokens_per_s_steady": 33300.2,
+      "peak_gb": 22.12,
+      "components_ms": {
+        "a_fused_scan_bwd": 271.223,
+        "a_fused_scan_trajectory_fwd": 381.185,
+        "a_mixer_graph_aten": 577.937,
+        "a_mixer_graph_matmul": 4.833,
+        "backbone_norms": 109.689,
+        "c_embedding": 0.957,
+        "c_head_cross_entropy": 0.617,
+        "c_matmul_backbone": 826.953,
+        "d_optimizer": 6.835,
+        "memcpy": 4.102,
+        "z_other_elementwise": 985.661
+      },
+      "step_walls": [
+        3.194,
+        3.201
+      ]
+    }
+  },
+  "verdict": {
+    "best_arm": "x45_fused_mb8_k5b",
+    "k5b_step_wall_s": 3.1975,
+    "k5b_kernels_per_step": 193342,
+    "k5b_device_busy_s": 3.169992,
+    "k5b_host_gap_s": 0.027507999999999644,
+    "k5b_tokens_per_s_steady": 33300.2,
+    "k5a_step_wall_s": null,
+    "registered_step_wall_s": null,
+    "target_tokens_per_s": 32000,
+    "target_reached": true,
+    "host_ms_per_scan": null,
+    "dispatch_counts": null,
+    "residual_attribution": {
+      "host_gap_s": 0.027507999999999644,
+      "note": "filled in by the K5B doc from this receipt: the ranked owners of whatever host gap remains, decomposed with the same attribution discipline"
+    }
+  }
+}

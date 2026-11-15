@@ -1,0 +1,205 @@
+{
+  "session": {
+    "device": "NVIDIA RTX 6000 Ada Generation",
+    "card_gib": 47.38,
+    "torch": "2.9.1+cu128",
+    "triton": "3.5.1"
+  },
+  "gate": "K5B",
+  "bit_equality_to_the_arm": {
+    "fixture": "registered shape: batch 8, 2048 tokens, rank 128, chunk 64, bf16 autocast, 32 chunks per scan",
+    "recorded_channels_bit_equal": {
+      "slot": true,
+      "erase": true,
+      "op": true,
+      "live_after": true,
+      "payload": true,
+      "weights": true,
+      "reads": true,
+      "state": true,
+      "live": true
+    },
+    "wrapper_calls": [
+      {
+        "reads": true,
+        "dquery": true,
+        "dpayload": true,
+        "ddecay": true
+      },
+      {
+        "reads": true,
+        "dquery": true,
+        "dpayload": true,
+        "ddecay": true
+      },
+      {
+        "reads": true,
+        "dquery": true,
+        "dpayload": true,
+        "ddecay": true
+      }
+    ],
+    "wrapper_call_labels": [
+      "eager body",
+      "capture + replay",
+      "replay"
+    ],
+    "ledger_after": {
+      "fwd_calls": 3,
+      "bwd_calls": 3,
+      "fwd_graph_replays": 2,
+      "bwd_graph_replays": 2,
+      "fwd_eager": 1,
+      "bwd_eager": 1,
+      "fwd_captures": 1,
+      "bwd_captures": 1,
+      "fallbacks": 0
+    },
+    "all_bit_equal": true
+  },
+  "flip_test": {
+    "fixture": "real routed scan, batch 8, 2048 tokens, rank 128, chunk 64, bf16 autocast, 32 chunks",
+    "differing_lanes": {
+      "slot": 0,
+      "erase": 0,
+      "op": 0,
+      "live_after": 0,
+      "payload": 0
+    },
+    "lanes": 8650752,
+    "flips": 0,
+    "zero_flips": true,
+    "construction": "the whole-scan walk runs the K5A router, which consumes the eager preprocessing's own similarity and strength tensors, so decisions are bit-equal by construction; this test is the proof, at the bar and fixture of the K5A receipt"
+  },
+  "model_level_bit_equality": {
+    "fixture": "depth-2 registered model, one whole training step (fwd + bwd), compile off, bf16 autocast: the per-chunk K5A+K4 arm vs the whole-scan arm",
+    "loss_arm": 5.710614204406738,
+    "loss_whole_scan": 5.710614204406738,
+    "loss_bit_equal": true,
+    "parameters": 23,
+    "gradients_differing": [],
+    "all_gradients_bit_equal": true
+  },
+  "floors": [
+    {
+      "label": "fp32_small",
+      "chunks_sampled": 2,
+      "weights_floor": 7.450580596923828e-09,
+      "weights_max_deviation": 1.4901161193847656e-08,
+      "weights_median_deviation": 9.313225746154785e-10,
+      "within_floor": true
+    },
+    {
+      "label": "registered_bf16",
+      "chunks_sampled": 4,
+      "weights_floor": 0.0011424422264099121,
+      "weights_max_deviation": 0.0011424422264099121,
+      "weights_median_deviation": 9.255018085241318e-09,
+      "within_floor": true
+    }
+  ],
+  "gradient_floors": [
+    {
+      "label": "fp32",
+      "gradient_floor": 3.14807556023311e-06,
+      "note": "the whole-scan adjoint is bit-equal to the per-chunk K5A+K4 arm's on the same upstream (gate A asserts it end-to-end at the registered shape, and the model-level row asserts every parameter gradient), so the floor that bounds the arm's adjoint bounds it: the eager autograd's own deviation from the fp64 oracle, re-measured here"
+    },
+    {
+      "label": "bf16",
+      "gradient_floor": 0.897590060235359,
+      "note": "the whole-scan adjoint is bit-equal to the per-chunk K5A+K4 arm's on the same upstream (gate A asserts it end-to-end at the registered shape, and the model-level row asserts every parameter gradient), so the floor that bounds the arm's adjoint bounds it: the eager autograd's own deviation from the fp64 oracle, re-measured here"
+    }
+  ],
+  "host_cost_per_scan": {
+    "shape": {
+      "batch": 8,
+      "tokens": 2048,
+      "heads": 2,
+      "rank": 128,
+      "value_dim": 128,
+      "chunk_tokens": 64,
+      "chunks_per_scan": 32
+    },
+    "scans_per_step": 192,
+    "before_per_chunk_k5a_compiled_ms_per_scan": 41.999,
+    "after_whole_scan_ms_per_scan": 1.115,
+    "ledger": {
+      "fwd_calls": 23,
+      "bwd_calls": 23,
+      "fwd_graph_replays": 22,
+      "bwd_graph_replays": 22,
+      "fwd_eager": 1,
+      "bwd_eager": 1,
+      "fwd_captures": 1,
+      "bwd_captures": 1,
+      "fallbacks": 0
+    },
+    "note": "host issue time of one mixer scan, fwd+bwd, warmed: the per-chunk arm crosses ~4 op bodies per chunk x 32 chunks; the whole-scan arm is 2 op dispatches + 2 graph replays + input copies",
+    "per_step_host_s_before": 8.064,
+    "per_step_host_s_after": 0.214
+  },
+  "determinism_and_pathology": {
+    "replay_bit_identical": {
+      "reads": true,
+      "state": true,
+      "dquery": true,
+      "dpayload": true,
+      "ddecay": true
+    },
+    "refusals_bit_equal_to_per_chunk_stack": {
+      "growth": true,
+      "append_only": true,
+      "rank_512": true
+    },
+    "fallbacks_in_ledger": 1
+  },
+  "compiled_regime": {
+    "compiled_wrapper_bit_equal": [
+      true,
+      true,
+      true
+    ],
+    "inductorerror_raised": false,
+    "preprocessing_probe": {
+      "eager_vs_inductor_bit_equal": "4096/4096",
+      "note": "pre-existing: the registered COMPILED arm's similarity differs from the eager router's by inductor's reduction orders (the K5A receipt's probe row).  The whole-scan op keeps the EAGER preprocessing (captured into its graph), so its decisions are bit-equal to the registered EAGER router's -- the flip-test bar -- and any step-level difference from the registered compiled arm is that arm's own delta, not a K5B deviation"
+    }
+  },
+  "gate_suites_rerun": [
+    {
+      "suite": "test_k4_fused_backward.py",
+      "command": ".venv/bin/python -m pytest -q experiments/expressivity_tasks/x45_matrix_emender/test_k4_fused_backward.py",
+      "returncode": 0,
+      "wall_s": 8.6,
+      "summary": "============================== 14 passed in 7.38s =============================="
+    },
+    {
+      "suite": "test_k5_recompute.py",
+      "command": ".venv/bin/python -m pytest -q experiments/expressivity_tasks/x45_matrix_emender/test_k5_recompute.py",
+      "returncode": 0,
+      "wall_s": 8.3,
+      "summary": "============================== 5 passed in 6.67s ==============================="
+    },
+    {
+      "suite": "test_k5_routing_fusion.py",
+      "command": ".venv/bin/python -m pytest -q experiments/expressivity_tasks/x45_matrix_emender/test_k5_routing_fusion.py",
+      "returncode": 0,
+      "wall_s": 25.0,
+      "summary": "============================= 14 passed in 21.55s =============================="
+    },
+    {
+      "suite": "test_k5a_routing_diff.py",
+      "command": ".venv/bin/python -m pytest -q experiments/expressivity_tasks/x45_matrix_emender/test_k5a_routing_diff.py",
+      "returncode": 0,
+      "wall_s": 24.8,
+      "summary": "============================= 18 passed in 21.63s =============================="
+    },
+    {
+      "suite": "test_k5b_whole_scan.py",
+      "command": ".venv/bin/python -m pytest -q experiments/expressivity_tasks/x45_matrix_emender/test_k5b_whole_scan.py",
+      "returncode": 0,
+      "wall_s": 14.0,
+      "summary": "============================== 14 passed in 7.54s =============================="
+    }
+  ]
+}
