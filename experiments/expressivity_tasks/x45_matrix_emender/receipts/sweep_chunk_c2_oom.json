@@ -1,0 +1,63 @@
+{
+ "sweep": "chunk_sequentiality",
+ "receipt": "chunk-2 arm: NOT RUN, with reason -- first-class receipt of the measured memory wall",
+ "chunk_tokens": 2,
+ "seed": 3401,
+ "intended_exposure_targets": 20000000,
+ "status": "not-run-with-reason",
+ "decision": "operator decision (supervisor session, this sweep's escalation channel): not-run-with-reason; the half-exposure fallback in the task's menu was written for a TIME wall and cannot help a per-step MEMORY wall, and a microbatch-deviated point would not sit comparably in the gradient table",
+ "reason": "CUDA OOM during the first training step's whole-scan graph capture, at the matched training regime (registered microbatch 8, K5B path): 42.71 GiB allocated by PyTorch (47.37 GiB total process use) against the 47.38 GiB card, before the first training step was logged. Exposure cannot change this: the chunk-entry checkpoint set the K5B forward keeps for its adjoint scales with the number of chunks per window, which is a property of the scan shape, not of the run length.",
+ "evidence": {
+  "preflight": "a 4-step leased smoke arm at chunk 2 (card 4, seed 3401, 400,000-target budget), run detached before budgeting the full arm; console retained at experiments/expressivity_tasks/x45_matrix_emender/sweep_runs/preflight_c2.console.txt (sha256 e9dd28aeafc90756faca8217d850b796644594cc5dc28451da778230a49565dc)",
+  "preflight_console_sha256": "e9dd28aeafc90756faca8217d850b796644594cc5dc28451da778230a49565dc",
+  "parity_passed_first": {
+   "gate": "the same per-chunk-size parity gate every arm runs, BEFORE the arm's clock",
+   "receipt": "experiments/expressivity_tasks/x45_matrix_emender/receipts/smoke/sweep_chunk_parity_c2.json (sha256 b1937f136552b03271a13155428cc3df0bad61fb3fd7a5530b83c3063b716073)",
+   "receipt_sha256": "b1937f136552b03271a13155428cc3df0bad61fb3fd7a5530b83c3063b716073",
+   "chunk_tokens": 2,
+   "chunks_per_window": 1024,
+   "bit_equal_channels": ["slot", "erase", "op", "live_after", "payload", "weights", "reads", "state", "live"],
+   "bit_equal_gradients": ["dquery", "dpayload", "ddecay"],
+   "decision_flip_test": {
+    "chunks": 1024,
+    "flips": 0,
+    "lanes": 8650752,
+    "per_field_flips": {"slot": 0, "erase": 0, "op": 0, "live_after": 0, "payload": 0}
+   },
+   "parity_wall_seconds": 22.6,
+   "note": "the fast path is pinned to the registered router at chunk 2 exactly as at every other chunk size; the wall that stopped the arm is memory, not correctness"
+  },
+  "oom_observed": {
+   "phase": "training step 1, whole-scan graph capture (mixer slots were mid-capture when the allocator gave out)",
+   "torch_allocated_gib": 42.71,
+   "process_total_gib": 47.37,
+   "card_total_gib": 47.38,
+   "training_steps_logged": 0,
+   "registered_microbatch": 8
+  }
+ },
+ "checkpoint_scaling_law": {
+  "claim": "the K5B whole-scan graph's training peak memory is LINEAR in decisions-per-window (the chunk count), because the forward keeps a chunk-entry checkpoint set (entry state + liveness + read weights + schedule + routing scratch) per chunk per layer for the adjoint walk (K4's recompute-over-store doctrine: ~1 MB of state per chunk per layer at the registered shape, x24 layers)",
+  "measured_points": [
+   {"chunk_tokens": 128, "chunks_per_window": 16, "peak_allocated_gb": 21.96, "receipt": "receipts/sweep_chunk_c128.json"},
+   {"chunk_tokens": 64, "chunks_per_window": 32, "peak_allocated_gb": 22.39, "receipt": "receipts/sweep_chunk_c64.json"},
+   {"chunk_tokens": 32, "chunks_per_window": 64, "peak_allocated_gb": 23.23, "receipt": "receipts/sweep_chunk_c32.json"},
+   {"chunk_tokens": 8, "chunks_per_window": 256, "peak_allocated_gb": 28.32, "receipt": "receipts/sweep_chunk_c8.json"},
+   {"chunk_tokens": 4, "chunks_per_window": 512, "peak_allocated_gb": 35.1, "receipt": "receipts/sweep_chunk_c4.json"}
+  ],
+  "fit": "peak_GB = 21.54 + 0.02649 * chunks_per_window (least squares over the five arms; residuals <= 0.005 GB -- the law is linear to measurement precision)",
+  "marginal_cost": "~26.5 MB per chunk per window (i.e. per additional chunk-entry decision event per window, across the 24 layers)",
+  "projection_chunk_2": "1024 chunks/window -> ~48.7 GB (45.3 GiB) of allocator demand plus context and fragmentation: beyond the 47.38 GiB card, consistent with the observed OOM at 42.71 GiB allocated mid-capture",
+  "hard_floor": "at the registered microbatch on a 48 GB card, the chunk dial's floor is ~chunk 4: the current architecture CANNOT reach per-token decisions on this hardware -- by memory, not by time"
+ },
+ "implications": [
+  "The sequentiality dial bottoms out at chunk 4 on this hardware at the registered microbatch; the per-token limit of the dial is therefore UNREACHABLE by the dial alone, and the sweep's smallest measured point (chunk 4) is the closest approach this architecture allows.",
+  "This is direct evidence for the split-scan direction (a small sequential decision mini-scan over near-current state + a large-chunk parallel value scan): the value scan must stay large-chunk precisely because its checkpoint memory scales with the chunk count, while the decision layer must move to a small sequential state update. The dial cannot deliver per-token decisions; the split can.",
+  "Named but NOT run (per the operator's decision): a chunk-2 arm at microbatch 4 instead of the transferred 8 is a one-command rerun (run_sweep_chunk_leased.sh with a microbatch override) that would fit (~half the batch-scaled demand) and deliver the chunk-2 point, but it is a labelled deviation from the transferred-optimizer discipline (microbatch is a recorded config field; reduction order differs numerically) and was deliberately not spent."
+ ],
+ "cross_references": {
+  "result_doc": "experiments/expressivity_tasks/x45_matrix_emender/RESULT_CHUNK_SEQUENTIALITY.md",
+  "k4_doctrine": "experiments/expressivity_tasks/x45_matrix_emender/K4_FUSED_BACKWARD.md (the recompute-over-store design whose per-chunk entry checkpoint is the term that scales here)",
+  "gradient_table": "receipts/sweep_chunk_gradient.json"
+ }
+}

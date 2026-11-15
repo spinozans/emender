@@ -1,0 +1,117 @@
+gpu_lease: granted GPUs: 4 (pid 3306061)
+preflight leased card: 4
+{
+ "chunk_tokens": 2,
+ "bit_equal_channels": [
+  "slot",
+  "erase",
+  "op",
+  "live_after",
+  "payload",
+  "weights",
+  "reads",
+  "state",
+  "live"
+ ],
+ "op_histogram": {
+  "none": 34111,
+  "append": 15643,
+  "correct": 1860,
+  "pop": 13918,
+  "merge": 4
+ }
+}
+{"chunk_tokens": 2, "card": "4", "seed": 3401, "exposure": 400000, "parameters": 149981808}
+W1115 21:15:54.024000 3306124 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8] torch._dynamo hit config.recompile_limit (8)
+W1115 21:15:54.024000 3306124 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8]    function: 'whole_scan' (/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k5b_whole_scan.py:582)
+W1115 21:15:54.024000 3306124 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8]    last reason: 0/7: slot_id == 9  # reads, state, live, _token = _whole_scan_fwd_op(  # experiments/expressivity_tasks/x45_matrix_emender/k5b_whole_scan.py:622 in whole_scan (experiments/expressivity_tasks/x45_matrix_emender/k5b_whole_scan.py:479 in _)
+W1115 21:15:54.024000 3306124 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8] To log all recompilation reasons, use TORCH_LOGS="recompiles".
+W1115 21:15:54.024000 3306124 .venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py:1358] [0/8] To diagnose recompilation issues, see https://pytorch.org/docs/main/torch.compiler_troubleshooting.html
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/sweep_chunk_sequentiality.py", line 628, in <module>
+    main()
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/sweep_chunk_sequentiality.py", line 622, in main
+    train_arm(args)
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/sweep_chunk_sequentiality.py", line 482, in train_arm
+    loss = model.loss(x, y)
+           ^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py", line 302, in loss
+    hidden = self.features(ids)
+             ^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py", line 296, in features
+    x = block(x)
+        ^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py", line 265, in forward
+    h = x + self.mixer(self.norm1(x))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py", line 211, in forward
+    return self._forward_impl(x)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py", line 214, in _forward_impl
+    out, result = self.mix(x)
+                  ^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py", line 230, in mix
+    result = scan(
+             ^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py", line 832, in compile_wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k5b_whole_scan.py", line 622, in whole_scan
+    reads, state, live, _token = _whole_scan_fwd_op(
+                                 ^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_library/custom_ops.py", line 676, in __call__
+    return self._opoverload(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_ops.py", line 841, in __call__
+    return self._op(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_library/autograd.py", line 109, in autograd_impl
+    result = Generated.apply(*args, Metadata(keyset, keyword_only_args))  # type: ignore[attr-defined]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py", line 581, in apply
+    return super().apply(*args, **kwargs)  # type: ignore[misc]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_library/autograd.py", line 50, in forward
+    result = op.redispatch(keyset & _C._after_autograd_keyset, *args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_ops.py", line 848, in redispatch
+    return self._handle.redispatch_boxed(keyset, *args, **kwargs)  # type: ignore[return-value]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_library/custom_ops.py", line 343, in backend_impl
+    result = self._backend_fns[device_type](*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_compile.py", line 53, in inner
+    return disable_fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py", line 1044, in _fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_library/custom_ops.py", line 376, in wrapped_fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k5b_whole_scan.py", line 448, in _whole_scan_fwd_op
+    slot.fwd_graph, outputs = _warm_capture(body)
+                              ^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k5b_whole_scan.py", line 380, in _warm_capture
+    body()
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k5b_whole_scan.py", line 440, in body
+    return _fwd_body(slot.query_static, slot.payload_static,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k5b_whole_scan.py", line 240, in _fwd_body
+    stored = frozen_rows / strength.clamp_min(EPS).unsqueeze(-1)
+             ~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 2.00 MiB. GPU 0 has a total capacity of 47.38 GiB of which 704.00 KiB is free. Including non-PyTorch memory, this process has 47.37 GiB memory in use. Of the allocated memory 42.71 GiB is allocated by PyTorch, with 158.21 MiB allocated in private pools (e.g., CUDA Graphs), and 849.42 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
