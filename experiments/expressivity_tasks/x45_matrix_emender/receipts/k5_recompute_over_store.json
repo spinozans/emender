@@ -1,0 +1,1024 @@
+{
+  "x45_fused_mb8": {
+    "label": "x45_fused_mb8",
+    "boundary": "whole model, whole step: prepare + all microbatches' forward and backward + clip/AdamW; flagship-stream read excluded; tokens are measured targets over the same 64-window stream batches for every arm (the gates.py/cd_* protocol)",
+    "precision": "bf16 compute (autocast), fp32 master weights, fused CE -- the registered regime",
+    "session": "same-session (this card, this process)",
+    "parameters": 149981808,
+    "summary": {
+      "shape": {
+        "width": 576,
+        "depth": 24,
+        "hidden": 3352,
+        "heads": 2,
+        "value_dim": 128,
+        "rank": 128,
+        "rank_max": 128,
+        "vocab": 256
+      },
+      "parameters": {
+        "total": 149981808,
+        "trainable": 149981808,
+        "per_layer": 6236930,
+        "mixer": 443522,
+        "mlp": 5792256,
+        "norms": 1152,
+        "embedding": 147456,
+        "head": 147456,
+        "final_norm": 576,
+        "capacity": 150003984,
+        "capacity_relative": -0.00014783607347390593
+      },
+      "routing": {
+        "ops": true,
+        "tau_match": 0.45,
+        "tau_merge": 0.85,
+        "tau_pop": 0.1,
+        "tie_break": 1e-06,
+        "read_scale": 2.0,
+        "grow": false,
+        "grow_trigger": 0.5,
+        "grow_window": 4,
+        "grow_window_tokens": 512,
+        "grow_geometric": 2.0,
+        "grow_stride_floor": 64
+      },
+      "chunk_tokens": 64
+    },
+    "microbatches": 8,
+    "windows_per_step": 64,
+    "context": 2048,
+    "warmup": 2,
+    "steps": 3,
+    "tokens": 318235,
+    "step_walls": [
+      8.255,
+      8.295,
+      8.272
+    ],
+    "phase_s": {
+      "prepare": 0.003,
+      "fwd_bwd": 24.773,
+      "opt": 0.046
+    },
+    "ms_per_step_p50": 8272.0,
+    "total_s": 24.822,
+    "tokens_per_s": 12820.7,
+    "tokens_per_s_steady": 12210.8,
+    "peak_allocated_gb": 21.28,
+    "losses": [
+      3.843691,
+      3.95865,
+      3.405281
+    ],
+    "step_profile": {
+      "kernels": 207976,
+      "device_busy_ms": 3072.866,
+      "device_streams": [
+        "(0, 7)"
+      ],
+      "unattributed_device_ms": 0.0,
+      "components_ms": {
+        "a_mixer_graph_aten": 1552.776,
+        "a_mixer_graph_matmul": 71.647,
+        "backbone_norms": 123.137,
+        "c_embedding": 0.862,
+        "c_head_cross_entropy": 0.675,
+        "c_matmul_backbone": 801.906,
+        "d_optimizer": 6.826,
+        "memcpy": 0.129,
+        "z_other_elementwise": 514.908
+      },
+      "phase_components_ms": {
+        "b_fwd_bwd": {
+          "a_mixer_graph_aten": 1552.776,
+          "a_mixer_graph_matmul": 71.647,
+          "backbone_norms": 123.137,
+          "c_embedding": 0.862,
+          "c_head_cross_entropy": 0.675,
+          "c_matmul_backbone": 801.906,
+          "memcpy": 0.128,
+          "z_other_elementwise": 512.81
+        },
+        "d_opt": {
+          "d_optimizer": 6.826,
+          "memcpy": 0.001,
+          "z_other_elementwise": 2.098
+        }
+      },
+      "top_kernels": [
+        {
+          "name": "_persistent_scan_trajectory_kernel",
+          "device_ms": 553.881,
+          "calls": 6144
+        },
+        {
+          "name": "_persistent_bwd_kernel",
+          "device_ms": 400.151,
+          "calls": 6144
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8>(cutlass_80_tensorop_",
+          "device_ms": 305.483,
+          "calls": 1152
+        },
+        {
+          "name": "_persistent_scan_kernel",
+          "device_ms": 228.042,
+          "calls": 6144
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<c10::BFloat16, c10::BFloat16, c10:",
+          "device_ms": 217.906,
+          "calls": 576
+        },
+        {
+          "name": "ampere_bf16_s1688gemm_bf16_64x128_sliced1x2_ldg8_f2f_nn",
+          "device_ms": 155.729,
+          "calls": 384
+        },
+        {
+          "name": "ampere_bf16_s16816gemm_bf16_128x64_ldg8_f2f_tn",
+          "device_ms": 133.89,
+          "calls": 384
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >",
+          "device_ms": 94.056,
+          "calls": 2677
+        },
+        {
+          "name": "ampere_bf16_s1688gemm_bf16_64x128_sliced1x2_ldg8_f2f_tn",
+          "device_ms": 80.378,
+          "calls": 192
+        },
+        {
+          "name": "ampere_bf16_s16816gemm_bf16_128x64_ldg8_f2f_nn",
+          "device_ms": 77.472,
+          "calls": 192
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::(anonymous namespace)::silu_backward_kernel(at::",
+          "device_ms": 72.691,
+          "calls": 192
+        },
+        {
+          "name": "triton_poi_fused__to_copy_add_clamp_min_div_eq_ge_masked_fill_mul_permute_scalar_tensor_slice_slice_backward_v",
+          "device_ms": 55.524,
+          "calls": 192
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_128x2_nn_align8>(cutlass_80_wmma_te",
+          "device_ms": 54.868,
+          "calls": 18432
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::(anonymous namespace)::silu_kernel(at::TensorIte",
+          "device_ms": 45.571,
+          "calls": 192
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::layer_norm_grad_input_kernel_vectorized<float, float, true>(float cons",
+          "device_ms": 42.28,
+          "calls": 392
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16_copy_kernel_cuda(at::TensorIteratorBase",
+          "device_ms": 40.894,
+          "calls": 3093
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::GammaBetaBackwardCUDAKernelTemplate<float, float, 32u, 32u, 256u, fals",
+          "device_ms": 38.802,
+          "calls": 392
+        },
+        {
+          "name": "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{la",
+          "device_ms": 38.261,
+          "calls": 2728
+        },
+        {
+          "name": "void at::native::reduce_kernel<128, 4, at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::nativ",
+          "device_ms": 34.829,
+          "calls": 12304
+        },
+        {
+          "name": "void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>, 4, Tr",
+          "device_ms": 31.391,
+          "calls": 384
+        },
+        {
+          "name": "triton_red_fused__to_copy_add_clamp_min_clone_copy_div_eq_fused_block_scan_bwd_ge_masked_fill_mul_neg_permute_",
+          "device_ms": 24.805,
+          "calls": 5952
+        },
+        {
+          "name": "triton_red_fused__to_copy_add_arange_argmax_bitwise_and_bitwise_not_bitwise_or_clamp_min_copy_div_eq_full_like",
+          "device_ms": 19.799,
+          "calls": 6144
+        },
+        {
+          "name": "triton_poi_fused_clone_copy_index_put_mul_permute_scalar_tensor_select_where_4",
+          "device_ms": 19.194,
+          "calls": 5952
+        },
+        {
+          "name": "triton_poi_fused_copy_slice_zeros_like_11",
+          "device_ms": 18.542,
+          "calls": 192
+        },
+        {
+          "name": "ampere_bf16_s1688gemm_bf16_128x128_ldg8_f2f_stages_32x1_nn",
+          "device_ms": 18.149,
+          "calls": 584
+        }
+      ],
+      "top_launchers": [
+        {
+          "name": "x45::fused_block_scan_bwd",
+          "device_ms": 954.032,
+          "calls": 12288
+        },
+        {
+          "name": "aten::mm",
+          "device_ms": 797.863,
+          "calls": 5775
+        },
+        {
+          "name": "x45::fused_block_scan",
+          "device_ms": 228.042,
+          "calls": 6144
+        },
+        {
+          "name": "aten::mul",
+          "device_ms": 217.925,
+          "calls": 593
+        },
+        {
+          "name": "aten::add_",
+          "device_ms": 94.047,
+          "calls": 2669
+        },
+        {
+          "name": "aten::_fused_rms_norm_backward",
+          "device_ms": 81.082,
+          "calls": 784
+        },
+        {
+          "name": "aten::copy_",
+          "device_ms": 79.258,
+          "calls": 5837
+        },
+        {
+          "name": "aten::silu_backward",
+          "device_ms": 72.691,
+          "calls": 192
+        },
+        {
+          "name": "aten::bmm",
+          "device_ms": 71.647,
+          "calls": 24384
+        },
+        {
+          "name": "triton_poi_fused__to_copy_add_clamp_min_div_eq_ge_masked_fill_mul_permute_scalar_tensor_slice_slice_backward_v",
+          "device_ms": 55.524,
+          "calls": 192
+        },
+        {
+          "name": "aten::silu",
+          "device_ms": 45.571,
+          "calls": 192
+        },
+        {
+          "name": "aten::sum",
+          "device_ms": 35.838,
+          "calls": 12504
+        },
+        {
+          "name": "aten::add",
+          "device_ms": 31.614,
+          "calls": 393
+        },
+        {
+          "name": "triton_red_fused__to_copy_add_clamp_min_clone_copy_div_eq_fused_block_scan_bwd_ge_masked_fill_mul_neg_permute_",
+          "device_ms": 24.805,
+          "calls": 5952
+        },
+        {
+          "name": "triton_red_fused__to_copy_add_arange_argmax_bitwise_and_bitwise_not_bitwise_or_clamp_min_copy_div_eq_full_like",
+          "device_ms": 19.799,
+          "calls": 6144
+        },
+        {
+          "name": "triton_poi_fused_clone_copy_index_put_mul_permute_scalar_tensor_select_where_4",
+          "device_ms": 19.194,
+          "calls": 5952
+        },
+        {
+          "name": "triton_poi_fused_copy_slice_zeros_like_11",
+          "device_ms": 18.542,
+          "calls": 192
+        },
+        {
+          "name": "triton_per_fused__softmax__to_copy_arange_argmax_argmin_bitwise_not_exp_masked_fill_mul_prepare_softmax_online",
+          "device_ms": 14.905,
+          "calls": 5952
+        },
+        {
+          "name": "triton_per_fused_arange_bitwise_not_cumsum_gather_ge_masked_fill_mul_scatter_squeeze_sub_unsqueeze_view_30",
+          "device_ms": 12.842,
+          "calls": 5952
+        },
+        {
+          "name": "triton_per_fused_linalg_vector_norm_24",
+          "device_ms": 12.623,
+          "calls": 5952
+        },
+        {
+          "name": "triton_per_fused__softmax__softmax_backward_data__to_copy_bitwise_not_masked_fill_mul_scalar_tensor_unsqueeze_",
+          "device_ms": 12.368,
+          "calls": 5952
+        },
+        {
+          "name": "triton_per_fused_mul_sum_2",
+          "device_ms": 12.185,
+          "calls": 5952
+        },
+        {
+          "name": "triton_poi_fused__to_copy_clamp_min_div_transpose_view_186",
+          "device_ms": 11.87,
+          "calls": 6144
+        },
+        {
+          "name": "triton_poi_fused__to_copy_clamp_min_div_mul_transpose_unsqueeze_26",
+          "device_ms": 10.415,
+          "calls": 5952
+        },
+        {
+          "name": "aten::_fused_rms_norm",
+          "device_ms": 9.984,
+          "calls": 391
+        }
+      ]
+    },
+    "cprofile_step": {
+      "boundary": "one steady training step under cProfile (host python only; the wall here is inflated by the tracer and is NOT the arm's tokens/s)",
+      "wall_s": 11.713,
+      "interesting_frames": [
+        "13067/779    0.036    0.000   11.011    0.014 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py:1039(_fn)",
+        "576/384    0.005    0.000   10.981    0.029 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/utils.py:119(call_func_at_runtime_with_args)",
+        "8    0.000    0.000    5.867    0.733 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:253(loss)",
+        "8    0.000    0.000    5.844    0.731 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:247(features)",
+        "192    0.010    0.000    5.840    0.030 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:220(forward)",
+        "8    0.000    0.000    5.813    0.727 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:243(backward)",
+        "8    0.021    0.003    5.813    0.727 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/graph.py:832(_engine_run_backward)",
+        "192    0.001    0.000    5.754    0.030 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:185(forward)",
+        "192    0.001    0.000    5.753    0.030 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:188(_forward_impl)",
+        "192    0.005    0.000    5.751    0.030 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:194(mix)",
+        "192    0.014    0.000    5.658    0.029 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py:791(compile_wrapper)",
+        "200    0.001    0.000    5.644    0.028 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py:565(apply)",
+        "192    0.001    0.000    5.638    0.029 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/scan.py:219(routed_chunk_scan)",
+        "192    0.001    0.000    5.632    0.029 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/aot_autograd.py:1126(forward)",
+        "192    0.003    0.000    5.632    0.029 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:310(runtime_wrapper)",
+        "192    0.000    0.000    5.625    0.029 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/utils.py:102(g)",
+        "192    0.028    0.000    5.597    0.029 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:2083(forward)",
+        "192    0.000    0.000    5.497    0.029 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:512(wrapper)",
+        "192    0.000    0.000    5.496    0.029 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:716(inner_fn)",
+        "200    0.002    0.000    5.449    0.027 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py:300(apply)",
+        "192    0.061    0.000    5.442    0.028 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:2239(backward)",
+        "192    0.001    0.000    5.360    0.028 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:2288(impl_fn)",
+        "192    0.002    0.000    5.359    0.028 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:2330(_backward_impl)",
+        "12288    0.033    0.000    4.756    0.000 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_library/autograd.py:107(autograd_impl)",
+        "12288    0.128    0.000    4.715    0.000 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_library/autograd.py:33(forward_no_grad)",
+        "6144    0.030    0.000    3.000    0.000 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k4_fused_backward.py:578(_fused_block_scan_bwd_op)",
+        "6144    0.056    0.000    2.938    0.000 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k4_fused_backward.py:453(persistent_scan_recompute_backward)",
+        "2/1    0.013    0.007    2.052    2.052 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/profile_step_vs_gdn2.py:164(one_step)",
+        "6144    0.098    0.000    1.468    0.000 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k4_fused_backward.py:370(persistent_scan_backward)",
+        "6144    0.108    0.000    1.355    0.000 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k4_fused_backward.py:192(persistent_scan_trajectory)",
+        "6144    0.018    0.000    1.281    0.000 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k4_fused_backward.py:513(_fused_block_scan_op)",
+        "6144    0.093    0.000    1.234    0.000 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k4_fused_backward.py:420(_persistent_scan_forward)",
+        "153216    0.525    0.000    0.525    0.000 {built-in method torch._C._dynamo.guards._empty_strided_cuda}",
+        "195072    0.268    0.000    0.268    0.000 {built-in method torch._C._dynamo.guards._reinterpret_tensor}"
+      ],
+      "top_frames": [
+        "",
+        "ncalls  tottime  percall  cumtime  percall filename:lineno(function)",
+        "13067/779    0.036    0.000   11.011    0.014 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py:1039(_fn)",
+        "576/384    0.005    0.000   10.981    0.029 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/utils.py:119(call_func_at_runtime_with_args)",
+        "384    0.004    0.000   10.847    0.028 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_inductor/output_code.py:590(__call__)",
+        "384    0.029    0.000   10.813    0.028 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_inductor/utils.py:3013(run)",
+        "8    0.000    0.000    5.867    0.733 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:253(loss)",
+        "2328/216    0.004    0.000    5.864    0.027 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py:1771(_wrapped_call_impl)",
+        "2328/216    0.006    0.000    5.863    0.027 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py:1779(_call_impl)",
+        "8    0.000    0.000    5.844    0.731 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:247(features)",
+        "192    0.010    0.000    5.840    0.030 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:220(forward)",
+        "8    0.001    0.000    5.814    0.727 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_tensor.py:570(backward)",
+        "8    0.000    0.000    5.813    0.727 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:243(backward)",
+        "8    0.021    0.003    5.813    0.727 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/graph.py:832(_engine_run_backward)",
+        "192    0.001    0.000    5.754    0.030 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:185(forward)",
+        "192    0.001    0.000    5.753    0.030 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:188(_forward_impl)",
+        "192    0.005    0.000    5.751    0.030 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:194(mix)",
+        "192    0.014    0.000    5.658    0.029 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py:791(compile_wrapper)"
+      ]
+    },
+    "dynamo_counters": {
+      "frames": {
+        "total": 1,
+        "ok": 1
+      },
+      "inline_call": {},
+      "unimplemented": {},
+      "stats": {
+        "calls_captured": 5571,
+        "unique_graphs": 1
+      },
+      "inductor": {
+        "pattern_matcher_count": 542,
+        "pattern_matcher_nodes": 638,
+        "fxgraph_cache_miss": 2,
+        "async_compile_cache_miss": 526,
+        "extern_calls": 414,
+        "async_compile_cache_hit": 263,
+        "triton_bundler_save_kernel": 6800,
+        "triton_bundler_save_static_autotuner": 2,
+        "benchmarking.InductorBenchmarker.benchmark_gpu": 821
+      },
+      "aot_autograd": {
+        "total": 1,
+        "autograd_cache_miss": 1,
+        "ok": 1,
+        "autograd_cache_saved": 1
+      },
+      "graph_break": {},
+      "aten_mm_info": {
+        "aten.bmm_16_64_128_128": 96,
+        "aten.bmm_16_128_128_64": 31
+      }
+    },
+    "recorded_references": {
+      "gdn2_tokens_per_s": 28124.0,
+      "matrix_ops_tokens_per_s": 13189.7,
+      "x45_registered_mb8_tokens_per_s_steady": 9306.3,
+      "x45_on_mb2_tokens_per_s_steady": 880.8,
+      "x45_off_mb2_tokens_per_s_steady": 2110.7,
+      "source": "receipts/cd_gdn2_c128_rerun.json, receipts/cd_matrix_ops_c128.json, receipts/scale_proof_model_step.json -- RECORDED, not same-session"
+    }
+  },
+  "session": {
+    "device": "NVIDIA RTX 6000 Ada Generation",
+    "card_gib": 47.38,
+    "torch": "2.9.1+cu128",
+    "triton": "3.5.1"
+  },
+  "gate": "C",
+  "grad_parity": {
+    "fixture": "the lane's canonical routed fixture (all five ops present)",
+    "outputs": {
+      "dstate": {
+        "bit_equal_to_store": true,
+        "oracle_max_deviation": 0.0,
+        "measured_floor": 1.969556671088668e-07,
+        "floor_multiple": 0.0,
+        "bit_equal_to_oracle": true
+      },
+      "dweights": {
+        "bit_equal_to_store": true,
+        "oracle_max_deviation": 4.76837158203125e-07,
+        "measured_floor": 1.1146788665428176e-06,
+        "floor_multiple": 0.4277798498881009,
+        "bit_equal_to_oracle": false
+      },
+      "ddecay": {
+        "bit_equal_to_store": true,
+        "oracle_max_deviation": 1.6689300537109375e-06,
+        "measured_floor": 2.5671295134088723e-06,
+        "floor_multiple": 0.6501152532404871,
+        "bit_equal_to_oracle": false
+      },
+      "dpayload": {
+        "bit_equal_to_store": true,
+        "oracle_max_deviation": 0.0,
+        "measured_floor": 8.42994077210335e-07,
+        "floor_multiple": 0.0,
+        "bit_equal_to_oracle": true
+      }
+    },
+    "note": "dstate/dpayload bit-exact against the oracle, dweights/ddecay within the SAME floor multiples as the K4 gates -- the recompute reproduces the stored trajectory bit for bit, so the adjoint cannot tell the two forms apart"
+  },
+  "memory": {
+    "shape": {
+      "batch": 8,
+      "tokens": 2048,
+      "heads": 2,
+      "rank": 128,
+      "value_dim": 128,
+      "chunk_tokens": 64,
+      "chunks_per_scan": 32
+    },
+    "per_chunk": {
+      "trajectory_mb": 64.0,
+      "checkpoint_mb": 1.0
+    },
+    "per_layer_at_mb8": {
+      "store_trajectory_gb": 2.0,
+      "checkpoints_gb": 0.03125
+    },
+    "whole_model_at_mb8": {
+      "store_24_layers_gb": 48.0,
+      "checkpoints_24_layers_gb": 0.75
+    },
+    "measured_whole_scan_peak_gb": {
+      "recompute_form": 0.3440995216369629,
+      "store_form_floor_gb": 2.0,
+      "note": "the recompute form's peak is the outputs + checkpoint set + one chunk scratch + the routing's own saved activations; the store form must additionally hold all 32 chunk trajectories"
+    },
+    "card_gib": 47.38
+  },
+  "recompute_cost": {
+    "shape": {
+      "batch": 2,
+      "tokens": 64,
+      "rank": 5,
+      "value_dim": 8
+    },
+    "store_form": {
+      "device_ms_p50": 0.15059199929237366,
+      "occupancy_ms": 0.023846799999999984
+    },
+    "recompute_form": {
+      "device_ms_p50": 0.274399995803833,
+      "occupancy_ms": 0.035200600000000304
+    },
+    "extra_device_ms_per_chunk": 0.12380799651145935,
+    "per_step_at_mb8": {
+      "chunks_per_step": 768,
+      "extra_device_s_per_step": 0.09508454132080078
+    },
+    "note": "the recompute pays one extra forward walk (the trajectory write) per chunk in backward; the persistent kernels it replaces were 2.77 s of the 122 s mb2 wall, so the whole recompute class is small against the launch savings it buys"
+  },
+  "mb8_fused_step": {
+    "label": "x45_fused_mb8",
+    "boundary": "whole model, whole step: prepare + all microbatches' forward and backward + clip/AdamW; flagship-stream read excluded; tokens are measured targets over the same 64-window stream batches for every arm (the gates.py/cd_* protocol)",
+    "precision": "bf16 compute (autocast), fp32 master weights, fused CE -- the registered regime",
+    "session": "same-session (this card, this process)",
+    "parameters": 149981808,
+    "summary": {
+      "shape": {
+        "width": 576,
+        "depth": 24,
+        "hidden": 3352,
+        "heads": 2,
+        "value_dim": 128,
+        "rank": 128,
+        "rank_max": 128,
+        "vocab": 256
+      },
+      "parameters": {
+        "total": 149981808,
+        "trainable": 149981808,
+        "per_layer": 6236930,
+        "mixer": 443522,
+        "mlp": 5792256,
+        "norms": 1152,
+        "embedding": 147456,
+        "head": 147456,
+        "final_norm": 576,
+        "capacity": 150003984,
+        "capacity_relative": -0.00014783607347390593
+      },
+      "routing": {
+        "ops": true,
+        "tau_match": 0.45,
+        "tau_merge": 0.85,
+        "tau_pop": 0.1,
+        "tie_break": 1e-06,
+        "read_scale": 2.0,
+        "grow": false,
+        "grow_trigger": 0.5,
+        "grow_window": 4,
+        "grow_window_tokens": 512,
+        "grow_geometric": 2.0,
+        "grow_stride_floor": 64
+      },
+      "chunk_tokens": 64
+    },
+    "microbatches": 8,
+    "windows_per_step": 64,
+    "context": 2048,
+    "warmup": 2,
+    "steps": 3,
+    "tokens": 318235,
+    "step_walls": [
+      8.255,
+      8.295,
+      8.272
+    ],
+    "phase_s": {
+      "prepare": 0.003,
+      "fwd_bwd": 24.773,
+      "opt": 0.046
+    },
+    "ms_per_step_p50": 8272.0,
+    "total_s": 24.822,
+    "tokens_per_s": 12820.7,
+    "tokens_per_s_steady": 12210.8,
+    "peak_allocated_gb": 21.28,
+    "losses": [
+      3.843691,
+      3.95865,
+      3.405281
+    ],
+    "step_profile": {
+      "kernels": 207976,
+      "device_busy_ms": 3072.866,
+      "device_streams": [
+        "(0, 7)"
+      ],
+      "unattributed_device_ms": 0.0,
+      "components_ms": {
+        "a_mixer_graph_aten": 1552.776,
+        "a_mixer_graph_matmul": 71.647,
+        "backbone_norms": 123.137,
+        "c_embedding": 0.862,
+        "c_head_cross_entropy": 0.675,
+        "c_matmul_backbone": 801.906,
+        "d_optimizer": 6.826,
+        "memcpy": 0.129,
+        "z_other_elementwise": 514.908
+      },
+      "phase_components_ms": {
+        "b_fwd_bwd": {
+          "a_mixer_graph_aten": 1552.776,
+          "a_mixer_graph_matmul": 71.647,
+          "backbone_norms": 123.137,
+          "c_embedding": 0.862,
+          "c_head_cross_entropy": 0.675,
+          "c_matmul_backbone": 801.906,
+          "memcpy": 0.128,
+          "z_other_elementwise": 512.81
+        },
+        "d_opt": {
+          "d_optimizer": 6.826,
+          "memcpy": 0.001,
+          "z_other_elementwise": 2.098
+        }
+      },
+      "top_kernels": [
+        {
+          "name": "_persistent_scan_trajectory_kernel",
+          "device_ms": 553.881,
+          "calls": 6144
+        },
+        {
+          "name": "_persistent_bwd_kernel",
+          "device_ms": 400.151,
+          "calls": 6144
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8>(cutlass_80_tensorop_",
+          "device_ms": 305.483,
+          "calls": 1152
+        },
+        {
+          "name": "_persistent_scan_kernel",
+          "device_ms": 228.042,
+          "calls": 6144
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<c10::BFloat16, c10::BFloat16, c10:",
+          "device_ms": 217.906,
+          "calls": 576
+        },
+        {
+          "name": "ampere_bf16_s1688gemm_bf16_64x128_sliced1x2_ldg8_f2f_nn",
+          "device_ms": 155.729,
+          "calls": 384
+        },
+        {
+          "name": "ampere_bf16_s16816gemm_bf16_128x64_ldg8_f2f_tn",
+          "device_ms": 133.89,
+          "calls": 384
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >",
+          "device_ms": 94.056,
+          "calls": 2677
+        },
+        {
+          "name": "ampere_bf16_s1688gemm_bf16_64x128_sliced1x2_ldg8_f2f_tn",
+          "device_ms": 80.378,
+          "calls": 192
+        },
+        {
+          "name": "ampere_bf16_s16816gemm_bf16_128x64_ldg8_f2f_nn",
+          "device_ms": 77.472,
+          "calls": 192
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::(anonymous namespace)::silu_backward_kernel(at::",
+          "device_ms": 72.691,
+          "calls": 192
+        },
+        {
+          "name": "triton_poi_fused__to_copy_add_clamp_min_div_eq_ge_masked_fill_mul_permute_scalar_tensor_slice_slice_backward_v",
+          "device_ms": 55.524,
+          "calls": 192
+        },
+        {
+          "name": "void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_128x2_nn_align8>(cutlass_80_wmma_te",
+          "device_ms": 54.868,
+          "calls": 18432
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::(anonymous namespace)::silu_kernel(at::TensorIte",
+          "device_ms": 45.571,
+          "calls": 192
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::layer_norm_grad_input_kernel_vectorized<float, float, true>(float cons",
+          "device_ms": 42.28,
+          "calls": 392
+        },
+        {
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16_copy_kernel_cuda(at::TensorIteratorBase",
+          "device_ms": 40.894,
+          "calls": 3093
+        },
+        {
+          "name": "void at::native::(anonymous namespace)::GammaBetaBackwardCUDAKernelTemplate<float, float, 32u, 32u, 256u, fals",
+          "device_ms": 38.802,
+          "calls": 392
+        },
+        {
+          "name": "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{la",
+          "device_ms": 38.261,
+          "calls": 2728
+        },
+        {
+          "name": "void at::native::reduce_kernel<128, 4, at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::nativ",
+          "device_ms": 34.829,
+          "calls": 12304
+        },
+        {
+          "name": "void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>, 4, Tr",
+          "device_ms": 31.391,
+          "calls": 384
+        },
+        {
+          "name": "triton_red_fused__to_copy_add_clamp_min_clone_copy_div_eq_fused_block_scan_bwd_ge_masked_fill_mul_neg_permute_",
+          "device_ms": 24.805,
+          "calls": 5952
+        },
+        {
+          "name": "triton_red_fused__to_copy_add_arange_argmax_bitwise_and_bitwise_not_bitwise_or_clamp_min_copy_div_eq_full_like",
+          "device_ms": 19.799,
+          "calls": 6144
+        },
+        {
+          "name": "triton_poi_fused_clone_copy_index_put_mul_permute_scalar_tensor_select_where_4",
+          "device_ms": 19.194,
+          "calls": 5952
+        },
+        {
+          "name": "triton_poi_fused_copy_slice_zeros_like_11",
+          "device_ms": 18.542,
+          "calls": 192
+        },
+        {
+          "name": "ampere_bf16_s1688gemm_bf16_128x128_ldg8_f2f_stages_32x1_nn",
+          "device_ms": 18.149,
+          "calls": 584
+        }
+      ],
+      "top_launchers": [
+        {
+          "name": "x45::fused_block_scan_bwd",
+          "device_ms": 954.032,
+          "calls": 12288
+        },
+        {
+          "name": "aten::mm",
+          "device_ms": 797.863,
+          "calls": 5775
+        },
+        {
+          "name": "x45::fused_block_scan",
+          "device_ms": 228.042,
+          "calls": 6144
+        },
+        {
+          "name": "aten::mul",
+          "device_ms": 217.925,
+          "calls": 593
+        },
+        {
+          "name": "aten::add_",
+          "device_ms": 94.047,
+          "calls": 2669
+        },
+        {
+          "name": "aten::_fused_rms_norm_backward",
+          "device_ms": 81.082,
+          "calls": 784
+        },
+        {
+          "name": "aten::copy_",
+          "device_ms": 79.258,
+          "calls": 5837
+        },
+        {
+          "name": "aten::silu_backward",
+          "device_ms": 72.691,
+          "calls": 192
+        },
+        {
+          "name": "aten::bmm",
+          "device_ms": 71.647,
+          "calls": 24384
+        },
+        {
+          "name": "triton_poi_fused__to_copy_add_clamp_min_div_eq_ge_masked_fill_mul_permute_scalar_tensor_slice_slice_backward_v",
+          "device_ms": 55.524,
+          "calls": 192
+        },
+        {
+          "name": "aten::silu",
+          "device_ms": 45.571,
+          "calls": 192
+        },
+        {
+          "name": "aten::sum",
+          "device_ms": 35.838,
+          "calls": 12504
+        },
+        {
+          "name": "aten::add",
+          "device_ms": 31.614,
+          "calls": 393
+        },
+        {
+          "name": "triton_red_fused__to_copy_add_clamp_min_clone_copy_div_eq_fused_block_scan_bwd_ge_masked_fill_mul_neg_permute_",
+          "device_ms": 24.805,
+          "calls": 5952
+        },
+        {
+          "name": "triton_red_fused__to_copy_add_arange_argmax_bitwise_and_bitwise_not_bitwise_or_clamp_min_copy_div_eq_full_like",
+          "device_ms": 19.799,
+          "calls": 6144
+        },
+        {
+          "name": "triton_poi_fused_clone_copy_index_put_mul_permute_scalar_tensor_select_where_4",
+          "device_ms": 19.194,
+          "calls": 5952
+        },
+        {
+          "name": "triton_poi_fused_copy_slice_zeros_like_11",
+          "device_ms": 18.542,
+          "calls": 192
+        },
+        {
+          "name": "triton_per_fused__softmax__to_copy_arange_argmax_argmin_bitwise_not_exp_masked_fill_mul_prepare_softmax_online",
+          "device_ms": 14.905,
+          "calls": 5952
+        },
+        {
+          "name": "triton_per_fused_arange_bitwise_not_cumsum_gather_ge_masked_fill_mul_scatter_squeeze_sub_unsqueeze_view_30",
+          "device_ms": 12.842,
+          "calls": 5952
+        },
+        {
+          "name": "triton_per_fused_linalg_vector_norm_24",
+          "device_ms": 12.623,
+          "calls": 5952
+        },
+        {
+          "name": "triton_per_fused__softmax__softmax_backward_data__to_copy_bitwise_not_masked_fill_mul_scalar_tensor_unsqueeze_",
+          "device_ms": 12.368,
+          "calls": 5952
+        },
+        {
+          "name": "triton_per_fused_mul_sum_2",
+          "device_ms": 12.185,
+          "calls": 5952
+        },
+        {
+          "name": "triton_poi_fused__to_copy_clamp_min_div_transpose_view_186",
+          "device_ms": 11.87,
+          "calls": 6144
+        },
+        {
+          "name": "triton_poi_fused__to_copy_clamp_min_div_mul_transpose_unsqueeze_26",
+          "device_ms": 10.415,
+          "calls": 5952
+        },
+        {
+          "name": "aten::_fused_rms_norm",
+          "device_ms": 9.984,
+          "calls": 391
+        }
+      ]
+    },
+    "cprofile_step": {
+      "boundary": "one steady training step under cProfile (host python only; the wall here is inflated by the tracer and is NOT the arm's tokens/s)",
+      "wall_s": 11.713,
+      "interesting_frames": [
+        "13067/779    0.036    0.000   11.011    0.014 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py:1039(_fn)",
+        "576/384    0.005    0.000   10.981    0.029 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/utils.py:119(call_func_at_runtime_with_args)",
+        "8    0.000    0.000    5.867    0.733 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:253(loss)",
+        "8    0.000    0.000    5.844    0.731 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:247(features)",
+        "192    0.010    0.000    5.840    0.030 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:220(forward)",
+        "8    0.000    0.000    5.813    0.727 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:243(backward)",
+        "8    0.021    0.003    5.813    0.727 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/graph.py:832(_engine_run_backward)",
+        "192    0.001    0.000    5.754    0.030 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:185(forward)",
+        "192    0.001    0.000    5.753    0.030 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:188(_forward_impl)",
+        "192    0.005    0.000    5.751    0.030 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:194(mix)",
+        "192    0.014    0.000    5.658    0.029 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py:791(compile_wrapper)",
+        "200    0.001    0.000    5.644    0.028 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py:565(apply)",
+        "192    0.001    0.000    5.638    0.029 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/scan.py:219(routed_chunk_scan)",
+        "192    0.001    0.000    5.632    0.029 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/aot_autograd.py:1126(forward)",
+        "192    0.003    0.000    5.632    0.029 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:310(runtime_wrapper)",
+        "192    0.000    0.000    5.625    0.029 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/utils.py:102(g)",
+        "192    0.028    0.000    5.597    0.029 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:2083(forward)",
+        "192    0.000    0.000    5.497    0.029 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:512(wrapper)",
+        "192    0.000    0.000    5.496    0.029 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:716(inner_fn)",
+        "200    0.002    0.000    5.449    0.027 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/function.py:300(apply)",
+        "192    0.061    0.000    5.442    0.028 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:2239(backward)",
+        "192    0.001    0.000    5.360    0.028 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:2288(impl_fn)",
+        "192    0.002    0.000    5.359    0.028 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:2330(_backward_impl)",
+        "12288    0.033    0.000    4.756    0.000 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_library/autograd.py:107(autograd_impl)",
+        "12288    0.128    0.000    4.715    0.000 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_library/autograd.py:33(forward_no_grad)",
+        "6144    0.030    0.000    3.000    0.000 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k4_fused_backward.py:578(_fused_block_scan_bwd_op)",
+        "6144    0.056    0.000    2.938    0.000 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k4_fused_backward.py:453(persistent_scan_recompute_backward)",
+        "2/1    0.013    0.007    2.052    2.052 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/profile_step_vs_gdn2.py:164(one_step)",
+        "6144    0.098    0.000    1.468    0.000 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k4_fused_backward.py:370(persistent_scan_backward)",
+        "6144    0.108    0.000    1.355    0.000 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k4_fused_backward.py:192(persistent_scan_trajectory)",
+        "6144    0.018    0.000    1.281    0.000 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k4_fused_backward.py:513(_fused_block_scan_op)",
+        "6144    0.093    0.000    1.234    0.000 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k4_fused_backward.py:420(_persistent_scan_forward)",
+        "153216    0.525    0.000    0.525    0.000 {built-in method torch._C._dynamo.guards._empty_strided_cuda}",
+        "195072    0.268    0.000    0.268    0.000 {built-in method torch._C._dynamo.guards._reinterpret_tensor}"
+      ],
+      "top_frames": [
+        "",
+        "ncalls  tottime  percall  cumtime  percall filename:lineno(function)",
+        "13067/779    0.036    0.000   11.011    0.014 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py:1039(_fn)",
+        "576/384    0.005    0.000   10.981    0.029 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/utils.py:119(call_func_at_runtime_with_args)",
+        "384    0.004    0.000   10.847    0.028 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_inductor/output_code.py:590(__call__)",
+        "384    0.029    0.000   10.813    0.028 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_inductor/utils.py:3013(run)",
+        "8    0.000    0.000    5.867    0.733 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:253(loss)",
+        "2328/216    0.004    0.000    5.864    0.027 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py:1771(_wrapped_call_impl)",
+        "2328/216    0.006    0.000    5.863    0.027 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py:1779(_call_impl)",
+        "8    0.000    0.000    5.844    0.731 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:247(features)",
+        "192    0.010    0.000    5.840    0.030 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:220(forward)",
+        "8    0.001    0.000    5.814    0.727 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_tensor.py:570(backward)",
+        "8    0.000    0.000    5.813    0.727 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/__init__.py:243(backward)",
+        "8    0.021    0.003    5.813    0.727 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/autograd/graph.py:832(_engine_run_backward)",
+        "192    0.001    0.000    5.754    0.030 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:185(forward)",
+        "192    0.001    0.000    5.753    0.030 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:188(_forward_impl)",
+        "192    0.005    0.000    5.751    0.030 /home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/model.py:194(mix)",
+        "192    0.014    0.000    5.658    0.029 /home/erikg/emender/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py:791(compile_wrapper)"
+      ]
+    },
+    "dynamo_counters": {
+      "frames": {
+        "total": 1,
+        "ok": 1
+      },
+      "inline_call": {},
+      "unimplemented": {},
+      "stats": {
+        "calls_captured": 5571,
+        "unique_graphs": 1
+      },
+      "inductor": {
+        "pattern_matcher_count": 542,
+        "pattern_matcher_nodes": 638,
+        "fxgraph_cache_miss": 2,
+        "async_compile_cache_miss": 526,
+        "extern_calls": 414,
+        "async_compile_cache_hit": 263,
+        "triton_bundler_save_kernel": 6800,
+        "triton_bundler_save_static_autotuner": 2,
+        "benchmarking.InductorBenchmarker.benchmark_gpu": 821
+      },
+      "aot_autograd": {
+        "total": 1,
+        "autograd_cache_miss": 1,
+        "ok": 1,
+        "autograd_cache_saved": 1
+      },
+      "graph_break": {},
+      "aten_mm_info": {
+        "aten.bmm_16_64_128_128": 96,
+        "aten.bmm_16_128_128_64": 31
+      }
+    },
+    "recorded_references": {
+      "gdn2_tokens_per_s": 28124.0,
+      "matrix_ops_tokens_per_s": 13189.7,
+      "x45_registered_mb8_tokens_per_s_steady": 9306.3,
+      "x45_on_mb2_tokens_per_s_steady": 880.8,
+      "x45_off_mb2_tokens_per_s_steady": 2110.7,
+      "source": "receipts/cd_gdn2_c128_rerun.json, receipts/cd_matrix_ops_c128.json, receipts/scale_proof_model_step.json -- RECORDED, not same-session"
+    }
+  }
+}

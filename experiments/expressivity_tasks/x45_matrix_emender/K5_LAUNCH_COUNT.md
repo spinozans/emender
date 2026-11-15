@@ -11,8 +11,8 @@ fixes, one receipted gate at a time.
 |---|---|---|
 | A | routing fusion — the decision chain as one Triton kernel, bit-identical decisions | **landed** (below) |
 | B | K4 compile hosting — the fused scan as a `torch.library` op under `torch.compile` | **landed** (below) |
-| C | trajectory recompute-over-store — mb8 for the fused path | in flight |
-| D | the step metric — honest un-profiled walls, kernels/step, distance to 32 k tok/s | pending |
+| C | trajectory recompute-over-store — mb8 for the fused path | **landed** (below) |
+| D | the step metric — honest un-profiled walls, kernels/step, distance to 32 k tok/s | in flight |
 
 Every number below is from this stage's own receipts (session metadata inside
 each): `receipts/k5_routing_fusion.json` for gate A.
@@ -58,6 +58,46 @@ was; the question the scale proof left open (does the fused arm reach its own
 registered twin once the integration is fixed?) is answered *yes at mb2*, and
 **mb8 needs gate C** (the 2.15 GB/layer trajectory store still forces
 microbatch 2: 21.4 GB peak at mb2 is mostly trajectory).
+
+## Gate C — recompute-over-store: microbatch 8 for the fused path
+
+**The problem**: the store-everything K4 kept every chunk's trajectory alive
+until its backward — 67 MB per chunk at the registered shape, 2.15 GB per
+layer, **51.5 GB over 24 layers at microbatch 8**, above the card's 47.4 GiB.
+That is what forced the fused arm to microbatch 2 and the 4.1x launch
+regression the profile diagnosed.
+
+**The fix** (`k4_fused_backward.py`): the forward keeps only the
+*chunk-boundary checkpoints* — the chunk-entry state and liveness, the very
+tensors the routing already consumed and the op already receives as inputs
+(1 MB per chunk against the 67 MB trajectory; 0.75 GB against 48 GB over the
+whole model at mb8).  The backward re-walks the chunk forward from its
+checkpoint into a one-chunk scratch trajectory — `persistent_scan_trajectory`'s
+own kernel, so the recomputed states are bit-identical to the ones a storing
+forward would have saved — then runs the same reverse walk.  The autograd
+engine runs a scan's chunk nodes strictly in sequence (the dstate chain), so
+one scratch is live at a time and the allocator reuses it.
+
+**Receipt** (`receipts/k5_recompute_over_store.json`, gate C):
+
+* **grad parity, the same multiples of the same floors**: every backward output
+  bit-identical to the store form's (`bit_equal_to_store: true` on all four);
+  against the autograd oracle, `dstate` and `dpayload` bit-exact, `dweights`
+  0.43x and `ddecay` 0.65x the re-measured floors — the same class as the K4
+  gates, because it is the same adjoint on a bit-identical trajectory;
+* **memory**: whole-scan fwd+bwd peak at the registered shape
+  **0.34 GB** (the store form's floor for the same scan is 2.0 GB of trajectory
+  alone); the whole mb8 step peaks at **21.3 GB — fits the card** (24.31 GB is
+  the registered arm's own peak; the fused arm's activation set is a little
+  smaller because the scan's autograd graph is 32 opaque nodes, not the eager
+  chunk arithmetic's);
+* **the recompute cost, paid and stated**: one extra forward walk per chunk in
+  backward, **0.095 s of extra device time per step at mb8** (24 layers x 32
+  chunks);
+* **the mb8 fused step wall** (gates.py protocol, un-profiled steady walls):
+  **8.26 s/step p50 = 12,821 tok/s**, 207,976 kernels/step, 3.07 s device busy —
+  the configuration that OOMed before this gate, and already faster than the
+  registered eager-scan arm's 9.29 s baseline with 2.1x fewer launches.
 
 ## Gate A — routing fusion, landed and honestly measured
 
