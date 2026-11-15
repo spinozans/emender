@@ -345,8 +345,18 @@ SCALE2_CONFIGS = {
 
 def train_run(label: str, chunk_tokens: int, compile_scan: bool, fused_backward: bool,
               microbatch: int, warmup: int, steps: int, min_seconds: float | None,
-              description: str = "", seed: int = 3401, profile: bool = True) -> dict:
-    """One gate-D-protocol training run: the same loop, phases and stream as gates.py."""
+              description: str = "", seed: int = 3401, profile_mode: str = "full",
+              profile_steps: int = 1) -> dict:
+    """One gate-D-protocol training run: the same loop, phases and stream as gates.py.
+
+    ``profile_mode``: ``full`` is the gates/cd protocol (CPU+CUDA activities across
+    every steady step, aggregated with ``key_averages``) -- honest but its
+    post-processing is quadratic-ish in the event count, which the microbatch-2
+    eager runs make enormous.  ``cuda`` profiles only the first ``profile_steps``
+    steady steps with CUDA activity alone and aggregates with one pass over the
+    event list (busy device ms, kernel count, top kernels) -- the step walls of
+    the unprofiled steps stay clean.  ``off`` is walls only.
+    """
     from experiments.expressivity_tasks.x42_pile_scale import lattice as L
     from experiments.expressivity_tasks.x42_pile_scale.byte_velocity import grouped
     from experiments.expressivity_tasks.x42_pile_scale.velocity_train import (
@@ -408,10 +418,18 @@ def train_run(label: str, chunk_tokens: int, compile_scan: bool, fused_backward:
     grad_probe = {}
     oom = None
     records = []
-    profiler = (torch.profiler.profile(
-        activities=[torch.profiler.ProfilerActivity.CUDA,
-                    torch.profiler.ProfilerActivity.CPU],
-        record_shapes=False, profile_memory=False) if profile else None)
+    profiled_steps = 0
+    if profile_mode == "full":
+        profiler = torch.profiler.profile(
+            activities=[torch.profiler.ProfilerActivity.CUDA,
+                        torch.profiler.ProfilerActivity.CPU],
+            record_shapes=False, profile_memory=False)
+    elif profile_mode == "cuda":
+        profiler = torch.profiler.profile(
+            activities=[torch.profiler.ProfilerActivity.CUDA],
+            record_shapes=False, profile_memory=False)
+    else:
+        profiler = None
     try:
         began_warmup = time.monotonic()
         for _ in range(warmup):
@@ -428,11 +446,15 @@ def train_run(label: str, chunk_tokens: int, compile_scan: bool, fused_backward:
                     finite=bool(grad is None or torch.isfinite(grad).all()),
                     nonzero=bool(grad is None or float(grad.abs().max()) > 0.0))
         torch.cuda.reset_peak_memory_stats()
-        if profiler is not None:
+        if profiler is not None and profile_mode == "full":
             profiler.start()
         began = time.monotonic()
         while len(records) < steps and (min_seconds is None
                                         or time.monotonic() - began < min_seconds):
+            # In cuda mode only the first `profile_steps` steady steps carry the
+            # profiler, so the rest of the step walls stay clean.
+            if profiler is not None and profile_mode == "cuda" and profiled_steps == 0:
+                profiler.start()
             count, loss, phases = one_step(next(batches), True)
             records.append(dict(
                 tokens=count, loss=round(loss, 6),
@@ -440,7 +462,10 @@ def train_run(label: str, chunk_tokens: int, compile_scan: bool, fused_backward:
                 phases={key: round(value, 3) for key, value in phases.items()}))
             print(f"[{label}] step {len(records)}: {records[-1]['wall_s']:.1f} s "
                   f"(fwd_bwd {records[-1]['phases']['fwd_bwd']:.1f} s)", flush=True)
-        if profiler is not None:
+            if profiler is not None and profile_mode == "cuda" and profiled_steps == 0:
+                profiler.stop()
+                profiled_steps = 1
+        if profiler is not None and profile_mode == "full":
             profiler.stop()
     except torch.cuda.OutOfMemoryError as error:
         oom = dict(error=repr(error)[:400],
@@ -461,13 +486,37 @@ def train_run(label: str, chunk_tokens: int, compile_scan: bool, fused_backward:
     phases = {key: round(sum(record["phases"][key] for record in records), 3)
               for key in ("prepare", "fwd_bwd", "opt")}
     kernels = []
+    device_busy_ms = None
+    kernel_count_per_step = None
     if not oom and profiler is not None:
-        for event in profiler.key_averages():
-            device = getattr(event, "self_device_time_total", 0) or 0
-            if device > 0:
-                kernels.append(dict(name=event.key[:110],
-                                    cuda_ms=round(device / 1000, 3),
-                                    calls=event.count))
+        if profile_mode == "full":
+            for event in profiler.key_averages():
+                device = getattr(event, "self_device_time_total", 0) or 0
+                if device > 0:
+                    kernels.append(dict(name=event.key[:110],
+                                        cuda_ms=round(device / 1000, 3),
+                                        calls=event.count))
+        else:
+            # One pass over the raw event list: the microbatch-2 eager runs produce
+            # millions of events and `key_averages` does not finish in a session.
+            busy_us = 0.0
+            per_name: dict[str, list] = {}
+            events = 0
+            for event in profiler.events():
+                if event.device_type != torch.autograd.DeviceType.CUDA:
+                    continue
+                device = getattr(event, "self_device_time_total", 0) or 0
+                busy_us += device
+                events += 1
+                row = per_name.setdefault(event.name, [0.0, 0])
+                row[0] += device
+                row[1] += 1
+            divisor = max(1, profiled_steps)
+            device_busy_ms = round(busy_us / 1000.0 / divisor, 1)
+            kernel_count_per_step = round(events / divisor, 1)
+            kernels = [dict(name=name[:110], cuda_ms=round(busy / 1000.0 / divisor, 3),
+                            calls=round(calls / divisor, 1))
+                       for name, (busy, calls) in per_name.items()]
         kernels.sort(key=lambda row: -row["cuda_ms"])
         device_total = sum(row["cuda_ms"] for row in kernels) or 1.0
         for row in kernels:
@@ -476,7 +525,7 @@ def train_run(label: str, chunk_tokens: int, compile_scan: bool, fused_backward:
                         ("replaybackward", "reverse_kernel", "replay", "scan_kernel")
                         if any(name in row["name"].lower() for row in kernels)})
     if profiler is None:
-        forbidden = ["not checked: --no-profile run (per-step walls only)"]
+        forbidden = ["not checked: profile off (per-step walls only)"]
     report = dict(
         label=label,
         config=dict(fused_backward=fused_backward, compile_scan=compile_scan,
@@ -512,6 +561,10 @@ def train_run(label: str, chunk_tokens: int, compile_scan: bool, fused_backward:
         top_kernels=kernels[:20],
         cuda_total_ms=(round(sum(row["cuda_ms"] for row in kernels), 1)
                        if kernels else None),
+        device_busy_ms_per_step=device_busy_ms,
+        kernel_count_per_step=kernel_count_per_step,
+        profile_mode=profile_mode,
+        profiled_steps=profiled_steps,
         recorded_references=RECORDED,
         oom=oom,
         seed=seed)
@@ -528,7 +581,8 @@ def scale2(args) -> dict:
                        microbatch=config["microbatch"], warmup=args.warmup,
                        steps=args.steps, min_seconds=args.min_seconds,
                        description=config["description"], seed=args.seed,
-                       profile=not args.no_profile)
+                       profile_mode=args.profile_mode,
+                       profile_steps=args.profile_steps)
     report["scale"] = 2
     report["shape_note"] = ("the registered shape: width 576, depth 24, chunk 64, "
                             "~150 M parameters, embedding + head + optimizer included")
@@ -561,7 +615,8 @@ def scale3(args) -> dict:
                        microbatch=config["microbatch"], warmup=args.warmup,
                        steps=args.steps, min_seconds=args.min_seconds,
                        description=config["description"], seed=args.seed,
-                       profile=not args.no_profile)
+                       profile_mode=args.profile_mode,
+                       profile_steps=args.profile_steps)
     report["scale"] = 3
     report["shape_note"] = ("the cd_* protocol: chunk 128, 64 flagship windows/step, "
                             "microbatch as stated per config; compared against the "
@@ -584,8 +639,12 @@ def main():
     parser.add_argument("--warmup", type=int, default=2)
     parser.add_argument("--repeats", type=int, default=REPEATS)
     parser.add_argument("--seed", type=int, default=3401)
-    parser.add_argument("--no-profile", action="store_true",
-                        help="skip the torch.profiler pass (per-step walls only; no kernel attribution)")
+    parser.add_argument("--profile-mode", choices=("full", "cuda", "off"), default="full",
+                        help="full = gates/cd protocol (CPU+CUDA, all steps, key_averages); "
+                             "cuda = CUDA-only over the first --profile-steps steady step(s), "
+                             "one-pass aggregation (for the huge microbatch-2 event volumes); "
+                             "off = walls only")
+    parser.add_argument("--profile-steps", type=int, default=1)
     arguments = parser.parse_args()
     if arguments.scale == 1:
         report = scale1(arguments)
