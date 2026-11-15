@@ -1,0 +1,312 @@
+{
+  "session": {
+    "device": "NVIDIA RTX 6000 Ada Generation",
+    "card_gib": 47.38,
+    "torch": "2.9.1+cu128",
+    "triton": "3.5.1"
+  },
+  "gate": "A",
+  "pinned_chunk_parity": {
+    "fixture": "fp32, distinct directions, rank 8, chunk 32",
+    "rows": [
+      {
+        "chunk": 0,
+        "slot": true,
+        "erase": true,
+        "op": true,
+        "live_after": true,
+        "payload": true,
+        "weights": true
+      },
+      {
+        "chunk": 1,
+        "slot": true,
+        "erase": true,
+        "op": true,
+        "live_after": true,
+        "payload": true,
+        "weights": true
+      },
+      {
+        "chunk": 2,
+        "slot": true,
+        "erase": true,
+        "op": true,
+        "live_after": true,
+        "payload": true,
+        "weights": true
+      },
+      {
+        "chunk": 3,
+        "slot": true,
+        "erase": true,
+        "op": true,
+        "live_after": true,
+        "payload": true,
+        "weights": true
+      }
+    ],
+    "all_bit_equal": true
+  },
+  "whole_scan_parity": [
+    {
+      "label": "five_ops_small",
+      "ops": {
+        "none": 295,
+        "append": 26,
+        "correct": 125,
+        "pop": 32,
+        "merge": 34
+      },
+      "chunks": 4,
+      "slot": true,
+      "erase": true,
+      "op": true,
+      "live_after": true,
+      "payload": true,
+      "weights_bit_equal": true,
+      "reads_bit_equal": true,
+      "state_bit_equal": true
+    },
+    {
+      "label": "pop_saturated",
+      "ops": {
+        "none": 1321,
+        "append": 43,
+        "correct": 505,
+        "pop": 139,
+        "merge": 40
+      },
+      "chunks": 4,
+      "slot": true,
+      "erase": true,
+      "op": true,
+      "live_after": true,
+      "payload": true,
+      "weights_bit_equal": true,
+      "reads_bit_equal": true,
+      "state_bit_equal": true
+    },
+    {
+      "label": "ragged_100_over_64",
+      "ops": {
+        "none": 589,
+        "append": 28,
+        "correct": 96,
+        "pop": 9,
+        "merge": 78
+      },
+      "chunks": 2,
+      "slot": true,
+      "erase": true,
+      "op": true,
+      "live_after": true,
+      "payload": true,
+      "weights_bit_equal": true,
+      "reads_bit_equal": true,
+      "state_bit_equal": true
+    },
+    {
+      "label": "rank_prefix_6_of_16",
+      "ops": {
+        "none": 645,
+        "append": 36,
+        "correct": 207,
+        "pop": 70,
+        "merge": 66
+      },
+      "chunks": 4,
+      "slot": true,
+      "erase": true,
+      "op": true,
+      "live_after": true,
+      "payload": true,
+      "weights_bit_equal": true,
+      "reads_bit_equal": true,
+      "state_bit_equal": true
+    },
+    {
+      "label": "registered_bf16",
+      "ops": {
+        "none": 41488,
+        "append": 8760,
+        "correct": 3082,
+        "pop": 11962,
+        "merge": 244
+      },
+      "chunks": 32,
+      "slot": true,
+      "erase": true,
+      "op": true,
+      "live_after": true,
+      "payload": true,
+      "weights_bit_equal": true,
+      "reads_bit_equal": true,
+      "state_bit_equal": true
+    },
+    {
+      "label": "growth_policy",
+      "ops": {
+        "none": 1156,
+        "append": 84,
+        "correct": 563,
+        "pop": 57,
+        "merge": 188
+      },
+      "chunks": 4,
+      "slot": true,
+      "erase": true,
+      "op": true,
+      "live_after": true,
+      "payload": true,
+      "weights_bit_equal": true,
+      "reads_bit_equal": true,
+      "state_bit_equal": true
+    }
+  ],
+  "eager_chunk": {
+    "shape": {
+      "batch": 8,
+      "chunk_tokens": 64,
+      "heads": 2,
+      "rank": 128,
+      "value_dim": 128
+    },
+    "route_chunk": {
+      "kernels_per_chunk": 136.0,
+      "timing_ms": {
+        "latency_ms_mean": 2.281591482460499,
+        "latency_ms_p50": 2.2780634462833405,
+        "latency_ms_min": 2.2678226232528687,
+        "latency_ms_max": 2.307254821062088,
+        "dispatch_ms_mean": 2.25808322429657,
+        "dispatch_ms_p50": 2.2547226399183273,
+        "device_ms_mean": 2.3060927391052246,
+        "device_ms_p50": 2.3018879890441895,
+        "occupancy_ms": 0.2281115999999992,
+        "latency_over_occupancy": 9.986618156566122,
+        "latency_over_device": 0.9893754244010878,
+        "dispatch_over_occupancy": 9.884296282689418,
+        "repeats": 5
+      }
+    },
+    "fused_route_chunk": {
+      "kernels_per_chunk": 65.0,
+      "timing_ms": {
+        "latency_ms_mean": 1.3884717598557472,
+        "latency_ms_p50": 1.387481577694416,
+        "latency_ms_min": 1.3811718672513962,
+        "latency_ms_max": 1.3973424211144447,
+        "dispatch_ms_mean": 1.3653621077537537,
+        "dispatch_ms_p50": 1.3642720878124237,
+        "device_ms_mean": 1.4141439914703369,
+        "device_ms_p50": 1.4142080545425415,
+        "occupancy_ms": 0.2012059999999975,
+        "latency_over_occupancy": 6.895826057346368,
+        "latency_over_device": 0.9818460978730339,
+        "dispatch_over_occupancy": 6.780474179758261,
+        "repeats": 5
+      }
+    }
+  },
+  "compiled_differential": {
+    "shape": {
+      "batch": 8,
+      "tokens": 2048,
+      "heads": 2,
+      "rank": 128,
+      "value_dim": 128,
+      "chunk_tokens": 64,
+      "chunks_per_scan": 32
+    },
+    "arms": {
+      "eager_router": {
+        "host_dispatch_ms_p50": 45.64349539577961,
+        "latency_ms_p50": 45.696236193180084,
+        "device_ms_p50": 45.742496490478516,
+        "kernels_per_scan": 2172.0,
+        "kernels_per_chunk": 67.875
+      },
+      "fused_router": {
+        "host_dispatch_ms_p50": 40.133677423000336,
+        "latency_ms_p50": 40.18588736653328,
+        "device_ms_p50": 40.21196746826172,
+        "kernels_per_scan": 2139.0,
+        "kernels_per_chunk": 66.84375
+      },
+      "scan_only": {
+        "host_dispatch_ms_p50": 17.552025616168976,
+        "latency_ms_p50": 17.599575221538544,
+        "device_ms_p50": 17.639360427856445,
+        "kernels_per_scan": 861.0,
+        "kernels_per_chunk": 26.90625
+      }
+    },
+    "routing_differential": {
+      "eager_router": {
+        "kernels_per_scan": 1311.0,
+        "kernels_per_chunk": 40.96875,
+        "host_ms_per_scan": 28.091469779610634
+      },
+      "fused_router": {
+        "kernels_per_scan": 1278.0,
+        "kernels_per_chunk": 39.9375,
+        "host_ms_per_scan": 22.58165180683136
+      },
+      "host_ms_note": "the dispatch p50 is stable to ~+/-20% run to run at this shape; the kernel counts are the robust before/after, the host ms the honest same-session estimate"
+    },
+    "reference": "PROFILE_STEP_VS_GDN2.md \u00a73 recorded routing compiled = 28.5 ms host / 724 kernels per scan at its own fixture; the absolute numbers here are this session's own fixture, the before/after is the comparison that matters"
+  },
+  "cross_regime": {
+    "shape": {
+      "batch": 8,
+      "tokens": 512,
+      "heads": 2,
+      "rank": 128,
+      "chunk_tokens": 64,
+      "autocast": "bf16"
+    },
+    "compiled_eager_router_vs_eager_router": {
+      "slot": 628,
+      "erase": 3,
+      "op": 10,
+      "live_after": 1,
+      "payload": 4103,
+      "lanes": 16384
+    },
+    "compiled_fused_router_vs_compiled_eager_router": {
+      "slot": 0,
+      "erase": 0,
+      "op": 0,
+      "live_after": 0,
+      "payload": 0,
+      "lanes": 16384
+    },
+    "note": "the first row is the pre-existing inductor-vs-eager difference of the registered arm (its similarity bmm is inductor-lowered at bf16); the second row is what K5 adds to the compiled regime and is asserted zero by test_gate_c"
+  },
+  "cd_protocol_fixture": {
+    "fixture": "registered matrix_ops model, block 0's mixer on a real flagship-stream 64-window batch, bf16 autocast",
+    "shape": {
+      "batch": 8,
+      "tokens": 2048,
+      "heads": 2,
+      "rank": 128,
+      "value_dim": 128,
+      "chunk_tokens": 64,
+      "chunks": 32
+    },
+    "schedule_bit_parity_all_chunks": true,
+    "training_step": {
+      "note": "one eager-scan step per router; the eager scan's duplicate-slot scatter_add_ is atomics-nondeterministic, so the fused arm is compared against the eager arm's own rerun deviation",
+      "loss_eager": 5.742380142211914,
+      "loss_eager_rerun": 5.7426252365112305,
+      "loss_fused": 5.742516994476318,
+      "grad_scale_eager": 30177.44091887772,
+      "grad_scale_eager_rerun": 30185.491604954004,
+      "grad_scale_fused": 30190.814603574574,
+      "grad_scale_fused_deviation": 13.37368469685316,
+      "grad_scale_eager_rerun_baseline": 8.050686076283455,
+      "within_baseline": true
+    }
+  }
+}
