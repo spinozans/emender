@@ -474,6 +474,46 @@ def test_hi_span_grads_within_floors():
             collect["weights"][:, start:stop]), seg
 
 
+def test_hi_span_grads_bf16_decay_gate():
+    """The x44 §6.2 class, found again at K8 and pinned: the DECAY GATE may
+    arrive bf16 (the training regime's autocast); a bf16 ``lam`` fed to the
+    f32 ``mul.rn`` intrinsic is NOT a value-correct promotion on this stack --
+    it poisoned the trajectory replay and blew ddecay up by ~1e6.  The replay
+    upcasts (K6's body pattern); this test holds the whole hi backward to the
+    oracle under the bf16 regime."""
+    batch, tokens, heads, rank, value_dim = 2, 256, 2, 256, 128
+    g0 = torch.Generator().manual_seed(21)
+    query = (torch.randn(batch, tokens, heads, value_dim, generator=g0)
+             .to("cuda") * 0.5).bfloat16()
+    directions = torch.randn(64, value_dim, generator=g0).to("cuda")
+    choice = torch.randint(0, 64, (batch, tokens, heads), generator=g0)
+    payload = directions[choice].bfloat16()
+    decay = torch.rand(batch, tokens, heads, generator=g0).to("cuda") \
+        .clamp(0.9, 1.0).bfloat16()
+    upstream = torch.randn(batch, tokens, heads, value_dim, generator=g0) \
+        .to("cuda")
+    policy = RoutingPolicy(ops=True, grow=False)
+    spans = [(0, tokens, rank)]
+    o32 = _grad_case(query.float(), payload.float(), decay.float(), upstream,
+                     policy=policy, spans=spans)
+    o64 = _grad_case(query.float(), payload.float(), decay.float(), upstream,
+                     policy=policy, spans=spans, dtype=torch.float64)
+    q = query.clone().requires_grad_(True)
+    p = payload.clone().requires_grad_(True)
+    d = decay.clone().requires_grad_(True)
+    res = growing_scan(q, p, d, policy=policy, start_rank=rank, rank_cap=rank)
+    (res.reads * upstream).sum().backward()
+    for name, kern, orac, or64 in zip(("dquery", "dpayload", "ddecay"),
+                                       (q.grad, p.grad, d.grad), o32, o64):
+        floor = (orac.float() - or64.float()).abs().max().item()
+        deviation = (kern.float() - orac.float()).abs().max().item()
+        # the bf16 inputs round the gate and the projections; the allowance is
+        # the noise factor over the floor PLUS the bf16 input rounding itself
+        input_rounding = 0.05 * (orac.float().abs().max().item() + 1.0)
+        assert deviation <= NOISE_FACTOR * max(floor, 1e-30) + input_rounding, \
+            (name, floor, deviation)
+
+
 def test_grads_across_a_growth_boundary():
     """Gate B ACROSS the shape change: a 64 -> 128 -> 256 chain (the K6 op,
     the K6 op, the K8 hi op, two zero-injection pads), gradients vs the mixed

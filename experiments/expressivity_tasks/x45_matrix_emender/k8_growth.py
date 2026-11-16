@@ -223,7 +223,7 @@ def _k8_traj_kernel(
                          mask=keep)
                 tl.store(ckpt_live + (seg * ROWS + ck_row) * R + ranks,
                          live.to(tl.int8), mask=keep_r)
-        lam = tl.load(decay_row + t * dts)
+        lam = tl.load(decay_row + t * dts).to(tl.float32)
         acc = _mul_rn(acc, lam)
         for lane in tl.static_range(L):
             channel = t * sts + lane * sls
@@ -253,8 +253,13 @@ def _launch_traj(state, live, decay, schedule, state_out, live_out, traj,
 
     ``heads`` is explicit because MODE 1 takes its entry as a ``(rows, R, V)``
     checkpoint slab, where the head count is not recoverable from the shape.
+    The DECAY GATE is upcast to fp32 here (K6's body and K7's kernel both do
+    the same): a bf16 ``lam`` fed to the f32 ``mul.rn`` intrinsic is not a
+    value-correct promotion on this stack -- the x44 §6.2 class, found here
+    again as a 1e6-scale ddecay blowup under the training regime's autocast.
     """
     value_dim = state.shape[-1]
+    decay = decay.to(torch.float32)
     _k8_traj_kernel[(rows, triton.cdiv(_pow2(rank), K8_BR))](
         state, live.view(torch.int8), decay,
         schedule.slot, schedule.op, schedule.erase.view(torch.int8),
@@ -615,7 +620,7 @@ def _k8_bwd_walk_kernel(
         erase0 = tl.load(erase + channel_base + t * sts + 0 * sls) != 0
         merge = op1 != _NONE_CODE
         carries = (op0 == _APPEND_CODE) | (op0 == _CORRECT_CODE)
-        lam = tl.load(decay_row + t * dts)
+        lam = tl.load(decay_row + t * dts).to(tl.float32)
         nq = tl.load(scal + scal_base + tt * 2 + 0)
         duu = tl.load(scal + scal_base + tt * 2 + 1)
         q = tl.load(q_row + t * qts + values * qvs, mask=keep_v,
@@ -840,6 +845,9 @@ def _hi_backward_body(query, payload, decay, dreads, dstate_out, state, live,
     R = int(rank)
     device = query.device
     nvb = triton.cdiv(value_dim, K8_BV)
+    # the DECAY GATE upcast once, K6's own pattern: the kernels' ``mul.rn`` is
+    # f32 and a bf16 ``lam`` is not a value-correct promotion on this stack.
+    decay = decay.to(torch.float32)
     # 1. the span's segment-entry checkpoints, REPLAYED (not forward-saved):
     #    one extra K1-class walk per span, the memory arithmetic's price.
     _, _, ckpt_state, ckpt_live = traj_checkpoints(
