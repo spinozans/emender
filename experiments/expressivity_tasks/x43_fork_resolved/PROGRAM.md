@@ -3642,3 +3642,148 @@ columns remain mandatory; stream-transfer and single-seed caveats are explicit.
 Both byte nominations and completed extraction gate execution on free cards;
 finish before the 1.3B launch with zero contention and attach all receipts to
 flagship sign-off. This task launches no training and changes no live service.
+
+## X45 matrix emender arc — machine, matched board, and expressivity results (2026-11-13 → 2026-11-16)
+
+The matrix-emender arc is the decision-space lane of this program:
+[PREREGISTRATION_MATRIX_EMENDER.md](PREREGISTRATION_MATRIX_EMENDER.md) committed the
+five-op matrix state before any measurement; the arc's own synthesis is
+[../x45_matrix_emender/PROGRAM_SYNTHESIS.md](../x45_matrix_emender/PROGRAM_SYNTHESIS.md)
+and its paper map [../x45_matrix_emender/PAPER2_SKELETON.md](../x45_matrix_emender/PAPER2_SKELETON.md).
+One line per stage, receipts under `../x45_matrix_emender/receipts/`; no existing claim
+status or binding is changed by this entry, and the running lanes' pre-registrations
+below have no outcome receipts.
+
+- **Registered (2026-11-13):** the matrix-state emender — five rank-1 ops on an
+  orthonormal-key `r×d_v` state, detached decisions, chunk-boundary growth by
+  zero-injection; claims C1–C4 with falsifiers.
+  [PREREGISTRATION_MATRIX_EMENDER.md](PREREGISTRATION_MATRIX_EMENDER.md).
+- **Lean phase two (2026-11-13):** the attention/retrieval algebra — fixed-schedule
+  readout linear/affine, the truncation obstruction and its full-population
+  resolution, zero sorries/axioms; decision generation remains outside every theorem.
+  [OPERATOR_ALGEBRA_STATUS](../../../formal/lean/OPERATOR_ALGEBRA_STATUS.md).
+- **K1:** the state scan as one Triton kernel — 87→1 kernels/chunk, state/liveness
+  bit-exact, reads 0.0–1.66× the measured floor.
+  [../x45_matrix_emender/K1_SCHEDULE_SCAN.md](../x45_matrix_emender/K1_SCHEDULE_SCAN.md),
+  `receipts/k1_gates.json`.
+- **K2+K3:** the read as two kernels — 24→3 kernels/chunk, per-token parity ≤1.65×
+  floor; the wall/occupancy ratio honestly did not move.
+  [../x45_matrix_emender/K23_READ.md](../x45_matrix_emender/K23_READ.md),
+  `receipts/k23_gates.json`.
+- **No-host-loop:** one launch for the 2048-token forward — ratio 4.60×→1.12×; rank
+  2048 refused by name (the register-tile ceiling, first receipted here).
+  [../x45_matrix_emender/NO_HOST_LOOP.md](../x45_matrix_emender/NO_HOST_LOOP.md),
+  `receipts/hostloop_free.json`.
+- **K4:** the fused backward — 2 027→3 kernels, block step 44.8→6.0 ms, dstate/dpayload
+  bit-exact; the 2.00 GiB trajectory stated as the design's price.
+  [../x45_matrix_emender/K4_FUSED_BACKWARD.md](../x45_matrix_emender/K4_FUSED_BACKWARD.md),
+  `receipts/k4_fused_backward.json`.
+- **Scale proof:** the three-scale honest verdict — block call fast, model step NOT
+  fast (OOM at the registered microbatch; 2.65× slower at mb2), whole arm 16× below
+  GDN2's recorded class; causes receipted with their levers.
+  [../x45_matrix_emender/RESULT_SCALE_PROOF.md](../x45_matrix_emender/RESULT_SCALE_PROOF.md),
+  `receipts/scale_proof_*.json`.
+- **Step profile:** the registered step is launch-bound, not arithmetic-bound — 434,357
+  kernels, 64 % host gap, against GDN2's 59,294.
+  [../x45_matrix_emender/PROFILE_STEP_VS_GDN2.md](../x45_matrix_emender/PROFILE_STEP_VS_GDN2.md),
+  `receipts/profile_step_vs_gdn2.json`.
+- **K5 (gates A–D):** compile hosting, recompute-over-store, decision-chain fusion —
+  mb8 parity with the registered twin at −52 % launches; the 32 k target not reached
+  and the residual named. [../x45_matrix_emender/K5_LAUNCH_COUNT.md](../x45_matrix_emender/K5_LAUNCH_COUNT.md),
+  `receipts/k5_*.json`.
+- **K5A:** the routing differentiable channels fused — 125,033 kernels/step; the wall
+  did NOT improve (per-chunk Python op dispatch owns the residual); landed, gated,
+  default-off with the reason.
+  [../x45_matrix_emender/K5A_ROUTING_DIFF.md](../x45_matrix_emender/K5A_ROUTING_DIFF.md),
+  `receipts/k5a_routing_diff.json`.
+- **K5B:** one op per (layer, window), CUDA-graph replayed — host 42.0→1.0 ms/scan,
+  3.25 s step, 31,046 tok/s matched session, bit-equal to the per-chunk arm including
+  a whole training step's loss and gradients.
+  [../x45_matrix_emender/K5B_WHOLE_SCAN.md](../x45_matrix_emender/K5B_WHOLE_SCAN.md),
+  `receipts/k5b_whole_scan.json`.
+- **150M matched board (2026-11-14):** C1 not met in the matrix form — matrix_ops 1.7576
+  vs gdn2 1.1976 same-session at exposure matched to 0.13 %; append-only DNF at step 56,
+  bit-identical ×2 (the stability contrast is the cleanest ops evidence; the control is
+  whole-vs-crippled per the operator's ruling); C2/C3 untouched. Bound under the
+  150 M lattice registration's caveats.
+  [RESULT_150M_MATCHED_ARMS.md](RESULT_150M_MATCHED_ARMS.md),
+  `runs_150m_matched/`.
+- **Chunk-sequentiality sweep:** the dial is monotone and still falling at chunk 4
+  (2.4173→2.1791 at matched 20 M exposure); MERGE collapses 62× (the staleness
+  artifact); chunk 2 not-run-with-reason — whole-scan checkpoint memory is linear in
+  decisions-per-window (peak GB = 21.54 + 0.0265 × chunks/window) and OOMs the card.
+  [../x45_matrix_emender/RESULT_CHUNK_SEQUENTIALITY.md](../x45_matrix_emender/RESULT_CHUNK_SEQUENTIALITY.md),
+  `receipts/sweep_chunk_*.json`.
+- **Chunk-8 board arm:** the dial at board scale closes 0.0240 of the 0.5600-nat gap
+  (1.7576→1.7336, matched-time at 57.3 % exposure, a stated lower bound) — the
+  probe-scale −0.199 does not transfer.
+  [../x45_matrix_emender/RESULT_BOARD_CHUNK8.md](../x45_matrix_emender/RESULT_BOARD_CHUNK8.md),
+  `receipts/board_chunk8.json`.
+- **CMA-ES tuning + diagnosis:** tuning closes 0.076 nats at board scale (13.6 %;
+  1.6813 confirmed) and 0.10 at probe scale; the plateau is architectural — the ops
+  degenerate into identity caching (CORRECT 60–71 % identity rewrites, capacity never
+  binding, read-back sharpness the tuned win, the query channel 1–2 orders
+  gradient-poor). [../x45_matrix_emender/CMAES_TUNING.md](../x45_matrix_emender/CMAES_TUNING.md),
+  `receipts/cmaes_*.json`, `runs_150m_matched/matrix_ops_cmaes_confirm/`.
+- **K6 (the sequential arm):** the per-token limit beats the dial's best — 2.0278 vs
+  2.1791 (−0.1513 beyond chunk 4; 0.39 over the full dial, probe scale); 0 flips in
+  17.0 M lanes; 32 MB checkpoints where the dial's chunk-2 point demands 1 GB; MERGE's
+  recovery prediction falsified in the informative direction (completes its collapse).
+  Its board-scale arm is gated on the operator's sign-off of the DRAFT
+  [PREREGISTRATION_SEQUENTIAL_MATRIX.md](../x45_matrix_emender/PREREGISTRATION_SEQUENTIAL_MATRIX.md)
+  — **sign-off pending**. [../x45_matrix_emender/K6_SEQUENTIAL_MATRIX.md](../x45_matrix_emender/K6_SEQUENTIAL_MATRIX.md),
+  `receipts/k6_gates.json`, `receipts/k6_probe.json`.
+- **K7:** the rank ceiling removed on both sides of the scan — rank 2048 executes;
+  the split softmax implements the Lean truncation law (full-population denominator,
+  never per-block); 0 flips in 279,040 lanes at rank 2048.
+  [../x45_matrix_emender/K7_HIGH_RANK.md](../x45_matrix_emender/K7_HIGH_RANK.md),
+  `receipts/k7_high_rank.json`.
+- **K8 (growth wired):** the registered rule on the untangled machine — fires, climbs
+  128→2048 in every window, zero rows exact, backward survives every rank change,
+  trains (six-step smoke, then the arms); the honest finding: the trigger fires on an
+  IDLE store (identity-rewrite pressure, not occupancy).
+  [../x45_matrix_emender/K8_GROWTH.md](../x45_matrix_emender/K8_GROWTH.md),
+  `receipts/k8_gates.json`, `receipts/k8_smoke.json`.
+- **K8 three-arm probe (2026-11-16):** the capacity three-way tie — fixed-128 2.0278 /
+  grow 2.0186 / fixed-2048 2.0240 at matched 20 M exposure (single seed, probe scale):
+  the informative null. On natural text the store never fills (~84 live slots at every
+  physical rank); the binding constraint is content diversity, not size; the 2048
+  target is testable only in the saturation regime (C3's own probe).
+  `receipts/k8_probe_grow.json` (`3004f950`), `receipts/k8_probe_fixed2048.json`
+  (`ca576f41`), `receipts/k6_probe.json`.
+- **K9:** the distributed-persistent walk — gate 0 receipts the impossibility (no
+  grid-wide barrier/cooperative launch in Triton 3.5.1; 9.3 MB addressable smem vs
+  the 16 MB needed); the L2-resident walk runs anyway: 374.5→56.2 ms at rank 2048
+  (6.7×), 0 flips at every gated rank; the C3 saturation probe becomes affordable.
+  [../x45_matrix_emender/K9_DISTRIBUTED_WALK.md](../x45_matrix_emender/K9_DISTRIBUTED_WALK.md),
+  `receipts/k9_barrier_economics.json` (`9a316ce9`), `receipts/k9_gates.json` (`d319f898`).
+- **Granularity separator (2026-11-16):** the two-part signature, receipted — the
+  learnability side (the K6 dial gradient on natural text) plus the expressivity side
+  (SEP-AR, 48 cells: per-token 0.856–0.999; C=8 blind 0.289–0.322; C=32/128 AT CHANCE
+  across every LR and seed; read weight exactly 0.0 on live blind answer rows;
+  refutation clause not triggered; P-5 partial, honestly marked). Chunk-granular
+  decision generation is an expressivity weakening of this algebra — the empirical
+  witness for the boundary the Lean theorems leave open.
+  [../x45_matrix_emender/RESULT_GRANULARITY_SEPARATOR.md](../x45_matrix_emender/RESULT_GRANULARITY_SEPARATOR.md),
+  `receipts/separator_*.json` (`469bfa71`/`d1d62f69`).
+- **SEP-KV pre-registration (in flight, no results):** the key-separation necessity
+  probe — the machine-checked collision lemma, the derived 0.5 set-retrieval ceiling at
+  depth 1, and the calibrated depth-substitution finding (the fused depth-2 composite-
+  payload escape; the necessity claim is per-layer). Predictions committed before any
+  protocol-budget run; the sweep is running on its own lane.
+  [../x45_matrix_emender/RESULT_KEY_SEPARATION.md](../x45_matrix_emender/RESULT_KEY_SEPARATION.md)
+  (`63d2b681`).
+- **Wheeler-order pre-registrations (in flight, no results):** the ordered-key design
+  (derived 1-D order, full-population-denominator interval read per the Lean
+  truncation law, MERGE-before-POP losslessness) and the SPAN-RUN capacity probe
+  (pointwise eviction-onset decay vs ordered dilution, collapse point S=8, refutation
+  clause; both arms reclassify if SEP-KV refutes separation). Predictions committed;
+  the sweep is running. [../x45_matrix_emender/DESIGN_WHEELER_ORDER.md](../x45_matrix_emender/DESIGN_WHEELER_ORDER.md)
+  (`4acac6da`), [../x45_matrix_emender/RESULT_WHEELER_CAPACITY.md](../x45_matrix_emender/RESULT_WHEELER_CAPACITY.md)
+  (`abbdd903`).
+
+Arc-level honesty, carried from the stage documents: single seed throughout the
+quality measurements; probe-scale numbers are never board claims; the SEP-KV/Wheeler
+lanes have committed predictions and no outcomes; and the operator's pending decisions
+are the sequential registration's sign-off (gating any 2700 s per-token claim), the
+key-family registration, the C3 saturation probe, and the 1.3B flagship gates.
