@@ -1,0 +1,109 @@
+{
+ "gate": "K9 gate 0: the barrier economics (measured first)",
+ "fixture": {
+  "rows": 16,
+  "rank": 2048,
+  "value_dim": 128,
+  "block_slots": 128,
+  "cta_smem_bytes": 65536,
+  "tokens": 2048,
+  "syncs_per_token": 3,
+  "decision_budget_ms": 40.0,
+  "device": "NVIDIA RTX 6000 Ada Generation"
+ },
+ "impossibility": {
+  "sync_survey": {
+   "triton_version": "3.5.1",
+   "torch_version": "2.9.1+cu128",
+   "tl_extra_cuda_members": [
+    "convert_custom_float8_sm70",
+    "convert_custom_float8_sm80",
+    "gdc",
+    "gdc_launch_dependents",
+    "gdc_wait",
+    "globaltimer",
+    "libdevice",
+    "num_threads",
+    "num_warps",
+    "smid",
+    "utils"
+   ],
+   "has_grid_sync_primitive": false,
+   "nvidia_driver_has_cooperative_launch": true,
+   "note": "tl.extra.cuda exposes only the PDL utilities (gdc_wait/gdc_launch_dependents) and diagnostics; grid-wide sync inside one kernel is not expressible, and the NVIDIA launch path exposes no cooperative launch, so a software grid barrier cannot be made deadlock-safe by construction either"
+  },
+  "sm_count": 142,
+  "smem_per_sm_bytes": 102400,
+  "smem_optin_per_block_bytes": 101376,
+  "l2_bytes": 100663296,
+  "ctas_per_sm_at_64KB": 1,
+  "max_coresident_ctas": 142,
+  "total_addressable_smem_bytes": 9306112,
+  "probe_state_bytes": 16777216,
+  "probe_shape_ctas": 256,
+  "verdict": "the smem-resident distributed walk is impossible at the probe shape on this card: 256 CTAs of 64 KB do not fit 142 SMs (1 CTA/SM, 142 co-resident, 9.3 MB of addressable on-chip state < 16 MB of store), so no barrier -- cooperative or software -- can exist for it; and no grid-wide sync is Triton-expressible in any case. The store CAN wholly live on-chip in the L2 (16 MB < 96 MB); the distributed design is therefore built on the L2-resident store with the launch boundary (graph-captured) as the per-token barrier"
+ },
+ "barrier_economics": {
+  "eager_empty_launch_us": 10.766,
+  "eager_walklike_launch_us": 19.097,
+  "graph_replay_3x2048_nodes_ms": 3.441,
+  "graph_node_us": 0.56,
+  "note": "the per-token barrier of the Triton-expressible design is the kernel-launch boundary; eager it costs 10-19 us (2048 tokens x 3 x that is 65-118 ms/scan -- over budget), inside a whole-scan CUDA graph (the lane's K5B discipline) it is the graph node cost measured above"
+ },
+ "l2_streaming": {
+  "single_cta_1MB_pass_us": 14.235,
+  "single_cta_1MB_GBs": 73.7,
+  "multi_cta_16MB_read_us": 14.262,
+  "multi_cta_16MB_read_GBs": 1176.4,
+  "multi_cta_16MB_rw_us": 14.47,
+  "multi_cta_16MB_rw_GBs": 2319.0,
+  "note": "the 16 MB store is L2-resident (96 MB L2): the distributed sweep reads it at the multi-CTA rate, the single-CTA fallback sweeps one 1 MB row at the single-CTA rate (latency-bound, the K7 fold class)"
+ },
+ "occupancy_per_snap": [
+  {
+   "rank": 128,
+   "slot_blocks_per_row": 1,
+   "sweep_ctas": 16,
+   "waves_on_142_SMs": 0.11
+  },
+  {
+   "rank": 256,
+   "slot_blocks_per_row": 2,
+   "sweep_ctas": 32,
+   "waves_on_142_SMs": 0.23
+  },
+  {
+   "rank": 512,
+   "slot_blocks_per_row": 4,
+   "sweep_ctas": 64,
+   "waves_on_142_SMs": 0.45
+  },
+  {
+   "rank": 1024,
+   "slot_blocks_per_row": 8,
+   "sweep_ctas": 128,
+   "waves_on_142_SMs": 0.9
+  },
+  {
+   "rank": 2048,
+   "slot_blocks_per_row": 16,
+   "sweep_ctas": 256,
+   "waves_on_142_SMs": 1.8
+  }
+ ],
+ "projection": {
+  "distributed_barrier_ms": 3.44,
+  "distributed_projected_scan_ms": 65.7,
+  "fallback_scan_ms": 374.3,
+  "fallback_note": "the L2-resident single-CTA variant already exists: it is the K7 walk (receipts/k7_high_rank.json, 374.3 ms/scan at rank 2048, fold-bound at 275 GB/s effective); the distributed variant parallelises those folds across the slot-block CTAs",
+  "eager_multilaunch_barrier_ms": 117.3
+ },
+ "decision": {
+  "rule": "if 2048 tokens x syncs/token x measured barrier-us < 40 ms/scan then the distributed design, else the L2-resident single-CTA fallback",
+  "measured_barrier_ms": 3.44,
+  "budget_ms": 40.0,
+  "build_distributed": true,
+  "variant": "distributed walk, the store L2-resident on-chip, the per-token barrier the graph-captured launch boundary (the best Triton-expressible form of the distributed-persistent design; the smem-persistent form is impossible -- see impossibility)",
+  "reason": "the graph-captured launch boundary costs ~0.56 us/node, so 2048 tokens x 3 barriers = 3.4 ms/scan, under the 40 ms budget; the smem-resident form is receipted impossible (no Triton grid sync; 256 CTAs > 142 co-resident; 16 MB > 9.3 MB addressable on-chip), so the state rides the L2 -- on-chip at the probe shape -- and the sweeps distribute across CTAs exactly as the brief's design specifies"
+ }
+}
