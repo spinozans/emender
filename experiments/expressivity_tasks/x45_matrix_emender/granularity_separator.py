@@ -319,7 +319,13 @@ def collect_channels(model, ids, targets, probe_pairs, chunk_tokens: int) -> dic
         destroyed = row_destroyed_before_probe(schedule, probe_pairs)
         live_at_probe = stored & ~destroyed
         masks = dict(all=stored, readable=stored & ~blind, blind=stored & blind,
-                     live_blind=live_at_probe & blind)
+                     live_blind=live_at_probe & blind,
+                     # the churn channel: a blind pair that CORRECTed onto an
+                     # ENTRY-LIVE register is the one blind write the chunked
+                     # router can still read; a blind APPEND is dead-at-entry
+                     # and must carry exactly zero weight.
+                     blind_append=blind & (op == APPEND),
+                     blind_correct=blind & (op == CORRECT))
 
         def stats(mask):
             if not bool(mask.any()):
@@ -344,6 +350,10 @@ def collect_channels(model, ids, targets, probe_pairs, chunk_tokens: int) -> dic
                 if bool((stored & ~blind).any()) else None,
                 blind=float(correct[stored & blind].float().mean())
                 if bool((stored & blind).any()) else None,
+                blind_append=float(correct[blind & (op == APPEND)].float().mean())
+                if bool((blind & (op == APPEND)).any()) else None,
+                blind_correct=float(correct[blind & (op == CORRECT)].float().mean())
+                if bool((blind & (op == CORRECT)).any()) else None,
                 blind_intact=float(correct[live_at_probe & blind].float().mean())
                 if bool((live_at_probe & blind).any()) else None)))
     return dict(chunk_tokens=chunk_tokens, per_layer=per_layer)
@@ -475,10 +485,40 @@ def sweep(task: str, arms, lrs, seeds, steps: int, batch: int, rank: int,
     return summary, best, best_state
 
 
+def mechanism_pass(arms, rank: int, device: str, eval_ids, eval_targets,
+                   eval_pairs):
+    """The headline mechanistic receipt, from the sweep's saved best models:
+    the recorded read channel at the probe on the row the probed pair's write
+    created, stratified by the pre-registered blindness predicate."""
+    receipt_ids = eval_ids[:512].to(device)
+    receipt_targets = eval_targets[:512].to(device)
+    receipt_pairs = eval_pairs[:512].to(device)
+    mechanism = dict(experiment="granularity_separator_mechanism",
+                      chance=CHANCE,
+                      note=("weight_on_answer_row is the scan's recorded read "
+                            "channel at the probe token on the row the probed "
+                            "pair's write created; blind = the pre-registered "
+                            "same-chunk predicate (P2: dead at the probe chunk's "
+                            "entry). live_blind = stored and not destroyed "
+                            "before the probe."))
+    for chunk_tokens in arms:
+        path = RECEIPTS / f"separator_ar_best_c{chunk_tokens}.pt"
+        if not path.exists():
+            continue
+        model = SeparatorModel(chunk_tokens=chunk_tokens, rank=rank).to(device)
+        model.load_state_dict(torch.load(path, map_location=device,
+                                         weights_only=True))
+        mechanism[f"c{chunk_tokens}"] = collect_channels(
+            model, receipt_ids, receipt_targets, receipt_pairs, chunk_tokens)
+    (RECEIPTS / "separator_mechanism.json").write_text(json.dumps(mechanism, indent=1))
+    return mechanism
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Granularity separator sweep (SEP-AR headline, SEP-EVICT corroboration)")
-    parser.add_argument("--task", choices=["ar", "evict", "both"], default="both")
+    parser.add_argument("--task", choices=["ar", "evict", "both", "mechanism"],
+                        default="both")
     parser.add_argument("--arms", default=None, help="comma list of chunk sizes (AR)")
     parser.add_argument("--lrs", default="3e-3,1e-3,3e-4,1e-4")
     parser.add_argument("--seeds", default="3401,3402,3403")
@@ -508,24 +548,15 @@ def main():
                                       parse_ints(args.seeds), args.steps, args.batch,
                                       16, args.device, eval_sets, args.quick)
         if not args.quick:
-            receipt_ids, receipt_targets, receipt_pairs = (eval_ids[:512],
-                                                           eval_targets[:512],
-                                                           eval_pairs[:512])
-            mechanism = dict(experiment="granularity_separator_mechanism",
-                             chance=CHANCE,
-                             note=("weight_on_answer_row is the scan's recorded read "
-                                   "channel at the probe token on the row the probed "
-                                   "pair's write created; blind = the pre-registered "
-                                   "same-chunk predicate (P2: dead at the probe chunk's "
-                                   "entry). live_blind = stored and not destroyed "
-                                   "before the probe."))
-            for chunk_tokens, state in states.items():
-                model = SeparatorModel(chunk_tokens=chunk_tokens, rank=16).to(args.device)
-                model.load_state_dict({k: v.to(args.device) for k, v in state.items()})
-                mechanism[f"c{chunk_tokens}"] = collect_channels(
-                    model, receipt_ids, receipt_targets, receipt_pairs, chunk_tokens)
-            (RECEIPTS / "separator_mechanism.json").write_text(json.dumps(mechanism, indent=1))
+            print(json.dumps(mechanism_pass(ar_arms, 16, args.device,
+                                            eval_ids, eval_targets, eval_pairs),
+                             indent=1))
         print(json.dumps(summary["best"], indent=1))
+    if args.task == "mechanism":
+        ar_arms = parse_ints(args.arms) if args.arms else [1, 8, 32, 128]
+        print(json.dumps(mechanism_pass(ar_arms, 16, args.device,
+                                        eval_ids, eval_targets, eval_pairs),
+                         indent=1))
     if args.task in ("evict", "both"):
         summary, _, _ = sweep("evict", parse_ints(args.evict_arms),
                               parse_floats(args.evict_lrs), parse_ints(args.seeds),
