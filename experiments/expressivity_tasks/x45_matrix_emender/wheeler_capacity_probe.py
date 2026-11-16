@@ -569,15 +569,20 @@ def _pointwise_binding_fate(result, aux, task: TaskSpec, count: int):
     destroyed = torch.zeros(count, dtype=torch.bool, device=slot.device)
     distance = (probe - write_pos).clamp(min=1)
     for offset in range(1, int(distance.max().item()) + 1):
-        at = write_pos + offset
-        active = (at < probe)
+        raw = write_pos + offset
+        active = raw < probe
         if not bool(active.any()):
             break
-        hit = active & (op.gather(1, at.unsqueeze(1)).squeeze(1) == PT_POP) \
-            & (slot.gather(1, at.unsqueeze(1)).squeeze(1) == binding_slot)
+        # CLAMP before the gather: the loop bound is the batch-wide max
+        # distance, so per-window indices can run past the probe/window; the
+        # clamped reads for inactive windows are discarded by the mask (an
+        # unclamped gather past the window asserted on CUDA at S=4).
+        at = raw.clamp(max=probe - 1).unsqueeze(1)
+        hit = active & (op.gather(1, at).squeeze(1) == PT_POP) \
+            & (slot.gather(1, at).squeeze(1) == binding_slot)
         hit = hit | (active
-                     & (op.gather(1, at.unsqueeze(1)).squeeze(1) == PT_CORRECT)
-                     & (slot.gather(1, at.unsqueeze(1)).squeeze(1) == binding_slot))
+                     & (op.gather(1, at).squeeze(1) == PT_CORRECT)
+                     & (slot.gather(1, at).squeeze(1) == binding_slot))
         destroyed |= hit
     return dict(binding_slot=binding_slot, binding_op=binding_op, filed=filed,
                 destroyed=destroyed)
@@ -742,11 +747,33 @@ def is_pointwise_arm(arm: str) -> bool:
 
 
 # ------------------------------------------------------------------- one run
+def cell_receipt_name(arm: str, span: int, lr: float, seed: int) -> str:
+    return f"wheeler_{arm}_s{span}_lr{lr:.0e}_seed{seed}.json"
+
+
 def run_one(arm: str, span: int, lr: float, seed: int, steps: int, batch: int,
-            device: str, eval_sets, quick: bool = False):
+            device: str, eval_sets, quick: bool = False, resume: bool = False):
     """Train one (arm, span, lr, seed) cell; every cell of the sweep shares the
-    fixed eval set (seed 4999) so arms are compared on identical probes."""
+    fixed eval set (seed 4999) so arms are compared on identical probes.
+    With ``resume`` an existing per-cell receipt is reused instead of
+    retraining (cells are deterministic; the receipt is the record of the
+    committed run) -- an engineering recovery path, never a protocol change:
+    the reused receipt is byte-identical to what its own run wrote."""
     task = TASKS[span]
+    if resume and not quick:
+        path = RECEIPTS / cell_receipt_name(arm, span, lr, seed)
+        if path.exists():
+            receipt = json.loads(path.read_text())
+            receipt["resumed"] = True
+            state = torch.load(RECEIPTS /
+                               f"wheeler_{arm}_s{span}_best_seed{seed}.pt",
+                               map_location=device, weights_only=True) \
+                if (RECEIPTS / f"wheeler_{arm}_s{span}_best_seed{seed}.pt").exists() \
+                else None
+            print(f"{arm} S={span} lr={lr:.0e} seed={seed}: "
+                  f"value_acc={receipt['metrics']['value_acc']:.4f} [resumed]",
+                  flush=True)
+            return receipt, state
     torch.manual_seed(seed)
     if device == "cuda":
         torch.cuda.manual_seed_all(seed)
@@ -798,7 +825,7 @@ def parse_ints(text):
 
 
 def sweep(arm: str, spans, lrs, seeds, steps: int, batch: int, device: str,
-          quick: bool = False):
+          quick: bool = False, resume: bool = False):
     """The (span, lr, seed) grid for one arm; per-cell receipts, the best model
     per (arm, span) kept for the mechanism pass."""
     runs, best, best_state = [], {}, {}
@@ -812,16 +839,17 @@ def sweep(arm: str, spans, lrs, seeds, steps: int, batch: int, device: str,
         for lr in lrs:
             for seed in seeds:
                 receipt, state = run_one(arm, span, lr, seed, steps, batch,
-                                        device, eval_sets, quick)
-                if not quick:
-                    name = f"wheeler_{arm}_s{span}_lr{lr:.0e}_seed{seed}.json"
+                                        device, eval_sets, quick, resume)
+                if not quick and not receipt.get("resumed"):
+                    name = cell_receipt_name(arm, span, lr, seed)
                     (RECEIPTS / name).write_text(json.dumps(receipt, indent=1))
                 runs.append({k: receipt[k] for k in
                              ("arm", "span", "lr", "seed", "metrics")})
                 key = (arm, span)
-                if key not in best or \
+                if (key not in best or \
                         receipt["metrics"]["value_acc"] \
-                        > best[key]["metrics"]["value_acc"]:
+                        > best[key]["metrics"]["value_acc"]) \
+                        and state is not None:
                     best[key] = receipt
                     best_state[key] = state
                     if not quick:
@@ -935,6 +963,9 @@ def main():
                         help="suffix for the sweep summary file (the "
                              "split-by-seed execution; per-cell receipt "
                              "names are already unique by seed)")
+    parser.add_argument("--resume", action="store_true",
+                        help="reuse existing per-cell receipts instead of "
+                             "retraining deterministic cells (recovery path)")
     parser.add_argument("--merge-seeds", action="store_true",
                         help="merge the per-seed sweep summaries for --arm "
                              "into the canonical receipt and run the "
@@ -965,7 +996,8 @@ def main():
     for arm in arms:
         summary, best, best_state = sweep(arm, spans, parse_floats(args.lrs),
                                           parse_ints(args.seeds), args.steps,
-                                          args.batch, args.device, args.quick)
+                                          args.batch, args.device, args.quick,
+                                          args.resume)
         all_best.update(best)
         all_best_state.update(best_state)
         if not args.quick:

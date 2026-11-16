@@ -156,6 +156,19 @@ conditioned on any S >= 4 training result. The stale calibration receipts
 (`wheeler_*_s2_*` at batch 256) are superseded by the sweep's own cells and
 are not part of the evidence for §4.
 
+**(d) Mid-sweep engineering recovery, disclosed.** The pointwise arm's
+receipt harness crashed at its first S = 4 cell (a CUDA device-side assert:
+the probed-binding fate loop gathered slot/op at indices that can run past
+the window for later-probed bindings — the per-window gate was applied after
+the gather; the 9 committed S = 2 cells all landed before the crash and are
+unaffected). The fix clamps the gather indices before the mask
+(`_pointwise_binding_fate`); the relaunched driver REUSES the committed
+per-cell receipts via a `--resume` path (cells are deterministic; the reused
+receipts are byte-identical to what their own runs wrote — an engineering
+recovery, never a protocol change; resumed cells are flagged `resumed` in
+the summaries). The ordered arm's receipt path never had the bug and its
+sweep ran uninterrupted.
+
 ## 4b. MIMETIC-INIT EXTENSION (operator-directed; pre-registered before its
 ## cells run; the standard-init P-1 PARTIAL receipt stands untouched)
 

@@ -44,7 +44,7 @@ pids=""
 fail=0
 for seed in $SEEDS; do
   $PY -m "$MOD" --arm "$ARM" --seeds "$seed" --run-tag "_seed$seed" \
-      --lrs 3e-3,1e-3,3e-4 --batch 1024 --steps 3000 --device cuda \
+      --lrs 3e-3,1e-3,3e-4 --batch 1024 --steps 3000 --device cuda --resume \
       > "$LOGS/${ARM}_seed${seed}.console.txt" 2>&1 &
   pids="$pids $!"
   echo "launched seed $seed (pid $!)"
