@@ -1,0 +1,314 @@
+{
+ "gate": "K9: the distributed-persistent walk",
+ "barrier_economics": "receipts/k9_barrier_economics.json (gate 0)",
+ "device": "NVIDIA RTX 6000 Ada Generation",
+ "gate_b_sequential_walk": {
+  "rows": [
+   {
+    "rank": 256,
+    "flips_vs_oracle": 0,
+    "flips_vs_k7_walk": 0,
+    "state_bit_equal": true,
+    "live_bit_equal": true,
+    "read_floor": 8.9e-08,
+    "read_deviation_vs_oracle": 8.9e-08,
+    "read_x_floor": 1.0,
+    "read_deviation_vs_k7_walk": 3e-08,
+    "graph_vs_eager_bit_equal": true,
+    "determinism_two_scans": true,
+    "op_histogram": {
+     "none": 0,
+     "append": 64,
+     "correct": 0,
+     "pop": 0,
+     "merge": 0
+    },
+    "registers": {
+     "score": 80,
+     "decide": 27,
+     "apply": 104,
+     "combine": 18
+    },
+    "spills": {
+     "score": 0,
+     "decide": 0,
+     "apply": 0,
+     "combine": 0
+    }
+   },
+   {
+    "rank": 1024,
+    "flips_vs_oracle": 0,
+    "flips_vs_k7_walk": 0,
+    "state_bit_equal": true,
+    "live_bit_equal": true,
+    "read_floor": 3.7e-08,
+    "read_deviation_vs_oracle": 4.1e-08,
+    "read_x_floor": 1.1,
+    "read_deviation_vs_k7_walk": 3e-08,
+    "graph_vs_eager_bit_equal": true,
+    "determinism_two_scans": true,
+    "op_histogram": {
+     "none": 0,
+     "append": 64,
+     "correct": 0,
+     "pop": 0,
+     "merge": 0
+    },
+    "registers": {
+     "score": 80,
+     "decide": 47,
+     "apply": 104,
+     "combine": 40
+    },
+    "spills": {
+     "score": 2,
+     "decide": 0,
+     "apply": 0,
+     "combine": 0
+    }
+   },
+   {
+    "rank": 2048,
+    "flips_vs_oracle": 0,
+    "flips_vs_k7_walk": 0,
+    "state_bit_equal": true,
+    "live_bit_equal": true,
+    "read_floor": 2.3e-08,
+    "read_deviation_vs_oracle": 2.5e-08,
+    "read_x_floor": 1.08,
+    "read_deviation_vs_k7_walk": 1.9e-08,
+    "graph_vs_eager_bit_equal": true,
+    "determinism_two_scans": true,
+    "op_histogram": {
+     "none": 0,
+     "append": 64,
+     "correct": 0,
+     "pop": 0,
+     "merge": 0
+    },
+    "registers": {
+     "score": 86,
+     "decide": 64,
+     "apply": 104,
+     "combine": 40
+    },
+    "spills": {
+     "score": 0,
+     "decide": 0,
+     "apply": 0,
+     "combine": 0
+    }
+   }
+  ],
+  "boundary": "one window scan, forward only, fp32; decisions, payload lanes, read weights and pre-decision liveness are torch.equal against BOTH the K7 oracle and the K7 global-tiled walk; the read is at the measured fp32-vs-fp64 floor (re-measured per fixture)",
+  "note": "the random fixtures saturate in APPEND (the fresh-store regime, the lane's own K6/K7 finding); the five-op coverage is the crafted-fixture test suite's"
+ },
+ "gate_c_the_number": {
+  "fixture": {
+   "batch": 8,
+   "tokens": 2048,
+   "heads": 2,
+   "value_dim": 128,
+   "dtype": "fp32",
+   "forward_only": true,
+   "block_slots_default": 64
+  },
+  "walls": [
+   {
+    "rank": 512,
+    "k7_wall_ms": 97.12,
+    "k7_device_ms": 97.09,
+    "k9_wall_ms": 30.01,
+    "k9_device_ms": 29.99,
+    "k9_bare_replay_ms": 31.12,
+    "k9_bare_replay_note": "the bare replay in a tight loop; the full call's state copy-in re-populates the L2 reuse set and the full call measures FASTER -- the full-call wall is the number",
+    "speedup_wall": 3.24,
+    "tok_per_s_k9": 1091903,
+    "capture_ms_one_time": 777.9,
+    "graph_nodes": 6145,
+    "slot_blocks_per_row": 8,
+    "per_token_us": 14.65
+   },
+   {
+    "rank": 1024,
+    "k7_wall_ms": 191.15,
+    "k7_device_ms": 191.11,
+    "k9_wall_ms": 36.13,
+    "k9_device_ms": 36.09,
+    "k9_bare_replay_ms": 40.51,
+    "k9_bare_replay_note": "the bare replay in a tight loop; the full call's state copy-in re-populates the L2 reuse set and the full call measures FASTER -- the full-call wall is the number",
+    "speedup_wall": 5.29,
+    "tok_per_s_k9": 906947,
+    "capture_ms_one_time": 691.3,
+    "graph_nodes": 6145,
+    "slot_blocks_per_row": 16,
+    "per_token_us": 17.64
+   },
+   {
+    "rank": 2048,
+    "k7_wall_ms": 374.53,
+    "k7_device_ms": 374.44,
+    "k9_wall_ms": 56.18,
+    "k9_device_ms": 56.15,
+    "k9_bare_replay_ms": 65.09,
+    "k9_bare_replay_note": "the bare replay in a tight loop; the full call's state copy-in re-populates the L2 reuse set and the full call measures FASTER -- the full-call wall is the number",
+    "speedup_wall": 6.67,
+    "tok_per_s_k9": 583268,
+    "capture_ms_one_time": 791.4,
+    "graph_nodes": 6145,
+    "slot_blocks_per_row": 32,
+    "per_token_us": 27.43
+   }
+  ],
+  "banked_before": {
+   "k7_receipted_scan_ms": 374.3,
+   "k8_gate_d_scan_ms": 414,
+   "source": "receipts/k7_high_rank.json, receipts/k8_gates.json"
+  },
+  "tile_width_measurement": [
+   {
+    "block_slots": 64,
+    "wall_ms": 56.18
+   },
+   {
+    "block_slots": 128,
+    "wall_ms": 64.28
+   }
+  ],
+  "scaling_law": {
+   "per_token_us_at": {
+    "512": 14.65,
+    "1024": 17.64,
+    "2048": 27.43
+   },
+   "fit": "per_token_us ~= 10.39 + 1.065 * NT",
+   "barrier_ms_per_scan": 3.44,
+   "barrier_note": "the graph node cost 0.56 us (gate-0 receipt k9_barrier_economics.json) x 2048 tokens x 3 launch-boundary syncs"
+  },
+  "whole_arm_projection": {
+   "accounting": "derived from the banked receipts: fixed-2048 arm step 135.4 s, grow arm 143.6 s; 192 rank-2048 forward scans/step x 414 ms = 79.5 s forward-walk share (+52 s backward, untouched by K9); rest = matmuls etc.",
+   "fixed2048_arm": {
+    "banked_tok_s": 821.7,
+    "banked_step_s": 135.4,
+    "projected_step_s": 66.7,
+    "projected_tok_s": 1666.3,
+    "speedup": 2.03
+   },
+   "grow_arm": {
+    "banked_tok_s": 774.9,
+    "banked_step_s": 143.6,
+    "projected_step_s": 74.9,
+    "projected_tok_s": 1484.3,
+    "speedup": 1.92
+   },
+   "notes": "K9 is forward-only; after it, the hi backward (270 ms/scan, k8's own kernels) becomes the dominant scan cost. The projection excludes the grow arm's probe pass (which also speeds up). The C3 saturation probe at rank 2048 becomes affordable: a 180-step arm costs ~3.3 h instead of the banked ~7.4 h."
+  }
+ },
+ "gate_d_growth_pathology": {
+  "growth_spans": [
+   {
+    "t0": 0,
+    "t1": 192,
+    "rank": 128,
+    "flips": 0,
+    "read_floor": 3.815e-06,
+    "read_deviation": 1.907e-06,
+    "read_x_floor": 0.5
+   },
+   {
+    "t0": 192,
+    "t1": 448,
+    "rank": 256,
+    "flips": 0,
+    "read_floor": 1.19e-07,
+    "read_deviation": 1.19e-07,
+    "read_x_floor": 1.0
+   },
+   {
+    "t0": 448,
+    "t1": 700,
+    "rank": 512,
+    "flips": 0,
+    "read_floor": 6e-08,
+    "read_deviation": 6e-08,
+    "read_x_floor": 1.0
+   },
+   {
+    "t0": 700,
+    "t1": 960,
+    "rank": 1024,
+    "flips": 0,
+    "read_floor": 4.5e-08,
+    "read_deviation": 3e-08,
+    "read_x_floor": 0.67
+   }
+  ],
+  "chain": {
+   "total_flips": 0,
+   "exit_state_bit_equal": true,
+   "exit_live_bit_equal": true
+  },
+  "zero_injection": [
+   {
+    "span": 1,
+    "rank": 256,
+    "fresh_rows": 512,
+    "dead_at_entry": true
+   },
+   {
+    "span": 2,
+    "rank": 512,
+    "fresh_rows": 1024,
+    "dead_at_entry": true
+   },
+   {
+    "span": 3,
+    "rank": 1024,
+    "fresh_rows": 2048,
+    "dead_at_entry": true
+   }
+  ],
+  "ragged_windows": [
+   {
+    "tokens": 1,
+    "flips": 0
+   },
+   {
+    "tokens": 33,
+    "flips": 0
+   },
+   {
+    "tokens": 130,
+    "flips": 0
+   }
+  ],
+  "occupancy_per_snap": [
+   {
+    "rank": 256,
+    "slot_blocks_per_row": 4,
+    "sweep_ctas": 64,
+    "waves_on_sm": 0.45
+   },
+   {
+    "rank": 512,
+    "slot_blocks_per_row": 8,
+    "sweep_ctas": 128,
+    "waves_on_sm": 0.9
+   },
+   {
+    "rank": 1024,
+    "slot_blocks_per_row": 16,
+    "sweep_ctas": 256,
+    "waves_on_sm": 1.8
+   },
+   {
+    "rank": 2048,
+    "slot_blocks_per_row": 32,
+    "sweep_ctas": 512,
+    "waves_on_sm": 3.61
+   }
+  ],
+  "note": "growth re-dispatch composes at the span-API level: spans at/below the on-chip budget run the existing K7 path, grown spans the K9 walk, the state chained through k8_growth's own zero-injection pads; every snap is its own cached graph (more blocks per snap, state copy-in at the snap change)"
+ }
+}
