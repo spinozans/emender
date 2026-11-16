@@ -1,0 +1,654 @@
+{
+ "gate_a_never_fires": {
+  "gate": "A: grow=True with fewer than grow_window boundaries is K6",
+  "fixture": {
+   "batch": 4,
+   "tokens": 192,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "boundaries": 3,
+   "grow_window": 4
+  },
+  "spans": [
+   [
+    0,
+    192,
+    128
+   ]
+  ],
+  "events": [],
+  "bit_equal_reads": true,
+  "bit_equal_state": true,
+  "bit_equal_live": true
+ },
+ "gate_a_grown": {
+  "gate": "A: the grown scan at the probe shape (batch 8, 2048 tokens)",
+  "fixture": {
+   "batch": 8,
+   "tokens": 2048,
+   "heads": 2,
+   "value_dim": 128,
+   "start_rank": 128,
+   "rank_cap": 2048,
+   "distinct": 512,
+   "seed": 5,
+   "policy": {
+    "ops": true,
+    "tau_match": 0.45,
+    "tau_merge": 0.85,
+    "tau_pop": 0.1,
+    "tie_break": 1e-06,
+    "read_scale": 2.0,
+    "grow": true,
+    "grow_trigger": 0.5,
+    "grow_window": 4,
+    "grow_window_tokens": 512,
+    "grow_geometric": 2.0,
+    "grow_stride_floor": 64
+   }
+  },
+  "spans": [
+   [
+    0,
+    256,
+    128
+   ],
+   [
+    256,
+    512,
+    256
+   ],
+   [
+    512,
+    960,
+    512
+   ],
+   [
+    960,
+    1792,
+    1024
+   ],
+   [
+    1792,
+    2048,
+    2048
+   ]
+  ],
+  "events": [
+   {
+    "boundary": 256,
+    "rank_before": 128,
+    "rank_after": 256,
+    "smoothed_rate": 1.0,
+    "window_rates": [
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "boundary": 512,
+    "rank_before": 256,
+    "rank_after": 512,
+    "smoothed_rate": 1.0,
+    "window_rates": [
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "boundary": 960,
+    "rank_before": 512,
+    "rank_after": 1024,
+    "smoothed_rate": 0.529296875,
+    "window_rates": [
+     0.2421875,
+     0.24609375,
+     0.62890625,
+     1.0
+    ]
+   },
+   {
+    "boundary": 1792,
+    "rank_before": 1024,
+    "rank_after": 2048,
+    "smoothed_rate": 0.631591796875,
+    "window_rates": [
+     0.248046875,
+     0.3173828125,
+     0.9609375,
+     1.0
+    ]
+   }
+  ],
+  "rates_note": "the per-boundary append-collision rates, reported per chunk as registered; with the registered grow_window_tokens=512 and the statistic's zero-initialised last_write, every write inside the first 512 tokens of a window counts as a collision (rate 1.0) -- the REGISTERED implementation's own behaviour, inherited verbatim and stated, not engineered around",
+  "rates": [
+   [
+    64,
+    1.0
+   ],
+   [
+    128,
+    1.0
+   ],
+   [
+    192,
+    1.0
+   ],
+   [
+    256,
+    1.0
+   ],
+   [
+    320,
+    1.0
+   ],
+   [
+    384,
+    1.0
+   ],
+   [
+    448,
+    1.0
+   ],
+   [
+    512,
+    1.0
+   ],
+   [
+    576,
+    0.015625
+   ],
+   [
+    640,
+    0.103515625
+   ],
+   [
+    704,
+    0.2119140625
+   ],
+   [
+    768,
+    0.2421875
+   ],
+   [
+    832,
+    0.24609375
+   ],
+   [
+    896,
+    0.62890625
+   ],
+   [
+    960,
+    1.0
+   ],
+   [
+    1024,
+    0.0
+   ],
+   [
+    1088,
+    0.1103515625
+   ],
+   [
+    1152,
+    0.2001953125
+   ],
+   [
+    1216,
+    0.2431640625
+   ],
+   [
+    1280,
+    0.2216796875
+   ],
+   [
+    1344,
+    0.2353515625
+   ],
+   [
+    1408,
+    0.2451171875
+   ],
+   [
+    1472,
+    0.224609375
+   ],
+   [
+    1536,
+    0.248046875
+   ],
+   [
+    1600,
+    0.248046875
+   ],
+   [
+    1664,
+    0.3173828125
+   ],
+   [
+    1728,
+    0.9609375
+   ],
+   [
+    1792,
+    1.0
+   ]
+  ],
+  "zero_injection": [
+   {
+    "boundary": 256,
+    "rank_before": 128,
+    "rank": 256,
+    "first_write_into_new_rows": 256,
+    "new_rows_live_before_first_write": true,
+    "new_rows_dead_at_entry": true
+   },
+   {
+    "boundary": 512,
+    "rank_before": 256,
+    "rank": 512,
+    "first_write_into_new_rows": 512,
+    "new_rows_live_before_first_write": true,
+    "new_rows_dead_at_entry": true
+   },
+   {
+    "boundary": 960,
+    "rank_before": 512,
+    "rank": 1024,
+    "first_write_into_new_rows": 960,
+    "new_rows_live_before_first_write": true,
+    "new_rows_dead_at_entry": true
+   },
+   {
+    "boundary": 1792,
+    "rank_before": 1024,
+    "rank": 2048,
+    "first_write_into_new_rows": 1792,
+    "new_rows_live_before_first_write": true,
+    "new_rows_dead_at_entry": true
+   }
+  ],
+  "prefix": {
+   "fire_boundary": 256,
+   "span1_schedule_bit_equal_to_twin_prefix": true,
+   "boundary_state_bit_equal_to_twin_checkpoint": true,
+   "boundary_live_bit_equal": true
+  },
+  "determinism_bit_equal": true,
+  "final_rank": 2048
+ },
+ "gate_a_span_parity": {
+  "gate": "A: per-span parity vs the eager oracles (the mixed K6/K7 fixed points), reads at the floor",
+  "fixture": {
+   "batch": 2,
+   "tokens": 2048,
+   "heads": 2,
+   "value_dim": 128,
+   "start_rank": 128,
+   "rank_cap": 2048,
+   "distinct": 512,
+   "seed": 21
+  },
+  "spans": [
+   [
+    0,
+    256,
+    128
+   ],
+   [
+    256,
+    512,
+    256
+   ],
+   [
+    512,
+    960,
+    512
+   ],
+   [
+    960,
+    1792,
+    1024
+   ],
+   [
+    1792,
+    2048,
+    2048
+   ]
+  ],
+  "total_decision_flips": 0,
+  "total_lanes": 2162688,
+  "per_span": [
+   {
+    "span": [
+     0,
+     256,
+     128
+    ],
+    "decision_flips": 0,
+    "weights_bit_equal": true,
+    "read_floor": 3.814697265625e-06,
+    "read_deviation": 1.9073486328125e-06,
+    "deviation_over_floor": 0.5
+   },
+   {
+    "span": [
+     256,
+     512,
+     256
+    ],
+    "decision_flips": 0,
+    "weights_bit_equal": true,
+    "read_floor": 8.940696716308594e-08,
+    "read_deviation": 7.450580596923828e-08,
+    "deviation_over_floor": 0.8333333333333334
+   },
+   {
+    "span": [
+     512,
+     960,
+     512
+    ],
+    "decision_flips": 0,
+    "weights_bit_equal": true,
+    "read_floor": 5.960464477539063e-08,
+    "read_deviation": 4.470348358154297e-08,
+    "deviation_over_floor": 0.75
+   },
+   {
+    "span": [
+     960,
+     1792,
+     1024
+    ],
+    "decision_flips": 0,
+    "weights_bit_equal": true,
+    "read_floor": 2.9802322387695312e-08,
+    "read_deviation": 2.9802322387695312e-08,
+    "deviation_over_floor": 1.0
+   },
+   {
+    "span": [
+     1792,
+     2048,
+     2048
+    ],
+    "decision_flips": 0,
+    "weights_bit_equal": true,
+    "read_floor": 1.4901161193847656e-08,
+    "read_deviation": 1.4901161193847656e-08,
+    "deviation_over_floor": 1.0
+   }
+  ],
+  "hi_span_bit_equal_to_k7_walk": true
+ },
+ "gate_b_hi_spans": {
+  "gate": "B: the hi backward vs the eager oracle (floor first), and the prep weights bit-equal the forward's channel",
+  "noise_factor": 8.0,
+  "floor_definition": "the fp32 oracle against its own fp64 twin, per output, on the same fixture",
+  "hi_spans": [
+   {
+    "rank": 256,
+    "tokens": 128,
+    "outputs": [
+     {
+      "output": "dquery",
+      "floor": 1.9073486328125e-06,
+      "deviation": 1.9073486328125e-06,
+      "deviation_over_floor": 1.0,
+      "within_noise_factor": true
+     },
+     {
+      "output": "dpayload",
+      "floor": 3.814697265625e-06,
+      "deviation": 3.814697265625e-06,
+      "deviation_over_floor": 1.0,
+      "within_noise_factor": true
+     },
+     {
+      "output": "ddecay",
+      "floor": 2.288818359375e-05,
+      "deviation": 3.814697265625e-05,
+      "deviation_over_floor": 1.6666666666666667,
+      "within_noise_factor": true
+     }
+    ]
+   },
+   {
+    "rank": 2048,
+    "tokens": 128,
+    "outputs": [
+     {
+      "output": "dquery",
+      "floor": 1.9073486328125e-06,
+      "deviation": 1.9073486328125e-06,
+      "deviation_over_floor": 1.0,
+      "within_noise_factor": true
+     },
+     {
+      "output": "dpayload",
+      "floor": 3.814697265625e-06,
+      "deviation": 3.814697265625e-06,
+      "deviation_over_floor": 1.0,
+      "within_noise_factor": true
+     },
+     {
+      "output": "ddecay",
+      "floor": 2.288818359375e-05,
+      "deviation": 3.814697265625e-05,
+      "deviation_over_floor": 1.6666666666666667,
+      "within_noise_factor": true
+     }
+    ]
+   }
+  ],
+  "prep_weights_bit_equal_forward_channel": true,
+  "note": "the K8 adjoint's rank-axis reductions (duq, dlam) are tile sums sequenced across slot blocks -- an order no torch expression reproduces exactly -- so the gradients are held to the floor gates, never bit-equality (the K6/K23 discipline)"
+ },
+ "gate_b_across_boundary": {
+  "gate": "B: gradients ACROSS the growth boundary (the chained carries)",
+  "fixture": {
+   "batch": 2,
+   "tokens": 1024,
+   "heads": 2,
+   "value_dim": 128,
+   "start_rank": 128,
+   "rank_cap": 512,
+   "spans": [
+    [
+     0,
+     256,
+     128
+    ],
+    [
+     256,
+     512,
+     256
+    ],
+    [
+     512,
+     1024,
+     512
+    ]
+   ],
+   "distinct": 8,
+   "seed": 51
+  },
+  "outputs": [
+   {
+    "output": "dquery",
+    "floor": 1.430511474609375e-06,
+    "deviation": 2.384185791015625e-06,
+    "deviation_over_floor": 1.6666666666666667,
+    "within_noise_factor": true
+   },
+   {
+    "output": "dpayload",
+    "floor": 3.814697265625e-06,
+    "deviation": 3.814697265625e-06,
+    "deviation_over_floor": 1.0,
+    "within_noise_factor": true
+   },
+   {
+    "output": "ddecay",
+    "floor": 3.4332275390625e-05,
+    "deviation": 3.0517578125e-05,
+    "deviation_over_floor": 0.8888888888888888,
+    "within_noise_factor": true
+   },
+   {
+    "output": "dstate",
+    "floor": 3.814697265625e-06,
+    "deviation": 3.814697265625e-06,
+    "deviation_over_floor": 1.0,
+    "within_noise_factor": true
+   }
+  ],
+  "note": "the entry state is attached, so dstate crosses both zero-injection pads; K6's own op pair cannot express this (its backward drops the exit-state gradient) -- the K8 span pair re-hosts K6's launch and adjoint kernels with the carry seeded"
+ },
+ "gate_d_walls": {
+  "gate": "D: the honest walls and memory at the probe shape",
+  "fixture": {
+   "batch": 8,
+   "tokens": 2048,
+   "heads": 2,
+   "value_dim": 128,
+   "reps": 3,
+   "precision": "bf16 inputs"
+  },
+  "fixed_rank": [
+   {
+    "rank": 128,
+    "forward_s": 0.027,
+    "backward_s": 0.016,
+    "peak_fwd_bwd_gb": 0.38,
+    "tok_per_s_forward": 611611
+   },
+   {
+    "rank": 256,
+    "forward_s": 0.061,
+    "backward_s": 0.033,
+    "peak_fwd_bwd_gb": 0.55,
+    "tok_per_s_forward": 269139
+   },
+   {
+    "rank": 512,
+    "forward_s": 0.112,
+    "backward_s": 0.067,
+    "peak_fwd_bwd_gb": 0.92,
+    "tok_per_s_forward": 145691
+   },
+   {
+    "rank": 1024,
+    "forward_s": 0.212,
+    "backward_s": 0.135,
+    "peak_fwd_bwd_gb": 1.67,
+    "tok_per_s_forward": 77372
+   },
+   {
+    "rank": 2048,
+    "forward_s": 0.412,
+    "backward_s": 0.272,
+    "peak_fwd_bwd_gb": 3.17,
+    "tok_per_s_forward": 39772
+   }
+  ],
+  "grown": {
+   "spans": [
+    [
+     0,
+     256,
+     128
+    ],
+    [
+     256,
+     512,
+     256
+    ],
+    [
+     512,
+     960,
+     512
+    ],
+    [
+     960,
+     1792,
+     1024
+    ],
+    [
+     1792,
+     2048,
+     2048
+    ]
+   ],
+   "events": [
+    {
+     "boundary": 256,
+     "rank_before": 128,
+     "rank_after": 256,
+     "smoothed_rate": 1.0,
+     "window_rates": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    {
+     "boundary": 512,
+     "rank_before": 256,
+     "rank_after": 512,
+     "smoothed_rate": 1.0,
+     "window_rates": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    {
+     "boundary": 960,
+     "rank_before": 512,
+     "rank_after": 1024,
+     "smoothed_rate": 0.591552734375,
+     "window_rates": [
+      0.2392578125,
+      0.255859375,
+      0.87109375,
+      1.0
+     ]
+    },
+    {
+     "boundary": 1792,
+     "rank_before": 1024,
+     "rank_after": 2048,
+     "smoothed_rate": 0.6806640625,
+     "window_rates": [
+      0.2451171875,
+      0.4775390625,
+      1.0,
+      1.0
+     ]
+    }
+   ],
+   "forward_s": 0.446,
+   "backward_s": 0.11,
+   "peak_gb": 2.4,
+   "tok_per_s": 36709
+  },
+  "memory_arithmetic": {
+   "state_at_2048_mb": 16.0,
+   "forward_saved_checkpoints_per_scan_mb": 528.0,
+   "k8_backward_recomputed_checkpoints_mb": 16.0,
+   "note": "at rank 2048 the K6-style forward-SAVED checkpoints would be ~33 states per scan (~554 MB) held by autograd for every mixer of the microbatch; K8's backward REPLAYS them into scratch (one extra K1-class walk per span, measured in the backward wall) and holds only the span's entry state -- the 16x state is paid in recompute, not in resident bytes"
+  },
+  "note": "the grow arm pays the probe pass (span discovery) on top of the real pass until the cap is reached within the window; at the cap the probe is skipped and the scan is one span. 2048 is 16x the registered state -- the walls say so, they are not optimised away"
+ },
+ "walls_seconds_total": 30.6
+}
