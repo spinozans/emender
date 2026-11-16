@@ -170,13 +170,21 @@ measurable property of the trained key projection (§6), never an assumption.
 Registered constants of the ordered policy (new for this variant, not
 inherited — the registered `tau_*` are cosine thresholds in `R^16`; these are
 key-space radii in `(-1, 1)`): `tau_match_dist = 0.10` (a write joins a row's
-run within this radius), `tau_run = 0.05` (adjacent live rows this close
+run within this radius), `tau_run = 0.25 = w` (adjacent live rows this close
 coalesce under pressure), `tau_pop_dist = 0.5` (POP fires only if the
 farthest live row is at least this dissimilar, else the write is dropped —
-the NONE branch). Sensitivity of `w`, `tau_match_dist`, `tau_run` to the
-learned key scale is an open registration question; the probe's receipts
-(run-length histograms, key-scale statistics) are designed to make that
-sensitivity legible rather than to tune it away.
+the NONE branch). Two ordering facts are load-bearing and stated: **`tau_run`
+must exceed `tau_match_dist`** — with `tau_run <= tau_match_dist` a
+coalescible pair can never exist (the second write of any pair closer than
+`tau_match_dist` matches the first row and accumulates instead of inserting
+two rows), the same self-deduplication impossibility the separator lane
+receipted for the registered MERGE's `tau_merge > tau_match` ordering; and
+**`tau_run = w` is the losslessness rule** — two rows closer than the
+interval width are never resolved apart by any read, so coalescing them under
+pressure loses nothing the read could have expressed. Sensitivity of these
+radii to the learned key scale is an open registration question; the probe's
+receipts (run-length histograms, key-scale statistics) are designed to make
+that sensitivity legible rather than to tune it away.
 
 ## 5. The arms (both on the SEP-KV minimal separated-key base)
 
@@ -223,8 +231,8 @@ with a measured failure mode, not a design assumption.
   compose with no relabeling — the sort is over live keys. This probe runs
   fixed rank (r = 8); the composition is stated because the registration
   this design feeds will grow.
-* **Run boundaries.** A run boundary is a key gap `> tau_run` between adjacent
-  live rows. Coalescing never crosses a boundary (the pressure path only
+* **Run boundaries.** A run boundary is a key gap `> tau_run = w` between
+  adjacent live rows. Coalescing never crosses a boundary (the pressure path only
   merges pairs inside one); the **interval read may cross boundaries** — `w`
   is a query radius, not a run predicate — and the omitted-mass receipt
   discloses exactly what crossing cost. Boundary semantics are therefore
