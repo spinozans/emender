@@ -77,11 +77,13 @@ jumps from ~0 at S ≤ 4 to ≥ 0.2 at S = 8 and grows ~1 − r_eff/(S + 2).
 
 ## 4. PRE-STATED PREDICTIONS (committed before any training run)
 
-Protocol: per-arm best-effort LR sweep {3e-3, 1e-3, 3e-4} x 3 seeds {3401,
-3402, 3403}, 3000 steps x batch 256, fixed eval set per span (seed 4999,
-4096 windows) shared by every cell, receipt windows 512 (fresh batch, seed
-6999, in the mechanism pass). Comparison statistic: the best-LR MEAN over
-seeds, per (arm, S), with per-seed values reported.
+Protocol (as amended below, before the sweep): per-arm best-effort LR sweep
+{3e-3, 1e-3, 3e-4} x 3 seeds {3401, 3402, 3403}, 3000 steps x **batch 1024**,
+fixed eval set per span (seed 4999, 4096 windows) shared by every cell,
+receipt windows 512 (fresh batch, seed 6999, in the mechanism pass, run
+per arm when the sweep is split by arm across the 4/5 card pool).
+Comparison statistic: the best-LR MEAN over seeds, per (arm, S), with
+per-seed values reported.
 
 * **P-1 (precondition: the task is learnable at probe budget).** BOTH arms
   reach value accuracy >= 0.85 at best LR at S = 2 (mean over seeds, every
@@ -134,14 +136,25 @@ seeds, per (arm, S), with per-seed values reported.
 * **Inconclusive clause.** P-1 failure at S = 2 for either arm -> no claim;
   tune within the probe budget and say so.
 
-**Honest pre-registration disclosure (recorded before the sweep):** a
+**Honest pre-registration disclosure (recorded before the sweep).** (a) A
 harness smoke run (200 steps, one ordered-arm S = 8 cell, CPU, far from
 convergence, value_acc 0.045 vs chance 0.031) confirmed the plumbing end to
-end; no full-protocol (3000 x 256) cell has been run at the time of this
-commit. Calibration cells (if any, to fix P-1's feasibility like the
-separator lane's disclosed calibration) are run only after this commit and
-disclosed here before the sweep; nothing below is conditioned on a training
-result.
+end. (b) Two calibration cells at the ORIGINAL committed budget (3000 steps
+x batch 256, lr 3e-3, seed 3401, S = 2): pointwise 0.3125, ordered 0.5159 —
+BOTH curves still rising monotonically at step 3000 (loss 2.34 -> 1.83 and
+2.39 -> 1.71), i.e. the budget, not the task, was the binding constraint.
+Per the inconclusive clause ("tune LR/steps within the probe budget"), the
+protocol was amended to 3000 steps x batch 1024 (4x the exposure, ~identical
+walls: the eager per-token oracle is latency-bound, measured 233 s/cell at
+both batch 256 and 1024) BEFORE the sweep, and the amendment is committed
+before any sweep cell runs. (c) Feasibility at the amended budget (the P-1
+fix, the separator lane's disclosed-calibration role): S = 2, seed 3401,
+3000 x 1024: pointwise 0.9717 (lr 3e-3) and 0.9744 (lr 1e-3); ordered 0.9795
+(lr 3e-3). No other cell has been run; no S >= 4 cell at any budget has
+been run at the time of this amendment; the predictions above are not
+conditioned on any S >= 4 training result. The stale calibration receipts
+(`wheeler_*_s2_*` at batch 256) are superseded by the sweep's own cells and
+are not part of the evidence for §4.
 
 ## 5. RESULTS (pending the sweep)
 

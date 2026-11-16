@@ -725,6 +725,7 @@ def run_one(arm: str, span: int, lr: float, seed: int, steps: int, batch: int,
                                   weight_decay=0.01)
     rng = torch.Generator().manual_seed(seed)
     eval_ids, eval_targets, eval_aux = eval_sets
+    eval_aux = {k: v.to(device) for k, v in eval_aux.items()}
     curve = []
     started = time.monotonic()
     model.train()
@@ -743,8 +744,7 @@ def run_one(arm: str, span: int, lr: float, seed: int, steps: int, batch: int,
     walls = time.monotonic() - started
     metrics = evaluate(model, eval_ids, eval_targets, task)
     receipt_ids, receipt_targets = eval_ids[:512], eval_targets[:512]
-    receipt_aux = dict(j=eval_aux["j"][:512], members=eval_aux["members"][:512],
-                       values=eval_aux["values"][:512])
+    receipt_aux = {k: v[:512] for k, v in eval_aux.items()}
     channels = collect_channels(model, receipt_ids, receipt_targets, receipt_aux,
                                 task)
     receipt = dict(
@@ -777,6 +777,7 @@ def sweep(arm: str, spans, lrs, seeds, steps: int, batch: int, device: str,
         eval_rng = torch.Generator().manual_seed(4999)
         eval_ids, eval_targets, eval_aux = task.make_batch(eval_rng, 512 if quick
                                                            else 4096)
+        eval_aux = {k: v.to(device) for k, v in eval_aux.items()}
         eval_sets = (eval_ids.to(device), eval_targets.to(device), eval_aux)
         for lr in lrs:
             for seed in seeds:
@@ -810,10 +811,12 @@ def sweep(arm: str, spans, lrs, seeds, steps: int, batch: int, device: str,
     return summary, best, best_state
 
 
-def mechanism_pass(best, best_state, spans, device: str, windows: int = 512):
+def mechanism_pass(best, best_state, spans, device: str, arm: str,
+                   windows: int = 512):
     """The headline receipts from the sweep's best models per (arm, span):
     the pointwise saturation witness and the ordered run-structure /
-    Wheeler-ness receipts, on a fresh receipt batch (seed 6999)."""
+    Wheeler-ness receipts, on a fresh receipt batch (seed 6999).  When the
+    sweep is split by arm across cards, each process receipts its own arm."""
     mechanism = dict(experiment="wheeler_capacity_mechanism", chance=CHANCE,
                     policy=ordered_policy_record(),
                     note=("pointwise: probed-binding filed/evicted strata from "
@@ -826,6 +829,7 @@ def mechanism_pass(best, best_state, spans, device: str, windows: int = 512):
         rng = torch.Generator().manual_seed(6999)
         ids, targets, aux = task.make_batch(rng, windows)
         ids, targets = ids.to(device), targets.to(device)
+        aux = {k: v.to(device) for k, v in aux.items()}
         for arm in ("pointwise", "ordered"):
             key = (arm, span)
             if key not in best_state:
@@ -837,8 +841,8 @@ def mechanism_pass(best, best_state, spans, device: str, windows: int = 512):
             print(f"mechanism {arm} S={span}: "
                   f"acc={mechanism[f'{arm}_s{span}']['value_acc']:.4f}",
                   flush=True)
-    (RECEIPTS / "wheeler_mechanism.json").write_text(json.dumps(mechanism,
-                                                                indent=1))
+    (RECEIPTS / f"wheeler_mechanism_{arm}.json").write_text(
+        json.dumps(mechanism, indent=1))
     return mechanism
 
 
@@ -877,9 +881,8 @@ def main():
             (RECEIPTS / f"wheeler_{arm}_sweep.json").write_text(
                 json.dumps(summary, indent=1))
             print(json.dumps(summary["best"], indent=1))
-    if not args.quick:
-        print(json.dumps(mechanism_pass(all_best, all_best_state, spans,
-                                        args.device), indent=1))
+            print(json.dumps(mechanism_pass(all_best, all_best_state, spans,
+                                             args.device, arm), indent=1))
 
 
 if __name__ == "__main__":
