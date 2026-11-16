@@ -1,0 +1,404 @@
+{
+ "gate": "K7: the high-rank store",
+ "gate_a_chunked_value_scan": {
+  "rows": [
+   {
+    "fixture": "canonical routed (rank 5, 64 tokens)",
+    "floor": 5.79e-07,
+    "noise_factor": 8.0,
+    "k7_vs_oracle": 3.338e-06,
+    "k7_vs_oracle_x_floor": 5.77,
+    "k7_vs_k23": 9.54e-07,
+    "state_bit_equal_to_oracle": true,
+    "state_bit_equal_to_k23": true,
+    "liveness_equal": true
+   },
+   {
+    "fixture": "routed chunk (rank 128, 64 tokens)",
+    "slot_blocks": 2,
+    "floor": 5.37e-07,
+    "k7_vs_k23_given_torch_weights": 1.49e-07,
+    "k7_vs_k23_x_floor": 0.28,
+    "k7_vs_oracle": 7.5e-08,
+    "k7_routed_vs_k23_torch_weights": 1.19e-07,
+    "weights_vs_registered": 1.9e-08,
+    "weights_floor_fp64": 2e-08,
+    "state_bit_equal_to_k23": true,
+    "state_bit_equal_to_oracle": true,
+    "liveness_equal": true
+   },
+   {
+    "fixture": "routed chunk (rank 512, 64 tokens)",
+    "slot_blocks": 8,
+    "floor": 3.32e-07,
+    "k7_vs_k23_given_torch_weights": 1.34e-07,
+    "k7_vs_k23_x_floor": 0.4,
+    "k7_vs_oracle": 3.7e-08,
+    "k7_routed_vs_k23_torch_weights": 1.49e-07,
+    "weights_vs_registered": 4e-09,
+    "weights_floor_fp64": 5e-09,
+    "state_bit_equal_to_k23": true,
+    "state_bit_equal_to_oracle": true,
+    "liveness_equal": true
+   },
+   {
+    "fixture": "routed chunk (rank 1024, 64 tokens)",
+    "slot_blocks": 16,
+    "floor": 3.81e-07,
+    "k7_vs_k23_given_torch_weights": 1.56e-07,
+    "k7_vs_k23_x_floor": 0.41,
+    "k7_vs_oracle": 2.4e-08,
+    "k7_routed_vs_k23_torch_weights": 1.71e-07,
+    "weights_vs_registered": 3e-09,
+    "weights_floor_fp64": 4e-09,
+    "state_bit_equal_to_k23": true,
+    "state_bit_equal_to_oracle": true,
+    "liveness_equal": true
+   },
+   {
+    "fixture": "routed chunk (rank 2048, 64 tokens)",
+    "slot_blocks": 32,
+    "floor": 3.12e-07,
+    "k7_vs_k23_given_torch_weights": 1.42e-07,
+    "k7_vs_k23_x_floor": 0.45,
+    "k7_vs_oracle": 2.2e-08,
+    "k7_routed_vs_k23_torch_weights": 1.34e-07,
+    "weights_vs_registered": 1e-09,
+    "weights_floor_fp64": 2e-09,
+    "state_bit_equal_to_k23": true,
+    "state_bit_equal_to_oracle": true,
+    "liveness_equal": true
+   }
+  ],
+  "boundary": "one chunk, forward only, fp32; the state walk is K1 (bit-exact by construction); the read gates are the measured fp32 sequential floor x NOISE_FACTOR (8)"
+ },
+ "gate_b_sequential_walk": {
+  "rows": [
+   {
+    "rank": 128,
+    "compared_lanes": 33280,
+    "flips": 0,
+    "state_bit_equal": true,
+    "live_bit_equal": true,
+    "read_floor": 1.19e-07,
+    "read_deviation": 1.79e-07,
+    "read_x_floor": 1.5,
+    "op_histogram": {
+     "none": 0,
+     "append": 64,
+     "correct": 0,
+     "pop": 0,
+     "merge": 0
+    },
+    "registers": 255,
+    "spills": 0
+   },
+   {
+    "rank": 1024,
+    "compared_lanes": 147968,
+    "flips": 0,
+    "state_bit_equal": true,
+    "live_bit_equal": true,
+    "read_floor": 3.7e-08,
+    "read_deviation": 4.5e-08,
+    "read_x_floor": 1.2,
+    "op_histogram": {
+     "none": 0,
+     "append": 64,
+     "correct": 0,
+     "pop": 0,
+     "merge": 0
+    },
+    "registers": 250,
+    "spills": 0
+   },
+   {
+    "rank": 2048,
+    "compared_lanes": 279040,
+    "flips": 0,
+    "state_bit_equal": true,
+    "live_bit_equal": true,
+    "read_floor": 2.3e-08,
+    "read_deviation": 3.7e-08,
+    "read_x_floor": 1.6,
+    "op_histogram": {
+     "none": 0,
+     "append": 64,
+     "correct": 0,
+     "pop": 0,
+     "merge": 0
+    },
+    "registers": 255,
+    "spills": 0
+   }
+  ],
+  "oracle_pinned_to_k6": {
+   "rank": 128,
+   "decision_flips": 0,
+   "weights_bit_equal": true,
+   "live_pre_bit_equal": true,
+   "state_bit_equal": true
+  },
+  "boundary": "one window scan, forward only, fp32; decisions, payload lanes, read weights and pre-decision liveness are torch.equal against the K7 oracle (written to the kernel's reduction order); the read is at the measured fp32-vs-fp64 floor"
+ },
+ "refusal_removed": {
+  "block_boundary": {
+   "batch": 8,
+   "tokens": 2048,
+   "heads": 2,
+   "value_dim": 128,
+   "chunk_tokens": 128,
+   "dtype": "fp32",
+   "forward_only": true,
+   "schedule": "synthetic five-op, the rank-sweep fixtures' own"
+  },
+  "block_rows": [
+   {
+    "rank": 512,
+    "persistent_kernel_refusal": false,
+    "refusal_message": "the persistent kernel needs next_pow2(512) * 16 = 8192 register-resident floats and its budget is 8192; rank 512 at value dim 128 does not fit",
+    "k7_routed_block": {
+     "wall_ms": {
+      "mean": 12.186,
+      "p50": 12.296,
+      "min": 10.795,
+      "max": 13.216
+     },
+     "device_ms": {
+      "mean": 12.154,
+      "p50": 12.264,
+      "min": 10.768,
+      "max": 13.172
+     }
+    },
+    "k7_given_weights_block": {
+     "wall_ms": {
+      "mean": 6.136,
+      "p50": 6.077,
+      "min": 6.058,
+      "max": 6.396
+     },
+     "device_ms": {
+      "mean": 6.112,
+      "p50": 6.051,
+      "min": 6.035,
+      "max": 6.373
+     }
+    },
+    "k23_twin_block": {
+     "wall_ms": {
+      "mean": 5.306,
+      "p50": 5.24,
+      "min": 5.21,
+      "max": 5.6
+     },
+     "device_ms": {
+      "mean": 5.284,
+      "p50": 5.217,
+      "min": 5.189,
+      "max": 5.576
+     }
+    },
+    "torch_weights_per_chunk_ms": {
+     "mean": 0.349,
+     "p50": 0.345,
+     "min": 0.335,
+     "max": 0.375
+    },
+    "torch_weights_per_block_ms": 5.584,
+    "per_chunk_channels_mb": {
+     "scores": 4.19,
+     "strength": 4.19,
+     "weights": 4.19,
+     "inter_partials": 8.39,
+     "intra_partials": 4.19,
+     "state": 4.19
+    },
+    "reps": 5
+   },
+   {
+    "rank": 1024,
+    "persistent_kernel_refusal": true,
+    "refusal_message": "the persistent kernel needs next_pow2(1024) * 16 = 16384 register-resident floats and its budget is 8192; rank 1024 at value dim 128 does not fit",
+    "k7_routed_block": {
+     "wall_ms": {
+      "mean": 11.902,
+      "p50": 11.98,
+      "min": 11.012,
+      "max": 13.091
+     },
+     "device_ms": {
+      "mean": 11.835,
+      "p50": 11.955,
+      "min": 10.99,
+      "max": 13.066
+     }
+    },
+    "k7_given_weights_block": {
+     "wall_ms": {
+      "mean": 6.577,
+      "p50": 6.591,
+      "min": 6.264,
+      "max": 7.051
+     },
+     "device_ms": {
+      "mean": 6.553,
+      "p50": 6.568,
+      "min": 6.241,
+      "max": 7.029
+     }
+    },
+    "k23_twin_block": {
+     "wall_ms": {
+      "mean": 5.433,
+      "p50": 5.435,
+      "min": 5.189,
+      "max": 5.679
+     },
+     "device_ms": {
+      "mean": 5.412,
+      "p50": 5.411,
+      "min": 5.168,
+      "max": 5.66
+     }
+    },
+    "torch_weights_per_chunk_ms": {
+     "mean": 0.342,
+     "p50": 0.343,
+     "min": 0.333,
+     "max": 0.35
+    },
+    "torch_weights_per_block_ms": 5.472,
+    "per_chunk_channels_mb": {
+     "scores": 8.39,
+     "strength": 8.39,
+     "weights": 8.39,
+     "inter_partials": 16.78,
+     "intra_partials": 4.19,
+     "state": 8.39
+    },
+    "reps": 5
+   },
+   {
+    "rank": 2048,
+    "persistent_kernel_refusal": true,
+    "refusal_message": "the persistent kernel needs next_pow2(2048) * 16 = 32768 register-resident floats and its budget is 8192; rank 2048 at value dim 128 does not fit",
+    "k7_routed_block": {
+     "wall_ms": {
+      "mean": 13.147,
+      "p50": 13.034,
+      "min": 12.297,
+      "max": 13.782
+     },
+     "device_ms": {
+      "mean": 13.122,
+      "p50": 13.017,
+      "min": 12.269,
+      "max": 13.764
+     }
+    },
+    "k7_given_weights_block": {
+     "wall_ms": {
+      "mean": 7.5,
+      "p50": 7.754,
+      "min": 6.905,
+      "max": 7.84
+     },
+     "device_ms": {
+      "mean": 7.482,
+      "p50": 7.732,
+      "min": 6.889,
+      "max": 7.821
+     }
+    },
+    "k23_twin_block": {
+     "wall_ms": {
+      "mean": 5.374,
+      "p50": 5.377,
+      "min": 5.357,
+      "max": 5.389
+     },
+     "device_ms": {
+      "mean": 5.358,
+      "p50": 5.361,
+      "min": 5.342,
+      "max": 5.373
+     }
+    },
+    "torch_weights_per_chunk_ms": {
+     "mean": 0.349,
+     "p50": 0.352,
+     "min": 0.337,
+     "max": 0.358
+    },
+    "torch_weights_per_block_ms": 5.584,
+    "per_chunk_channels_mb": {
+     "scores": 16.78,
+     "strength": 16.78,
+     "weights": 16.78,
+     "inter_partials": 33.55,
+     "intra_partials": 4.19,
+     "state": 16.78
+    },
+    "reps": 5
+   }
+  ],
+  "walk_rows": [
+   {
+    "rank": 128,
+    "wall_ms": {
+     "mean": 28.901,
+     "p50": 28.846,
+     "min": 28.789,
+     "max": 29.188
+    },
+    "device_ms": {
+     "mean": 28.863,
+     "p50": 28.803,
+     "min": 28.771,
+     "max": 29.138
+    },
+    "launches_per_scan": 1,
+    "tokens_per_s": 1133802,
+    "traffic_gb_per_scan": 6.4
+   },
+   {
+    "rank": 1024,
+    "wall_ms": {
+     "mean": 191.194,
+     "p50": 191.198,
+     "min": 191.174,
+     "max": 191.213
+    },
+    "device_ms": {
+     "mean": 191.166,
+     "p50": 191.166,
+     "min": 191.152,
+     "max": 191.184
+    },
+    "launches_per_scan": 1,
+    "tokens_per_s": 171386,
+    "traffic_gb_per_scan": 51.5
+   },
+   {
+    "rank": 2048,
+    "wall_ms": {
+     "mean": 374.328,
+     "p50": 374.293,
+     "min": 374.266,
+     "max": 374.52
+    },
+    "device_ms": {
+     "mean": 374.293,
+     "p50": 374.264,
+     "min": 374.239,
+     "max": 374.452
+    },
+    "launches_per_scan": 1,
+    "tokens_per_s": 87538,
+    "traffic_gb_per_scan": 103.1
+   }
+  ],
+  "note": "the k23 twin was never refused (its rank axis is an in-program loop); the refusal this receipt records is the persistent kernel's by-name one, and the k7 rows show the snap set executing without it"
+ }
+}
