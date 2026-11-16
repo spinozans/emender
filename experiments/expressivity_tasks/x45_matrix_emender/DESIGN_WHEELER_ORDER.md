@@ -262,6 +262,23 @@ with a measured failure mode, not a design assumption.
   pointwise store holds at most `r` distinct bindings — the floor of the
   capacity argument, machine-checked in the SEP-KV lane's tests.
 
+**The free-key collapse basin (receipted mid-sweep; supervisor-directed
+addition, 2026-11-16).** The probe's ordered arm trains a FREE scalar key
+projection, and one seed in three fell into a degenerate basin the static
+spine never faces because its order is built offline: the key projection
+collapsed to a single quantisation centre (`span_key_std -> 0`), every write
+matched row 0, one run absorbed the whole window (run length ~498 at S=2
+scale), and accuracy fell to chance — the mass-preserving accumulate
+faithfully preserved everything into one address nothing could resolve. This
+receipt is DIRECT EVIDENCE for the constrained key family over free keys: a
+key space restricted to a learned rotation of an orthonormal basis cannot
+collapse to a single centre BY CONSTRUCTION — spread is an invariant of the
+family, not a training outcome — at the cost of address expressivity. The
+free-key form's price (a receipted degenerate basin) and the constrained
+form's price (bounded expressivity) are now a REGISTRATION DECISION WITH
+RECEIPTS ON BOTH SIDES; the probe measures the free-key form and reports the
+basin wherever it occurs, per-seed, in every aggregate.
+
 **Needs a separator (not claimed here):**
 
 * *The Theta(r x run) mass claim as a theorem.* The mass arithmetic
