@@ -1,0 +1,896 @@
+{
+  "probe": "k8_growth",
+  "arm": "fixed2048",
+  "seed": 3401,
+  "granularity": "per-token, fixed rank 2048, never grows",
+  "stopping_rule": "matched-EXPOSURE: train until 20000000 targets seen (~20M, the probe exposure); the honest elapsed wall is reported first-class",
+  "within_sweep": "WITHIN-SWEEP comparison at ONE transferred LR (the gdn2 nomination's, verbatim from the matched arms)",
+  "exposure_bytes": 20022866,
+  "exposure_steps": 180,
+  "eval_nll_nats_per_byte": 2.0240132978984287,
+  "eval_split": "calibration",
+  "eval_windows": 7,
+  "eval_targets": 14336,
+  "walls": {
+    "train_seconds": 24368.7,
+    "probe_seconds": 80.8,
+    "eval_seconds": 70.6
+  },
+  "bytes_per_s": 821.6641055455366,
+  "diagnostics": {
+    "probe": {
+      "split": "calibration",
+      "windows": 4,
+      "mixers": 24,
+      "regime": "eval, bf16 autocast, the growing collect walk the arm trains on",
+      "probe_wall_seconds": 80.8
+    },
+    "op_rate_per_token_lane0": {
+      "none": 0.0,
+      "append": 0.07085927327473958,
+      "correct": 0.9289321899414062,
+      "pop": 0.0,
+      "merge": 0.00020853678385416666
+    },
+    "op_histogram_all_lanes": {
+      "none": 393134,
+      "append": 27863,
+      "correct": 365271,
+      "pop": 0,
+      "merge": 164
+    },
+    "occupancy": {
+      "note": "live slots at every token, per span, from the recorded pre-decision liveness",
+      "mean_live_slots": 83.39651997884114
+    },
+    "read_weight_entropy": {
+      "units": "nats over the live-slot weight distribution, per token",
+      "mean": -1.143294616740217
+    },
+    "growth": {
+      "events_per_probe": 0.0,
+      "span_tables": {
+        "t0-t1@rank": 96
+      }
+    },
+    "per_layer": {
+      "0": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02825927734375,
+          "correct": 0.97174072265625,
+          "pop": 0.0,
+          "merge": 0.0
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 42.76708984375,
+        "read_weight_entropy_nats": -2.7524909619069065
+      },
+      "1": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.17633056640625,
+          "correct": 0.82366943359375,
+          "pop": 0.0,
+          "merge": 0.0
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 186.59197998046875,
+        "read_weight_entropy_nats": -1.2517762214425836
+      },
+      "2": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.1199951171875,
+          "correct": 0.8800048828125,
+          "pop": 0.0,
+          "merge": 0.0
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 132.0433349609375,
+        "read_weight_entropy_nats": -1.1232032347261236
+      },
+      "3": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.07330322265625,
+          "correct": 0.92669677734375,
+          "pop": 0.0,
+          "merge": 0.0
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 82.8055419921875,
+        "read_weight_entropy_nats": -1.287203655979024
+      },
+      "4": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.102783203125,
+          "correct": 0.89715576171875,
+          "pop": 0.0,
+          "merge": 6.103515625e-05
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 114.18328857421875,
+        "read_weight_entropy_nats": -1.060324381430905
+      },
+      "5": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.072265625,
+          "correct": 0.9276123046875,
+          "pop": 0.0,
+          "merge": 0.0001220703125
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 85.5634765625,
+        "read_weight_entropy_nats": -1.4130283312851124
+      },
+      "6": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.0784912109375,
+          "correct": 0.9215087890625,
+          "pop": 0.0,
+          "merge": 0.0
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 91.4407958984375,
+        "read_weight_entropy_nats": -1.1610805733237666
+      },
+      "7": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.052734375,
+          "correct": 0.94720458984375,
+          "pop": 0.0,
+          "merge": 6.103515625e-05
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 62.834716796875,
+        "read_weight_entropy_nats": -1.5838037443324071
+      },
+      "8": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.048828125,
+          "correct": 0.95111083984375,
+          "pop": 0.0,
+          "merge": 6.103515625e-05
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 57.69720458984375,
+        "read_weight_entropy_nats": -1.2535691999725207
+      },
+      "9": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.03057861328125,
+          "correct": 0.96917724609375,
+          "pop": 0.0,
+          "merge": 0.000244140625
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 39.06402587890625,
+        "read_weight_entropy_nats": -1.2616821945033891
+      },
+      "10": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.08349609375,
+          "correct": 0.91650390625,
+          "pop": 0.0,
+          "merge": 0.0
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 97.50921630859375,
+        "read_weight_entropy_nats": -1.0081454949316073
+      },
+      "11": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.06146240234375,
+          "correct": 0.9383544921875,
+          "pop": 0.0,
+          "merge": 0.00018310546875
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 77.58367919921875,
+        "read_weight_entropy_nats": -1.1116031260972612
+      },
+      "12": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.0875244140625,
+          "correct": 0.91241455078125,
+          "pop": 0.0,
+          "merge": 6.103515625e-05
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 102.7113037109375,
+        "read_weight_entropy_nats": -0.8117258941247862
+      },
+      "13": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.07098388671875,
+          "correct": 0.9288330078125,
+          "pop": 0.0,
+          "merge": 0.00018310546875
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 83.95001220703125,
+        "read_weight_entropy_nats": -0.9918401035146709
+      },
+      "14": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.07830810546875,
+          "correct": 0.9215087890625,
+          "pop": 0.0,
+          "merge": 0.00018310546875
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 91.34832763671875,
+        "read_weight_entropy_nats": -0.9906813300523633
+      },
+      "15": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.06744384765625,
+          "correct": 0.93255615234375,
+          "pop": 0.0,
+          "merge": 0.0
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 84.8797607421875,
+        "read_weight_entropy_nats": -1.2588915580298532
+      },
+      "16": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.0435791015625,
+          "correct": 0.956298828125,
+          "pop": 0.0,
+          "merge": 0.0001220703125
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 55.7626953125,
+        "read_weight_entropy_nats": -1.339747173121107
+      },
+      "17": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.0712890625,
+          "correct": 0.92791748046875,
+          "pop": 0.0,
+          "merge": 0.00079345703125
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 88.5478515625,
+        "read_weight_entropy_nats": -0.8292946118987008
+      },
+      "18": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.04083251953125,
+          "correct": 0.95867919921875,
+          "pop": 0.0,
+          "merge": 0.00048828125
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 53.382080078125,
+        "read_weight_entropy_nats": -1.8021800195407913
+      },
+      "19": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.06072998046875,
+          "correct": 0.93896484375,
+          "pop": 0.0,
+          "merge": 0.00030517578125
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 75.968994140625,
+        "read_weight_entropy_nats": -0.9091298485827202
+      },
+      "20": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.0618896484375,
+          "correct": 0.937744140625,
+          "pop": 0.0,
+          "merge": 0.0003662109375
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 73.632080078125,
+        "read_weight_entropy_nats": -0.7249083786867978
+      },
+      "21": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.0850830078125,
+          "correct": 0.9144287109375,
+          "pop": 0.0,
+          "merge": 0.00048828125
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 103.897705078125,
+        "read_weight_entropy_nats": -0.6130623568193354
+      },
+      "22": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.04278564453125,
+          "correct": 0.95654296875,
+          "pop": 0.0,
+          "merge": 0.00067138671875
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 49.6378173828125,
+        "read_weight_entropy_nats": -0.5980211340862772
+      },
+      "23": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.0616455078125,
+          "correct": 0.937744140625,
+          "pop": 0.0,
+          "merge": 0.0006103515625
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 67.7135009765625,
+        "read_weight_entropy_nats": -0.3016772733761965
+      }
+    }
+  },
+  "growth": {
+    "note": "per-step snapshots of the mixers' live growth state: the final-rank histogram over the 24 mixers and the boundary histogram of one sampled scan each",
+    "first_step": {
+      "step": 1,
+      "mixers": 24,
+      "events_per_scan_sample": 0,
+      "final_rank_histogram": {
+        "2048": 24
+      },
+      "boundary_histogram": {}
+    },
+    "last_step": {
+      "step": 180,
+      "mixers": 24,
+      "events_per_scan_sample": 0,
+      "final_rank_histogram": {
+        "2048": 24
+      },
+      "boundary_histogram": {}
+    },
+    "step_samples": [
+      {
+        "step": 1,
+        "mixers": 24,
+        "events_per_scan_sample": 0,
+        "final_rank_histogram": {
+          "2048": 24
+        },
+        "boundary_histogram": {}
+      },
+      {
+        "step": 2,
+        "mixers": 24,
+        "events_per_scan_sample": 0,
+        "final_rank_histogram": {
+          "2048": 24
+        },
+        "boundary_histogram": {}
+      },
+      {
+        "step": 3,
+        "mixers": 24,
+        "events_per_scan_sample": 0,
+        "final_rank_histogram": {
+          "2048": 24
+        },
+        "boundary_histogram": {}
+      },
+      {
+        "step": 30,
+        "mixers": 24,
+        "events_per_scan_sample": 0,
+        "final_rank_histogram": {
+          "2048": 24
+        },
+        "boundary_histogram": {}
+      },
+      {
+        "step": 60,
+        "mixers": 24,
+        "events_per_scan_sample": 0,
+        "final_rank_histogram": {
+          "2048": 24
+        },
+        "boundary_histogram": {}
+      },
+      {
+        "step": 90,
+        "mixers": 24,
+        "events_per_scan_sample": 0,
+        "final_rank_histogram": {
+          "2048": 24
+        },
+        "boundary_histogram": {}
+      },
+      {
+        "step": 120,
+        "mixers": 24,
+        "events_per_scan_sample": 0,
+        "final_rank_histogram": {
+          "2048": 24
+        },
+        "boundary_histogram": {}
+      },
+      {
+        "step": 150,
+        "mixers": 24,
+        "events_per_scan_sample": 0,
+        "final_rank_histogram": {
+          "2048": 24
+        },
+        "boundary_histogram": {}
+      },
+      {
+        "step": 180,
+        "mixers": 24,
+        "events_per_scan_sample": 0,
+        "final_rank_histogram": {
+          "2048": 24
+        },
+        "boundary_histogram": {}
+      }
+    ]
+  },
+  "peak_allocated_gb": 23.48,
+  "config_sha256": "599ab51036b15d971f8565d80dc0debb390969d0121d09257680b4448fde47ff",
+  "config": {
+    "probe": "k8_growth",
+    "arm": "fixed2048",
+    "granularity": "per-token, fixed rank 2048, never grows",
+    "seed": 3401,
+    "exposure_targets": 20000000,
+    "segment_tokens": 64,
+    "optimizer": {
+      "lr": 0.0005420185524740253,
+      "betas": [
+        0.9,
+        0.9392004369596886
+      ],
+      "weight_decay": 0.20059436743465126,
+      "warmup_steps": 69,
+      "microbatch": 8
+    },
+    "microbatch": 8,
+    "context": 2048,
+    "windows_per_step": 64,
+    "summary": {
+      "base_arm": "matrix",
+      "shape": {
+        "width": 576,
+        "depth": 24,
+        "hidden": 3352,
+        "heads": 2,
+        "value_dim": 128,
+        "rank": 128,
+        "rank_max": 128,
+        "vocab": 256
+      },
+      "parameters": {
+        "total": 149981808,
+        "trainable": 149981808,
+        "per_layer": 6236930,
+        "mixer": 443522,
+        "mlp": 5792256,
+        "norms": 1152,
+        "embedding": 147456,
+        "head": 147456,
+        "final_norm": 576,
+        "capacity": 150003984,
+        "capacity_relative": -0.00014783607347390593
+      },
+      "routing": {
+        "ops": true,
+        "tau_match": 0.45,
+        "tau_merge": 0.85,
+        "tau_pop": 0.1,
+        "tie_break": 1e-06,
+        "read_scale": 2.0,
+        "grow": false,
+        "grow_trigger": 0.5,
+        "grow_window": 4,
+        "grow_window_tokens": 512,
+        "grow_geometric": 2.0,
+        "grow_stride_floor": 64
+      },
+      "chunk_tokens": 128,
+      "compile_scan": true,
+      "compile_mode": "default",
+      "fused_whole_scan": false,
+      "scan_path": "k8_growth fixed-2048 (per-token, one hi span, never grows)",
+      "fused_scan": false,
+      "fused_backward": false,
+      "fused_routing": false,
+      "fused_routing_diff": false,
+      "optimizer_note": "the registered gdn2 nomination's optimizer settings (gates.py / profile_step_vs_gdn2.py)",
+      "start_rank": 2048
+    },
+    "identity": {
+      "stream": "flagship_beyond_100gb",
+      "source": "/mnt/nvme2n1/erikg/pile.txt",
+      "source_size": 1307910802540,
+      "manifest": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/documents.jsonl.gz",
+      "manifest_sha256": "48b9095eeccb023ff1cb2a4f6da899a8b3e4eb3b76b2804e730f1d6ad031c414",
+      "registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/registration.json",
+      "registration_sha256": "c36f84cfd1a59530a7991a4be6c1f68b424a79c5b7de169eabfc90d3cd31cc31",
+      "boundary_bytes": 100000000000,
+      "lattice_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_150M_LATTICE.md",
+      "lattice_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c"
+    },
+    "policy": {
+      "ops": true,
+      "tau_match": 0.45,
+      "tau_merge": 0.85,
+      "tau_pop": 0.1,
+      "tie_break": 1e-06,
+      "read_scale": 2.0,
+      "grow": false,
+      "grow_trigger": 0.5,
+      "grow_window": 4,
+      "grow_window_tokens": 512,
+      "grow_geometric": 2.0,
+      "grow_stride_floor": 64
+    },
+    "rank_cap": 2048,
+    "start_rank": 2048,
+    "bindings": {
+      "matrix_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_MATRIX_EMENDER.md",
+      "matrix_registration_sha256": "20a163c9a1eb7c79d73289d8d8a55763748b0fd0bf83252fb29a40d66374dec2",
+      "lattice_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_150M_LATTICE.md",
+      "lattice_registration_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c",
+      "k5b_whole_scan_receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k5b_whole_scan.json",
+      "k5b_whole_scan_sha256": "5f2c54ab299b47fc859cab780b645a02c2162991472490705f4a037ab2111dee",
+      "k5b_step_metric_receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k5b_step_metric.json",
+      "k5b_step_metric_sha256": "2668e0eeaf37a1ae150cce4787728277afa200b8864073f104cb1fe77bbccd1d",
+      "k5b_doc": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/K5B_WHOLE_SCAN.md",
+      "k5b_doc_sha256": "04cbb61554f80eb39b0b0089ebeaab7b932c0f05dbf73d2266c95d1f7329ebaf",
+      "recorded_cd_receipts": {
+        "gdn2_c128_rerun": "ac60726997076202f7dee8b708c19aa2914a1967ccc64283794f7139b52ea1b1",
+        "matrix_append_c128": "27c9793b5e2b309d1ce15751f1abb85b96e6b6a44d9a4284d82d566c9129b241",
+        "matrix_ops_c128": "7c38ebf34b8d54657ecebc4e945bd9f5aeaef8cef4465b58eb6e3ca8635c2794"
+      },
+      "recorded_150m_gdn2_result": "8cacac01f89c88061cc2e6bdfa8fcf8e2e2db6be9b97ebfc1bb8f752e0d94316",
+      "k6_preregistration": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/PREREGISTRATION_SEQUENTIAL_MATRIX.md",
+      "k6_preregistration_sha256": "3ce8289fbd1635665696f6fc2b73b3f7ffbc1230bb778ce7eb7fd94e53ec4fbf",
+      "k8_gates_receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k8_gates.json",
+      "k8_gates_sha256": "6184c25da73ca14393d6b82bda3b36025f8888be04c7c13ad48b5c3ed8046d60"
+    },
+    "git": {
+      "commit": "63126e7f00b532d354472126ad052ccedb379e9d",
+      "relevant_paths_dirty": "D experiments/expressivity_tasks/x45_matrix_emender/receipts/smoke/sweep_chunk_parity_c2.json\n?? experiments/expressivity_tasks/x45_matrix_emender/RESULT_GRANULARITY_SEPARATOR.md\n?? experiments/expressivity_tasks/x45_matrix_emender/granularity_separator.py\n?? experiments/expressivity_tasks/x45_matrix_emender/k8_runs/\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_ar_c1_lr3e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/run_separator_leased.sh\n?? experiments/expressivity_tasks/x45_matrix_emender/test_granularity_separator.py",
+      "branch": "main"
+    },
+    "stopping_rule": "matched-EXPOSURE: train until 20000000 targets seen (~20M, the probe exposure); the honest elapsed wall is reported first-class",
+    "within_sweep": "WITHIN-SWEEP comparison at ONE transferred LR (the gdn2 nomination's, verbatim from the matched arms)"
+  },
+  "session": {
+    "host": "lambda01",
+    "card": "5",
+    "device": "NVIDIA RTX 6000 Ada Generation",
+    "card_gib": 47.38,
+    "torch": "2.9.1+cu128",
+    "triton": "3.5.1"
+  },
+  "trajectory": [
+    {
+      "step": 1,
+      "active_seconds": 135.63433042634279,
+      "bytes": 117712,
+      "loss": 5.741501609337172
+    },
+    {
+      "step": 2,
+      "active_seconds": 270.9435745179653,
+      "bytes": 248784,
+      "loss": 5.557697117328644
+    },
+    {
+      "step": 3,
+      "active_seconds": 406.26073846034706,
+      "bytes": 364722,
+      "loss": 5.22185725826378
+    },
+    {
+      "step": 4,
+      "active_seconds": 541.5975432302803,
+      "bytes": 461739,
+      "loss": 5.000862759434118
+    },
+    {
+      "step": 5,
+      "active_seconds": 676.9693205598742,
+      "bytes": 567019,
+      "loss": 4.6308642978001515
+    },
+    {
+      "step": 25,
+      "active_seconds": 3384.5004954747856,
+      "bytes": 2920934,
+      "loss": 3.280549191615539
+    },
+    {
+      "step": 50,
+      "active_seconds": 6767.44829068426,
+      "bytes": 5640425,
+      "loss": 2.628148724761094
+    },
+    {
+      "step": 75,
+      "active_seconds": 10151.24857236445,
+      "bytes": 8340023,
+      "loss": 2.242776930332184
+    },
+    {
+      "step": 100,
+      "active_seconds": 13536.387627440505,
+      "bytes": 11089562,
+      "loss": 2.555089257769533
+    },
+    {
+      "step": 125,
+      "active_seconds": 16921.486556540243,
+      "bytes": 13866716,
+      "loss": 2.272400545860561
+    },
+    {
+      "step": 150,
+      "active_seconds": 20306.56499985233,
+      "bytes": 16597785,
+      "loss": 2.5572748106440657
+    },
+    {
+      "step": 175,
+      "active_seconds": 23691.535065733828,
+      "bytes": 19507355,
+      "loss": 2.5481763190374656
+    },
+    {
+      "step": 176,
+      "active_seconds": 23826.954775912687,
+      "bytes": 19617663,
+      "loss": 2.436277864377208
+    },
+    {
+      "step": 177,
+      "active_seconds": 23962.336556867696,
+      "bytes": 19735519,
+      "loss": 2.547291714593894
+    },
+    {
+      "step": 178,
+      "active_seconds": 24097.7757769851,
+      "bytes": 19831382,
+      "loss": 2.419099445412059
+    },
+    {
+      "step": 179,
+      "active_seconds": 24233.221106691286,
+      "bytes": 19926115,
+      "loss": 2.45523561865622
+    },
+    {
+      "step": 180,
+      "active_seconds": 24368.67555107083,
+      "bytes": 20022866,
+      "loss": 2.4460586838149982
+    }
+  ],
+  "banked_fixed128": {
+    "arm": "fixed128 (banked K6 per-token probe)",
+    "eval_nll_nats_per_byte": 2.02779677936009,
+    "exposure_bytes": 20022866,
+    "train_seconds": 1719.5,
+    "bytes_per_s": 11644.613934297431,
+    "mean_live_slots": 73.6804707845052,
+    "read_entropy": 1.0845607315905803,
+    "receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k6_probe.json"
+  }
+}
