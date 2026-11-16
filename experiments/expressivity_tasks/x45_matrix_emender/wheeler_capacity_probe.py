@@ -102,10 +102,26 @@ TAU_POP_DIST = 0.5          # POP fires only if the farthest row is this far
 O_NONE, O_INSERT, O_UPDATE, O_MERGE, O_POP = 0, 1, 2, 3, 4
 O_NAMES = ("none", "insert", "update", "merge", "pop")
 
+# The mimetic-init variant (operator-directed extension; the X42 precedent --
+# experiments/expressivity_tasks/x42_pile_scale/receipts/mimetic_geometry/
+# VERDICT.md, "mimicry improves materially while unfreezing does not").
+# The key/query-key projections are born AT the fixed-family geometry: only
+# the CURRENT-token block is non-zero, projecting onto one fixed seeded unit
+# direction, so at step 0 the emitted scalar key is tanh(gain <e_token, u>) --
+# a FIXED function of token identity (the registered fixed-key behaviour,
+# address = identity) whose spread over the vocabulary is an invariant of the
+# embeddings, NOT a training outcome.  Training may then drift the projections
+# freely.  Safe birth, free drift -- the fork vs the rotation-constrained
+# family (spread invariant by construction) is a registration decision with
+# receipts on both sides (DESIGN_WHEELER_ORDER.md §8).
+MIMETIC_GAIN = 1.5
+MIMETIC_SEED = 3401
+
 
 def ordered_policy_record() -> dict:
     return dict(width=WIDTH, read_scale=READ_SCALE, tau_match_dist=TAU_MATCH_DIST,
-                tau_run=TAU_RUN, tau_pop_dist=TAU_POP_DIST, rank=RANK)
+                tau_run=TAU_RUN, tau_pop_dist=TAU_POP_DIST, rank=RANK,
+                mimetic=dict(gain=MIMETIC_GAIN, seed=MIMETIC_SEED))
 
 
 def ordered_policy() -> dict:
@@ -406,10 +422,10 @@ class WheelerMixer(nn.Module):
     oracle."""
 
     def __init__(self, width: int, value_dim: int, heads: int, rank: int,
-                 ctx: int = CONTEXT):
+                 ctx: int = CONTEXT, mimetic: bool = False):
         super().__init__()
         self.heads, self.value_dim, self.rank = heads, value_dim, rank
-        self.ctx = ctx
+        self.ctx, self.mimetic = ctx, mimetic
         self.value = nn.Linear(width, heads * value_dim, bias=False)
         self.key = nn.Linear(ctx * width, heads, bias=False)
         self.query_key = nn.Linear(ctx * width, heads, bias=False)
@@ -419,6 +435,14 @@ class WheelerMixer(nn.Module):
         with torch.no_grad():
             lam0 = math.exp(-1.0 / DECAY_HORIZON_TOKENS)
             self.decay.bias.fill_(math.log(lam0 / (1.0 - lam0)))
+            if mimetic:
+                generator = torch.Generator().manual_seed(MIMETIC_SEED)
+                u = torch.randn(width, generator=generator)
+                u = u / u.norm().clamp_min(EPS)
+                born = torch.zeros(heads, ctx * width)
+                born[:, (ctx - 1) * width:] = MIMETIC_GAIN * u
+                self.key.weight.copy_(born)
+                self.query_key.weight.copy_(born.clone())
 
     def forward(self, x, collect: bool = False):
         batch, tokens, _ = x.shape
@@ -439,10 +463,10 @@ class WheelerMixer(nn.Module):
 
 class WheelerBlock(nn.Module):
     def __init__(self, width: int, hidden: int, value_dim: int, heads: int,
-                 rank: int, ctx: int = CONTEXT):
+                 rank: int, ctx: int = CONTEXT, mimetic: bool = False):
         super().__init__()
         self.norm1 = nn.RMSNorm(width, eps=1e-5)
-        self.mixer = WheelerMixer(width, value_dim, heads, rank, ctx)
+        self.mixer = WheelerMixer(width, value_dim, heads, rank, ctx, mimetic)
         self.norm2 = nn.RMSNorm(width, eps=1e-5)
         self.w1 = nn.Linear(width, hidden, bias=False)
         self.w2 = nn.Linear(width, hidden, bias=False)
@@ -461,12 +485,12 @@ class WheelerModel(nn.Module):
 
     def __init__(self, task: TaskSpec, width: int = 64, hidden: int = 128,
                  depth: int = 2, heads: int = 1, value_dim: int = 32,
-                 rank: int = RANK):
+                 rank: int = RANK, mimetic: bool = False):
         super().__init__()
         self.task, self.rank = task, rank
         self.embed = nn.Embedding(task.vocab, width)
         self.blocks = nn.ModuleList(
-            WheelerBlock(width, hidden, value_dim, heads, rank)
+            WheelerBlock(width, hidden, value_dim, heads, rank, mimetic=mimetic)
             for _ in range(depth))
         self.norm = nn.RMSNorm(width, eps=1e-5)
         self.head = nn.Linear(width, task.vocab, bias=False)
@@ -495,6 +519,8 @@ def make_model(task: TaskSpec, arm: str) -> nn.Module:
         return SeparatedModel(task, key_dim=16, rank=RANK)
     if arm == "ordered":
         return WheelerModel(task, rank=RANK)
+    if arm == "ordered_mimetic":
+        return WheelerModel(task, rank=RANK, mimetic=True)
     raise ValueError(f"unknown arm {arm!r}")
 
 
@@ -711,6 +737,10 @@ def collect_channels(model, ids, targets, aux, task: TaskSpec) -> dict:
     return collect_ordered_channels(model, ids, targets, aux, task)
 
 
+def is_pointwise_arm(arm: str) -> bool:
+    return arm == "pointwise"
+
+
 # ------------------------------------------------------------------- one run
 def run_one(arm: str, span: int, lr: float, seed: int, steps: int, batch: int,
             device: str, eval_sets, quick: bool = False):
@@ -824,14 +854,17 @@ def merge_seeds(arm: str, spans, seeds, steps: int, batch: int, device: str):
     are exactly the registered grid)."""
     runs, best = [], {}
     for seed in seeds:
-        path = RECEIPTS / f"wheeler_{arm}_sweep_seed{seed}.json"
-        data = json.loads(path.read_text())
-        runs.extend(data["runs"])
-        for key_s, v in data["best"].items():
-            span = int(key_s[1:])
-            if span not in best or v["metrics"]["value_acc"] \
-                    > best[span]["metrics"]["value_acc"]:
-                best[span] = v
+        for tag in ("", "_phaseB"):
+            path = RECEIPTS / f"wheeler_{arm}_sweep_seed{seed}{tag}.json"
+            if not path.exists():
+                continue
+            data = json.loads(path.read_text())
+            runs.extend(data["runs"])
+            for key_s, v in data["best"].items():
+                span = int(key_s[1:])
+                if span not in best or v["metrics"]["value_acc"] \
+                        > best[span]["metrics"]["value_acc"]:
+                    best[span] = v
     best_state = {}
     for span, v in best.items():
         best_state[(arm, span)] = torch.load(
@@ -859,13 +892,14 @@ def mechanism_pass(best, best_state, spans, device: str, arm: str,
                           "run-length histogram, key-order contiguity (the "
                           "Wheeler-ness diagnostic), interval omitted mass and "
                           "true-value share of the interval read."))
+    arms_present = sorted({a for a, _ in best_state})
     for span in spans:
         task = TASKS[span]
         rng = torch.Generator().manual_seed(6999)
         ids, targets, aux = task.make_batch(rng, windows)
         ids, targets = ids.to(device), targets.to(device)
         aux = {k: v.to(device) for k, v in aux.items()}
-        for arm in ("pointwise", "ordered"):
+        for arm in arms_present:
             key = (arm, span)
             if key not in best_state:
                 continue
@@ -885,7 +919,9 @@ def main():
     parser = argparse.ArgumentParser(
         description="WHEELER-ORDER capacity probe (SPAN-RUN): pointwise vs "
                     "ordered run-coalescing at rank 8")
-    parser.add_argument("--arm", choices=["pointwise", "ordered", "both"],
+    parser.add_argument("--arm",
+                        choices=["pointwise", "ordered", "ordered_mimetic",
+                                 "both"],
                         default="both")
     parser.add_argument("--spans", default=",".join(str(s) for s in SPANS))
     parser.add_argument("--lrs", default="3e-3,1e-3,3e-4")

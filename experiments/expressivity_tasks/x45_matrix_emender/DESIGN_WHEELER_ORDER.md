@@ -277,7 +277,16 @@ family, not a training outcome — at the cost of address expressivity. The
 free-key form's price (a receipted degenerate basin) and the constrained
 form's price (bounded expressivity) are now a REGISTRATION DECISION WITH
 RECEIPTS ON BOTH SIDES; the probe measures the free-key form and reports the
-basin wherever it occurs, per-seed, in every aggregate.
+basin wherever it occurs, per-seed, in every aggregate. Between the two lies
+**mimetic init (safe birth, free drift)** — the operator-directed middle
+fork: initialize the learned key projection AT the fixed-family geometry
+(identity addressing born spread by construction) and let training drift it
+only if the loss prefers it; the X42 precedent
+(`x42_pile_scale/receipts/mimetic_geometry/VERDICT.md`: "mimicry improves
+materially while unfreezing does not") motivates safe birth, the collapse
+receipt motivates needing it, and the Wheeler probe carries the variant as
+a pre-registered extension (§4b of
+[`RESULT_WHEELER_CAPACITY.md`](RESULT_WHEELER_CAPACITY.md)).
 
 **Needs a separator (not claimed here):**
 

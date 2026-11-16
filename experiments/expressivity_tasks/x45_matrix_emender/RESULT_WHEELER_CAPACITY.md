@@ -156,6 +156,51 @@ conditioned on any S >= 4 training result. The stale calibration receipts
 (`wheeler_*_s2_*` at batch 256) are superseded by the sweep's own cells and
 are not part of the evidence for §4.
 
+## 4b. MIMETIC-INIT EXTENSION (operator-directed; pre-registered before its
+## cells run; the standard-init P-1 PARTIAL receipt stands untouched)
+
+**Variant `ordered_mimetic`.** The key/query-key projections are born AT the
+fixed-family geometry: only the CURRENT-token context block is non-zero,
+a fixed seeded unit direction (seed 3401) scaled by gain 1.5, so at step 0
+the emitted scalar key is `tanh(1.5 <e_token, u>)` — a FIXED function of
+token identity (the registered fixed-key behaviour: address = identity)
+whose spread over the vocabulary is an invariant of the embeddings, not a
+training outcome. Training then drifts the projections freely (weight decay
+applies as everywhere). Motivation: the free-key arm's collapse receipt
+(seed 3402: `span_key_std -> 0.000`, one run absorbing the window, chance
+accuracy — init luck decided the entry race between key spread and store
+collapse; succeeding seeds were born at `span_key_std ~ 0.016-0.018`).
+Program precedent: the X42 mimetic-geometry verdict
+(`experiments/expressivity_tasks/x42_pile_scale/receipts/mimetic_geometry/VERDICT.md`
+— "mimicry improves materially while unfreezing does not: early-training
+optimization is the stronger lead").
+
+**Pre-stated predictions (committed before any mimetic cell runs):**
+* **M-1 (safe birth repairs the precondition at S = 2).** The mimetic arm at
+  S = 2: EVERY seed >= 0.70 at its best LR (including the collapsed seed
+  3402's condition), best-LR mean over seeds >= 0.85 — P-1's bound, repaired
+  by the init, not by tuning.
+* **M-2 (no basin entry, receipted).** End-of-training `span_key_std` >=
+  0.016 (the succeeding-seed range) in EVERY (LR, seed) cell at S = 2; no
+  cell shows the collapse signature (span_key_std < 0.005 with one run
+  absorbing the window).
+* **M-3 (no adverse interaction with the capacity mechanism).** At S = 32
+  (3 seeds at the mimetic arm's own best S = 2 LR — a spot-check, not a
+  comparison arm): accuracy within 0.05 of the FREE-KEY ordered arm's S = 32
+  best-LR mean counts as "no interaction"; a deficit > 0.10 is an adverse
+  interaction, reported honestly; anything in between is reported as
+  inconclusive-on-interaction with the receipts.
+* **Refutation clause (verbatim from the operator's directive).** If the
+  mimetic arm ALSO collapses, report it — the basin would be init-independent
+  and the rotation-constrained family becomes the only safe form.
+
+**Scheduling disclosure.** The mimetic cells run AFTER the committed S = 8..64
+capacity cells finish (they do not preempt them; the extension is gated on
+the committed sweeps' exit). Protocol: 3 seeds x 3 LRs at S = 2 (9 cells),
+then 3 seeds x 1 LR at S = 32 (3 cells), same 3000 x 1024 budget, same
+receipt machinery; the mechanism pass receipts the mimetic arm's run-length
+histogram and Wheeler-ness contiguity like any ordered arm.
+
 ## 5. RESULTS (pending the sweep)
 
 To be appended: the saturation curve (accuracy vs span length, both arms,
