@@ -954,6 +954,11 @@ def build_eval_sets(task_name: str, windows: int, device: str):
 
 
 def main():
+    # Operator housekeeping (reinstated after the box-load measurement):
+    # cap host threads for every launch -- the sweeps are GPU-dispatch-bound
+    # and torch's default one-thread-per-core pool spins most of a loaded box.
+    # Near-zero wall cost; receipted with the driver change.
+    torch.set_num_threads(4)
     parser = argparse.ArgumentParser(
         description="SEP-KV: the key-separation necessity probe")
     parser.add_argument("--part", choices=["1", "2", "3", "all"],
