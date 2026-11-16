@@ -794,6 +794,12 @@ def sweep(arm: str, spans, lrs, seeds, steps: int, batch: int, device: str,
                         > best[key]["metrics"]["value_acc"]:
                     best[key] = receipt
                     best_state[key] = state
+                    if not quick:
+                        # NOT committed (program rule); the merge step and the
+                        # mechanism pass reload them for the run-structure
+                        # receipts.
+                        torch.save(state, RECEIPTS /
+                                   f"wheeler_{arm}_s{span}_best_seed{seed}.pt")
                 print(f"{arm} S={span} lr={lr:.0e} seed={seed}: "
                       f"value_acc={receipt['metrics']['value_acc']:.4f} "
                       f"[{receipt['walls_s']}s]", flush=True)
@@ -809,6 +815,35 @@ def sweep(arm: str, spans, lrs, seeds, steps: int, batch: int, device: str,
                                           }) for (a, span), v in best.items()
                          if a == arm})
     return summary, best, best_state
+
+
+def merge_seeds(arm: str, spans, seeds, steps: int, batch: int, device: str):
+    """Merge the per-seed split sweep into the canonical arm receipt, then run
+    the mechanism pass from the overall best models (the split-by-seed,
+    split-by-card execution of the registered protocol -- the cells themselves
+    are exactly the registered grid)."""
+    runs, best = [], {}
+    for seed in seeds:
+        path = RECEIPTS / f"wheeler_{arm}_sweep_seed{seed}.json"
+        data = json.loads(path.read_text())
+        runs.extend(data["runs"])
+        for key_s, v in data["best"].items():
+            span = int(key_s[1:])
+            if span not in best or v["metrics"]["value_acc"] \
+                    > best[span]["metrics"]["value_acc"]:
+                best[span] = v
+    best_state = {}
+    for span, v in best.items():
+        best_state[(arm, span)] = torch.load(
+            RECEIPTS / f"wheeler_{arm}_s{span}_best_seed{v['seed']}.pt",
+            map_location=device, weights_only=True)
+    summary = dict(arm=arm, rank=RANK, steps=steps, batch=batch,
+                   seeds=list(seeds), chance=CHANCE, runs=runs,
+                   best={f"s{span}": v for span, v in best.items()})
+    (RECEIPTS / f"wheeler_{arm}_sweep.json").write_text(json.dumps(summary,
+                                                                   indent=1))
+    print(json.dumps(summary["best"], indent=1))
+    return mechanism_pass(None, best_state, spans, device, arm)
 
 
 def mechanism_pass(best, best_state, spans, device: str, arm: str,
@@ -860,6 +895,14 @@ def main():
     parser.add_argument("--quick", action="store_true",
                         help="smoke: one arm, one span, one lr, one seed, "
                              "200 steps, no receipts")
+    parser.add_argument("--run-tag", default="",
+                        help="suffix for the sweep summary file (the "
+                             "split-by-seed execution; per-cell receipt "
+                             "names are already unique by seed)")
+    parser.add_argument("--merge-seeds", action="store_true",
+                        help="merge the per-seed sweep summaries for --arm "
+                             "into the canonical receipt and run the "
+                             "mechanism pass from the overall best models")
     parser.add_argument("--device",
                         default="cuda" if torch.cuda.is_available() else "cpu")
     args = parser.parse_args()
@@ -868,6 +911,12 @@ def main():
     if args.quick:
         args.arm, args.lrs, args.seeds = "ordered", "1e-3", "3401"
         args.steps, spans = 200, [8]
+
+    if args.merge_seeds:
+        seeds = parse_ints(args.seeds)
+        print(json.dumps(merge_seeds(args.arm, spans, seeds, args.steps,
+                                     args.batch, args.device), indent=1))
+        return
 
     arms = ["pointwise", "ordered"] if args.arm == "both" else [args.arm]
     all_best, all_best_state = {}, {}
@@ -878,11 +927,13 @@ def main():
         all_best.update(best)
         all_best_state.update(best_state)
         if not args.quick:
-            (RECEIPTS / f"wheeler_{arm}_sweep.json").write_text(
+            (RECEIPTS / f"wheeler_{arm}_sweep{args.run_tag}.json").write_text(
                 json.dumps(summary, indent=1))
             print(json.dumps(summary["best"], indent=1))
-            print(json.dumps(mechanism_pass(all_best, all_best_state, spans,
-                                             args.device, arm), indent=1))
+            if not args.run_tag:
+                print(json.dumps(mechanism_pass(all_best, all_best_state,
+                                                 spans, args.device, arm),
+                                 indent=1))
 
 
 if __name__ == "__main__":
