@@ -1,0 +1,2610 @@
+{
+  "probe": "k8_growth",
+  "arm": "grow",
+  "seed": 3401,
+  "granularity": "per-token, the registered growth rule at 64-token statistic boundaries, rank cap 2048",
+  "stopping_rule": "matched-EXPOSURE: train until 20000000 targets seen (~20M, the probe exposure); the honest elapsed wall is reported first-class",
+  "within_sweep": "WITHIN-SWEEP comparison at ONE transferred LR (the gdn2 nomination's, verbatim from the matched arms)",
+  "exposure_bytes": 20022866,
+  "exposure_steps": 180,
+  "eval_nll_nats_per_byte": 2.0186139345169067,
+  "eval_split": "calibration",
+  "eval_windows": 7,
+  "eval_targets": 14336,
+  "walls": {
+    "train_seconds": 25840.6,
+    "probe_seconds": 108.6,
+    "eval_seconds": 94.4
+  },
+  "bytes_per_s": 774.8611651616916,
+  "diagnostics": {
+    "probe": {
+      "split": "calibration",
+      "windows": 4,
+      "mixers": 24,
+      "regime": "eval, bf16 autocast, the growing collect walk the arm trains on",
+      "probe_wall_seconds": 108.6
+    },
+    "op_rate_per_token_lane0": {
+      "none": 0.0,
+      "append": 0.07152811686197917,
+      "correct": 0.9282862345377604,
+      "pop": 0.0,
+      "merge": 0.00018564860026041666
+    },
+    "op_histogram_all_lanes": {
+      "none": 393143,
+      "append": 28126,
+      "correct": 365017,
+      "pop": 0,
+      "merge": 146
+    },
+    "occupancy": {
+      "note": "live slots at every token, per span, from the recorded pre-decision liveness",
+      "mean_live_slots": 84.66181182861328
+    },
+    "read_weight_entropy": {
+      "units": "nats over the live-slot weight distribution, per token",
+      "mean": -1.1328575901324383
+    },
+    "growth": {
+      "events_per_probe": 16.0,
+      "span_tables": {
+        "t0-t1@rank; t0-t1@rank; t0-t1@rank; t0-t1@rank; t0-t1@rank": 96
+      }
+    },
+    "per_layer": {
+      "0": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.0284423828125,
+          "correct": 0.9715576171875,
+          "pop": 0.0,
+          "merge": 0.0
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 256,
+            "rank": 128
+          },
+          {
+            "t0": 256,
+            "t1": 512,
+            "rank": 256
+          },
+          {
+            "t0": 512,
+            "t1": 768,
+            "rank": 512
+          },
+          {
+            "t0": 768,
+            "t1": 1024,
+            "rank": 1024
+          },
+          {
+            "t0": 1024,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [
+          {
+            "boundary": 256,
+            "rank_before": 128,
+            "rank_after": 256,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 512,
+            "rank_before": 256,
+            "rank_after": 512,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 768,
+            "rank_before": 512,
+            "rank_after": 1024,
+            "smoothed_rate": 0.70703125,
+            "window_rates": [
+              0.015625,
+              0.890625,
+              0.953125,
+              0.96875
+            ]
+          },
+          {
+            "boundary": 1024,
+            "rank_before": 1024,
+            "rank_after": 2048,
+            "smoothed_rate": 0.70703125,
+            "window_rates": [
+              0.0,
+              0.953125,
+              0.875,
+              1.0
+            ]
+          }
+        ],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 42.98175048828125,
+        "read_weight_entropy_nats": -2.745776431293795
+      },
+      "1": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.17950439453125,
+          "correct": 0.82049560546875,
+          "pop": 0.0,
+          "merge": 0.0
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 256,
+            "rank": 128
+          },
+          {
+            "t0": 256,
+            "t1": 512,
+            "rank": 256
+          },
+          {
+            "t0": 512,
+            "t1": 768,
+            "rank": 512
+          },
+          {
+            "t0": 768,
+            "t1": 1088,
+            "rank": 1024
+          },
+          {
+            "t0": 1088,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [
+          {
+            "boundary": 256,
+            "rank_before": 128,
+            "rank_after": 256,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 512,
+            "rank_before": 256,
+            "rank_after": 512,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 768,
+            "rank_before": 512,
+            "rank_after": 1024,
+            "smoothed_rate": 0.5703125,
+            "window_rates": [
+              0.015625,
+              0.6875,
+              0.78125,
+              0.796875
+            ]
+          },
+          {
+            "boundary": 1088,
+            "rank_before": 1024,
+            "rank_after": 2048,
+            "smoothed_rate": 0.642578125,
+            "window_rates": [
+              0.734375,
+              0.4453125,
+              0.6015625,
+              0.7890625
+            ]
+          }
+        ],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 190.96624755859375,
+        "read_weight_entropy_nats": -1.227305210562642
+      },
+      "2": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.12042236328125,
+          "correct": 0.87957763671875,
+          "pop": 0.0,
+          "merge": 0.0
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 256,
+            "rank": 128
+          },
+          {
+            "t0": 256,
+            "t1": 512,
+            "rank": 256
+          },
+          {
+            "t0": 512,
+            "t1": 768,
+            "rank": 512
+          },
+          {
+            "t0": 768,
+            "t1": 1024,
+            "rank": 1024
+          },
+          {
+            "t0": 1024,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [
+          {
+            "boundary": 256,
+            "rank_before": 128,
+            "rank_after": 256,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 512,
+            "rank_before": 256,
+            "rank_after": 512,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 768,
+            "rank_before": 512,
+            "rank_after": 1024,
+            "smoothed_rate": 0.54296875,
+            "window_rates": [
+              0.015625,
+              0.703125,
+              0.6171875,
+              0.8359375
+            ]
+          },
+          {
+            "boundary": 1024,
+            "rank_before": 1024,
+            "rank_after": 2048,
+            "smoothed_rate": 0.525390625,
+            "window_rates": [
+              0.0,
+              0.78125,
+              0.5625,
+              0.7578125
+            ]
+          }
+        ],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 132.64154052734375,
+        "read_weight_entropy_nats": -1.100504121840961
+      },
+      "3": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.07220458984375,
+          "correct": 0.92779541015625,
+          "pop": 0.0,
+          "merge": 0.0
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 256,
+            "rank": 128
+          },
+          {
+            "t0": 256,
+            "t1": 512,
+            "rank": 256
+          },
+          {
+            "t0": 512,
+            "t1": 768,
+            "rank": 512
+          },
+          {
+            "t0": 768,
+            "t1": 1024,
+            "rank": 1024
+          },
+          {
+            "t0": 1024,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [
+          {
+            "boundary": 256,
+            "rank_before": 128,
+            "rank_after": 256,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 512,
+            "rank_before": 256,
+            "rank_after": 512,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 768,
+            "rank_before": 512,
+            "rank_after": 1024,
+            "smoothed_rate": 0.66015625,
+            "window_rates": [
+              0.015625,
+              0.90625,
+              0.859375,
+              0.859375
+            ]
+          },
+          {
+            "boundary": 1024,
+            "rank_before": 1024,
+            "rank_after": 2048,
+            "smoothed_rate": 0.625,
+            "window_rates": [
+              0.0,
+              0.8125,
+              0.8515625,
+              0.8359375
+            ]
+          }
+        ],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 81.7069091796875,
+        "read_weight_entropy_nats": -1.2947559366007229
+      },
+      "4": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.09991455078125,
+          "correct": 0.90008544921875,
+          "pop": 0.0,
+          "merge": 0.0
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 256,
+            "rank": 128
+          },
+          {
+            "t0": 256,
+            "t1": 512,
+            "rank": 256
+          },
+          {
+            "t0": 512,
+            "t1": 768,
+            "rank": 512
+          },
+          {
+            "t0": 768,
+            "t1": 1024,
+            "rank": 1024
+          },
+          {
+            "t0": 1024,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [
+          {
+            "boundary": 256,
+            "rank_before": 128,
+            "rank_after": 256,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 512,
+            "rank_before": 256,
+            "rank_after": 512,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 768,
+            "rank_before": 512,
+            "rank_after": 1024,
+            "smoothed_rate": 0.587890625,
+            "window_rates": [
+              0.015625,
+              0.8359375,
+              0.6484375,
+              0.8515625
+            ]
+          },
+          {
+            "boundary": 1024,
+            "rank_before": 1024,
+            "rank_after": 2048,
+            "smoothed_rate": 0.5625,
+            "window_rates": [
+              0.0,
+              0.703125,
+              0.7421875,
+              0.8046875
+            ]
+          }
+        ],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 111.83966064453125,
+        "read_weight_entropy_nats": -1.0315254539411476
+      },
+      "5": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.07513427734375,
+          "correct": 0.92486572265625,
+          "pop": 0.0,
+          "merge": 0.0
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 256,
+            "rank": 128
+          },
+          {
+            "t0": 256,
+            "t1": 512,
+            "rank": 256
+          },
+          {
+            "t0": 512,
+            "t1": 768,
+            "rank": 512
+          },
+          {
+            "t0": 768,
+            "t1": 1024,
+            "rank": 1024
+          },
+          {
+            "t0": 1024,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [
+          {
+            "boundary": 256,
+            "rank_before": 128,
+            "rank_after": 256,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 512,
+            "rank_before": 256,
+            "rank_after": 512,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 768,
+            "rank_before": 512,
+            "rank_after": 1024,
+            "smoothed_rate": 0.666015625,
+            "window_rates": [
+              0.015625,
+              0.890625,
+              0.8203125,
+              0.9375
+            ]
+          },
+          {
+            "boundary": 1024,
+            "rank_before": 1024,
+            "rank_after": 2048,
+            "smoothed_rate": 0.611328125,
+            "window_rates": [
+              0.0,
+              0.8671875,
+              0.75,
+              0.828125
+            ]
+          }
+        ],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 90.3765869140625,
+        "read_weight_entropy_nats": -1.414428394133135
+      },
+      "6": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.08319091796875,
+          "correct": 0.916748046875,
+          "pop": 0.0,
+          "merge": 6.103515625e-05
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 256,
+            "rank": 128
+          },
+          {
+            "t0": 256,
+            "t1": 512,
+            "rank": 256
+          },
+          {
+            "t0": 512,
+            "t1": 768,
+            "rank": 512
+          },
+          {
+            "t0": 768,
+            "t1": 1024,
+            "rank": 1024
+          },
+          {
+            "t0": 1024,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [
+          {
+            "boundary": 256,
+            "rank_before": 128,
+            "rank_after": 256,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 512,
+            "rank_before": 256,
+            "rank_after": 512,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 768,
+            "rank_before": 512,
+            "rank_after": 1024,
+            "smoothed_rate": 0.576171875,
+            "window_rates": [
+              0.015625,
+              0.7890625,
+              0.8203125,
+              0.6796875
+            ]
+          },
+          {
+            "boundary": 1024,
+            "rank_before": 1024,
+            "rank_after": 2048,
+            "smoothed_rate": 0.578125,
+            "window_rates": [
+              0.0,
+              0.84375,
+              0.6875,
+              0.78125
+            ]
+          }
+        ],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 96.07806396484375,
+        "read_weight_entropy_nats": -1.117861169573733
+      },
+      "7": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.05877685546875,
+          "correct": 0.941162109375,
+          "pop": 0.0,
+          "merge": 6.103515625e-05
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 256,
+            "rank": 128
+          },
+          {
+            "t0": 256,
+            "t1": 512,
+            "rank": 256
+          },
+          {
+            "t0": 512,
+            "t1": 768,
+            "rank": 512
+          },
+          {
+            "t0": 768,
+            "t1": 1024,
+            "rank": 1024
+          },
+          {
+            "t0": 1024,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [
+          {
+            "boundary": 256,
+            "rank_before": 128,
+            "rank_after": 256,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 512,
+            "rank_before": 256,
+            "rank_after": 512,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 768,
+            "rank_before": 512,
+            "rank_after": 1024,
+            "smoothed_rate": 0.642578125,
+            "window_rates": [
+              0.015625,
+              0.875,
+              0.828125,
+              0.8515625
+            ]
+          },
+          {
+            "boundary": 1024,
+            "rank_before": 1024,
+            "rank_after": 2048,
+            "smoothed_rate": 0.6328125,
+            "window_rates": [
+              0.0,
+              0.8828125,
+              0.7734375,
+              0.875
+            ]
+          }
+        ],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 68.186279296875,
+        "read_weight_entropy_nats": -1.5567140080722646
+      },
+      "8": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.05029296875,
+          "correct": 0.94964599609375,
+          "pop": 0.0,
+          "merge": 6.103515625e-05
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 256,
+            "rank": 128
+          },
+          {
+            "t0": 256,
+            "t1": 512,
+            "rank": 256
+          },
+          {
+            "t0": 512,
+            "t1": 768,
+            "rank": 512
+          },
+          {
+            "t0": 768,
+            "t1": 1024,
+            "rank": 1024
+          },
+          {
+            "t0": 1024,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [
+          {
+            "boundary": 256,
+            "rank_before": 128,
+            "rank_after": 256,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 512,
+            "rank_before": 256,
+            "rank_after": 512,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 768,
+            "rank_before": 512,
+            "rank_after": 1024,
+            "smoothed_rate": 0.6328125,
+            "window_rates": [
+              0.015625,
+              0.9140625,
+              0.828125,
+              0.7734375
+            ]
+          },
+          {
+            "boundary": 1024,
+            "rank_before": 1024,
+            "rank_after": 2048,
+            "smoothed_rate": 0.66796875,
+            "window_rates": [
+              0.0,
+              0.8515625,
+              0.84375,
+              0.9765625
+            ]
+          }
+        ],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 60.44384765625,
+        "read_weight_entropy_nats": -1.2466694133480876
+      },
+      "9": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.030029296875,
+          "correct": 0.96990966796875,
+          "pop": 0.0,
+          "merge": 6.103515625e-05
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 256,
+            "rank": 128
+          },
+          {
+            "t0": 256,
+            "t1": 512,
+            "rank": 256
+          },
+          {
+            "t0": 512,
+            "t1": 768,
+            "rank": 512
+          },
+          {
+            "t0": 768,
+            "t1": 1024,
+            "rank": 1024
+          },
+          {
+            "t0": 1024,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [
+          {
+            "boundary": 256,
+            "rank_before": 128,
+            "rank_after": 256,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 512,
+            "rank_before": 256,
+            "rank_after": 512,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 768,
+            "rank_before": 512,
+            "rank_after": 1024,
+            "smoothed_rate": 0.70703125,
+            "window_rates": [
+              0.015625,
+              0.8828125,
+              0.953125,
+              0.9765625
+            ]
+          },
+          {
+            "boundary": 1024,
+            "rank_before": 1024,
+            "rank_after": 2048,
+            "smoothed_rate": 0.650390625,
+            "window_rates": [
+              0.0,
+              0.9296875,
+              0.8125,
+              0.859375
+            ]
+          }
+        ],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 38.46405029296875,
+        "read_weight_entropy_nats": -1.2479746827394367
+      },
+      "10": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.08990478515625,
+          "correct": 0.91009521484375,
+          "pop": 0.0,
+          "merge": 0.0
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 256,
+            "rank": 128
+          },
+          {
+            "t0": 256,
+            "t1": 512,
+            "rank": 256
+          },
+          {
+            "t0": 512,
+            "t1": 768,
+            "rank": 512
+          },
+          {
+            "t0": 768,
+            "t1": 1024,
+            "rank": 1024
+          },
+          {
+            "t0": 1024,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [
+          {
+            "boundary": 256,
+            "rank_before": 128,
+            "rank_after": 256,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 512,
+            "rank_before": 256,
+            "rank_after": 512,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 768,
+            "rank_before": 512,
+            "rank_after": 1024,
+            "smoothed_rate": 0.541015625,
+            "window_rates": [
+              0.015625,
+              0.8046875,
+              0.7421875,
+              0.6015625
+            ]
+          },
+          {
+            "boundary": 1024,
+            "rank_before": 1024,
+            "rank_after": 2048,
+            "smoothed_rate": 0.55859375,
+            "window_rates": [
+              0.0,
+              0.734375,
+              0.7578125,
+              0.7421875
+            ]
+          }
+        ],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 104.75982666015625,
+        "read_weight_entropy_nats": -0.9922925076021121
+      },
+      "11": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.06494140625,
+          "correct": 0.934814453125,
+          "pop": 0.0,
+          "merge": 0.000244140625
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 256,
+            "rank": 128
+          },
+          {
+            "t0": 256,
+            "t1": 512,
+            "rank": 256
+          },
+          {
+            "t0": 512,
+            "t1": 768,
+            "rank": 512
+          },
+          {
+            "t0": 768,
+            "t1": 1024,
+            "rank": 1024
+          },
+          {
+            "t0": 1024,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [
+          {
+            "boundary": 256,
+            "rank_before": 128,
+            "rank_after": 256,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 512,
+            "rank_before": 256,
+            "rank_after": 512,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 768,
+            "rank_before": 512,
+            "rank_after": 1024,
+            "smoothed_rate": 0.603515625,
+            "window_rates": [
+              0.015625,
+              0.6484375,
+              0.9453125,
+              0.8046875
+            ]
+          },
+          {
+            "boundary": 1024,
+            "rank_before": 1024,
+            "rank_after": 2048,
+            "smoothed_rate": 0.5703125,
+            "window_rates": [
+              0.0,
+              0.6171875,
+              0.8125,
+              0.8515625
+            ]
+          }
+        ],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 81.35699462890625,
+        "read_weight_entropy_nats": -1.1029563534824687
+      },
+      "12": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.09088134765625,
+          "correct": 0.90899658203125,
+          "pop": 0.0,
+          "merge": 0.0001220703125
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 256,
+            "rank": 128
+          },
+          {
+            "t0": 256,
+            "t1": 512,
+            "rank": 256
+          },
+          {
+            "t0": 512,
+            "t1": 832,
+            "rank": 512
+          },
+          {
+            "t0": 832,
+            "t1": 1152,
+            "rank": 1024
+          },
+          {
+            "t0": 1152,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [
+          {
+            "boundary": 256,
+            "rank_before": 128,
+            "rank_after": 256,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 512,
+            "rank_before": 256,
+            "rank_after": 512,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 832,
+            "rank_before": 512,
+            "rank_after": 1024,
+            "smoothed_rate": 0.57421875,
+            "window_rates": [
+              0.59375,
+              0.53125,
+              0.6875,
+              0.484375
+            ]
+          },
+          {
+            "boundary": 1152,
+            "rank_before": 1024,
+            "rank_after": 2048,
+            "smoothed_rate": 0.646484375,
+            "window_rates": [
+              0.6328125,
+              0.6328125,
+              0.6953125,
+              0.625
+            ]
+          }
+        ],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 105.90472412109375,
+        "read_weight_entropy_nats": -0.7986333555399527
+      },
+      "13": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.06787109375,
+          "correct": 0.93194580078125,
+          "pop": 0.0,
+          "merge": 0.00018310546875
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 256,
+            "rank": 128
+          },
+          {
+            "t0": 256,
+            "t1": 512,
+            "rank": 256
+          },
+          {
+            "t0": 512,
+            "t1": 768,
+            "rank": 512
+          },
+          {
+            "t0": 768,
+            "t1": 1024,
+            "rank": 1024
+          },
+          {
+            "t0": 1024,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [
+          {
+            "boundary": 256,
+            "rank_before": 128,
+            "rank_after": 256,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 512,
+            "rank_before": 256,
+            "rank_after": 512,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 768,
+            "rank_before": 512,
+            "rank_after": 1024,
+            "smoothed_rate": 0.583984375,
+            "window_rates": [
+              0.015625,
+              0.7265625,
+              0.8125,
+              0.78125
+            ]
+          },
+          {
+            "boundary": 1024,
+            "rank_before": 1024,
+            "rank_after": 2048,
+            "smoothed_rate": 0.55078125,
+            "window_rates": [
+              0.0,
+              0.8046875,
+              0.6015625,
+              0.796875
+            ]
+          }
+        ],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 81.510009765625,
+        "read_weight_entropy_nats": -0.9955975467773199
+      },
+      "14": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.07940673828125,
+          "correct": 0.92041015625,
+          "pop": 0.0,
+          "merge": 0.00018310546875
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 256,
+            "rank": 128
+          },
+          {
+            "t0": 256,
+            "t1": 512,
+            "rank": 256
+          },
+          {
+            "t0": 512,
+            "t1": 768,
+            "rank": 512
+          },
+          {
+            "t0": 768,
+            "t1": 1024,
+            "rank": 1024
+          },
+          {
+            "t0": 1024,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [
+          {
+            "boundary": 256,
+            "rank_before": 128,
+            "rank_after": 256,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 512,
+            "rank_before": 256,
+            "rank_after": 512,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 768,
+            "rank_before": 512,
+            "rank_after": 1024,
+            "smoothed_rate": 0.615234375,
+            "window_rates": [
+              0.015625,
+              0.7734375,
+              0.8671875,
+              0.8046875
+            ]
+          },
+          {
+            "boundary": 1024,
+            "rank_before": 1024,
+            "rank_after": 2048,
+            "smoothed_rate": 0.5859375,
+            "window_rates": [
+              0.0,
+              0.7421875,
+              0.7265625,
+              0.875
+            ]
+          }
+        ],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 93.62969970703125,
+        "read_weight_entropy_nats": -0.9868431743552875
+      },
+      "15": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.0635986328125,
+          "correct": 0.93621826171875,
+          "pop": 0.0,
+          "merge": 0.00018310546875
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 256,
+            "rank": 128
+          },
+          {
+            "t0": 256,
+            "t1": 512,
+            "rank": 256
+          },
+          {
+            "t0": 512,
+            "t1": 768,
+            "rank": 512
+          },
+          {
+            "t0": 768,
+            "t1": 1024,
+            "rank": 1024
+          },
+          {
+            "t0": 1024,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [
+          {
+            "boundary": 256,
+            "rank_before": 128,
+            "rank_after": 256,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 512,
+            "rank_before": 256,
+            "rank_after": 512,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 768,
+            "rank_before": 512,
+            "rank_after": 1024,
+            "smoothed_rate": 0.625,
+            "window_rates": [
+              0.015625,
+              0.8046875,
+              0.8671875,
+              0.8125
+            ]
+          },
+          {
+            "boundary": 1024,
+            "rank_before": 1024,
+            "rank_after": 2048,
+            "smoothed_rate": 0.642578125,
+            "window_rates": [
+              0.0,
+              0.7890625,
+              0.859375,
+              0.921875
+            ]
+          }
+        ],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 82.71923828125,
+        "read_weight_entropy_nats": -1.2652210632532936
+      },
+      "16": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.04254150390625,
+          "correct": 0.95721435546875,
+          "pop": 0.0,
+          "merge": 0.000244140625
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 256,
+            "rank": 128
+          },
+          {
+            "t0": 256,
+            "t1": 512,
+            "rank": 256
+          },
+          {
+            "t0": 512,
+            "t1": 768,
+            "rank": 512
+          },
+          {
+            "t0": 768,
+            "t1": 1024,
+            "rank": 1024
+          },
+          {
+            "t0": 1024,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [
+          {
+            "boundary": 256,
+            "rank_before": 128,
+            "rank_after": 256,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 512,
+            "rank_before": 256,
+            "rank_after": 512,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 768,
+            "rank_before": 512,
+            "rank_after": 1024,
+            "smoothed_rate": 0.693359375,
+            "window_rates": [
+              0.015625,
+              0.96875,
+              0.8984375,
+              0.890625
+            ]
+          },
+          {
+            "boundary": 1024,
+            "rank_before": 1024,
+            "rank_after": 2048,
+            "smoothed_rate": 0.638671875,
+            "window_rates": [
+              0.0,
+              0.828125,
+              0.8671875,
+              0.859375
+            ]
+          }
+        ],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 54.845703125,
+        "read_weight_entropy_nats": -1.348021491888854
+      },
+      "17": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.0692138671875,
+          "correct": 0.92999267578125,
+          "pop": 0.0,
+          "merge": 0.00079345703125
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 256,
+            "rank": 128
+          },
+          {
+            "t0": 256,
+            "t1": 512,
+            "rank": 256
+          },
+          {
+            "t0": 512,
+            "t1": 768,
+            "rank": 512
+          },
+          {
+            "t0": 768,
+            "t1": 1024,
+            "rank": 1024
+          },
+          {
+            "t0": 1024,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [
+          {
+            "boundary": 256,
+            "rank_before": 128,
+            "rank_after": 256,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 512,
+            "rank_before": 256,
+            "rank_after": 512,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 768,
+            "rank_before": 512,
+            "rank_after": 1024,
+            "smoothed_rate": 0.556640625,
+            "window_rates": [
+              0.015625,
+              0.8671875,
+              0.671875,
+              0.671875
+            ]
+          },
+          {
+            "boundary": 1024,
+            "rank_before": 1024,
+            "rank_after": 2048,
+            "smoothed_rate": 0.556640625,
+            "window_rates": [
+              0.0,
+              0.7109375,
+              0.78125,
+              0.734375
+            ]
+          }
+        ],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 87.8433837890625,
+        "read_weight_entropy_nats": -0.8183060624160357
+      },
+      "18": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.04248046875,
+          "correct": 0.95697021484375,
+          "pop": 0.0,
+          "merge": 0.00054931640625
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 256,
+            "rank": 128
+          },
+          {
+            "t0": 256,
+            "t1": 512,
+            "rank": 256
+          },
+          {
+            "t0": 512,
+            "t1": 768,
+            "rank": 512
+          },
+          {
+            "t0": 768,
+            "t1": 1024,
+            "rank": 1024
+          },
+          {
+            "t0": 1024,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [
+          {
+            "boundary": 256,
+            "rank_before": 128,
+            "rank_after": 256,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 512,
+            "rank_before": 256,
+            "rank_after": 512,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 768,
+            "rank_before": 512,
+            "rank_after": 1024,
+            "smoothed_rate": 0.642578125,
+            "window_rates": [
+              0.015625,
+              0.875,
+              0.8359375,
+              0.84375
+            ]
+          },
+          {
+            "boundary": 1024,
+            "rank_before": 1024,
+            "rank_after": 2048,
+            "smoothed_rate": 0.625,
+            "window_rates": [
+              0.0,
+              0.71875,
+              0.8515625,
+              0.9296875
+            ]
+          }
+        ],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 56.292724609375,
+        "read_weight_entropy_nats": -1.8065906929049658
+      },
+      "19": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.05987548828125,
+          "correct": 0.9398193359375,
+          "pop": 0.0,
+          "merge": 0.00030517578125
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 256,
+            "rank": 128
+          },
+          {
+            "t0": 256,
+            "t1": 512,
+            "rank": 256
+          },
+          {
+            "t0": 512,
+            "t1": 768,
+            "rank": 512
+          },
+          {
+            "t0": 768,
+            "t1": 1024,
+            "rank": 1024
+          },
+          {
+            "t0": 1024,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [
+          {
+            "boundary": 256,
+            "rank_before": 128,
+            "rank_after": 256,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 512,
+            "rank_before": 256,
+            "rank_after": 512,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 768,
+            "rank_before": 512,
+            "rank_after": 1024,
+            "smoothed_rate": 0.62890625,
+            "window_rates": [
+              0.015625,
+              0.7734375,
+              0.890625,
+              0.8359375
+            ]
+          },
+          {
+            "boundary": 1024,
+            "rank_before": 1024,
+            "rank_after": 2048,
+            "smoothed_rate": 0.59765625,
+            "window_rates": [
+              0.0,
+              0.6015625,
+              0.859375,
+              0.9296875
+            ]
+          }
+        ],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 76.337890625,
+        "read_weight_entropy_nats": -0.8893870478091033
+      },
+      "20": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.06256103515625,
+          "correct": 0.93719482421875,
+          "pop": 0.0,
+          "merge": 0.000244140625
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 256,
+            "rank": 128
+          },
+          {
+            "t0": 256,
+            "t1": 512,
+            "rank": 256
+          },
+          {
+            "t0": 512,
+            "t1": 768,
+            "rank": 512
+          },
+          {
+            "t0": 768,
+            "t1": 1024,
+            "rank": 1024
+          },
+          {
+            "t0": 1024,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [
+          {
+            "boundary": 256,
+            "rank_before": 128,
+            "rank_after": 256,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 512,
+            "rank_before": 256,
+            "rank_after": 512,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 768,
+            "rank_before": 512,
+            "rank_after": 1024,
+            "smoothed_rate": 0.5625,
+            "window_rates": [
+              0.015625,
+              0.671875,
+              0.875,
+              0.6875
+            ]
+          },
+          {
+            "boundary": 1024,
+            "rank_before": 1024,
+            "rank_after": 2048,
+            "smoothed_rate": 0.61328125,
+            "window_rates": [
+              0.0,
+              0.7890625,
+              0.6875,
+              0.9765625
+            ]
+          }
+        ],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 74.95294189453125,
+        "read_weight_entropy_nats": -0.7063792982972652
+      },
+      "21": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.08697509765625,
+          "correct": 0.91278076171875,
+          "pop": 0.0,
+          "merge": 0.000244140625
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 256,
+            "rank": 128
+          },
+          {
+            "t0": 256,
+            "t1": 512,
+            "rank": 256
+          },
+          {
+            "t0": 512,
+            "t1": 832,
+            "rank": 512
+          },
+          {
+            "t0": 832,
+            "t1": 1152,
+            "rank": 1024
+          },
+          {
+            "t0": 1152,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [
+          {
+            "boundary": 256,
+            "rank_before": 128,
+            "rank_after": 256,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 512,
+            "rank_before": 256,
+            "rank_after": 512,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 832,
+            "rank_before": 512,
+            "rank_after": 1024,
+            "smoothed_rate": 0.603515625,
+            "window_rates": [
+              0.5078125,
+              0.5859375,
+              0.6953125,
+              0.625
+            ]
+          },
+          {
+            "boundary": 1152,
+            "rank_before": 1024,
+            "rank_after": 2048,
+            "smoothed_rate": 0.654296875,
+            "window_rates": [
+              0.7265625,
+              0.796875,
+              0.4296875,
+              0.6640625
+            ]
+          }
+        ],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 105.91864013671875,
+        "read_weight_entropy_nats": -0.5984629354770439
+      },
+      "22": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.04339599609375,
+          "correct": 0.95611572265625,
+          "pop": 0.0,
+          "merge": 0.00048828125
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 256,
+            "rank": 128
+          },
+          {
+            "t0": 256,
+            "t1": 512,
+            "rank": 256
+          },
+          {
+            "t0": 512,
+            "t1": 768,
+            "rank": 512
+          },
+          {
+            "t0": 768,
+            "t1": 1024,
+            "rank": 1024
+          },
+          {
+            "t0": 1024,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [
+          {
+            "boundary": 256,
+            "rank_before": 128,
+            "rank_after": 256,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 512,
+            "rank_before": 256,
+            "rank_after": 512,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 768,
+            "rank_before": 512,
+            "rank_after": 1024,
+            "smoothed_rate": 0.626953125,
+            "window_rates": [
+              0.015625,
+              0.8046875,
+              0.9140625,
+              0.7734375
+            ]
+          },
+          {
+            "boundary": 1024,
+            "rank_before": 1024,
+            "rank_after": 2048,
+            "smoothed_rate": 0.587890625,
+            "window_rates": [
+              0.0,
+              0.7734375,
+              0.7578125,
+              0.8203125
+            ]
+          }
+        ],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 51.15106201171875,
+        "read_weight_entropy_nats": -0.5851262376316594
+      },
+      "23": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.05511474609375,
+          "correct": 0.9444580078125,
+          "pop": 0.0,
+          "merge": 0.00042724609375
+        },
+        "spans": [
+          {
+            "t0": 0,
+            "t1": 256,
+            "rank": 128
+          },
+          {
+            "t0": 256,
+            "t1": 512,
+            "rank": 256
+          },
+          {
+            "t0": 512,
+            "t1": 832,
+            "rank": 512
+          },
+          {
+            "t0": 832,
+            "t1": 1152,
+            "rank": 1024
+          },
+          {
+            "t0": 1152,
+            "t1": 2048,
+            "rank": 2048
+          }
+        ],
+        "growth_events": [
+          {
+            "boundary": 256,
+            "rank_before": 128,
+            "rank_after": 256,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 512,
+            "rank_before": 256,
+            "rank_after": 512,
+            "smoothed_rate": 1.0,
+            "window_rates": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "boundary": 832,
+            "rank_before": 512,
+            "rank_after": 1024,
+            "smoothed_rate": 0.599609375,
+            "window_rates": [
+              0.8359375,
+              0.4609375,
+              0.6484375,
+              0.453125
+            ]
+          },
+          {
+            "boundary": 1152,
+            "rank_before": 1024,
+            "rank_after": 2048,
+            "smoothed_rate": 0.662109375,
+            "window_rates": [
+              0.5859375,
+              0.78125,
+              0.5546875,
+              0.7265625
+            ]
+          }
+        ],
+        "final_rank": 2048,
+        "occupancy_mean_live_slots": 60.9757080078125,
+        "read_weight_entropy_nats": -0.3112495736372314
+      }
+    }
+  },
+  "growth": {
+    "note": "per-step snapshots of the mixers' live growth state: the final-rank histogram over the 24 mixers and the boundary histogram of one sampled scan each",
+    "first_step": {
+      "step": 1,
+      "mixers": 24,
+      "events_per_scan_sample": 96,
+      "final_rank_histogram": {
+        "2048": 24
+      },
+      "boundary_histogram": {
+        "256": 24,
+        "512": 24,
+        "768": 24,
+        "1024": 24
+      }
+    },
+    "last_step": {
+      "step": 180,
+      "mixers": 24,
+      "events_per_scan_sample": 96,
+      "final_rank_histogram": {
+        "2048": 24
+      },
+      "boundary_histogram": {
+        "256": 24,
+        "512": 24,
+        "768": 24,
+        "1024": 24
+      }
+    },
+    "step_samples": [
+      {
+        "step": 1,
+        "mixers": 24,
+        "events_per_scan_sample": 96,
+        "final_rank_histogram": {
+          "2048": 24
+        },
+        "boundary_histogram": {
+          "256": 24,
+          "512": 24,
+          "768": 24,
+          "1024": 24
+        }
+      },
+      {
+        "step": 2,
+        "mixers": 24,
+        "events_per_scan_sample": 96,
+        "final_rank_histogram": {
+          "2048": 24
+        },
+        "boundary_histogram": {
+          "256": 24,
+          "512": 24,
+          "768": 24,
+          "1024": 24
+        }
+      },
+      {
+        "step": 3,
+        "mixers": 24,
+        "events_per_scan_sample": 96,
+        "final_rank_histogram": {
+          "2048": 24
+        },
+        "boundary_histogram": {
+          "256": 24,
+          "512": 24,
+          "768": 24,
+          "1024": 24
+        }
+      },
+      {
+        "step": 30,
+        "mixers": 24,
+        "events_per_scan_sample": 96,
+        "final_rank_histogram": {
+          "2048": 24
+        },
+        "boundary_histogram": {
+          "256": 24,
+          "512": 24,
+          "768": 24,
+          "1024": 24
+        }
+      },
+      {
+        "step": 60,
+        "mixers": 24,
+        "events_per_scan_sample": 96,
+        "final_rank_histogram": {
+          "2048": 24
+        },
+        "boundary_histogram": {
+          "256": 24,
+          "512": 24,
+          "768": 24,
+          "1024": 24
+        }
+      },
+      {
+        "step": 90,
+        "mixers": 24,
+        "events_per_scan_sample": 96,
+        "final_rank_histogram": {
+          "2048": 24
+        },
+        "boundary_histogram": {
+          "256": 24,
+          "512": 24,
+          "768": 24,
+          "1024": 24
+        }
+      },
+      {
+        "step": 120,
+        "mixers": 24,
+        "events_per_scan_sample": 96,
+        "final_rank_histogram": {
+          "2048": 24
+        },
+        "boundary_histogram": {
+          "256": 24,
+          "512": 24,
+          "768": 24,
+          "1024": 24
+        }
+      },
+      {
+        "step": 150,
+        "mixers": 24,
+        "events_per_scan_sample": 96,
+        "final_rank_histogram": {
+          "2048": 24
+        },
+        "boundary_histogram": {
+          "256": 24,
+          "512": 24,
+          "768": 19,
+          "832": 5,
+          "1024": 19,
+          "1088": 2,
+          "1152": 3
+        }
+      },
+      {
+        "step": 180,
+        "mixers": 24,
+        "events_per_scan_sample": 96,
+        "final_rank_histogram": {
+          "2048": 24
+        },
+        "boundary_histogram": {
+          "256": 24,
+          "512": 24,
+          "768": 24,
+          "1024": 24
+        }
+      }
+    ]
+  },
+  "peak_allocated_gb": 22.89,
+  "config_sha256": "482f7da6207732367e3e730f856e41a3f25a658d2049650270a8e89ddf57501c",
+  "config": {
+    "probe": "k8_growth",
+    "arm": "grow",
+    "granularity": "per-token, the registered growth rule at 64-token statistic boundaries, rank cap 2048",
+    "seed": 3401,
+    "exposure_targets": 20000000,
+    "segment_tokens": 64,
+    "optimizer": {
+      "lr": 0.0005420185524740253,
+      "betas": [
+        0.9,
+        0.9392004369596886
+      ],
+      "weight_decay": 0.20059436743465126,
+      "warmup_steps": 69,
+      "microbatch": 8
+    },
+    "microbatch": 8,
+    "context": 2048,
+    "windows_per_step": 64,
+    "summary": {
+      "base_arm": "matrix",
+      "shape": {
+        "width": 576,
+        "depth": 24,
+        "hidden": 3352,
+        "heads": 2,
+        "value_dim": 128,
+        "rank": 128,
+        "rank_max": 128,
+        "vocab": 256
+      },
+      "parameters": {
+        "total": 149981808,
+        "trainable": 149981808,
+        "per_layer": 6236930,
+        "mixer": 443522,
+        "mlp": 5792256,
+        "norms": 1152,
+        "embedding": 147456,
+        "head": 147456,
+        "final_norm": 576,
+        "capacity": 150003984,
+        "capacity_relative": -0.00014783607347390593
+      },
+      "routing": {
+        "ops": true,
+        "tau_match": 0.45,
+        "tau_merge": 0.85,
+        "tau_pop": 0.1,
+        "tie_break": 1e-06,
+        "read_scale": 2.0,
+        "grow": false,
+        "grow_trigger": 0.5,
+        "grow_window": 4,
+        "grow_window_tokens": 512,
+        "grow_geometric": 2.0,
+        "grow_stride_floor": 64
+      },
+      "chunk_tokens": 128,
+      "compile_scan": true,
+      "compile_mode": "default",
+      "fused_whole_scan": false,
+      "scan_path": "k8_growth (per-token decisions, the registered growth rule at 64-token boundaries)",
+      "fused_scan": false,
+      "fused_backward": false,
+      "fused_routing": false,
+      "fused_routing_diff": false,
+      "optimizer_note": "the registered gdn2 nomination's optimizer settings (gates.py / profile_step_vs_gdn2.py)",
+      "start_rank": 128
+    },
+    "identity": {
+      "stream": "flagship_beyond_100gb",
+      "source": "/mnt/nvme2n1/erikg/pile.txt",
+      "source_size": 1307910802540,
+      "manifest": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/documents.jsonl.gz",
+      "manifest_sha256": "48b9095eeccb023ff1cb2a4f6da899a8b3e4eb3b76b2804e730f1d6ad031c414",
+      "registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/registration.json",
+      "registration_sha256": "c36f84cfd1a59530a7991a4be6c1f68b424a79c5b7de169eabfc90d3cd31cc31",
+      "boundary_bytes": 100000000000,
+      "lattice_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_150M_LATTICE.md",
+      "lattice_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c"
+    },
+    "policy": {
+      "ops": true,
+      "tau_match": 0.45,
+      "tau_merge": 0.85,
+      "tau_pop": 0.1,
+      "tie_break": 1e-06,
+      "read_scale": 2.0,
+      "grow": true,
+      "grow_trigger": 0.5,
+      "grow_window": 4,
+      "grow_window_tokens": 512,
+      "grow_geometric": 2.0,
+      "grow_stride_floor": 64
+    },
+    "rank_cap": 2048,
+    "start_rank": 128,
+    "bindings": {
+      "matrix_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_MATRIX_EMENDER.md",
+      "matrix_registration_sha256": "20a163c9a1eb7c79d73289d8d8a55763748b0fd0bf83252fb29a40d66374dec2",
+      "lattice_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_150M_LATTICE.md",
+      "lattice_registration_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c",
+      "k5b_whole_scan_receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k5b_whole_scan.json",
+      "k5b_whole_scan_sha256": "5f2c54ab299b47fc859cab780b645a02c2162991472490705f4a037ab2111dee",
+      "k5b_step_metric_receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k5b_step_metric.json",
+      "k5b_step_metric_sha256": "2668e0eeaf37a1ae150cce4787728277afa200b8864073f104cb1fe77bbccd1d",
+      "k5b_doc": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/K5B_WHOLE_SCAN.md",
+      "k5b_doc_sha256": "04cbb61554f80eb39b0b0089ebeaab7b932c0f05dbf73d2266c95d1f7329ebaf",
+      "recorded_cd_receipts": {
+        "gdn2_c128_rerun": "ac60726997076202f7dee8b708c19aa2914a1967ccc64283794f7139b52ea1b1",
+        "matrix_append_c128": "27c9793b5e2b309d1ce15751f1abb85b96e6b6a44d9a4284d82d566c9129b241",
+        "matrix_ops_c128": "7c38ebf34b8d54657ecebc4e945bd9f5aeaef8cef4465b58eb6e3ca8635c2794"
+      },
+      "recorded_150m_gdn2_result": "8cacac01f89c88061cc2e6bdfa8fcf8e2e2db6be9b97ebfc1bb8f752e0d94316",
+      "k6_preregistration": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/PREREGISTRATION_SEQUENTIAL_MATRIX.md",
+      "k6_preregistration_sha256": "3ce8289fbd1635665696f6fc2b73b3f7ffbc1230bb778ce7eb7fd94e53ec4fbf",
+      "k8_gates_receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k8_gates.json",
+      "k8_gates_sha256": "6184c25da73ca14393d6b82bda3b36025f8888be04c7c13ad48b5c3ed8046d60"
+    },
+    "git": {
+      "commit": "63126e7f00b532d354472126ad052ccedb379e9d",
+      "relevant_paths_dirty": "D experiments/expressivity_tasks/x45_matrix_emender/receipts/smoke/sweep_chunk_parity_c2.json\n?? experiments/expressivity_tasks/x45_matrix_emender/RESULT_GRANULARITY_SEPARATOR.md\n?? experiments/expressivity_tasks/x45_matrix_emender/granularity_separator.py\n?? experiments/expressivity_tasks/x45_matrix_emender/k8_runs/\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_ar_c1_lr3e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/run_separator_leased.sh\n?? experiments/expressivity_tasks/x45_matrix_emender/test_granularity_separator.py",
+      "branch": "main"
+    },
+    "stopping_rule": "matched-EXPOSURE: train until 20000000 targets seen (~20M, the probe exposure); the honest elapsed wall is reported first-class",
+    "within_sweep": "WITHIN-SWEEP comparison at ONE transferred LR (the gdn2 nomination's, verbatim from the matched arms)"
+  },
+  "session": {
+    "host": "lambda01",
+    "card": "4",
+    "device": "NVIDIA RTX 6000 Ada Generation",
+    "card_gib": 47.38,
+    "torch": "2.9.1+cu128",
+    "triton": "3.5.1"
+  },
+  "trajectory": [
+    {
+      "step": 1,
+      "active_seconds": 144.20634741801769,
+      "bytes": 117712,
+      "loss": 5.741501609337172
+    },
+    {
+      "step": 2,
+      "active_seconds": 287.6750622810796,
+      "bytes": 248784,
+      "loss": 5.557697117328644
+    },
+    {
+      "step": 3,
+      "active_seconds": 431.2206839742139,
+      "bytes": 364722,
+      "loss": 5.22185725826378
+    },
+    {
+      "step": 4,
+      "active_seconds": 574.7882436988875,
+      "bytes": 461739,
+      "loss": 5.000862759434118
+    },
+    {
+      "step": 5,
+      "active_seconds": 755.0839234534651,
+      "bytes": 567019,
+      "loss": 4.6308642978001515
+    },
+    {
+      "step": 25,
+      "active_seconds": 3636.9557768171653,
+      "bytes": 2920934,
+      "loss": 3.280549191615539
+    },
+    {
+      "step": 50,
+      "active_seconds": 7222.085185262375,
+      "bytes": 5640425,
+      "loss": 2.6290324724936984
+    },
+    {
+      "step": 75,
+      "active_seconds": 10806.93291117251,
+      "bytes": 8340023,
+      "loss": 2.2435176968574524
+    },
+    {
+      "step": 100,
+      "active_seconds": 14396.738414697349,
+      "bytes": 11089562,
+      "loss": 2.556687770421453
+    },
+    {
+      "step": 125,
+      "active_seconds": 17983.15874974616,
+      "bytes": 13866716,
+      "loss": 2.27068174289983
+    },
+    {
+      "step": 150,
+      "active_seconds": 21563.39184605144,
+      "bytes": 16597785,
+      "loss": 2.5534903108978733
+    },
+    {
+      "step": 175,
+      "active_seconds": 25123.37820912525,
+      "bytes": 19507355,
+      "loss": 2.5351455108540955
+    },
+    {
+      "step": 176,
+      "active_seconds": 25266.730505582877,
+      "bytes": 19617663,
+      "loss": 2.433812788164624
+    },
+    {
+      "step": 177,
+      "active_seconds": 25409.770749093965,
+      "bytes": 19735519,
+      "loss": 2.5450120800633225
+    },
+    {
+      "step": 178,
+      "active_seconds": 25553.33723044675,
+      "bytes": 19831382,
+      "loss": 2.417994359920331
+    },
+    {
+      "step": 179,
+      "active_seconds": 25696.982941333205,
+      "bytes": 19926115,
+      "loss": 2.4684785383821524
+    },
+    {
+      "step": 180,
+      "active_seconds": 25840.58525609784,
+      "bytes": 20022866,
+      "loss": 2.446159667679743
+    }
+  ],
+  "banked_fixed128": {
+    "arm": "fixed128 (banked K6 per-token probe)",
+    "eval_nll_nats_per_byte": 2.02779677936009,
+    "exposure_bytes": 20022866,
+    "train_seconds": 1719.5,
+    "bytes_per_s": 11644.613934297431,
+    "mean_live_slots": 73.6804707845052,
+    "read_entropy": 1.0845607315905803,
+    "receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k6_probe.json"
+  }
+}
