@@ -907,6 +907,12 @@ def main():
                         default="cuda" if torch.cuda.is_available() else "cpu")
     args = parser.parse_args()
 
+    # CPU thread cap (operator housekeeping, receipted with the driver change:
+    # the eager oracle is GPU-dispatch-bound, so this costs single-digit %
+    # walls; without it each worker spin-waits on ~30 cores).  Env-overridable.
+    torch.set_num_threads(int(__import__("os").environ.get("WHEELER_CPU_THREADS",
+                                                          "4")))
+
     spans = parse_ints(args.spans)
     if args.quick:
         args.arm, args.lrs, args.seeds = "ordered", "1e-3", "3401"

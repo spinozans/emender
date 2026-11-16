@@ -20,6 +20,14 @@ MOD=experiments.expressivity_tasks.x45_matrix_emender.wheeler_capacity_probe
 LOGS=$X45/wheeler_runs
 mkdir -p "$LOGS"
 
+# CPU thread cap (operator housekeeping, 2026-11-16): the eager per-token
+# oracle is GPU-dispatch-bound, so capping torch's host thread pools costs
+# single-digit % walls while stopping ~30 spin-waiting cores per worker on
+# the shared box.  Applies to every worker and merge launch from this driver.
+export OMP_NUM_THREADS=4
+export MKL_NUM_THREADS=4
+export WHEELER_CPU_THREADS=4
+
 # pin the arms to separate cards of the 4/5 pool
 if [ -z "${GPU_LEASE_VISIBLE:-}" ]; then
   if [ "$ARM" = "pointwise" ]; then
