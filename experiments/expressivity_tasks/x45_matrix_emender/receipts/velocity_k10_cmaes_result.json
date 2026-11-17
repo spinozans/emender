@@ -1,0 +1,133 @@
+{
+  "arm": "k10_separated_keys",
+  "phase": 1,
+  "space": [
+    [
+      "lr",
+      "log",
+      0.0001,
+      0.003
+    ],
+    [
+      "weight_decay",
+      "log",
+      0.001,
+      0.6
+    ],
+    [
+      "warmup_steps",
+      "logint",
+      2,
+      120
+    ],
+    [
+      "read_scale",
+      "linear",
+      0.5,
+      4.0
+    ]
+  ],
+  "settings": {
+    "popsize": 8,
+    "generations_requested": 2,
+    "generations_run": 1,
+    "sigma0": 0.2,
+    "cma_seed": 20261115,
+    "probe_seed": 3401,
+    "probe_targets": 16777216,
+    "cma_version": "4.4.4",
+    "eval_est_seconds": 1800,
+    "budget_note": "the K10 arm's probe throughput is ~10.7k bytes/s, so one evaluation costs ~25-30 min: the 5.0 h wall budget buys the anchor plus roughly one generation at popsize 8; the wall guard stopped cleanly at 1 generation(s) run",
+    "fixed_seed_note": "every evaluation uses seed 3401 and the same deterministic stream prefix: the search tunes the seed and the data draw as well as the hyperparameters"
+  },
+  "transferred_anchor": {
+    "nll": 1.6775052888052804,
+    "config": {
+      "lr": 0.0005420185524740253,
+      "weight_decay": 0.20059436743465126,
+      "warmup_steps": 69,
+      "read_scale": 2.0,
+      "tau_match": 0.45,
+      "tau_pop": 0.1,
+      "tau_merge": 0.85
+    },
+    "note": "the banked K10 probe's own knobs at this probe exposure"
+  },
+  "gdn2_anchor": {
+    "nll": 1.5162515129361833,
+    "note": "the banked gdn2 anchor of the chunked-arm CMA-ES search (receipts/cmaes_result_phase2.json), at the IDENTICAL fixed probe exposure / seed / stream; cited, not re-run",
+    "receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/cmaes_result_phase2.json"
+  },
+  "incumbent_trajectory": [
+    {
+      "eval_id": 0,
+      "label": "transferred_k10_p1",
+      "nll": 1.6775052888052804,
+      "best_so_far": 1.6775052888052804
+    },
+    {
+      "eval_id": 1,
+      "label": "p1_g1_0",
+      "nll": 1.7383132491792952,
+      "best_so_far": 1.6775052888052804
+    },
+    {
+      "eval_id": 2,
+      "label": "p1_g1_1",
+      "nll": 1.7112539495740617,
+      "best_so_far": 1.6775052888052804
+    },
+    {
+      "eval_id": 3,
+      "label": "p1_g1_2",
+      "nll": 1.6734163420540946,
+      "best_so_far": 1.6734163420540946
+    },
+    {
+      "eval_id": 4,
+      "label": "p1_g1_3",
+      "nll": 1.6545846121651786,
+      "best_so_far": 1.6545846121651786
+    },
+    {
+      "eval_id": 5,
+      "label": "p1_g1_4",
+      "nll": 1.708548630986895,
+      "best_so_far": 1.6545846121651786
+    },
+    {
+      "eval_id": 6,
+      "label": "p1_g1_5",
+      "nll": 1.685591152736119,
+      "best_so_far": 1.6545846121651786
+    },
+    {
+      "eval_id": 7,
+      "label": "p1_g1_6",
+      "nll": 1.8032512835093908,
+      "best_so_far": 1.6545846121651786
+    },
+    {
+      "eval_id": 8,
+      "label": "p1_g1_7",
+      "nll": 1.6908204385212489,
+      "best_so_far": 1.6545846121651786
+    }
+  ],
+  "best": {
+    "nll": 1.6545846121651786,
+    "config": {
+      "lr": 0.00033427141575371284,
+      "weight_decay": 0.17422187309224696,
+      "warmup_steps": 45,
+      "read_scale": 2.7870458737509636,
+      "tau_match": 0.45,
+      "tau_pop": 0.1,
+      "tau_merge": 0.85
+    },
+    "eval_id": 4,
+    "label": "p1_g1_3"
+  },
+  "n_evaluations": 9,
+  "wall_s": 13197.9
+}
