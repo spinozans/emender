@@ -1,0 +1,204 @@
+{
+ "probe": "k10_separated_keys_gates",
+ "registration": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/PREREGISTRATION_SEPARATED_KEYS.md",
+ "shape": {
+  "batch": 8,
+  "tokens": 2048,
+  "heads": 2,
+  "rank": 128,
+  "value_dim": 128,
+  "key_dim": 16,
+  "segment_tokens": 64
+ },
+ "policy": {
+  "ops": true,
+  "tau_match": 0.45,
+  "tau_merge": 0.85,
+  "tau_pop": 0.1,
+  "tie_break": 1e-06,
+  "read_scale": 2.0,
+  "grow": false,
+  "grow_trigger": 0.5,
+  "grow_window": 4,
+  "grow_window_tokens": 512,
+  "grow_geometric": 2.0,
+  "grow_stride_floor": 64
+ },
+ "torch": "2.9.1+cu128",
+ "gate_a": {
+  "fixture": {
+   "batch": 8,
+   "tokens": 2048,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "key_dim": 16,
+   "dtype": "bf16 inputs, fp32 defined-order math",
+   "segment_tokens": 64,
+   "distinct_directions": 512
+  },
+  "channels": {
+   "schedule_slot": {
+    "lanes": 65536,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "schedule_erase": {
+    "lanes": 65536,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "schedule_op": {
+    "lanes": 65536,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "schedule_live_after": {
+    "lanes": 65536,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "weights": {
+    "lanes": 4194304,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "live_pre": {
+    "lanes": 4194304,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "state": {
+    "lanes": 262144,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "live": {
+    "lanes": 2048,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "keys": {
+    "lanes": 32768,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "payload": {
+    "lanes": 8388608,
+    "flips": 0,
+    "bit_equal": true
+   }
+  },
+  "total": {
+   "lanes": 17336320,
+   "flips": 0
+  },
+  "read": {
+   "floor_fp32_vs_fp64": 3.814697265625e-06,
+   "deviation": 1.9073486328125e-06,
+   "ratio_vs_floor": 0.5,
+   "read_scale": 52.44232940673828,
+   "within_noise_factor": true
+  },
+  "op_histogram": {
+   "none": 32768,
+   "append": 1645,
+   "correct": 31123,
+   "pop": 0,
+   "merge": 0
+  },
+  "key_collapse_watch": {
+   "span_key_std_min": 1.0022560358047485,
+   "span_key_std_mean": 1.0072667598724365,
+   "guard_floor": 0.05,
+   "within_guard": true
+  },
+  "walls": {
+   "kernel_forward_s": 2.017,
+   "eager_oracle_s": 6.7
+  },
+  "forward_kernel_resources": {
+   "num_warps": 8,
+   "registers": 255,
+   "spills": 4
+  }
+ },
+ "gate_b": {
+  "oracle_gradcheck_fp64": {
+   "ok": true,
+   "branches": {
+    "none": 192,
+    "append": 12,
+    "correct": 180,
+    "pop": 0,
+    "merge": 0
+   }
+  },
+  "floors_and_deviations": [
+   {
+    "output": "dpayload",
+    "floor": 5.7220458984375e-06,
+    "deviation": 7.62939453125e-06,
+    "ratio_vs_floor": 1.3333333333333333,
+    "within_noise_factor": true
+   },
+   {
+    "output": "dwrite_keys",
+    "floor": 5.245208740234375e-06,
+    "deviation": 5.7220458984375e-06,
+    "ratio_vs_floor": 1.0909090909090908,
+    "within_noise_factor": true
+   },
+   {
+    "output": "dquery_keys",
+    "floor": 3.814697265625e-06,
+    "deviation": 7.62939453125e-06,
+    "ratio_vs_floor": 2.0,
+    "within_noise_factor": true
+   },
+   {
+    "output": "ddecay",
+    "floor": 4.57763671875e-05,
+    "deviation": 3.0517578125e-05,
+    "ratio_vs_floor": 0.6666666666666666,
+    "within_noise_factor": true
+   },
+   {
+    "output": "dstate",
+    "floor": 5.7220458984375e-06,
+    "deviation": 7.62939453125e-06,
+    "ratio_vs_floor": 1.3333333333333333,
+    "within_noise_factor": true
+   },
+   {
+    "output": "dkeys",
+    "floor": 0.0,
+    "deviation": 0.0,
+    "ratio_vs_floor": 0.0,
+    "within_noise_factor": true
+   }
+  ],
+  "segment_recompute_bit_equal": true,
+  "noise_factor": 8.0
+ },
+ "gate_d": {
+  "fixture": {
+   "batch": 8,
+   "tokens": 2048,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "key_dim": 16,
+   "segment_tokens": 64
+  },
+  "forward_ms_per_scan": 19.73,
+  "backward_ms_per_scan": 17.15,
+  "forward_throughput_tok_per_s": 830420,
+  "k6_banked": {
+   "forward_ms_per_scan": 26.5,
+   "backward_ms_per_scan": 15.3
+  },
+  "key_channel_cost_note": "the key channel adds per token: two rank x key_dim defined-order folds and a key-norm fold against the value side's rank x value_dim folds (16 vs 128 wide), a rank x key_dim adjoint walk in the backward, and one key-table checkpoint per segment -- measured here against K6's banked walls, not estimated",
+  "available": true
+ }
+}
