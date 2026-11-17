@@ -586,6 +586,10 @@ def main():
                    help="honest worst-case per-evaluation wall, for the "
                         "generation wall guard")
     s.add_argument("--max-wall", type=float, default=5 * 3600)
+    s.add_argument("--x0", default=None,
+                  help="JSON config to start the incumbent from (e.g. a saved "
+                       "best); else the best completed eval in the log, else "
+                       "the transferred anchor")
     a = ap.parse_args()
     if a.cmd == "probe":
         probe(a)
