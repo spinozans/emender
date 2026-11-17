@@ -294,3 +294,46 @@ arm's S = 32 best-LR mean is made in the final verdict. Notably the
 mimetic cells show no basin at S = 32 either (key_std 0.87–0.90), so the
 long-span dilution is init-independent — consistent with dilution being
 the capacity mechanism's honest price rather than a training pathology.
+
+
+### 5.4 INTERIM — the ordered arm's landed cells (S = 2..16 complete,
+### S = 32 in flight, S = 64 pending; the verdict WAITS for the full grid)
+
+The ordered arm's best-LR means so far (collapsed seed 3402 included in
+every aggregate, per the supervisor's direction): S = 2: 0.624, S = 4:
+0.269, S = 8: 0.439, S = 16: 0.138 — against pointwise's 0.976 / 0.904 /
+0.610 / 0.303. **P-5's separation is currently FAILING at S = 8 and 16**
+(ordered below pointwise at both), and P-4's bands are missed (S = 8: 0.439
+vs [0.50, 0.90]; S = 16: 0.138 vs [0.35, 0.80]). The S = 32 comparison is
+neck-and-neck so far (pointwise 0.064; the first ordered cell 0.063); S =
+32/64 decide the committed refutation clause (ii) — the verdict is written
+only when they land.
+
+The receipts give the mechanism, and it is NOT the predicted one. **The
+run-structure receipts are POSITIVE (P-6):** runs form (mean run length
+~3.9-4.2, max >= 7 at S = 16), the span compresses into ~5 rows of the 8
+(occupancy 5.0-5.4), NOTHING is evicted (probed binding's row live in
+100% of probes at every S — the mass-preserving semantics work as
+designed), and the Wheeler-ness contiguity is real (0.71-0.73 at S = 16
+vs 0.42-0.47 at S = 4 — the trained key order places the span's writes
+contiguously). **But the dilution is steeper than the pre-registered
+rho*K_span/S model:** the measured law is `true_value_share ~=
+probe_mass_on_row / run_length` (0.37/4 ~ 0.09 at S = 16, measured
+0.06-0.09; P-4's band [0.10, 0.40]), because (a) the probe's interval
+(registered w = 0.25 against a learned key spread of ~0.9) catches several
+rows, splitting the read mass (mass-on-row only 0.26-0.38, not rho ~ 1),
+and (b) each row accumulates ~4 bindings. The per-address resolution
+decays with S as 1/(rows in interval x run length) — the same
+row-granularity ceiling the design doc §8 predicted for BOTH arms, but the
+ordered arm pays it through blending while the pointwise arm pays it
+through eviction-plus-retrieval-dilution, and at this budget the pointwise
+payment is smaller at S = 8-16.
+
+The S = 4 receipts also show the resolution-vs-alignment tradeoff the
+mimetic section flagged: the ordered seeds' key spread GROWS from 0.018
+(S = 2, where near-collapsed keys put every row inside every query's
+interval — alignment free, resolution irrelevant at 2 bindings) to 0.5-0.9
+(S = 4+), after which the probe must LEARN to place its query key within
+the interval of its own binding's row — and at 3000 x 1024 it only
+partway does (probe mass-on-row 0.26-0.38). This is a training-budget
+fact, not a store-capacity fact; the receipts separate the two.
