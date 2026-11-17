@@ -210,9 +210,11 @@ def _agg_walk(per_layer, with_identity=False):
         by_layer.setdefault(layer, []).append(stats)
     layers = {}
     for layer, stats_list in sorted(by_layer.items()):
+        layer_decisions = sum(s["decisions"] for s in stats_list)
         entry = dict(
             op_rate_per_token={OP_NAMES[i]:
-                               sum(s["lane0"][i] for s in stats_list) / decisions
+                               sum(s["lane0"][i] for s in stats_list)
+                               / max(1, layer_decisions)
                                for i in range(len(OP_NAMES))},
             occupancy_mean_live_slots=float(
                 sum(s["occupancy_sum"] for s in stats_list)
