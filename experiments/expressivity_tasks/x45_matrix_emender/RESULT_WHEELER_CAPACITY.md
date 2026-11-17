@@ -1,9 +1,9 @@
 # WHEELER-ORDER CAPACITY PROBE (SPAN-RUN): does an ordered, run-coalescing store hold Theta(r x run) of context mass?
 
-Status: **predictions pre-stated (this revision); sweep pending.** The
-predictions below were committed before any full-protocol training run.
-Results, receipts and the verdict are appended after the sweep lands; nothing
-in the prediction section is edited after the fact.
+Status: **predictions pre-stated; sweep COMPLETE — the verdict is in §6.**
+The predictions below were committed before any full-protocol training run
+(two mid-sweep engineering recoveries are disclosed in §4 and §5.4's
+lineage); nothing in the prediction section was edited after the fact.
 
 Design reference: [`DESIGN_WHEELER_ORDER.md`](DESIGN_WHEELER_ORDER.md)
 (operator-confirmed semantics: derived 1-D key order; the interval read with
@@ -337,3 +337,169 @@ interval — alignment free, resolution irrelevant at 2 bindings) to 0.5-0.9
 the interval of its own binding's row — and at 3000 x 1024 it only
 partway does (probe mass-on-row 0.26-0.38). This is a training-budget
 fact, not a store-capacity fact; the receipts separate the two.
+
+---
+
+## 6. THE FINAL RESULTS AND VERDICT (108 committed cells + the 12-cell
+## mimetic extension; every number below is from the committed receipts)
+
+Interim sections 5.1-5.3 stand as final for the pointwise arm and the mimetic
+extension; 5.4's landed-cell numbers are superseded by the complete grid below.
+
+### 6.1 The saturation curve, both arms (best-LR mean over seeds, chance 1/32)
+
+| S | pointwise | ordered | ord/pt | committed P-5 ratio | met? |
+|---:|---:|---:|---:|---:|---|
+| 2 | 0.976 | 0.624 | 0.64x | (P-1 only) | pt: P-1 MET; ord: PARTIAL |
+| 4 | 0.904 | 0.269 | 0.30x | — | — |
+| 8 | 0.610 | 0.439 | 0.72x | >= 1.1x | **NO** |
+| 16 | 0.303 | 0.138 | 0.46x | >= 1.3x | **NO** |
+| 32 | 0.064 | 0.064 | 1.01x | >= 1.6x | **NO** |
+| 64 | 0.033 | 0.038 | 1.15x | >= 2.0x | **NO** (both ~chance) |
+
+Per-seed cells at each arm's best LR are in the committed per-cell receipts
+(`receipts/wheeler_{arm}_s{S}_lr*_seed*.json`) and the canonical sweeps
+(`receipts/wheeler_{arm}_sweep.json`).
+
+### 6.2 Evaluation against the pre-registered predictions
+
+* **P-1 (precondition).** Pointwise: MET (0.976 mean, every seed >= 0.71).
+  Ordered: **PARTIAL** — seeds 3401/3403 learn (0.979/0.846) and seed 3402
+  fell into the receipted key-collapse basin (`span_key_std = 0.000`, one
+  run absorbing the window, chance accuracy; §5.4, the supervisor-directed
+  handling: the collapsed seed stays in every aggregate, no bound-rescue
+  tuning). 2 of 3 ordered seeds learn the task; the task IS learnable by
+  the ordered machine — but not by every init at this budget.
+* **P-2 (pointwise decay).** S = 2, 4: >= 0.85 MET (0.976, 0.904). S = 8:
+  0.610, in band. S = 16: 0.303, in band. S = 32: 0.064 **below** band;
+  S = 64: 0.033 **below** band (at chance) — the empirical collapse past
+  S = 16 is steeper than the committed r_eff/(S+2) law.
+* **P-3 (the mechanical saturation receipt).** MET in its essentials: the
+  pointwise store's probed-binding destruction grows with S (layer-0
+  destroyed fractions 0.22 / 0.36 / 0.35 / 0.54 / 0.72 / 0.87 at
+  S = 2..64), the S = 8 accuracy IS the predicted eviction-onset mixture
+  (intact 63% of probes answering 0.97, destroyed probes ~chance -> 0.61),
+  and the committed growth thresholds are met at S = 8 and 64 with marginal
+  misses at 16 (0.535 vs 0.55) and 32 (0.723 vs 0.75). The committed
+  "intact rows keep answering" sub-prediction FAILS at S >= 32 (intact
+  accuracy 0.26 / 0.02): the receipted second failure mode is retrieval
+  dilution — the probe's read-mass share on its row falls to ~0.13 as the
+  free-key geometry cannot isolate 32+ bindings across ~7.5 live rows.
+* **P-4 (ordered dilution).** MISSED: accuracy below the committed bands at
+  every long span (0.439 vs [0.50,0.90]; 0.138 vs [0.35,0.80]; 0.064 vs
+  [0.25,0.65]; 0.038 vs [0.18,0.50]). The share receipts are mixed (in band
+  at S = 32: 0.093 vs [0.05,0.20]; ~top of band at S = 64: 0.109 vs
+  [0.03,0.10]; below at S = 8/16), and the share -> accuracy mapping was
+  too optimistic: the read blends ~5-13 co-held values at shares comparable
+  to the true value's, so the argmax loses far more often than the
+  committed collision heuristic predicted. The MEASURED dilution law, from
+  the receipts: `true_value_share ~= probe_mass_on_row / run_length` —
+  the interval (fixed w = 0.25) splits its mass across the rows it catches
+  against a learned key spread of ~0.9 (mass-on-row 0.24-0.53), and each
+  row blends its accumulated run (~4-9 bindings at S = 16..64).
+* **P-5 (the separation — the claim).** **FAILED at every long span: the
+  ordered arm does not beat the pointwise arm at S = 8 or 16, is a
+  statistical tie at S = 32** (0.0643 vs 0.0635; the pointwise per-seed
+  cells 0.050-0.072 overlap the ordered 0.062-0.068), and at S = 64 both
+  arms sit at/near chance (0.038 vs 0.033; the committed >= 2.0x ratio is
+  1.15x).
+* **P-6 (run-structure receipts — did the store build runs?).** **MET, and
+  this is the probe's positive finding:** mean run length grows 2.4 / 2.7 /
+  3.9 / 5.0 / 8.6 at S = 2/8/16/32/64 (max 39 at S = 64), the span
+  compresses into a handful of rows, **nothing is ever evicted**
+  (probed-binding row live in 100.0% of probes at every span — the
+  mass-preserving semantics work exactly as designed), the Wheeler-ness
+  contiguity is real and GROWS with span (0.68 / 0.60 / 0.73 / 0.83 / 0.92
+  at S = 2/8/16/32/64; the one sub-0.5 value is 0.47 at S = 4), and the
+  interval read's disclosed omitted mass grows with occupancy (0.08 -> 3.9)
+  as the Lean truncation law requires it to.
+* **Mimetic extension (§4b).** M-2 MET IN FULL (no basin entry anywhere;
+  key spread held 0.68-0.90 in every cell — the collapse is init-addressable
+  and the operator's entry-race diagnosis is confirmed). M-1 NOT MET as
+  written (best-LR mean 0.72 vs 0.85): safe birth guarantees spread, not
+  the learned query-to-row alignment the lucky free-key seeds found.
+  Refutation clause (mimetic also collapses) NOT triggered. M-3: the
+  S = 32 spot-check (mimetic mean 0.073) is within 0.009 of the free-key
+  ordered arm (0.064) — **no adverse interaction with the capacity
+  mechanism**, and no basin at S = 32 either (key spread 0.87-0.90): the
+  long-span dilution is init-independent.
+
+### 6.3 The verdict (per the committed clauses, not reframed)
+
+**REFUTED AT THIS SCALE.** The capacity-multiplier claim, as pre-registered
+by P-5 (the ordered, run-coalescing store beats the pointwise store at long
+spans with growing margins), is wrong at this probe's scale and budget: the
+ordered arm loses at S = 8 and 16, ties at 32, and sits at chance with a
+1.15x nominal edge at 64. The refutation clause's trigger (i) — a pointwise
+escape — did NOT fire (the pointwise collapse was honest). Trigger (ii)'s
+letter (ordered <= pointwise at S = 32 OR 64) evaluates as NOT fired only
+because of nominal exceedances of 0.0008 and 0.005 at chance level —
+statistical ties, disclosed here rather than claimed; P-5's committed
+ratios failed at all four long spans regardless.
+
+**What the refutation does NOT refute, because the receipts say it holds:**
+the ordered store's mass-preservation machinery worked — runs built (mean
+length ~r-scaling with S, max 39), the probed binding's mass was NEVER
+evicted (100% row-live vs the pointwise arm's 13-87% destruction), and the
+learned key order was measurably Wheeler-like with contiguity growing to
+0.92. What failed is the CONVERSION of held mass into per-address
+resolution at this budget: the interval read pays dilution
+(~ mass-on-row / run-length) for every binding it holds, and the pointwise
+arm's eviction pays less at mid spans because an intact pointwise row
+answers cleanly while a diluted run row blends ~4-9 values the head cannot
+argmax apart. Both arms hit the same row-granularity ceiling the design doc
+§8 flagged as unproven; at this scale the ceiling binds the ordered arm
+EARLIER in accuracy terms.
+
+### 6.4 What oracle level does not establish (the honest list)
+
+* **No kernels.** The ordered oracle costs ~7x the pointwise oracle's walls
+  (per-token sorts and a larger autograd graph); that is an oracle
+  artifact, not a property of the variant.
+* **No real-text claims.** A synthetic binding task, 2154-token vocabulary,
+  ~70k parameters, rank 8, windows of 9-71 tokens.
+* **No board claims.** Nothing here touches nats/byte on natural text or
+  any 150M-class comparison.
+* **Training-scale caveat, receipted not assumed.** The ordered arm's
+  probe must LEARN the query-to-row alignment once keys spread (mass-on-row
+  only 0.24-0.53 at 3000 x 1024); the probe cannot separate "the
+  architecture cannot resolve" from "this budget did not finish learning
+  to". The pointwise arm had no comparable training-limited channel
+  receipted.
+* **The Theta(r x run) MASS claim was not directly tested.** SPAN-RUN
+  probes per-address resolution, the resolution-side worst case for the
+  ordered arm. The mass side — aggregate functions of a run retrieved by
+  the interval read — is exactly the probe this refutation leaves open,
+  and the mass-preservation receipts above are consistent with it.
+
+### 6.5 The registration questions this leaves open (interleaved with SEP-KV's)
+
+1. **The mass-vs-resolution fork (the headline).** The ordered variant's
+   interval read blends a run's mass by design; a task that ASKS for the
+   blend (the run's compressed function — counts, aggregate presence, the
+   "compressed function of the span" the operator's frame names) is the
+   right probe for the Theta(r x run) claim. SPAN-RUN's per-address probe
+   refuted the resolution-side reading; the mass-side reading is untested
+   and its machinery is receipted working.
+2. **Safe birth vs rotation-constrained keys.** Now with receipts on both
+   sides: the free-key basin (collapse) is init-addressable by mimetic
+   birth (M-2), but neither form of spread automatically earns the learned
+   query-to-row alignment the read needs (M-1, mass-on-row receipts). A
+   registration should decide the key family WITH the alignment-training
+   story attached.
+3. **Interval width vs key scale.** The registered constant w = 0.25 against
+   a learned spread of ~0.9 is what splits the probe's read mass across
+   rows; an adaptive width, or a key-scale normalisation that pins the
+   learned spread to the interval, is an open registration question the
+   omitted-mass receipts make measurable.
+4. **The SEP-KV dependency (§1).** If the SEP-KV lane refutes key-value
+   separation entirely, these arm definitions reclassify per the committed
+   clause; the order-axis mechanisms (interval read, accumulate,
+   contiguity) carry, the base does not.
+
+Files: `receipts/wheeler_{pointwise,ordered}_sweep.json` (the canonical
+54-cell aggregates), `receipts/wheeler_mechanism_{pointwise,ordered}.json`
+(the P-3/P-6 receipts), the 108 per-cell receipts, the 12 mimetic cells +
+`receipts/wheeler_{ordered_mimetic_sweep,wheeler_mechanism_ordered_mimetic}.json`,
+and the driver consoles in `wheeler_runs/`. The `.pt` best states are NOT
+committed (program rule).
