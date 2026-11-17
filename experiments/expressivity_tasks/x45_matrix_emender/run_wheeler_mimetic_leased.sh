@@ -20,13 +20,17 @@ export OMP_NUM_THREADS=4
 export MKL_NUM_THREADS=4
 export WHEELER_CPU_THREADS=4
 
-# ---- gate: wait for the committed sweeps (both arms' workers + drivers)
-echo "gate: waiting for the committed sweep workers to finish"
-while pgrep -f "wheeler_capacity_probe --arm pointwise --seeds" >/dev/null \
-   || pgrep -f "wheeler_capacity_probe --arm ordered --seeds" >/dev/null; do
+# ---- gate: wait for the POINTWISE committed cells (the arm whose card this
+# interleaves onto); the ordered arm's cells keep running on its own leased
+# card -- interleaving on the freed card is the operator-directed schedule
+# option ("after them, or interleaved on the free card, your call"), and the
+# broker's acquire below still refuses any card that is not idle+unleased,
+# so nothing preempts the ordered arm.
+echo "gate: waiting for the pointwise sweep workers to finish"
+while pgrep -f "wheeler_capacity_probe --arm pointwise --seeds" >/dev/null; do
   sleep 120
 done
-echo "gate: committed sweeps finished at $(date)"
+echo "gate: pointwise sweep finished at $(date) (ordered continues on its own card)"
 
 if [ -z "${GPU_LEASE_VISIBLE:-}" ]; then
   export GPU_LEASE_VISIBLE="4,5"
