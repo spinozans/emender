@@ -1,0 +1,107 @@
+gpu_lease: granted GPUs: 0 (pid 817212)
+leased card: 0
+{"addressing": "separated-keys", "card": "0", "seed": 3401, "exposure": 20000000, "parameters": 149981808}
+  separated-keys step 10 104s 1.2MB loss 3.3476
+  separated-keys step 20 208s 2.4MB loss 3.9067
+  separated-keys step 30 313s 3.5MB loss 3.3016
+  separated-keys step 40 417s 4.5MB loss 2.8839
+  separated-keys step 50 522s 5.6MB loss 2.5361
+  separated-keys step 60 626s 6.7MB loss 2.6686
+  separated-keys step 70 730s 7.8MB loss 2.6123
+  separated-keys step 80 833s 8.9MB loss 2.5170
+  separated-keys step 90 937s 10.0MB loss 2.4685
+  separated-keys step 100 1040s 11.1MB loss 2.3228
+  separated-keys step 110 1143s 12.2MB loss 2.2386
+  separated-keys step 120 1246s 13.3MB loss 2.0652
+  separated-keys step 130 1349s 14.4MB loss 2.1073
+  separated-keys step 140 1453s 15.5MB loss 2.3416
+  separated-keys step 150 1556s 16.6MB loss 2.3576
+  separated-keys step 160 1659s 17.7MB loss 2.1206
+  separated-keys step 170 1762s 19.0MB loss 2.8993
+  separated-keys step 180 1866s 20.0MB loss 2.2811
+{
+ "eval_nll_nats_per_byte": 1.841756020273481,
+ "exposure_bytes": 20022866,
+ "exposure_steps": 180,
+ "bytes_per_s": 10731.31846204193
+}
+{
+ "K1_nll": {
+  "prediction": "improves on the banked 2.0278",
+  "band": "improvement in [0.02, 0.35] nats/byte (honestly wide)",
+  "measured": 1.841756020273481,
+  "improvement": 0.18604397972651898,
+  "met": true,
+  "band_met": true
+ },
+ "K2_identity": {
+  "prediction": "falls materially below BOTH fused-path anchors",
+  "band": "at least 0.10 below the lower anchor; unchanged if within 0.02",
+  "measured": 0.10321439792683149,
+  "anchor_fused_at_init": 0.519177749897623,
+  "anchor_paired_ablation": 0.1343933601867768,
+  "met": false,
+  "unchanged": false
+ },
+ "K3_occupancy": {
+  "prediction": "falls from the banked 73.7/128",
+  "band": "<= 65 mean live slots; refuted if > 73.7",
+  "banked": 73.68,
+  "measured": 24.0287348429362,
+  "met": true,
+  "refuted": false
+ },
+ "K4_entropy": {
+  "prediction": "rises from the banked 1.085 nats",
+  "band": "> 1.2 nats",
+  "banked": 1.0846,
+  "measured": 1.6541064706071544,
+  "met": true
+ },
+ "K5_merge": {
+  "prediction": "NO PREDICTION (its recovery prediction was falsified once, at K6 4; reported, not re-predicted)",
+  "measured": 0.0031331380208333335,
+  "banked": 0.00017
+ },
+ "KEY_COLLAPSE": {
+  "prediction": "span_key_std >= 0.05 in every layer (the Wheeler receipt's guard)",
+  "measured": {
+   "span_key_std_min": 1.2194751501083374,
+   "span_key_std_mean": 1.786405559629202,
+   "mean_pairwise_key_cos": 0.09947642006833728,
+   "per_layer_span_key_std": {
+    "0": 1.6663878560066223,
+    "1": 1.8682925999164581,
+    "2": 1.9764447808265686,
+    "3": 1.8280331194400787,
+    "4": 1.8972240090370178,
+    "5": 1.886175513267517,
+    "6": 1.8686664998531342,
+    "7": 1.826415240764618,
+    "8": 1.8514848947525024,
+    "9": 1.7901345789432526,
+    "10": 1.8007460534572601,
+    "11": 1.7966516315937042,
+    "12": 1.829467535018921,
+    "13": 1.6747171878814697,
+    "14": 1.9302955865859985,
+    "15": 1.8292303085327148,
+    "16": 1.7199148535728455,
+    "17": 1.7837437093257904,
+    "18": 1.7202216386795044,
+    "19": 1.7441466748714447,
+    "20": 1.602323055267334,
+    "21": 1.7261657416820526,
+    "22": 1.6746448278427124,
+    "23": 1.5822055339813232
+   },
+   "guard_floor": 0.05,
+   "within_guard": true
+  },
+  "met": true
+ },
+ "refutation": {
+  "clause": "identity-rewrite share within 0.02 of the fused anchors OR NLL worse than 2.0278 -> the fix does not transfer to real text and the residual needs a different owner",
+  "refuted": false
+ }
+}
