@@ -1,0 +1,109 @@
+{
+ "arm": "pointwise",
+ "span": 2,
+ "lr": 0.003,
+ "seed": 3403,
+ "rank": 8,
+ "steps": 3000,
+ "batch": 1024,
+ "device": "cuda",
+ "window": 9,
+ "probe_positions": [
+  7
+ ],
+ "chance": 0.03125,
+ "policy": {
+  "width": 0.25,
+  "read_scale": 2.0,
+  "tau_match_dist": 0.1,
+  "tau_run": 0.25,
+  "tau_pop_dist": 0.5,
+  "rank": 8
+ },
+ "metrics": {
+  "value_acc": 0.849609375,
+  "n_probes": 4096,
+  "chance": 0.03125
+ },
+ "curve_tail": [
+  {
+   "step": 1500,
+   "loss": 0.30259305238723755,
+   "value_acc": 0.9150390625
+  },
+  {
+   "step": 2000,
+   "loss": 0.4825078248977661,
+   "value_acc": 0.859375
+  },
+  {
+   "step": 2500,
+   "loss": 0.5485883951187134,
+   "value_acc": 0.8486328125
+  },
+  {
+   "step": 3000,
+   "loss": 0.6004401445388794,
+   "value_acc": 0.8408203125
+  }
+ ],
+ "walls_s": 479.5,
+ "channels": {
+  "arm": "pointwise",
+  "value_acc": 0.84765625,
+  "per_layer": [
+   {
+    "layer": 0,
+    "op_histogram": {
+     "append": 2563,
+     "correct": 2045,
+     "merge": 0,
+     "pop": 0,
+     "none": 0
+    },
+    "occupancy_mean": 3.76953125,
+    "span_pos_live_frac": 1.0,
+    "probed_binding": {
+     "filed_frac": 1.0,
+     "destroyed_frac": 0.4375,
+     "intact_frac": 0.5625,
+     "acc_when_filed": 0.84765625,
+     "acc_when_intact": 0.9861111044883728,
+     "acc_when_destroyed": 0.6696428656578064,
+     "acc_when_not_filed": null,
+     "probe_mass_on_row": {
+      "mean": 1.660393476486206,
+      "mean_share": 0.5204191207885742
+     }
+    }
+   },
+   {
+    "layer": 1,
+    "op_histogram": {
+     "append": 531,
+     "correct": 4077,
+     "merge": 0,
+     "pop": 0,
+     "none": 0
+    },
+    "occupancy_mean": 1.0,
+    "span_pos_live_frac": 1.0,
+    "probed_binding": {
+     "filed_frac": 1.0,
+     "destroyed_frac": 1.0,
+     "intact_frac": 0.0,
+     "acc_when_filed": 0.84765625,
+     "acc_when_intact": null,
+     "acc_when_destroyed": 0.84765625,
+     "acc_when_not_filed": null,
+     "probe_mass_on_row": {
+      "mean": 3.091766834259033,
+      "mean_share": 1.0
+     }
+    }
+   }
+  ]
+ },
+ "params": 350018,
+ "torch": "2.9.1+cu128"
+}

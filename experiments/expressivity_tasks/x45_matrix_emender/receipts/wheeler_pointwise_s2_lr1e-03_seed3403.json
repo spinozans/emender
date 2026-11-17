@@ -1,0 +1,109 @@
+{
+ "arm": "pointwise",
+ "span": 2,
+ "lr": 0.001,
+ "seed": 3403,
+ "rank": 8,
+ "steps": 3000,
+ "batch": 1024,
+ "device": "cuda",
+ "window": 9,
+ "probe_positions": [
+  7
+ ],
+ "chance": 0.03125,
+ "policy": {
+  "width": 0.25,
+  "read_scale": 2.0,
+  "tau_match_dist": 0.1,
+  "tau_run": 0.25,
+  "tau_pop_dist": 0.5,
+  "rank": 8
+ },
+ "metrics": {
+  "value_acc": 0.970947265625,
+  "n_probes": 4096,
+  "chance": 0.03125
+ },
+ "curve_tail": [
+  {
+   "step": 1500,
+   "loss": 0.31870368123054504,
+   "value_acc": 0.9248046875
+  },
+  {
+   "step": 2000,
+   "loss": 0.2387130856513977,
+   "value_acc": 0.943359375
+  },
+  {
+   "step": 2500,
+   "loss": 0.1589532196521759,
+   "value_acc": 0.9765625
+  },
+  {
+   "step": 3000,
+   "loss": 0.11543139070272446,
+   "value_acc": 0.97265625
+  }
+ ],
+ "walls_s": 554.5,
+ "channels": {
+  "arm": "pointwise",
+  "value_acc": 0.96875,
+  "per_layer": [
+   {
+    "layer": 0,
+    "op_histogram": {
+     "append": 2709,
+     "correct": 1899,
+     "merge": 0,
+     "pop": 0,
+     "none": 0
+    },
+    "occupancy_mean": 3.8125,
+    "span_pos_live_frac": 1.0,
+    "probed_binding": {
+     "filed_frac": 1.0,
+     "destroyed_frac": 0.087890625,
+     "intact_frac": 0.912109375,
+     "acc_when_filed": 0.96875,
+     "acc_when_intact": 0.9871520400047302,
+     "acc_when_destroyed": 0.7777777910232544,
+     "acc_when_not_filed": null,
+     "probe_mass_on_row": {
+      "mean": 1.3732895851135254,
+      "mean_share": 0.5962201356887817
+     }
+    }
+   },
+   {
+    "layer": 1,
+    "op_histogram": {
+     "append": 2805,
+     "correct": 1803,
+     "merge": 0,
+     "pop": 0,
+     "none": 0
+    },
+    "occupancy_mean": 4.33203125,
+    "span_pos_live_frac": 1.0,
+    "probed_binding": {
+     "filed_frac": 1.0,
+     "destroyed_frac": 0.2265625,
+     "intact_frac": 0.7734375,
+     "acc_when_filed": 0.96875,
+     "acc_when_intact": 0.9823232293128967,
+     "acc_when_destroyed": 0.9224137663841248,
+     "acc_when_not_filed": null,
+     "probe_mass_on_row": {
+      "mean": 0.936915397644043,
+      "mean_share": 0.3679296374320984
+     }
+    }
+   }
+  ]
+ },
+ "params": 350018,
+ "torch": "2.9.1+cu128"
+}

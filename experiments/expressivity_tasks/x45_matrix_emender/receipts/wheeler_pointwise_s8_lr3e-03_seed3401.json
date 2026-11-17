@@ -1,0 +1,113 @@
+{
+ "arm": "pointwise",
+ "span": 8,
+ "lr": 0.003,
+ "seed": 3401,
+ "rank": 8,
+ "steps": 3000,
+ "batch": 1024,
+ "device": "cuda",
+ "window": 15,
+ "probe_positions": [
+  13
+ ],
+ "chance": 0.03125,
+ "policy": {
+  "width": 0.25,
+  "read_scale": 2.0,
+  "tau_match_dist": 0.1,
+  "tau_run": 0.25,
+  "tau_pop_dist": 0.5,
+  "rank": 8,
+  "mimetic": {
+   "gain": 1.5,
+   "seed": 3401
+  }
+ },
+ "metrics": {
+  "value_acc": 0.575439453125,
+  "n_probes": 4096,
+  "chance": 0.03125
+ },
+ "curve_tail": [
+  {
+   "step": 1500,
+   "loss": 1.8093070983886719,
+   "value_acc": 0.4384765625
+  },
+  {
+   "step": 2000,
+   "loss": 1.5314967632293701,
+   "value_acc": 0.490234375
+  },
+  {
+   "step": 2500,
+   "loss": 1.4790340662002563,
+   "value_acc": 0.6201171875
+  },
+  {
+   "step": 3000,
+   "loss": 1.2809759378433228,
+   "value_acc": 0.5341796875
+  }
+ ],
+ "walls_s": 376.3,
+ "channels": {
+  "arm": "pointwise",
+  "value_acc": 0.61328125,
+  "per_layer": [
+   {
+    "layer": 0,
+    "op_histogram": {
+     "append": 3958,
+     "correct": 3527,
+     "merge": 0,
+     "pop": 195,
+     "none": 0
+    },
+    "occupancy_mean": 7.0390625,
+    "span_pos_live_frac": 0.98876953125,
+    "probed_binding": {
+     "filed_frac": 0.9921875,
+     "destroyed_frac": 0.39453125,
+     "intact_frac": 0.59765625,
+     "acc_when_filed": 0.6181102395057678,
+     "acc_when_intact": 0.9901961088180542,
+     "acc_when_destroyed": 0.05445544421672821,
+     "acc_when_not_filed": 0.0,
+     "probe_mass_on_row": {
+      "mean": 1.2518210411071777,
+      "mean_share": 0.39700940251350403
+     }
+    }
+   },
+   {
+    "layer": 1,
+    "op_histogram": {
+     "append": 638,
+     "correct": 7042,
+     "merge": 0,
+     "pop": 0,
+     "none": 0
+    },
+    "occupancy_mean": 1.181640625,
+    "span_pos_live_frac": 1.0,
+    "probed_binding": {
+     "filed_frac": 1.0,
+     "destroyed_frac": 0.982421875,
+     "intact_frac": 0.017578125,
+     "acc_when_filed": 0.61328125,
+     "acc_when_intact": 0.5555555820465088,
+     "acc_when_destroyed": 0.614314079284668,
+     "acc_when_not_filed": null,
+     "probe_mass_on_row": {
+      "mean": 1.3723998069763184,
+      "mean_share": 0.9005476832389832
+     }
+    }
+   }
+  ]
+ },
+ "params": 350018,
+ "torch": "2.9.1+cu128"
+}
