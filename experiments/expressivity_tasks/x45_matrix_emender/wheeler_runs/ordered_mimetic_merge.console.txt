@@ -1,0 +1,315 @@
+{
+ "s2": {
+  "lr": 0.003,
+  "seed": 3401,
+  "metrics": {
+   "value_acc": 0.816650390625,
+   "n_probes": 4096,
+   "chance": 0.03125
+  },
+  "channels_summary": {
+   "value_acc": 0.80078125
+  }
+ },
+ "s32": {
+  "lr": 0.003,
+  "seed": 3403,
+  "metrics": {
+   "value_acc": 0.08154296875,
+   "n_probes": 4096,
+   "chance": 0.03125
+  },
+  "channels_summary": {
+   "value_acc": 0.091796875
+  }
+ }
+}
+mechanism ordered_mimetic S=2: acc=0.8066
+mechanism ordered_mimetic S=32: acc=0.0879
+{
+ "experiment": "wheeler_capacity_mechanism",
+ "chance": 0.03125,
+ "policy": {
+  "width": 0.25,
+  "read_scale": 2.0,
+  "tau_match_dist": 0.1,
+  "tau_run": 0.25,
+  "tau_pop_dist": 0.5,
+  "rank": 8,
+  "mimetic": {
+   "gain": 1.5,
+   "seed": 3401
+  }
+ },
+ "note": "pointwise: probed-binding filed/evicted strata from the imported SEP-KV oracle's own channels; ordered: run-length histogram, key-order contiguity (the Wheeler-ness diagnostic), interval omitted mass and true-value share of the interval read.",
+ "ordered_mimetic_s2": {
+  "arm": "ordered",
+  "value_acc": 0.806640625,
+  "per_layer": [
+   {
+    "layer": 0,
+    "op_histogram": {
+     "none": 0,
+     "insert": 2347,
+     "update": 2261,
+     "merge": 0,
+     "pop": 0
+    },
+    "occupancy_mean": 3.6796875,
+    "run_length_histogram": [
+     0,
+     1175,
+     183,
+     203,
+     199,
+     107,
+     16,
+     1
+    ],
+    "run_length_mean": 1.902335524559021,
+    "run_length_max": 7,
+    "probed_binding": {
+     "op_counts": {
+      "none": 0,
+      "insert": 312,
+      "update": 200,
+      "merge": 0,
+      "pop": 0
+     },
+     "row_live_frac": 1.0,
+     "probe_mass_on_row": {
+      "mean": 1.3928395509719849,
+      "mean_share": 0.7249104380607605
+     },
+     "true_value_share": {
+      "mean": 0.06346771121025085,
+      "median": 0.0
+     },
+     "acc_when_share_top_quartile": 0.875
+    },
+    "wheeler_contiguity": {
+     "mean": 0.5899739861488342,
+     "frac_at_least_half": 0.607421875,
+     "interleaved_foreign_writes_mean": 1.919921875
+    },
+    "key_scale": {
+     "span_key_std": 0.8050888776779175,
+     "span_key_range_mean": 0.9319612383842468
+    },
+    "interval_omitted_mass_mean": 0.548858642578125,
+    "accuracy_per_probe": 0.806640625
+   },
+   {
+    "layer": 1,
+    "op_histogram": {
+     "none": 0,
+     "insert": 1106,
+     "update": 3502,
+     "merge": 0,
+     "pop": 0
+    },
+    "occupancy_mean": 2.0,
+    "run_length_histogram": [
+     0,
+     0,
+     1,
+     511,
+     511,
+     1
+    ],
+    "run_length_mean": 3.5,
+    "run_length_max": 5,
+    "probed_binding": {
+     "op_counts": {
+      "none": 0,
+      "insert": 265,
+      "update": 247,
+      "merge": 0,
+      "pop": 0
+     },
+     "row_live_frac": 1.0,
+     "probe_mass_on_row": {
+      "mean": 0.13567830622196198,
+      "mean_share": 0.04296875
+     },
+     "true_value_share": {
+      "mean": 0.0028692642226815224,
+      "median": 0.0
+     },
+     "acc_when_share_top_quartile": 0.806640625
+    },
+    "wheeler_contiguity": {
+     "mean": 0.44902342557907104,
+     "frac_at_least_half": 0.40625,
+     "interleaved_foreign_writes_mean": 2.720703125
+    },
+    "key_scale": {
+     "span_key_std": 0.9993859529495239,
+     "span_key_range_mean": 1.9977741241455078
+    },
+    "interval_omitted_mass_mean": 3.0984458923339844,
+    "accuracy_per_probe": 0.806640625
+   }
+  ]
+ },
+ "ordered_mimetic_s32": {
+  "arm": "ordered",
+  "value_acc": 0.087890625,
+  "per_layer": [
+   {
+    "layer": 0,
+    "op_histogram": {
+     "none": 0,
+     "insert": 3867,
+     "update": 15683,
+     "merge": 418,
+     "pop": 0
+    },
+    "occupancy_mean": 7.40234375,
+    "run_length_histogram": [
+     0,
+     1508,
+     727,
+     334,
+     130,
+     50,
+     17,
+     8,
+     21,
+     34,
+     65,
+     108,
+     117,
+     139,
+     128,
+     120,
+     108,
+     63,
+     58,
+     27,
+     14,
+     10,
+     3,
+     0,
+     0,
+     1
+    ],
+    "run_length_mean": 4.998416900634766,
+    "run_length_max": 25,
+    "probed_binding": {
+     "op_counts": {
+      "none": 0,
+      "insert": 80,
+      "update": 424,
+      "merge": 8,
+      "pop": 0
+     },
+     "row_live_frac": 1.0,
+     "probe_mass_on_row": {
+      "mean": 0.9803937673568726,
+      "mean_share": 0.13844764232635498
+     },
+     "true_value_share": {
+      "mean": 0.07890427857637405,
+      "median": 0.0
+     },
+     "acc_when_share_top_quartile": 0.140625
+    },
+    "wheeler_contiguity": {
+     "mean": 0.8347686529159546,
+     "frac_at_least_half": 1.0,
+     "interleaved_foreign_writes_mean": 6.34765625
+    },
+    "key_scale": {
+     "span_key_std": 0.898908257484436,
+     "span_key_range_mean": 1.999801754951477
+    },
+    "interval_omitted_mass_mean": 4.759095191955566,
+    "accuracy_per_probe": 0.087890625
+   },
+   {
+    "layer": 1,
+    "op_histogram": {
+     "none": 0,
+     "insert": 534,
+     "update": 19434,
+     "merge": 0,
+     "pop": 0
+    },
+    "occupancy_mean": 1.04296875,
+    "run_length_histogram": [
+     0,
+     21,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     0,
+     2,
+     15,
+     494
+    ],
+    "run_length_mean": 35.47565460205078,
+    "run_length_max": 37,
+    "probed_binding": {
+     "op_counts": {
+      "none": 0,
+      "insert": 0,
+      "update": 512,
+      "merge": 0,
+      "pop": 0
+     },
+     "row_live_frac": 1.0,
+     "probe_mass_on_row": {
+      "mean": 0.0052601066417992115,
+      "mean_share": 0.001953125
+     },
+     "true_value_share": {
+      "mean": 0.001639472902752459,
+      "median": 0.0
+     },
+     "acc_when_share_top_quartile": 0.087890625
+    },
+    "wheeler_contiguity": {
+     "mean": 0.9088894724845886,
+     "frac_at_least_half": 1.0,
+     "interleaved_foreign_writes_mean": 3.2421875
+    },
+    "key_scale": {
+     "span_key_std": 0.03567061573266983,
+     "span_key_range_mean": 0.027559742331504822
+    },
+    "interval_omitted_mass_mean": 2.676926612854004,
+    "accuracy_per_probe": 0.087890625
+   }
+  ]
+ }
+}
