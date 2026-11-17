@@ -214,10 +214,51 @@ then 3 seeds x 1 LR at S = 32 (3 cells), same 3000 x 1024 budget, same
 receipt machinery; the mechanism pass receipts the mimetic arm's run-length
 histogram and Wheeler-ness contiguity like any ordered arm.
 
-## 5. RESULTS (pending the sweep)
+## 5. RESULTS (INTERIM — the pointwise arm complete and committed; the
+## ordered arm's cells and the mimetic extension still landing on their
+## detached leased drivers; this section records only landed, committed
+## evidence; the verdict waits for the full grid)
 
-To be appended: the saturation curve (accuracy vs span length, both arms,
-best-LR means with per-seed cells), the P-3 eviction receipts, the P-4
-share/accuracy receipts, the run-length histograms and the Wheeler-ness
-contiguity, and the verdict against §4 (confirmed / refuted / partial /
-inconclusive), with the honest list of what oracle level does not establish.
+### 5.1 The pointwise saturation curve (54/54 cells; best-LR mean over
+### seeds, per-seed values; chance = 0.03125)
+
+| S | best LR | mean | seed 3401 | seed 3402 | seed 3403 | P-2 band | in band? |
+|---:|---:|---:|---:|---:|---:|---|---|
+| 2 | 1e-3 | **0.976** | 0.974 | 0.982 | 0.971 | >= 0.85 | yes |
+| 4 | 3e-3 | **0.904** | 0.880 | 0.893 | 0.938 | >= 0.85 | yes |
+| 8 | 3e-3 | **0.610** | 0.575 | 0.609 | 0.644 | [0.50, 0.78] | yes |
+| 16 | 3e-3 | **0.303** | 0.303 | 0.324 | 0.283 | [0.28, 0.45] | yes |
+| 32 | 3e-3 | **0.064** | 0.050 | 0.069 | 0.072 | [0.15, 0.25] | **below** |
+| 64 | 3e-3 | **0.033** | 0.035 | 0.031 | 0.033 | [0.09, 0.16] | **below** |
+
+P-1 MET for the pointwise arm (S = 2: mean 0.976, every seed >= 0.70). The
+eviction onset lands at the derived S_collapse = 8 (the first swept S past
+the S + 4 > 8 budget), and the decay past it is STEEPER than the committed
+r_eff/(S + 2) law (S = 32/64 below the predicted bands, at ~chance by 64):
+the honest reading is that the empirical surviving-binding fraction at
+large S is ~0, not ~6/34. The refutation clause (any pointwise cell >= 0.5
+at S >= 16) is NOT triggered — the pointwise arm found no escape.
+
+### 5.2 The pointwise mechanism receipts (P-3; the seed-6999 batch, best
+### models, both layers; `receipts/wheeler_mechanism_pointwise.json`)
+
+The committed strata (layer 0 / layer 1): probed-binding destroyed fraction
+0.22/0.19 (S=2), 0.35/1.00 (S=8), 0.72/1.00 (S=32), 0.87/1.00 (S=64) — the
+predicted eviction growth (P-3's >= 0.2 at 8, >= 0.75 at 32, >= 0.85 at 64)
+is MET at layer 0. The accuracy mixture at S = 8 is exactly the predicted
+eviction-onset form: intact 0.63 of probes answer at 0.97, destroyed
+probes at ~chance (0.05), giving the observed 0.61. At S >= 32 a second,
+unpredicted-in-form failure mode compounds eviction: the intact rows stop
+answering (layer-0 intact-accuracy 0.26 at 32, 0.02 at 64) because the
+probe's read mass on the row falls to 0.15/0.13 — the free-key geometry
+cannot give 32+ bindings distinct-enough addresses, so the softmax splits
+its mass over ~7.5 live rows (all holding CORRECT-chained mixtures). The
+span's rows are 94% live at S = 32-64 (the store HOLDS rows; their CONTENT
+is the chained latest-write and the probe cannot ISOLATE it). P-3's last
+sub-prediction (intact accuracy within 0.1 of the S = 2 accuracy) therefore
+holds at S = 8 and fails at S >= 32 — reported as measured, with the
+retrieval-dilution mechanism receipted above.
+
+**Nothing in this interim section evaluates the capacity claim**: that
+needs the ordered arm's S = 8..64 cells (in flight) against §4's committed
+bands and refutation clause.
