@@ -1,0 +1,156 @@
+{
+ "task": "m1",
+ "arm": "separated",
+ "lr": 0.0003,
+ "seed": 3402,
+ "key_dim": 16,
+ "depth": 1,
+ "steps": 3000,
+ "batch": 256,
+ "device": "cuda",
+ "window": 13,
+ "probe_positions": [
+  9,
+  11
+ ],
+ "chance": 0.03125,
+ "policy": {
+  "ops": true,
+  "tau_match": 0.45,
+  "tau_merge": 0.85,
+  "tau_pop": 0.1,
+  "tie_break": 1e-06,
+  "read_scale": 2.0,
+  "grow": false,
+  "grow_trigger": 0.5,
+  "grow_window": 4,
+  "grow_window_tokens": 512,
+  "grow_geometric": 2.0,
+  "grow_stride_floor": 64
+ },
+ "metrics": {
+  "value_acc": 1.0,
+  "probe_acc": [
+   1.0,
+   1.0
+  ],
+  "n_probes": 8192,
+  "chance": 0.03125
+ },
+ "curve_tail": [
+  {
+   "step": 100,
+   "loss": 1.8159064054489136,
+   "value_acc": 0.9521484375
+  },
+  {
+   "step": 150,
+   "loss": 0.7359024286270142,
+   "value_acc": 0.99560546875
+  },
+  {
+   "step": 200,
+   "loss": 0.24596966803073883,
+   "value_acc": 1.0
+  },
+  {
+   "step": 250,
+   "loss": 0.09018883109092712,
+   "value_acc": 1.0
+  },
+  {
+   "step": 300,
+   "loss": 0.03619937598705292,
+   "value_acc": 1.0
+  },
+  {
+   "step": 350,
+   "loss": 0.015715204179286957,
+   "value_acc": 1.0
+  },
+  {
+   "step": 400,
+   "loss": 0.006891012657433748,
+   "value_acc": 1.0
+  },
+  {
+   "step": 450,
+   "loss": 0.0030992187093943357,
+   "value_acc": 1.0
+  },
+  {
+   "step": 500,
+   "loss": 0.0013802086468786001,
+   "value_acc": 1.0
+  },
+  {
+   "step": 1000,
+   "loss": 3.2712699749026797e-07,
+   "value_acc": 1.0
+  },
+  {
+   "step": 1500,
+   "loss": 1.280568362460599e-08,
+   "value_acc": 1.0
+  },
+  {
+   "step": 2000,
+   "loss": 1.3271345800092149e-08,
+   "value_acc": 1.0
+  },
+  {
+   "step": 2500,
+   "loss": 1.0477377188067294e-08,
+   "value_acc": 1.0
+  },
+  {
+   "step": 3000,
+   "loss": 2.7474012398442937e-08,
+   "value_acc": 1.0
+  }
+ ],
+ "walls_s": 222.0,
+ "channels": {
+  "arm": "separated",
+  "per_layer": [
+   {
+    "layer": 0,
+    "op_histogram": {
+     "append": 2098,
+     "correct": 4557,
+     "merge": 1,
+     "pop": 0,
+     "none": 0
+    },
+    "copy_key_cos": {
+     "mean": 0.8267305493354797,
+     "min": 0.7717990875244141,
+     "max": 0.8988761305809021,
+     "frac_below_tau_match": 0.0
+    },
+    "copy_rows": {
+     "distinct_slot_frac": 0.0,
+     "both_live_frac": 0.0,
+     "copy2_append_frac": 0.0
+    },
+    "role_addressing": {
+     "flip_probe0_mean": 0.43375709652900696,
+     "flip_probe1_mean": -0.43375709652900696,
+     "frac_correctly_flipped": 0.0
+    },
+    "answer_row_mass": {
+     "mean_true": 5.635017395019531,
+     "mean_other": 0.12012144178152084,
+     "frac_true_heavier": 1.0
+    },
+    "accuracy_per_probe": [
+     1.0,
+     1.0
+    ]
+   }
+  ],
+  "value_acc": 1.0
+ },
+ "params": 43329,
+ "torch": "2.9.1+cu128"
+}

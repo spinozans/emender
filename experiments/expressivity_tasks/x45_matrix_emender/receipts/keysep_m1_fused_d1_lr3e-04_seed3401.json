@@ -1,0 +1,155 @@
+{
+ "task": "m1",
+ "arm": "fused",
+ "lr": 0.0003,
+ "seed": 3401,
+ "key_dim": 16,
+ "depth": 1,
+ "steps": 3000,
+ "batch": 256,
+ "device": "cuda",
+ "window": 13,
+ "probe_positions": [
+  9,
+  11
+ ],
+ "chance": 0.03125,
+ "policy": {
+  "ops": true,
+  "tau_match": 0.45,
+  "tau_merge": 0.85,
+  "tau_pop": 0.1,
+  "tie_break": 1e-06,
+  "read_scale": 2.0,
+  "grow": false,
+  "grow_trigger": 0.5,
+  "grow_window": 4,
+  "grow_window_tokens": 512,
+  "grow_geometric": 2.0,
+  "grow_stride_floor": 64
+ },
+ "metrics": {
+  "value_acc": 0.5059814453125,
+  "probe_acc": [
+   0.51025390625,
+   0.501708984375
+  ],
+  "n_probes": 8192,
+  "chance": 0.03125
+ },
+ "curve_tail": [
+  {
+   "step": 100,
+   "loss": 3.045949697494507,
+   "value_acc": 0.32373046875
+  },
+  {
+   "step": 150,
+   "loss": 2.436671495437622,
+   "value_acc": 0.45556640625
+  },
+  {
+   "step": 200,
+   "loss": 1.932204246520996,
+   "value_acc": 0.4482421875
+  },
+  {
+   "step": 250,
+   "loss": 1.5510189533233643,
+   "value_acc": 0.44580078125
+  },
+  {
+   "step": 300,
+   "loss": 1.3739051818847656,
+   "value_acc": 0.42529296875
+  },
+  {
+   "step": 350,
+   "loss": 1.227081298828125,
+   "value_acc": 0.40380859375
+  },
+  {
+   "step": 400,
+   "loss": 1.1398487091064453,
+   "value_acc": 0.40185546875
+  },
+  {
+   "step": 450,
+   "loss": 1.0624150037765503,
+   "value_acc": 0.40576171875
+  },
+  {
+   "step": 500,
+   "loss": 0.959518313407898,
+   "value_acc": 0.416015625
+  },
+  {
+   "step": 1000,
+   "loss": 0.7543548941612244,
+   "value_acc": 0.48193359375
+  },
+  {
+   "step": 1500,
+   "loss": 0.7760142087936401,
+   "value_acc": 0.50146484375
+  },
+  {
+   "step": 2000,
+   "loss": 0.8114280700683594,
+   "value_acc": 0.49267578125
+  },
+  {
+   "step": 2500,
+   "loss": 0.7694619297981262,
+   "value_acc": 0.4833984375
+  },
+  {
+   "step": 3000,
+   "loss": 0.7484845519065857,
+   "value_acc": 0.52197265625
+  }
+ ],
+ "walls_s": 248.0,
+ "channels": {
+  "arm": "fused",
+  "per_layer": [
+   {
+    "layer": 0,
+    "op_histogram": {
+     "none": 6656,
+     "append": 3999,
+     "correct": 2657,
+     "pop": 0,
+     "merge": 0
+    },
+    "identity_rewrite_frac": 1.0,
+    "copy2_op_counts": {
+     "append": 0,
+     "correct": 512,
+     "merge": 0,
+     "pop": 0,
+     "none": 0
+    },
+    "copy_slots_equal_frac": 1.0,
+    "identical_live_row_pairs": 0,
+    "answer_row_mass": {
+     "mean_true": 1.7206804752349854,
+     "mean_other": 1.7322351932525635,
+     "mean_signed_gap": -0.011554745025932789,
+     "frac_true_heavier": 0.4697265625
+    },
+    "merged_x_row_mass": {
+     "mean": 0.5518893599510193,
+     "max": 1.6850709915161133
+    },
+    "accuracy_per_probe": [
+     0.537109375,
+     0.55078125
+    ]
+   }
+  ],
+  "value_acc": 0.5439453125
+ },
+ "params": 37121,
+ "torch": "2.9.1+cu128"
+}

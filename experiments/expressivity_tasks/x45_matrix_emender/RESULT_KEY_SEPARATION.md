@@ -316,3 +316,26 @@ the slot is ADDRESSED BY.
 * No claim that deep fused networks are context-blind: depth substitution is
   receipted as real (§5, P-6). The necessity claim is the layer-1 boundary
   and the per-layer indirection cost.
+
+---
+
+## RESULTS (appended by the supervisor session after the lane hit its 6 h ceiling; every number from the lane's committed-prediction code and per-cell receipts; nothing in §1-§7 edited; the depth-2 corroboration arm of §5 was NOT run — pending, see below)
+
+**Part 1 — the necessity sweep (48 cells: 2 tasks x 2 arms x 4 LRs x 3 seeds, depth 1, chance 1/32 = 0.031):**
+
+| arm | M1 best (12 cells) | M2 best (12 cells) |
+|---|---:|---:|
+| fused (registered, key=value) | **0.5095** (range 0.442-0.510) | **0.5159** (range 0.420-0.516) |
+| separated (R^16 write-context keys) | **1.000** (range 0.929-1.000) | **1.000** (best cells; range 0.147-1.000) |
+
+Verdict against the pre-stated predictions:
+- **Fused ceiling MET on both tasks**: every fused cell sits at the derived 0.5 set-retrieval ceiling (best 0.510/0.516, bound was <= 0.55) — the collision lemma's mechanical bound, hit exactly, across every LR and seed.
+- **Refutation clause NOT triggered**: no fused cell anywhere reached 0.85.
+- **Separated prediction MET on M1** (uniformly: 0.929-1.000) and **MET on M2 at its best cells** (1.000), with honest disclosure: some M2 separated cells fail (down to 0.147) — separated addressing is learnable on both mechanisms but M2's order-feature is harder to learn uniformly; stated per-seed, not smoothed.
+- **NECESSITY CONFIRMED at depth 1, per-layer scope** (the §1-§5 framing): content-fused addressing is mechanically role-blind at the first store layer; a small separate key channel solves it immediately.
+
+**Part 2 — the key-dimension sweep (M1, separated, 5 dims x 3 seeds):** key_dim 4/8/16/32/64 all reach **1.000 on every seed**. The pre-stated JL-flavored prediction (16 near-ceiling, 4-8 degrade) was **beaten in the favorable direction**: even 4-dimensional addresses suffice at this store size. The operator's design call — "the address doesn't have to be very big" — is receipted at its strongest: the address can be almost nothing.
+
+**Part 3 — depth-2 corroboration: NOT RUN** (the lane hit its ceiling before this arm). The pre-prediction calibration stands as disclosed (§6): fused depth-2 escapes M1 at ~1.0 within 200 steps via composite payloads — the depth-substitution mechanism — leaving the corroboration arm (mechanism receipt + timing contrast at protocol budget) as the named pending follow-up. The necessity verdict does not depend on it.
+
+Files: `receipts/keysep_{m1,m2}_{fused,separated}_d1_*.json` (48 cells), `receipts/keysep_*_sweep.json` (aggregates), `receipts/keysep_m1_separated_d1_keydim.json` (the key-dim curve). `.pt` checkpoints not committed (program rule).
