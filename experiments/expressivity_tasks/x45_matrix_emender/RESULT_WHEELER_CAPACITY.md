@@ -262,3 +262,35 @@ retrieval-dilution mechanism receipted above.
 **Nothing in this interim section evaluates the capacity claim**: that
 needs the ordered arm's S = 8..64 cells (in flight) against §4's committed
 bands and refutation clause.
+
+### 5.3 The mimetic-init extension (COMPLETE; §4b's cells all landed,
+### committed by its own driver)
+
+**M-2 (no basin entry) — MET, in full.** End-of-training `span_key_std` in
+every (LR, seed) S = 2 cell: 0.68–0.90 (floor 0.016; the collapse signature
+— std < 0.005 with one run absorbing the window — appears NOWHERE, at any
+LR, any seed, and the S = 32 spot-check cells hold 0.87–0.90 too). Safe
+birth eliminated the basin: **the key-collapse is init-addressable, and the
+operator's diagnosis (init luck decided the entry race between key spread
+and store collapse) is confirmed by the receipts** — the previously
+collapsed seed 3402 learns in every mimetic cell (0.46–0.67 vs 0.045 free-
+key at 3e-3), and runs form (max run length 4–7, contiguity 0.35–0.69).
+
+**M-1 (every seed >= 0.70, mean >= 0.85 at S = 2) — NOT MET as written.**
+Per-seed bests: 0.817 (3401), 0.672 (3402), 0.707 (3403); best-LR mean
+0.72. Every seed learns far above chance and the collapse is repaired, but
+the arm does not reach the free-key arm's lucky-seed accuracy (0.98) at
+this budget: the mimetic init guarantees SPREAD, not the learned ALIGNMENT
+(query key lands on its binding's row) that the lucky free-key seeds
+found; 3000 x 1024 moves it partway (0.52–0.82 across cells). The bound
+was over-optimistic; the honest reading is a partial repair: basin gone,
+alignment still to be earned by training. **The refutation clause (mimetic
+also collapses) is NOT triggered** — no collapse occurred.
+
+**M-3 (S = 32 spot-check) — pending the free-key ordered arm's S = 32
+cells** (still landing): mimetic S = 32 at its own best S = 2 LR (3e-3):
+0.069 / 0.067 / 0.082 (mean 0.073). The comparison against the free-key
+arm's S = 32 best-LR mean is made in the final verdict. Notably the
+mimetic cells show no basin at S = 32 either (key_std 0.87–0.90), so the
+long-span dilution is init-independent — consistent with dilution being
+the capacity mechanism's honest price rather than a training pathology.
