@@ -168,6 +168,37 @@ def test_sf_x_snapshot_is_the_package_eval_point_and_round_trips():
         assert torch.allclose(y_live[k], restored[k], atol=1e-6), k
 
 
+def test_hybrid_muon_survives_the_schedulefree_wrapper_prepopulated_state():
+    """The wrapper stores its own 'z' buffer into the base optimizer's state
+    dict BEFORE the base step runs; the hybrid's momentum-buffer creation must
+    not depend on the state dict being empty (the launch-failure regression).
+    """
+    import schedulefree
+    torch.manual_seed(2)
+    muon = [nn.Parameter(torch.randn(4, 3))]
+    aux = [nn.Parameter(torch.randn(3))]
+    base = HybridMuonX45(muon, aux, lr=1e-2, betas=(0.9, 0.98),
+                         weight_decay=0.0)
+    opt = schedulefree.ScheduleFreeWrapper(base, momentum=0.9,
+                                           weight_decay_at_y=0.01)
+    opt.train()
+    for _ in range(2):
+        opt.zero_grad(set_to_none=True)
+        (muon[0].square().sum() + aux[0].square().sum()).backward()
+        opt.step()
+    assert torch.isfinite(muon[0]).all() and torch.isfinite(aux[0]).all()
+    live = muon[0].detach().clone()
+    # the primal-average snapshot path works against the wrapper too
+    class _Holder(nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.p = muon[0]
+            self.q = aux[0]
+    snapshot = sf_x_snapshot(_Holder(), opt, 0.9)
+    assert set(snapshot) == {"p", "q"}
+    assert not torch.equal(snapshot["p"], live)
+
+
 def test_arm_conventions_hold_the_symmetry_rules():
     """The approved conventions, as spec'd: the SF arms carry NO schedule by
     design; the Muon/AdamW arms share the incumbent's warmup-45 schedule; the

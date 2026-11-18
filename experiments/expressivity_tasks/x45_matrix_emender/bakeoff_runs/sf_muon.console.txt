@@ -1,0 +1,31 @@
+gpu_lease: granted GPUs: 2 (pid 2302656)
+leased card: 2
+{"arm": "sf_muon", "family": "sf-wrapped-hybrid-muon", "card": "2", "seed": 3401, "parameters": 149981808}
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/optimizer_bakeoff.py", line 681, in <module>
+    main()
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/optimizer_bakeoff.py", line 675, in main
+    run_arm(args)
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/optimizer_bakeoff.py", line 480, in run_arm
+    run = _train_with_snapshots(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/optimizer_bakeoff.py", line 379, in _train_with_snapshots
+    optimizer.step()
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 120, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/schedulefree/wrap_schedulefree.py", line 151, in step
+    self.base.step()
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/optim/optimizer.py", line 517, in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 120, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/bakeoff_optimizers.py", line 116, in step
+    buf = state["momentum_buffer"]
+          ~~~~~^^^^^^^^^^^^^^^^^^^
+KeyError: 'momentum_buffer'
+committed: X45 optimizer bake-off: the sf_muon arm landed (the checkpoint-eval curve at the probe protocol, the approved conventions receipted in the run)

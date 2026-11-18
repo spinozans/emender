@@ -110,7 +110,12 @@ class HybridMuonX45(torch.optim.Optimizer):
             if grad.is_sparse:
                 raise ValueError("sparse Muon gradients unsupported")
             state = self.state[param]
-            if not state:
+            # "momentum_buffer" not in state -- NOT "if not state": a
+            # schedule-free wrapper pre-populates this state dict with its
+            # own "z" buffer BEFORE the base step runs (schedulefree's
+            # ScheduleFreeWrapper.step), so an empty-dict test would skip
+            # creating the momentum buffer and crash on the read.
+            if "momentum_buffer" not in state:
                 state["momentum_buffer"] = torch.zeros_like(param,
                                                            dtype=torch.float32)
             buf = state["momentum_buffer"]
