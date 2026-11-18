@@ -1,0 +1,306 @@
+{
+ "probe": "k11_learned_gates_gates",
+ "registration": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/PREREGISTRATION_LEARNED_GATES.md",
+ "shape": {
+  "batch": 8,
+  "tokens": 2048,
+  "heads": 2,
+  "rank": 128,
+  "value_dim": 128,
+  "key_dim": 16,
+  "segment_tokens": 64,
+  "lanes": 3
+ },
+ "policy": {
+  "ops": true,
+  "tau_match": 0.45,
+  "tau_merge": 0.85,
+  "tau_pop": 0.1,
+  "tie_break": 1e-06,
+  "read_scale": 2.0,
+  "grow": false,
+  "grow_trigger": 0.5,
+  "grow_window": 4,
+  "grow_window_tokens": 512,
+  "grow_geometric": 2.0,
+  "grow_stride_floor": 64
+ },
+ "torch": "2.9.1+cu128",
+ "gate_a": {
+  "fixture": {
+   "batch": 8,
+   "tokens": 2048,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "key_dim": 16,
+   "dtype": "bf16 inputs, fp32 defined-order math",
+   "segment_tokens": 64,
+   "lanes": 3,
+   "distinct_directions": 512
+  },
+  "channels": {
+   "gated=True,dense=True": {
+    "gated": true,
+    "use_dense": true,
+    "bit_equal_channels": true,
+    "mismatched": [],
+    "read": {
+     "floor_fp32_vs_fp64": 1.9073486328125e-06,
+     "deviation": 9.5367431640625e-07,
+     "within_noise_factor": true
+    }
+   },
+   "gated=True,dense=False": {
+    "gated": true,
+    "use_dense": false,
+    "bit_equal_channels": true,
+    "mismatched": [],
+    "read": {
+     "floor_fp32_vs_fp64": 1.9073486328125e-06,
+     "deviation": 9.5367431640625e-07,
+     "within_noise_factor": true
+    }
+   },
+   "gated=False,dense=True": {
+    "gated": false,
+    "use_dense": true,
+    "bit_equal_channels": true,
+    "mismatched": [],
+    "read": {
+     "floor_fp32_vs_fp64": 3.814697265625e-06,
+     "deviation": 1.9073486328125e-06,
+     "within_noise_factor": true
+    }
+   },
+   "gated=False,dense=False": {
+    "gated": false,
+    "use_dense": false,
+    "bit_equal_channels": true,
+    "mismatched": [],
+    "read": {
+     "floor_fp32_vs_fp64": 3.814697265625e-06,
+     "deviation": 1.9073486328125e-06,
+     "within_noise_factor": true
+    }
+   }
+  },
+  "total": {
+   "lanes_compared": 33816576,
+   "decision_flips": 0
+  },
+  "op_histogram": {
+   "none": 32784,
+   "append": 34397,
+   "correct": 31123,
+   "pop": 0,
+   "merge": 0
+  },
+  "birth_parity": {
+   "differing_elements": {
+    "slot": 0,
+    "erase": 0,
+    "op": 0,
+    "live_after": 0,
+    "payload": 0,
+    "reads": 0,
+    "state": 0,
+    "live": 0,
+    "live_pre": 0,
+    "weights": 0,
+    "keys": 0
+   },
+   "bit_identical": true
+  },
+  "forward_kernel_resources": {
+   "num_warps": 8,
+   "registers": 255,
+   "spills": 2
+  }
+ },
+ "gate_e": {
+  "probe": "the K12-flagged multi-lane MERGE corner assessment",
+  "oracle_pattern": "the if bool(sel[\"merge\"].any()): block index-puts zeros at sel[\"second_index\"] for EVERY (batch, head) lane whenever ANY lane merges, instead of only the merging lanes' source rows -- the K10 oracle pattern verbatim (K12_PLACEMENT.md)",
+  "fixture_merge_structure": {
+   "test identity-regime/bf16/floors/replay (2,64,2,6dirs,r5)": {
+    "merge_lane_fires": 0,
+    "tokens_with_merge": 0,
+    "heterogeneous_tokens": 0,
+    "corner_firing_nonmerging_live_second": 0
+   },
+   "test registered-shape flip (2,512,2,512dirs,r128)": {
+    "merge_lane_fires": 0,
+    "tokens_with_merge": 0,
+    "heterogeneous_tokens": 0,
+    "corner_firing_nonmerging_live_second": 0
+   },
+   "test gradcheck (2,32,2,5dirs,r5)": {
+    "merge_lane_fires": 0,
+    "tokens_with_merge": 0,
+    "heterogeneous_tokens": 0,
+    "corner_firing_nonmerging_live_second": 0
+   },
+   "test zero-flip invariance (2,128,2,6dirs,r8)": {
+    "merge_lane_fires": 0,
+    "tokens_with_merge": 0,
+    "heterogeneous_tokens": 0,
+    "corner_firing_nonmerging_live_second": 0
+   },
+   "gate_a registered fixture (8,2048,2,512dirs,r128)": {
+    "merge_lane_fires": 0,
+    "tokens_with_merge": 0,
+    "heterogeneous_tokens": 0,
+    "corner_firing_nonmerging_live_second": 0
+   },
+   "gate_b floor fixture (2,256,2,512dirs,r128)": {
+    "merge_lane_fires": 0,
+    "tokens_with_merge": 0,
+    "heterogeneous_tokens": 0,
+    "corner_firing_nonmerging_live_second": 0
+   },
+   "gate_b gradcheck fixture (2,48,2,6dirs,r8)": {
+    "merge_lane_fires": 0,
+    "tokens_with_merge": 0,
+    "heterogeneous_tokens": 0,
+    "corner_firing_nonmerging_live_second": 0
+   }
+  },
+  "corner_demonstration": {
+   "fixture": "batch 1, heads 2, rank 4, 1 token: head 0 MERGEs (second key similarity 0.9 >= tau_merge), head 1 CORRECTs with a live SECOND row",
+   "op_lane0_kernel": [
+    [
+     4,
+     2
+    ]
+   ],
+   "op_lane1_kernel": [
+    [
+     4,
+     0
+    ]
+   ],
+   "second_index": [
+    1,
+    1
+   ],
+   "kernel_live_head1": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "oracle_live_head1": [
+    true,
+    false,
+    true,
+    true
+   ],
+   "kernel_head1_live_rows": 4,
+   "oracle_head1_live_rows": 3,
+   "differing_elements": {
+    "state": 1,
+    "live": 1,
+    "keys": 1,
+    "schedule.slot": 0,
+    "schedule.erase": 0,
+    "schedule.op": 0,
+    "schedule.live_after": 0,
+    "schedule.payload": 0
+   },
+   "note": "the oracle kills the NON-merging head's live SECOND row (the K10 pattern verbatim); the kernel guards per lane and keeps it -- the corner is REAL in the k11 oracle, oracle-only"
+  },
+  "pattern_location": "k11_learned_gates.py:336-352 (gated_oracle_scan, the if bool(sel[\"merge\"].any()): block; the index_put at :326 is the lane-0 write, the flagged one is the merge-source close below it)",
+  "kernel_guard": "_k11_seq_fwd_kernel: hit2 = merge & keep_r & (second == ranks) -- merge is a per-(batch,head)-lane scalar; state/keys/live zeroed only in the merging lane",
+  "fixtures_unreachable": true,
+  "production": [
+   {
+    "kernel_only_at_registered_shape": true,
+    "path": "GatedSeparatedMixer.mix -> gated_scan -> x45::k11_scan_fwd (the opaque kernel op) whenever separated_available; the eager oracle is only the fallback for oversized/non-CUDA stores and the receipt/gradcheck instrument",
+    "inert": true
+   }
+  ],
+  "committed_engine_patched": false,
+  "escalation_rule": "the engine is committed: bugs escalate with receipts, never patch silently",
+  "flagged_by": "the K12 placement lane (commit cb5615fe, K12_PLACEMENT.md section 3, the K10 eager oracle's latent multi-lane MERGE bug; K11 flagged as carrying the same pattern)",
+  "verdict": "UNREACHABLE AND INERT: no committed fixture and no receipt fixture can fire the corner (every measured fixture produces zero MERGEs; the committed MERGE fixture is single-lane by construction -- heads=1), and production takes the kernel path, which guards per lane. No banked or committed K11 receipt is invalidated; the arms may proceed. The corner is receipted here and escalated to the operator with the K12 flag."
+ },
+ "gate_b": {
+  "oracle_gradcheck_fp64": {
+   "passed": true,
+   "hist": {
+    "none": 196,
+    "append": 200,
+    "correct": 180,
+    "pop": 0,
+    "merge": 0
+   },
+   "branches": "APPEND admission, CORRECT blend, dense lane, gates, keys, state"
+  },
+  "gradient_floors": {
+   "dpayload": {
+    "floor_fp32_vs_fp64": 3.814697265625e-06,
+    "kernel_deviation": 3.814697265625e-06,
+    "within_noise_factor": true
+   },
+   "ddense": {
+    "floor_fp32_vs_fp64": 1.9073486328125e-06,
+    "kernel_deviation": 2.86102294921875e-06,
+    "within_noise_factor": true
+   },
+   "dwrite_keys": {
+    "floor_fp32_vs_fp64": 2.384185791015625e-06,
+    "kernel_deviation": 2.86102294921875e-06,
+    "within_noise_factor": true
+   },
+   "dquery_keys": {
+    "floor_fp32_vs_fp64": 1.9073486328125e-06,
+    "kernel_deviation": 1.9073486328125e-06,
+    "within_noise_factor": true
+   },
+   "ddecay": {
+    "floor_fp32_vs_fp64": 1.6689300537109375e-05,
+    "kernel_deviation": 3.0517578125e-05,
+    "within_noise_factor": true
+   },
+   "dgates": {
+    "floor_fp32_vs_fp64": 3.0517578125e-05,
+    "kernel_deviation": 3.0517578125e-05,
+    "within_noise_factor": true
+   },
+   "dstate": {
+    "floor_fp32_vs_fp64": 5.7220458984375e-06,
+    "kernel_deviation": 3.814697265625e-06,
+    "within_noise_factor": true
+   },
+   "dkeys": {
+    "floor_fp32_vs_fp64": 0.0,
+    "kernel_deviation": 0.0,
+    "within_noise_factor": true
+   }
+  },
+  "replay_bit_exact": true
+ },
+ "gate_d": {
+  "fixture": {
+   "batch": 8,
+   "tokens": 2048,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "key_dim": 16,
+   "segment_tokens": 64
+  },
+  "k11": {
+   "forward_ms_per_scan": 24.81,
+   "backward_ms_per_scan": 19.12,
+   "forward_throughput_tok_per_s": 660356
+  },
+  "k10_same_session": {
+   "forward_ms_per_scan": 18.02,
+   "backward_ms_per_scan": 17.13
+  },
+  "forward_overhead_vs_k10": 1.377,
+  "backward_overhead_vs_k10": 1.116,
+  "gate_channel_cost_note": "the gate channel adds per token: one gate-scalar load, the CORRECT blend's sub/mul/mul/mul/add chain (or one mul at APPEND), and -- for the dense arms -- one (VP,) deposit load plus one masked row-add at the best row; measured here against K10's OWN launch on the same fixture and box, not estimated"
+ }
+}
