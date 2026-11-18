@@ -419,3 +419,74 @@ probe and its detached leased driver, cards 0/1), `receipts/k11_gates.json`,
 No `k10_*`/`k6_*`/`k1_*`/`k4_*` source, `PREREGISTRATION_*` file,
 `lattice.py`, `matched_arms.py`, `velocity_ladder.py`, `cmaes_search.py`,
 `optimizer_bakeoff.py` or `side_by_side.py` is edited — all imported.
+
+## 9. FINALIZATION (appended 2026-11-21, after the probe ran; the
+pre-stated sections above are untouched)
+
+This section records, receipted, what changed between the registration's
+commit and the probe's execution — the standing amendments that landed
+after this document was written — and the measured outcome.  Nothing above
+is edited; where an amendment supersedes a pre-stated anchor, both the
+original and the amended anchor are quoted in the receipts.
+
+**The standing amendments applied** (`RESULT_PROTOCOL_CORRECTION.md` /
+`protocol_correction.py`, supervisor-approved before this lane's arms ran):
+
+* **The corrected scoring:** every arm is scored with the 24-step linear
+  cooldown PRIMARY (the constant-LR budget verbatim, then
+  `factor (25-k)/24`, same stream), the EMA-0.99 iterate at step 180
+  SECONDARY (ranking-only), and the constant-LR step-180 eval RETAINED for
+  banked comparability.  This amends §3's gate C ("the ladder protocol
+  verbatim"): the protocol's training is verbatim, the scoring is the
+  corrected one.
+* **The re-anchored comparison:** the comparison config is the banked
+  winner (hybrid Muon **4x** lineage, the velocity ladder's selected
+  speedrun point) with BOTH anchors quoted: the constant-LR banked best
+  **1.4899048124040877** (seed 3402; same-config seed-3401:
+  **1.4907409463609969**) and the corrected post-cooldown banked best
+  **1.4338248457227434** (seed 3402).  The M-1 anchor moves from the
+  bake-off muon3x row (1.5146, one surface back) to these; the M-2/M-3
+  mechanism anchors keep their pre-stated values (0.123 / 1.664) WITH the
+  same-config seed-matched anchors measured alongside (identity
+  0.1222/0.1180, entropy 1.5150/1.6002), every verdict read against both.
+
+**The gate receipts before the probe** (`receipts/k11_gates.json`,
+`K11_GATES.md`): gates A/B/D green at the registered shape (33,816,576
+lanes, 0 flips; the fp64 gradcheck; the floors; the K4 3-lane replay;
+1.38x/1.12x walls), plus **gate E** — the K12-flagged multi-lane MERGE
+corner in the oracle assessed per the cross-lane steering (unreachable by
+every committed and receipt fixture, inert in production — the kernel
+guards per lane; demonstrated oracle-only on a crafted fixture; the engine
+NOT patched, escalated).  The prior lane's one casualty (the gate-receipt
+instrument's fp64-reference leaf dtype) was closed: the caller-side fix was
+already in the working tree and is proven green end-to-end by the
+completed receipts.
+
+**The measured outcome** (`RESULT_LEARNED_GATES.md`, the assemble summary
+`receipts/k11_learned_gates_summary.json`): all four runs (G1/G2/G3 seed
+3401 + the second seed 3402 on the best arm G1) landed with the
+0-flip-at-birth receipt intact (every step-1 loss bit-identical to the
+banked same-seed row's) and **PARITY on every scoring** — every
+seed-matched delta ≤ 0.0063, 12-20x inside the 0.075-nat endpoint-variance
+band; GDN2's post-cooldown row remains 0.074-0.111 nats ahead.  The
+mechanism predictions M-2/M-3/M-4 are NOT MET on any arm: the
+identity-rewrite share, read entropy/effective rows, occupancy and the
+read-mask sweep are all unchanged vs the banked winner's own same-config
+measurements, while the gate telemetry receipts the controller LIVE and
+per-layer heterogeneous but opened only ~3% off identity (write |1-g|
+0.010-0.076 per layer; dense deposit ~0.022-0.024 of payload scale).
+
+**The refutation clause (§4) applied verbatim:** no mechanism number moved
+and NLL did not improve beyond parity — **the learned-gate lever (the
+per-head scalar surface) does not own the ~0.08-nat residual at probe
+scale; reported as refuted, not excused.**  Per the task's pre-stated null
+reading, this confines the gap to GDN2's denser write geometry (per-channel
+gate matrices, ~18% of its parameters) rather than our per-head scalar gate
+surface (0.02-0.06%); §7.2's per-slot/per-channel variant is the named
+follow-up, and the probe-scale caveat (180 steps; the gates may need a
+longer horizon to open) is part of what a board-scale decision must weigh.
+
+**Status:** the probe-scale claims are measured and receipted; the
+registration remains pending the operator's sign-off for any board-scale
+(2700 s) continuation — which the null outcome now makes a decision about
+WHETHER, not just how.

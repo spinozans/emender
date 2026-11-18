@@ -142,4 +142,6 @@ OMP_NUM_THREADS=4 CUDA_VISIBLE_DEVICES=0 .venv/bin/python -m \
 ```
 
 The gate-A/B/C fixtures of the committed engine suite:
-`test_k11_learned_gates.py` (green at the engine commit `4cb6623a`).
+`test_k11_learned_gates.py` — green at the engine commit `4cb6623a` and
+**re-run green in this session (21 passed, 33:56, card 1)** alongside the
+arms.
