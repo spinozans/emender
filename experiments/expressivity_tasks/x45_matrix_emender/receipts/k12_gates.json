@@ -1,0 +1,459 @@
+{
+ "probe": "k12_placement",
+ "registration": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/PREREGISTRATION_PLACEMENT.md",
+ "policy": {
+  "tau_match": 0.45,
+  "tau_merge": 0.85,
+  "tau_pop": 0.1,
+  "tie_break": 1e-06,
+  "read_scale": 2.0
+ },
+ "registered_shape": {
+  "batch": 8,
+  "tokens": 2048,
+  "heads": 2,
+  "rank": 128,
+  "value_dim": 128,
+  "key_dim": 16,
+  "segment_tokens": 64
+ },
+ "noise_factor": 8.0,
+ "gate_a": {
+  "fixture": {
+   "batch": 8,
+   "tokens": 2048,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "key_dim": 16,
+   "dtype": "bf16 inputs, fp32 defined-order math",
+   "segment_tokens": 64,
+   "distinct_directions": 512
+  },
+  "w=0.0": {
+   "channels": {
+    "schedule_slot": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_erase": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_op": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_live_after": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "weights": {
+     "lanes": 4194304,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "live_pre": {
+     "lanes": 4194304,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "state": {
+     "lanes": 262144,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "live": {
+     "lanes": 2048,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "keys": {
+     "lanes": 32768,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "residue": {
+     "lanes": 32768,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "payload": {
+     "lanes": 8388608,
+     "flips": 0,
+     "bit_equal": true
+    }
+   },
+   "total": {
+    "lanes": 17369088,
+    "flips": 0
+   },
+   "read": {
+    "floor_fp32_vs_fp64": 0.0,
+    "deviation": 1.9073486328125e-06,
+    "ratio_vs_floor": 1.9073486328124998e+24,
+    "within_noise_factor": false
+   },
+   "placement": {
+    "append_tokens": 1645,
+    "fired_vs_first_free": 0,
+    "fire_rate": 0.0,
+    "chosen_residue_sim_mean": 0.0,
+    "free_mean_residue_sim_mean": 0.0
+   },
+   "op_histogram": {
+    "none": 32768,
+    "append": 1645,
+    "correct": 31123,
+    "pop": 0,
+    "merge": 0
+   },
+   "walls": {
+    "kernel_forward_s": 2.148,
+    "eager_oracle_s": 7.5
+   },
+   "forward_kernel_resources": {
+    "num_warps": 8,
+    "registers": 255,
+    "spills": 8
+   }
+  },
+  "birth_parity_vs_k10_launch": {
+   "note": "the k12 launch at w=+0.0 vs K10's own launch on every K10 channel: the zero-born argmax tie-break reproduces the first-free rule bit-exactly (P5)",
+   "channels": {
+    "schedule_slot": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_erase": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_op": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_live_after": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "weights": {
+     "lanes": 4194304,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "live_pre": {
+     "lanes": 4194304,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "state": {
+     "lanes": 262144,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "live": {
+     "lanes": 2048,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "keys": {
+     "lanes": 32768,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "reads": {
+     "lanes": 4194304,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "payload": {
+     "lanes": 8388608,
+     "flips": 0,
+     "bit_equal": true
+    }
+   },
+   "total": {
+    "lanes": 21530624,
+    "flips": 0
+   }
+  },
+  "w=0.5": {
+   "channels": {
+    "schedule_slot": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_erase": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_op": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_live_after": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "weights": {
+     "lanes": 4194304,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "live_pre": {
+     "lanes": 4194304,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "state": {
+     "lanes": 262144,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "live": {
+     "lanes": 2048,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "keys": {
+     "lanes": 32768,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "residue": {
+     "lanes": 32768,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "payload": {
+     "lanes": 8388608,
+     "flips": 0,
+     "bit_equal": true
+    }
+   },
+   "total": {
+    "lanes": 17369088,
+    "flips": 0
+   },
+   "read": {
+    "floor_fp32_vs_fp64": 0.0,
+    "deviation": 1.9073486328125e-06,
+    "ratio_vs_floor": 1.9073486328124998e+24,
+    "within_noise_factor": false
+   },
+   "placement": {
+    "append_tokens": 1645,
+    "fired_vs_first_free": 0,
+    "fire_rate": 0.0,
+    "chosen_residue_sim_mean": 0.0,
+    "free_mean_residue_sim_mean": 0.0
+   },
+   "op_histogram": {
+    "none": 32768,
+    "append": 1645,
+    "correct": 31123,
+    "pop": 0,
+    "merge": 0
+   },
+   "walls": {
+    "kernel_forward_s": 0.022,
+    "eager_oracle_s": 7.5
+   },
+   "forward_kernel_resources": {
+    "num_warps": 8,
+    "registers": 255,
+    "spills": 8
+   }
+  },
+  "placement_regime_w=0.5": {
+   "note": "the registered shape with the store seeded FULL (128 live rows of distinct keys): unmatched keys POP the worst row, the residue channel fills at every death, later unmatched keys APPEND into residue-bearing free slots -- the fire rate measures a regime where placement can differ from first-free",
+   "fixture": {
+    "store": "full at entry, 8 mergeable key pairs at cos 0.9 beside unique filler rows",
+    "token_stream": "1/6 pair-A + 1/6 pair-B + 2/3 fresh keys",
+    "structural_note": "only a POP-then-MERGE window leaves two free slots at once -- placement can differ from first-free only there"
+   },
+   "channels": {
+    "schedule_slot": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_erase": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_op": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_live_after": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "weights": {
+     "lanes": 4194304,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "live_pre": {
+     "lanes": 4194304,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "state": {
+     "lanes": 262144,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "live": {
+     "lanes": 2048,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "keys": {
+     "lanes": 32768,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "residue": {
+     "lanes": 32768,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "payload": {
+     "lanes": 8388608,
+     "flips": 0,
+     "bit_equal": true
+    }
+   },
+   "total": {
+    "lanes": 17369088,
+    "flips": 0
+   },
+   "placement": {
+    "append_tokens": 145,
+    "fired_vs_first_free": 75,
+    "fire_rate": 0.5172413793103449,
+    "residue_slots_nonzero": 148,
+    "chosen_residue_sim_mean": 0.1518639475107193,
+    "free_mean_residue_sim_mean": -0.013874889351427555
+   }
+  }
+ },
+ "gate_b": {
+  "fixture": {
+   "batch": 2,
+   "tokens": 256,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "key_dim": 16,
+   "dtype": "fp32",
+   "segment_tokens": 64
+  },
+  "six_gradients": {
+   "dpayload": {
+    "floor_fp32_vs_fp64": 5.7220458984375e-06,
+    "deviation": 7.62939453125e-06,
+    "ratio_vs_floor": 1.3333333333333333,
+    "within_noise_factor": true,
+    "bit_equal": false
+   },
+   "dwrite_keys": {
+    "floor_fp32_vs_fp64": 5.245208740234375e-06,
+    "deviation": 5.7220458984375e-06,
+    "ratio_vs_floor": 1.0909090909090908,
+    "within_noise_factor": true,
+    "bit_equal": false
+   },
+   "dquery_keys": {
+    "floor_fp32_vs_fp64": 3.814697265625e-06,
+    "deviation": 7.62939453125e-06,
+    "ratio_vs_floor": 2.0,
+    "within_noise_factor": true,
+    "bit_equal": false
+   },
+   "ddecay": {
+    "floor_fp32_vs_fp64": 4.57763671875e-05,
+    "deviation": 3.0517578125e-05,
+    "ratio_vs_floor": 0.6666666666666666,
+    "within_noise_factor": true,
+    "bit_equal": false
+   },
+   "dstate": {
+    "floor_fp32_vs_fp64": 5.7220458984375e-06,
+    "deviation": 7.62939453125e-06,
+    "ratio_vs_floor": 1.3333333333333333,
+    "within_noise_factor": true,
+    "bit_equal": false
+   },
+   "dkeys": {
+    "floor_fp32_vs_fp64": 0.0,
+    "deviation": 0.0,
+    "ratio_vs_floor": 0.0,
+    "within_noise_factor": true,
+    "bit_equal": true
+   }
+  },
+  "zero_gradient_finding": {
+   "note": "the ORACLE path's structural gradient to the placement weight is exactly zero under P2+P3 (the discrete slot choice is a backward constant) -- the finding; the kernel path's straight-through estimator is the admitted exception",
+   "oracle_dw_is_none": true,
+   "oracle_dw": [
+    0.0,
+    0.0
+   ]
+  },
+  "estimator": {
+   "note": "the admitted straight-through surrogate vs its DEFINED torch reference (replayed from the recorded channels, g_t from the oracle's own value adjoint); a defined estimator, not the true adjoint -- its bias is the registration's disclosure",
+   "kernel_dw": [
+    0.0,
+    0.0
+   ],
+   "reference_dw": [
+    0.0,
+    0.0
+   ],
+   "max_abs_diff": 0.0,
+   "nonzero": false
+  },
+  "op_histogram": {
+   "none": 1024,
+   "append": 240,
+   "correct": 784,
+   "pop": 0,
+   "merge": 0
+  }
+ },
+ "gate_d": {
+  "note": "the placement channel's honest price at the registered shape: the forward carries the residue tile and the placement scores (a scalar if appendable guard: ~2% of tokens); the backward is K10's own body plus the estimator's whole-window replay",
+  "forward_ms_per_scan": {
+   "k10": 19.0,
+   "k12": 20.0,
+   "ratio": 1.0526315789473684
+  },
+  "backward_ms_per_scan": {
+   "k12": 16.0
+  },
+  "k10_banked_walls": {
+   "forward_ms": 19.7,
+   "backward_ms": 17.2,
+   "note": "K10_SEPARATED_KEYS.md gate D, cited"
+  }
+ }
+}
