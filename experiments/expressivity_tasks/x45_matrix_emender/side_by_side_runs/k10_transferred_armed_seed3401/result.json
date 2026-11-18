@@ -1,0 +1,4826 @@
+{
+  "probe": "side_by_side k10-armed",
+  "arm": "k10_separated_keys",
+  "label": "k10_transferred_armed",
+  "seed": 3401,
+  "exposure_bytes": 20022866,
+  "exposure_steps": 180,
+  "train_seconds": 1858.6,
+  "bytes_per_s": 10773.345236775325,
+  "parameters": 149981808,
+  "config": {
+    "lr": 0.0005420185524740253,
+    "weight_decay": 0.20059436743465126,
+    "warmup_steps": 69,
+    "read_scale": 2.0,
+    "tau_match": 0.45,
+    "tau_pop": 0.1,
+    "tau_merge": 0.85
+  },
+  "protocol_equivalence": {
+    "banked_log": "experiments/expressivity_tasks/x45_matrix_emender/k10_runs/separated_keys_seed3401/training.jsonl",
+    "rows": 180,
+    "bit_identical": true
+  },
+  "final_eval_nll": 1.841756020273481,
+  "banked_final_nll": 1.841756020273481,
+  "final_eval_bit_identical": true,
+  "checkpoints": [
+    {
+      "step": 1,
+      "bytes": 117712,
+      "train_loss": 5.782296858980099,
+      "eval_nll": 5.618787016187396,
+      "eval_windows": 7,
+      "eval_targets": 14336,
+      "diagnostics": {
+        "probe": {
+          "split": "calibration",
+          "windows": 4,
+          "mixers": 24,
+          "regime": "eval, bf16 autocast, the persistent walk the arm trains on (collect=True)",
+          "probe_wall_seconds": 4.8
+        },
+        "key_collapse_watch": {
+          "span_key_std_min": 0.574059784412384,
+          "span_key_std_mean": 0.6747230806698402,
+          "mean_pairwise_key_cos": 0.2498100080022899,
+          "per_layer_span_key_std": {
+            "0": 0.9300205558538437,
+            "1": 0.9103492498397827,
+            "2": 0.8531279265880585,
+            "3": 0.8044037818908691,
+            "4": 0.7660156488418579,
+            "5": 0.7228688597679138,
+            "6": 0.6787014305591583,
+            "7": 0.6544406414031982,
+            "8": 0.6475338786840439,
+            "9": 0.6364775151014328,
+            "10": 0.6297233253717422,
+            "11": 0.6305855065584183,
+            "12": 0.6188809722661972,
+            "13": 0.6009168326854706,
+            "14": 0.6033501774072647,
+            "15": 0.6117579489946365,
+            "16": 0.60605388879776,
+            "17": 0.6069513112306595,
+            "18": 0.6074948757886887,
+            "19": 0.6100471168756485,
+            "20": 0.6170522123575211,
+            "21": 0.6162540018558502,
+            "22": 0.6151005625724792,
+            "23": 0.6152457147836685
+          },
+          "guard_floor": 0.05,
+          "within_guard": true
+        },
+        "op_rate_per_token_lane0": {
+          "none": 0.0,
+          "append": 0.005864461263020833,
+          "correct": 0.9929300944010416,
+          "pop": 0.0,
+          "merge": 0.0012054443359375
+        },
+        "op_histogram_all_lanes": {
+          "none": 392742,
+          "append": 2306,
+          "correct": 390436,
+          "pop": 0,
+          "merge": 948
+        },
+        "occupancy": {
+          "note": "live slots at every token, from the walk's recorded pre-decision liveness channel",
+          "mean_live_slots": 8.006413777669271,
+          "rank": 128
+        },
+        "read_weight_entropy": {
+          "units": "nats over the live-slot weight distribution, per token",
+          "mean": 0.8129851578928481
+        },
+        "per_layer": {
+          "0": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01409912109375,
+              "correct": 0.98590087890625,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 25.660400390625,
+            "read_weight_entropy_nats": 2.554541397281082,
+            "identity_rewrite_share": 0.7991085247322479
+          },
+          "1": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01446533203125,
+              "correct": 0.98553466796875,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 25.02227783203125,
+            "read_weight_entropy_nats": 2.650728450266396,
+            "identity_rewrite_share": 0.10107140645321112
+          },
+          "2": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.014892578125,
+              "correct": 0.98504638671875,
+              "pop": 0.0,
+              "merge": 6.103515625e-05
+            },
+            "occupancy_mean_live_slots": 23.9259033203125,
+            "read_weight_entropy_nats": 2.601856673352009,
+            "identity_rewrite_share": 0.08693227585352252
+          },
+          "3": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0137939453125,
+              "correct": 0.98577880859375,
+              "pop": 0.0,
+              "merge": 0.00042724609375
+            },
+            "occupancy_mean_live_slots": 20.2467041015625,
+            "read_weight_entropy_nats": 2.476223601325873,
+            "identity_rewrite_share": 0.08476255340226611
+          },
+          "4": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01141357421875,
+              "correct": 0.98797607421875,
+              "pop": 0.0,
+              "merge": 0.0006103515625
+            },
+            "occupancy_mean_live_slots": 15.12115478515625,
+            "read_weight_entropy_nats": 2.197891481340834,
+            "identity_rewrite_share": 0.08296781367764255
+          },
+          "5": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01141357421875,
+              "correct": 0.98779296875,
+              "pop": 0.0,
+              "merge": 0.00079345703125
+            },
+            "occupancy_mean_live_slots": 15.23638916015625,
+            "read_weight_entropy_nats": 2.180330232695713,
+            "identity_rewrite_share": 0.08106772120612951
+          },
+          "6": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0079345703125,
+              "correct": 0.98968505859375,
+              "pop": 0.0,
+              "merge": 0.00238037109375
+            },
+            "occupancy_mean_live_slots": 7.34820556640625,
+            "read_weight_entropy_nats": 1.168550462447904,
+            "identity_rewrite_share": 0.08023435090965156
+          },
+          "7": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0069580078125,
+              "correct": 0.98974609375,
+              "pop": 0.0,
+              "merge": 0.0032958984375
+            },
+            "occupancy_mean_live_slots": 5.78448486328125,
+            "read_weight_entropy_nats": 0.9865001087719834,
+            "identity_rewrite_share": 0.07918105574740997
+          },
+          "8": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00634765625,
+              "correct": 0.9893798828125,
+              "pop": 0.0,
+              "merge": 0.0042724609375
+            },
+            "occupancy_mean_live_slots": 4.5621337890625,
+            "read_weight_entropy_nats": 0.5096636512655716,
+            "identity_rewrite_share": 0.07791486736582356
+          },
+          "9": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00457763671875,
+              "correct": 0.99267578125,
+              "pop": 0.0,
+              "merge": 0.00274658203125
+            },
+            "occupancy_mean_live_slots": 3.99267578125,
+            "read_weight_entropy_nats": 0.3628386668478738,
+            "identity_rewrite_share": 0.07531972454500738
+          },
+          "10": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00433349609375,
+              "correct": 0.99298095703125,
+              "pop": 0.0,
+              "merge": 0.002685546875
+            },
+            "occupancy_mean_live_slots": 4.11376953125,
+            "read_weight_entropy_nats": 0.25249819995486916,
+            "identity_rewrite_share": 0.07375991148810622
+          },
+          "11": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00335693359375,
+              "correct": 0.99481201171875,
+              "pop": 0.0,
+              "merge": 0.0018310546875
+            },
+            "occupancy_mean_live_slots": 3.2392578125,
+            "read_weight_entropy_nats": 0.17951825192688614,
+            "identity_rewrite_share": 0.07258113994723603
+          },
+          "12": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00262451171875,
+              "correct": 0.99627685546875,
+              "pop": 0.0,
+              "merge": 0.0010986328125
+            },
+            "occupancy_mean_live_slots": 3.33953857421875,
+            "read_weight_entropy_nats": 0.18033775027693918,
+            "identity_rewrite_share": 0.07155547387122466
+          },
+          "13": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0025634765625,
+              "correct": 0.996337890625,
+              "pop": 0.0,
+              "merge": 0.0010986328125
+            },
+            "occupancy_mean_live_slots": 3.43133544921875,
+            "read_weight_entropy_nats": 0.1646620485336535,
+            "identity_rewrite_share": 0.07044841950502329
+          },
+          "14": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00244140625,
+              "correct": 0.99658203125,
+              "pop": 0.0,
+              "merge": 0.0009765625
+            },
+            "occupancy_mean_live_slots": 3.28631591796875,
+            "read_weight_entropy_nats": 0.15884674661149034,
+            "identity_rewrite_share": 0.06877756001959824
+          },
+          "15": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00177001953125,
+              "correct": 0.997802734375,
+              "pop": 0.0,
+              "merge": 0.00042724609375
+            },
+            "occupancy_mean_live_slots": 2.80462646484375,
+            "read_weight_entropy_nats": 0.09560809487183035,
+            "identity_rewrite_share": 0.06691950085637387
+          },
+          "16": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.002197265625,
+              "correct": 0.99688720703125,
+              "pop": 0.0,
+              "merge": 0.00091552734375
+            },
+            "occupancy_mean_live_slots": 2.85479736328125,
+            "read_weight_entropy_nats": 0.11193837779408032,
+            "identity_rewrite_share": 0.06496050939815098
+          },
+          "17": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0025634765625,
+              "correct": 0.99639892578125,
+              "pop": 0.0,
+              "merge": 0.00103759765625
+            },
+            "occupancy_mean_live_slots": 3.1455078125,
+            "read_weight_entropy_nats": 0.13240493304798182,
+            "identity_rewrite_share": 0.06505359877488515
+          },
+          "18": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0029296875,
+              "correct": 0.99566650390625,
+              "pop": 0.0,
+              "merge": 0.00140380859375
+            },
+            "occupancy_mean_live_slots": 3.37744140625,
+            "read_weight_entropy_nats": 0.13988981074569395,
+            "identity_rewrite_share": 0.0646110464047079
+          },
+          "19": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00244140625,
+              "correct": 0.99664306640625,
+              "pop": 0.0,
+              "merge": 0.00091552734375
+            },
+            "occupancy_mean_live_slots": 3.3446044921875,
+            "read_weight_entropy_nats": 0.10904602848382827,
+            "identity_rewrite_share": 0.06264927429726255
+          },
+          "20": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00238037109375,
+              "correct": 0.99664306640625,
+              "pop": 0.0,
+              "merge": 0.0009765625
+            },
+            "occupancy_mean_live_slots": 3.06494140625,
+            "read_weight_entropy_nats": 0.10883967702890758,
+            "identity_rewrite_share": 0.06191438544920081
+          },
+          "21": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00189208984375,
+              "correct": 0.99761962890625,
+              "pop": 0.0,
+              "merge": 0.00048828125
+            },
+            "occupancy_mean_live_slots": 3.19622802734375,
+            "read_weight_entropy_nats": 0.0819832625247003,
+            "identity_rewrite_share": 0.06111960844294891
+          },
+          "22": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0018310546875,
+              "correct": 0.99774169921875,
+              "pop": 0.0,
+              "merge": 0.00042724609375
+            },
+            "occupancy_mean_live_slots": 3.0133056640625,
+            "read_weight_entropy_nats": 0.053230601517118704,
+            "identity_rewrite_share": 0.06080626414632654
+          },
+          "23": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00152587890625,
+              "correct": 0.9984130859375,
+              "pop": 0.0,
+              "merge": 6.103515625e-05
+            },
+            "occupancy_mean_live_slots": 3.04193115234375,
+            "read_weight_entropy_nats": 0.05371528051513314,
+            "identity_rewrite_share": 0.059848392223988266
+          }
+        },
+        "identity_rewrite_share": 0.10281070393098997,
+        "identity_n_correct": 390436
+      },
+      "decay": {
+        "note": "the DECAY gate's per-token mean per layer (the store rows' survival factor per token), from the trained walk's own projections on the calibration probe windows",
+        "mean_decay_per_layer": {
+          "0": 0.9823375940322876,
+          "1": 0.9854901134967804,
+          "2": 0.9827570468187332,
+          "3": 0.9819506704807281,
+          "4": 0.9803855270147324,
+          "5": 0.982381597161293,
+          "6": 0.9726324826478958,
+          "7": 0.9747177064418793,
+          "8": 0.9753770977258682,
+          "9": 0.9857966899871826,
+          "10": 0.9850129783153534,
+          "11": 0.980434462428093,
+          "12": 0.980938196182251,
+          "13": 0.9885892271995544,
+          "14": 0.9898422956466675,
+          "15": 0.9884362071752548,
+          "16": 0.9813825488090515,
+          "17": 0.9889346063137054,
+          "18": 0.9827471226453781,
+          "19": 0.9758604168891907,
+          "20": 0.9829764664173126,
+          "21": 0.9818509519100189,
+          "22": 0.9839019477367401,
+          "23": 0.9889445900917053
+        }
+      }
+    },
+    {
+      "step": 5,
+      "bytes": 567019,
+      "train_loss": 4.616691273604846,
+      "eval_nll": 4.125687190464565,
+      "eval_windows": 7,
+      "eval_targets": 14336,
+      "diagnostics": {
+        "probe": {
+          "split": "calibration",
+          "windows": 4,
+          "mixers": 24,
+          "regime": "eval, bf16 autocast, the persistent walk the arm trains on (collect=True)",
+          "probe_wall_seconds": 4.7
+        },
+        "key_collapse_watch": {
+          "span_key_std_min": 0.4195311963558197,
+          "span_key_std_mean": 0.5675943431754907,
+          "mean_pairwise_key_cos": 0.24665363722791275,
+          "per_layer_span_key_std": {
+            "0": 0.9295668601989746,
+            "1": 0.9027799069881439,
+            "2": 0.8385810106992722,
+            "3": 0.776469811797142,
+            "4": 0.718237116932869,
+            "5": 0.659304067492485,
+            "6": 0.5947608649730682,
+            "7": 0.5740198343992233,
+            "8": 0.5592807233333588,
+            "9": 0.5354765802621841,
+            "10": 0.5212805643677711,
+            "11": 0.5138939991593361,
+            "12": 0.4955955296754837,
+            "13": 0.47809261083602905,
+            "14": 0.480032354593277,
+            "15": 0.4678514301776886,
+            "16": 0.45868613570928574,
+            "17": 0.45547450333833694,
+            "18": 0.44747114926576614,
+            "19": 0.44449345767498016,
+            "20": 0.4443058893084526,
+            "21": 0.4435376897454262,
+            "22": 0.4422321394085884,
+            "23": 0.4408400058746338
+          },
+          "guard_floor": 0.05,
+          "within_guard": true
+        },
+        "op_rate_per_token_lane0": {
+          "none": 0.0,
+          "append": 0.005126953125,
+          "correct": 0.994171142578125,
+          "pop": 0.0,
+          "merge": 0.000701904296875
+        },
+        "op_histogram_all_lanes": {
+          "none": 392940,
+          "append": 2016,
+          "correct": 390924,
+          "pop": 0,
+          "merge": 552
+        },
+        "occupancy": {
+          "note": "live slots at every token, from the walk's recorded pre-decision liveness channel",
+          "mean_live_slots": 7.536781311035156,
+          "rank": 128
+        },
+        "read_weight_entropy": {
+          "units": "nats over the live-slot weight distribution, per token",
+          "mean": 0.7330493931466721
+        },
+        "per_layer": {
+          "0": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01422119140625,
+              "correct": 0.98577880859375,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 25.52606201171875,
+            "read_weight_entropy_nats": 2.5591815600001526,
+            "identity_rewrite_share": 0.8041607330815429
+          },
+          "1": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01495361328125,
+              "correct": 0.98504638671875,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 25.33905029296875,
+            "read_weight_entropy_nats": 2.656591522559691,
+            "identity_rewrite_share": 0.10186504740070636
+          },
+          "2": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01434326171875,
+              "correct": 0.985595703125,
+              "pop": 0.0,
+              "merge": 6.103515625e-05
+            },
+            "occupancy_mean_live_slots": 22.88311767578125,
+            "read_weight_entropy_nats": 2.576836612554195,
+            "identity_rewrite_share": 0.08719346049046321
+          },
+          "3": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0126953125,
+              "correct": 0.9869384765625,
+              "pop": 0.0,
+              "merge": 0.0003662109375
+            },
+            "occupancy_mean_live_slots": 18.70623779296875,
+            "read_weight_entropy_nats": 2.434186509602467,
+            "identity_rewrite_share": 0.08466295609152752
+          },
+          "4": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0091552734375,
+              "correct": 0.99066162109375,
+              "pop": 0.0,
+              "merge": 0.00018310546875
+            },
+            "occupancy_mean_live_slots": 12.33740234375,
+            "read_weight_entropy_nats": 2.0247901428252475,
+            "identity_rewrite_share": 0.0831741728790586
+          },
+          "5": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0103759765625,
+              "correct": 0.98834228515625,
+              "pop": 0.0,
+              "merge": 0.00128173828125
+            },
+            "occupancy_mean_live_slots": 13.02813720703125,
+            "read_weight_entropy_nats": 2.053413007220933,
+            "identity_rewrite_share": 0.08188723522509726
+          },
+          "6": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00628662109375,
+              "correct": 0.99188232421875,
+              "pop": 0.0,
+              "merge": 0.0018310546875
+            },
+            "occupancy_mean_live_slots": 6.15155029296875,
+            "read_weight_entropy_nats": 0.8345242692717239,
+            "identity_rewrite_share": 0.08122577072180173
+          },
+          "7": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00604248046875,
+              "correct": 0.99078369140625,
+              "pop": 0.0,
+              "merge": 0.003173828125
+            },
+            "occupancy_mean_live_slots": 4.55657958984375,
+            "read_weight_entropy_nats": 0.7151285757596865,
+            "identity_rewrite_share": 0.0804533974003573
+          },
+          "8": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0059814453125,
+              "correct": 0.99017333984375,
+              "pop": 0.0,
+              "merge": 0.00384521484375
+            },
+            "occupancy_mean_live_slots": 4.11956787109375,
+            "read_weight_entropy_nats": 0.5747728221988352,
+            "identity_rewrite_share": 0.07988658078037354
+          },
+          "9": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00494384765625,
+              "correct": 0.99212646484375,
+              "pop": 0.0,
+              "merge": 0.0029296875
+            },
+            "occupancy_mean_live_slots": 4.306640625,
+            "read_weight_entropy_nats": 0.31531817981774013,
+            "identity_rewrite_share": 0.07689941556444171
+          },
+          "10": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00262451171875,
+              "correct": 0.996337890625,
+              "pop": 0.0,
+              "merge": 0.00103759765625
+            },
+            "occupancy_mean_live_slots": 3.66009521484375,
+            "read_weight_entropy_nats": 0.13028810591481055,
+            "identity_rewrite_share": 0.07430776770399412
+          },
+          "11": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0025634765625,
+              "correct": 0.99627685546875,
+              "pop": 0.0,
+              "merge": 0.00115966796875
+            },
+            "occupancy_mean_live_slots": 3.353759765625,
+            "read_weight_entropy_nats": 0.1659827612060189,
+            "identity_rewrite_share": 0.07394474055014397
+          },
+          "12": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00164794921875,
+              "correct": 0.99810791015625,
+              "pop": 0.0,
+              "merge": 0.000244140625
+            },
+            "occupancy_mean_live_slots": 3.06475830078125,
+            "read_weight_entropy_nats": 0.05412321645105881,
+            "identity_rewrite_share": 0.07301412584846817
+          },
+          "13": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0015869140625,
+              "correct": 0.9984130859375,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 3.245849609375,
+            "read_weight_entropy_nats": 0.08433099997352261,
+            "identity_rewrite_share": 0.07121897542486856
+          },
+          "14": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00152587890625,
+              "correct": 0.99847412109375,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 3.12152099609375,
+            "read_weight_entropy_nats": 0.04845548200211294,
+            "identity_rewrite_share": 0.07103123662815576
+          },
+          "15": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00140380859375,
+              "correct": 0.9984130859375,
+              "pop": 0.0,
+              "merge": 0.00018310546875
+            },
+            "occupancy_mean_live_slots": 2.61114501953125,
+            "read_weight_entropy_nats": 0.06471168930843858,
+            "identity_rewrite_share": 0.06969067123120186
+          },
+          "16": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00146484375,
+              "correct": 0.9984130859375,
+              "pop": 0.0,
+              "merge": 0.0001220703125
+            },
+            "occupancy_mean_live_slots": 2.74993896484375,
+            "read_weight_entropy_nats": 0.027057540783604936,
+            "identity_rewrite_share": 0.06901821738598851
+          },
+          "17": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.001708984375,
+              "correct": 0.99810791015625,
+              "pop": 0.0,
+              "merge": 0.00018310546875
+            },
+            "occupancy_mean_live_slots": 3.12591552734375,
+            "read_weight_entropy_nats": 0.03849384548259935,
+            "identity_rewrite_share": 0.06903932000244603
+          },
+          "18": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00177001953125,
+              "correct": 0.99798583984375,
+              "pop": 0.0,
+              "merge": 0.000244140625
+            },
+            "occupancy_mean_live_slots": 3.1402587890625,
+            "read_weight_entropy_nats": 0.04380778120271043,
+            "identity_rewrite_share": 0.06886428964589322
+          },
+          "19": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00152587890625,
+              "correct": 0.99847412109375,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 3.12115478515625,
+            "read_weight_entropy_nats": 0.03027076190078206,
+            "identity_rewrite_share": 0.06779142979399719
+          },
+          "20": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0015869140625,
+              "correct": 0.9984130859375,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 3.24615478515625,
+            "read_weight_entropy_nats": 0.033365974556718386,
+            "identity_rewrite_share": 0.06773444186330847
+          },
+          "21": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0015869140625,
+              "correct": 0.9984130859375,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 3.24578857421875,
+            "read_weight_entropy_nats": 0.04412384946345118,
+            "identity_rewrite_share": 0.06638953417288176
+          },
+          "22": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0015869140625,
+              "correct": 0.9984130859375,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 3.2457275390625,
+            "read_weight_entropy_nats": 0.04728632667440872,
+            "identity_rewrite_share": 0.06590047683090842
+          },
+          "23": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00146484375,
+              "correct": 0.99853515625,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 2.996337890625,
+            "read_weight_entropy_nats": 0.03614389878921993,
+            "identity_rewrite_share": 0.06583129584352078
+          }
+        },
+        "identity_rewrite_share": 0.10534016842148346,
+        "identity_n_correct": 390924
+      },
+      "decay": {
+        "note": "the DECAY gate's per-token mean per layer (the store rows' survival factor per token), from the trained walk's own projections on the calibration probe windows",
+        "mean_decay_per_layer": {
+          "0": 0.9825048446655273,
+          "1": 0.9853127300739288,
+          "2": 0.9824481010437012,
+          "3": 0.9818654209375381,
+          "4": 0.9805372059345245,
+          "5": 0.983054131269455,
+          "6": 0.9737005978822708,
+          "7": 0.972060963511467,
+          "8": 0.969844862818718,
+          "9": 0.9820138216018677,
+          "10": 0.9841193556785583,
+          "11": 0.9865425080060959,
+          "12": 0.9794048368930817,
+          "13": 0.9918635338544846,
+          "14": 0.9835574179887772,
+          "15": 0.9876159876585007,
+          "16": 0.9834596216678619,
+          "17": 0.9791817218065262,
+          "18": 0.981152206659317,
+          "19": 0.9788346737623215,
+          "20": 0.9804702550172806,
+          "21": 0.9878503680229187,
+          "22": 0.9861009865999222,
+          "23": 0.9797913432121277
+        }
+      }
+    },
+    {
+      "step": 10,
+      "bytes": 1190731,
+      "train_loss": 3.3476328551769257,
+      "eval_nll": 3.4279115540640697,
+      "eval_windows": 7,
+      "eval_targets": 14336,
+      "diagnostics": {
+        "probe": {
+          "split": "calibration",
+          "windows": 4,
+          "mixers": 24,
+          "regime": "eval, bf16 autocast, the persistent walk the arm trains on (collect=True)",
+          "probe_wall_seconds": 4.7
+        },
+        "key_collapse_watch": {
+          "span_key_std_min": 0.25836339592933655,
+          "span_key_std_mean": 0.43754893727600574,
+          "mean_pairwise_key_cos": 0.3251005607501914,
+          "per_layer_span_key_std": {
+            "0": 0.9283282160758972,
+            "1": 0.8857592642307281,
+            "2": 0.7853298485279083,
+            "3": 0.6755661070346832,
+            "4": 0.5432175099849701,
+            "5": 0.494520366191864,
+            "6": 0.45183972269296646,
+            "7": 0.4335223510861397,
+            "8": 0.4193345606327057,
+            "9": 0.3975650817155838,
+            "10": 0.37684316188097,
+            "11": 0.36413656920194626,
+            "12": 0.3516937643289566,
+            "13": 0.3399394154548645,
+            "14": 0.33670298010110855,
+            "15": 0.32851310074329376,
+            "16": 0.32024598866701126,
+            "17": 0.31450123339891434,
+            "18": 0.30231667309999466,
+            "19": 0.3005906119942665,
+            "20": 0.29550642520189285,
+            "21": 0.2902032881975174,
+            "22": 0.2832939103245735,
+            "23": 0.281704343855381
+          },
+          "guard_floor": 0.05,
+          "within_guard": true
+        },
+        "op_rate_per_token_lane0": {
+          "none": 0.0,
+          "append": 0.004163106282552083,
+          "correct": 0.9952367146809896,
+          "pop": 0.0,
+          "merge": 0.0006001790364583334
+        },
+        "op_histogram_all_lanes": {
+          "none": 392980,
+          "append": 1637,
+          "correct": 391343,
+          "pop": 0,
+          "merge": 472
+        },
+        "occupancy": {
+          "note": "live slots at every token, from the walk's recorded pre-decision liveness channel",
+          "mean_live_slots": 6.292116800944011,
+          "rank": 128
+        },
+        "read_weight_entropy": {
+          "units": "nats over the live-slot weight distribution, per token",
+          "mean": 0.5198449964458091
+        },
+        "per_layer": {
+          "0": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0145263671875,
+              "correct": 0.9854736328125,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 26.13787841796875,
+            "read_weight_entropy_nats": 2.58950836971788,
+            "identity_rewrite_share": 0.8139477269912052
+          },
+          "1": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01458740234375,
+              "correct": 0.98541259765625,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 24.811767578125,
+            "read_weight_entropy_nats": 2.6513142327186126,
+            "identity_rewrite_share": 0.10226076184577268
+          },
+          "2": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0135498046875,
+              "correct": 0.986328125,
+              "pop": 0.0,
+              "merge": 0.0001220703125
+            },
+            "occupancy_mean_live_slots": 20.523681640625,
+            "read_weight_entropy_nats": 2.49186225745756,
+            "identity_rewrite_share": 0.086509900990099
+          },
+          "3": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0091552734375,
+              "correct": 0.99017333984375,
+              "pop": 0.0,
+              "merge": 0.00067138671875
+            },
+            "occupancy_mean_live_slots": 11.81207275390625,
+            "read_weight_entropy_nats": 1.9503550117168418,
+            "identity_rewrite_share": 0.08444800591752451
+          },
+          "4": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.006103515625,
+              "correct": 0.99139404296875,
+              "pop": 0.0,
+              "merge": 0.00250244140625
+            },
+            "occupancy_mean_live_slots": 5.34100341796875,
+            "read_weight_entropy_nats": 0.8299290033218392,
+            "identity_rewrite_share": 0.08391307024564428
+          },
+          "5": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0057373046875,
+              "correct": 0.99102783203125,
+              "pop": 0.0,
+              "merge": 0.00323486328125
+            },
+            "occupancy_mean_live_slots": 4.3338623046875,
+            "read_weight_entropy_nats": 0.5215900236650625,
+            "identity_rewrite_share": 0.08154215680236497
+          },
+          "6": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0042724609375,
+              "correct": 0.99346923828125,
+              "pop": 0.0,
+              "merge": 0.00225830078125
+            },
+            "occupancy_mean_live_slots": 4.009521484375,
+            "read_weight_entropy_nats": 0.28141587503840415,
+            "identity_rewrite_share": 0.07986729741352828
+          },
+          "7": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00494384765625,
+              "correct": 0.99200439453125,
+              "pop": 0.0,
+              "merge": 0.0030517578125
+            },
+            "occupancy_mean_live_slots": 3.76312255859375,
+            "read_weight_entropy_nats": 0.32584952842216697,
+            "identity_rewrite_share": 0.07943148957115609
+          },
+          "8": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00201416015625,
+              "correct": 0.99755859375,
+              "pop": 0.0,
+              "merge": 0.00042724609375
+            },
+            "occupancy_mean_live_slots": 3.32110595703125,
+            "read_weight_entropy_nats": 0.05408961562104032,
+            "identity_rewrite_share": 0.07758198727361723
+          },
+          "9": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00262451171875,
+              "correct": 0.9964599609375,
+              "pop": 0.0,
+              "merge": 0.00091552734375
+            },
+            "occupancy_mean_live_slots": 3.37481689453125,
+            "read_weight_entropy_nats": 0.10135641689701201,
+            "identity_rewrite_share": 0.07644248438074237
+          },
+          "10": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00213623046875,
+              "correct": 0.99737548828125,
+              "pop": 0.0,
+              "merge": 0.00048828125
+            },
+            "occupancy_mean_live_slots": 3.49920654296875,
+            "read_weight_entropy_nats": 0.1028220563850347,
+            "identity_rewrite_share": 0.0753931827917508
+          },
+          "11": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00201416015625,
+              "correct": 0.99755859375,
+              "pop": 0.0,
+              "merge": 0.00042724609375
+            },
+            "occupancy_mean_live_slots": 3.275634765625,
+            "read_weight_entropy_nats": 0.09401365204677387,
+            "identity_rewrite_share": 0.07495105237395987
+          },
+          "12": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.001708984375,
+              "correct": 0.998046875,
+              "pop": 0.0,
+              "merge": 0.000244140625
+            },
+            "occupancy_mean_live_slots": 3.0938720703125,
+            "read_weight_entropy_nats": 0.04834777876756572,
+            "identity_rewrite_share": 0.07430283757338552
+          },
+          "13": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0015869140625,
+              "correct": 0.99835205078125,
+              "pop": 0.0,
+              "merge": 6.103515625e-05
+            },
+            "occupancy_mean_live_slots": 3.1224365234375,
+            "read_weight_entropy_nats": 0.08065955325575298,
+            "identity_rewrite_share": 0.07397444519166106
+          },
+          "14": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00152587890625,
+              "correct": 0.99847412109375,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 3.12152099609375,
+            "read_weight_entropy_nats": 0.05618990090747082,
+            "identity_rewrite_share": 0.0746378140473134
+          },
+          "15": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0013427734375,
+              "correct": 0.9986572265625,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 2.7471923828125,
+            "read_weight_entropy_nats": 0.056562933854260096,
+            "identity_rewrite_share": 0.07315731573157316
+          },
+          "16": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0013427734375,
+              "correct": 0.9986572265625,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 2.74725341796875,
+            "read_weight_entropy_nats": 0.026992489666139784,
+            "identity_rewrite_share": 0.07285172961740619
+          },
+          "17": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00146484375,
+              "correct": 0.99853515625,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 2.99688720703125,
+            "read_weight_entropy_nats": 0.020270751753724607,
+            "identity_rewrite_share": 0.07322738386308068
+          },
+          "18": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00152587890625,
+              "correct": 0.99847412109375,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 3.12158203125,
+            "read_weight_entropy_nats": 0.027648779259231187,
+            "identity_rewrite_share": 0.0718259062289871
+          },
+          "19": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00146484375,
+              "correct": 0.99853515625,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 2.996826171875,
+            "read_weight_entropy_nats": 0.027188415462119322,
+            "identity_rewrite_share": 0.07279951100244499
+          },
+          "20": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0015869140625,
+              "correct": 0.9984130859375,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 3.2462158203125,
+            "read_weight_entropy_nats": 0.025253780655704827,
+            "identity_rewrite_share": 0.07121897542486856
+          },
+          "21": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00146484375,
+              "correct": 0.99853515625,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 2.99676513671875,
+            "read_weight_entropy_nats": 0.034960366366954335,
+            "identity_rewrite_share": 0.07084352078239609
+          },
+          "22": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0015869140625,
+              "correct": 0.9984130859375,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 3.24615478515625,
+            "read_weight_entropy_nats": 0.04531144932764125,
+            "identity_rewrite_share": 0.07103557892162857
+          },
+          "23": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00164794921875,
+              "correct": 0.99835205078125,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 3.37042236328125,
+            "read_weight_entropy_nats": 0.03278767241462592,
+            "identity_rewrite_share": 0.07048969859998777
+          }
+        },
+        "identity_rewrite_share": 0.10745049738975783,
+        "identity_n_correct": 391343
+      },
+      "decay": {
+        "note": "the DECAY gate's per-token mean per layer (the store rows' survival factor per token), from the trained walk's own projections on the calibration probe windows",
+        "mean_decay_per_layer": {
+          "0": 0.9829055517911911,
+          "1": 0.9849968403577805,
+          "2": 0.9833524376153946,
+          "3": 0.9832773953676224,
+          "4": 0.976499930024147,
+          "5": 0.98158198595047,
+          "6": 0.9776718616485596,
+          "7": 0.973676323890686,
+          "8": 0.9702141284942627,
+          "9": 0.9832938462495804,
+          "10": 0.9853123724460602,
+          "11": 0.9911883473396301,
+          "12": 0.9784900099039078,
+          "13": 0.9917586892843246,
+          "14": 0.9862508475780487,
+          "15": 0.987712025642395,
+          "16": 0.9856250286102295,
+          "17": 0.9725206941366196,
+          "18": 0.9756695926189423,
+          "19": 0.9851901084184647,
+          "20": 0.9807680249214172,
+          "21": 0.9884533137083054,
+          "22": 0.9889260530471802,
+          "23": 0.9813038557767868
+        }
+      }
+    },
+    {
+      "step": 20,
+      "bytes": 2367970,
+      "train_loss": 3.9066820181001765,
+      "eval_nll": 3.0667509010859897,
+      "eval_windows": 7,
+      "eval_targets": 14336,
+      "diagnostics": {
+        "probe": {
+          "split": "calibration",
+          "windows": 4,
+          "mixers": 24,
+          "regime": "eval, bf16 autocast, the persistent walk the arm trains on (collect=True)",
+          "probe_wall_seconds": 4.7
+        },
+        "key_collapse_watch": {
+          "span_key_std_min": 0.1792207956314087,
+          "span_key_std_mean": 0.41887935452784103,
+          "mean_pairwise_key_cos": 0.3210110907287647,
+          "per_layer_span_key_std": {
+            "0": 0.9382778108119965,
+            "1": 0.902937576174736,
+            "2": 0.7903716415166855,
+            "3": 0.6752952486276627,
+            "4": 0.5413258299231529,
+            "5": 0.4866723120212555,
+            "6": 0.46014323830604553,
+            "7": 0.43163684010505676,
+            "8": 0.4099142327904701,
+            "9": 0.38494809716939926,
+            "10": 0.36081624031066895,
+            "11": 0.34918858855962753,
+            "12": 0.33753983676433563,
+            "13": 0.3233700543642044,
+            "14": 0.31526805460453033,
+            "15": 0.3063020035624504,
+            "16": 0.29439011961221695,
+            "17": 0.2784607522189617,
+            "18": 0.2699746675789356,
+            "19": 0.2628375105559826,
+            "20": 0.24997222051024437,
+            "21": 0.23952031135559082,
+            "22": 0.2264479249715805,
+            "23": 0.21749339625239372
+          },
+          "guard_floor": 0.05,
+          "within_guard": true
+        },
+        "op_rate_per_token_lane0": {
+          "none": 0.0,
+          "append": 0.00424957275390625,
+          "correct": 0.9947128295898438,
+          "pop": 0.0,
+          "merge": 0.00103759765625
+        },
+        "op_histogram_all_lanes": {
+          "none": 392808,
+          "append": 1671,
+          "correct": 391137,
+          "pop": 0,
+          "merge": 816
+        },
+        "occupancy": {
+          "note": "live slots at every token, from the walk's recorded pre-decision liveness channel",
+          "mean_live_slots": 5.755917867024739,
+          "rank": 128
+        },
+        "read_weight_entropy": {
+          "units": "nats over the live-slot weight distribution, per token",
+          "mean": 0.531528439366105
+        },
+        "per_layer": {
+          "0": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01513671875,
+              "correct": 0.98486328125,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 26.66290283203125,
+            "read_weight_entropy_nats": 2.6311892093421774,
+            "identity_rewrite_share": 0.838621715418939
+          },
+          "1": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0128173828125,
+              "correct": 0.9869384765625,
+              "pop": 0.0,
+              "merge": 0.000244140625
+            },
+            "occupancy_mean_live_slots": 21.1109619140625,
+            "read_weight_entropy_nats": 2.501028980577522,
+            "identity_rewrite_share": 0.10068027210884353
+          },
+          "2": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01202392578125,
+              "correct": 0.98760986328125,
+              "pop": 0.0,
+              "merge": 0.0003662109375
+            },
+            "occupancy_mean_live_slots": 17.85784912109375,
+            "read_weight_entropy_nats": 2.2902431888701456,
+            "identity_rewrite_share": 0.08615042333601138
+          },
+          "3": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0074462890625,
+              "correct": 0.9915771484375,
+              "pop": 0.0,
+              "merge": 0.0009765625
+            },
+            "occupancy_mean_live_slots": 9.3179931640625,
+            "read_weight_entropy_nats": 1.7169048121107109,
+            "identity_rewrite_share": 0.0831589314292749
+          },
+          "4": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00506591796875,
+              "correct": 0.991943359375,
+              "pop": 0.0,
+              "merge": 0.00299072265625
+            },
+            "occupancy_mean_live_slots": 3.63140869140625,
+            "read_weight_entropy_nats": 0.4580206151234562,
+            "identity_rewrite_share": 0.0823898597095742
+          },
+          "5": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0040283203125,
+              "correct": 0.9940185546875,
+              "pop": 0.0,
+              "merge": 0.001953125
+            },
+            "occupancy_mean_live_slots": 3.50616455078125,
+            "read_weight_entropy_nats": 0.2782881084045201,
+            "identity_rewrite_share": 0.07970035613410291
+          },
+          "6": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00628662109375,
+              "correct": 0.9893798828125,
+              "pop": 0.0,
+              "merge": 0.00433349609375
+            },
+            "occupancy_mean_live_slots": 3.597900390625,
+            "read_weight_entropy_nats": 0.4254149160678642,
+            "identity_rewrite_share": 0.07859346082665021
+          },
+          "7": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0050048828125,
+              "correct": 0.992431640625,
+              "pop": 0.0,
+              "merge": 0.0025634765625
+            },
+            "occupancy_mean_live_slots": 4.78765869140625,
+            "read_weight_entropy_nats": 0.7523247924267984,
+            "identity_rewrite_share": 0.07706027060270602
+          },
+          "8": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.001953125,
+              "correct": 0.9974365234375,
+              "pop": 0.0,
+              "merge": 0.0006103515625
+            },
+            "occupancy_mean_live_slots": 2.98199462890625,
+            "read_weight_entropy_nats": 0.05977800850991686,
+            "identity_rewrite_share": 0.07520499326887774
+          },
+          "9": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0059814453125,
+              "correct": 0.9898681640625,
+              "pop": 0.0,
+              "merge": 0.004150390625
+            },
+            "occupancy_mean_live_slots": 3.58026123046875,
+            "read_weight_entropy_nats": 0.4183698466887518,
+            "identity_rewrite_share": 0.07627327660623998
+          },
+          "10": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00213623046875,
+              "correct": 0.9971923828125,
+              "pop": 0.0,
+              "merge": 0.00067138671875
+            },
+            "occupancy_mean_live_slots": 3.09869384765625,
+            "read_weight_entropy_nats": 0.12687389222831336,
+            "identity_rewrite_share": 0.07583547557840617
+          },
+          "11": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0035400390625,
+              "correct": 0.994140625,
+              "pop": 0.0,
+              "merge": 0.0023193359375
+            },
+            "occupancy_mean_live_slots": 2.88616943359375,
+            "read_weight_entropy_nats": 0.17663508621610893,
+            "identity_rewrite_share": 0.07410363457760315
+          },
+          "12": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00286865234375,
+              "correct": 0.99591064453125,
+              "pop": 0.0,
+              "merge": 0.001220703125
+            },
+            "occupancy_mean_live_slots": 3.30584716796875,
+            "read_weight_entropy_nats": 0.10807395249270321,
+            "identity_rewrite_share": 0.07348164491021635
+          },
+          "13": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0028076171875,
+              "correct": 0.99578857421875,
+              "pop": 0.0,
+              "merge": 0.00140380859375
+            },
+            "occupancy_mean_live_slots": 3.09161376953125,
+            "read_weight_entropy_nats": 0.18403958691931027,
+            "identity_rewrite_share": 0.07471651854121973
+          },
+          "14": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0015869140625,
+              "correct": 0.9984130859375,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 3.24639892578125,
+            "read_weight_entropy_nats": 0.2078757274424558,
+            "identity_rewrite_share": 0.07396992297346863
+          },
+          "15": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00213623046875,
+              "correct": 0.9969482421875,
+              "pop": 0.0,
+              "merge": 0.00091552734375
+            },
+            "occupancy_mean_live_slots": 2.748046875,
+            "read_weight_entropy_nats": 0.12565043104178275,
+            "identity_rewrite_share": 0.07273172523570466
+          },
+          "16": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00128173828125,
+              "correct": 0.99859619140625,
+              "pop": 0.0,
+              "merge": 0.0001220703125
+            },
+            "occupancy_mean_live_slots": 2.55908203125,
+            "read_weight_entropy_nats": 0.044732935206157495,
+            "identity_rewrite_share": 0.07365075484383596
+          },
+          "17": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00140380859375,
+              "correct": 0.99859619140625,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 2.8721923828125,
+            "read_weight_entropy_nats": 0.057835079019804614,
+            "identity_rewrite_share": 0.07352851292708269
+          },
+          "18": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00140380859375,
+              "correct": 0.99859619140625,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 2.8719482421875,
+            "read_weight_entropy_nats": 0.04198654046219386,
+            "identity_rewrite_share": 0.07255057759305666
+          },
+          "19": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00140380859375,
+              "correct": 0.99859619140625,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 2.8720703125,
+            "read_weight_entropy_nats": 0.03439991545199649,
+            "identity_rewrite_share": 0.07468981113623861
+          },
+          "20": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00146484375,
+              "correct": 0.99853515625,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 2.99676513671875,
+            "read_weight_entropy_nats": 0.02670509569459737,
+            "identity_rewrite_share": 0.07426650366748166
+          },
+          "21": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0013427734375,
+              "correct": 0.99859619140625,
+              "pop": 0.0,
+              "merge": 6.103515625e-05
+            },
+            "occupancy_mean_live_slots": 2.68939208984375,
+            "read_weight_entropy_nats": 0.02782821049618034,
+            "identity_rewrite_share": 0.07426196442760223
+          },
+          "22": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00140380859375,
+              "correct": 0.99859619140625,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 2.8720703125,
+            "read_weight_entropy_nats": 0.027229277168650364,
+            "identity_rewrite_share": 0.07426196442760223
+          },
+          "23": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00146484375,
+              "correct": 0.99853515625,
+              "pop": 0.0,
+              "merge": 0.0
+            },
+            "occupancy_mean_live_slots": 2.99664306640625,
+            "read_weight_entropy_nats": 0.03525433682440314,
+            "identity_rewrite_share": 0.07389975550122249
+          }
+        },
+        "identity_rewrite_share": 0.10857576756993075,
+        "identity_n_correct": 391137
+      },
+      "decay": {
+        "note": "the DECAY gate's per-token mean per layer (the store rows' survival factor per token), from the trained walk's own projections on the calibration probe windows",
+        "mean_decay_per_layer": {
+          "0": 0.9824653118848801,
+          "1": 0.9801272302865982,
+          "2": 0.9726935178041458,
+          "3": 0.9759878814220428,
+          "4": 0.9560983777046204,
+          "5": 0.9756379276514053,
+          "6": 0.9753029644489288,
+          "7": 0.9769541919231415,
+          "8": 0.9693300575017929,
+          "9": 0.9836126863956451,
+          "10": 0.9874207824468613,
+          "11": 0.9897170513868332,
+          "12": 0.9810842871665955,
+          "13": 0.9886667430400848,
+          "14": 0.9901170581579208,
+          "15": 0.9859411269426346,
+          "16": 0.9837119877338409,
+          "17": 0.9791950732469559,
+          "18": 0.9754347950220108,
+          "19": 0.9824537634849548,
+          "20": 0.9738032072782516,
+          "21": 0.978955939412117,
+          "22": 0.9798923134803772,
+          "23": 0.9776571094989777
+        }
+      }
+    },
+    {
+      "step": 40,
+      "bytes": 4542086,
+      "train_loss": 2.883944901802051,
+      "eval_nll": 2.4529331071036204,
+      "eval_windows": 7,
+      "eval_targets": 14336,
+      "diagnostics": {
+        "probe": {
+          "split": "calibration",
+          "windows": 4,
+          "mixers": 24,
+          "regime": "eval, bf16 autocast, the persistent walk the arm trains on (collect=True)",
+          "probe_wall_seconds": 4.7
+        },
+        "key_collapse_watch": {
+          "span_key_std_min": 0.5100619792938232,
+          "span_key_std_mean": 0.8450305641939243,
+          "mean_pairwise_key_cos": 0.2576439778980178,
+          "per_layer_span_key_std": {
+            "0": 0.9974564760923386,
+            "1": 1.095180183649063,
+            "2": 1.068308174610138,
+            "3": 1.0809318721294403,
+            "4": 1.0067829191684723,
+            "5": 0.9805885553359985,
+            "6": 0.9324873238801956,
+            "7": 0.9537795186042786,
+            "8": 0.9172479212284088,
+            "9": 0.8605863451957703,
+            "10": 0.88624407351017,
+            "11": 0.8745335787534714,
+            "12": 0.8586036413908005,
+            "13": 0.8242164105176926,
+            "14": 0.7710576951503754,
+            "15": 0.7952217608690262,
+            "16": 0.7649389356374741,
+            "17": 0.7302274703979492,
+            "18": 0.707360252737999,
+            "19": 0.644683763384819,
+            "20": 0.6606296449899673,
+            "21": 0.6473779231309891,
+            "22": 0.630256786942482,
+            "23": 0.5920323133468628
+          },
+          "guard_floor": 0.05,
+          "within_guard": true
+        },
+        "op_rate_per_token_lane0": {
+          "none": 0.0,
+          "append": 0.008745829264322916,
+          "correct": 0.9867604573567709,
+          "pop": 0.0,
+          "merge": 0.00449371337890625
+        },
+        "op_histogram_all_lanes": {
+          "none": 391449,
+          "append": 3439,
+          "correct": 388010,
+          "pop": 0,
+          "merge": 3534
+        },
+        "occupancy": {
+          "note": "live slots at every token, from the walk's recorded pre-decision liveness channel",
+          "mean_live_slots": 7.300010681152344,
+          "rank": 128
+        },
+        "read_weight_entropy": {
+          "units": "nats over the live-slot weight distribution, per token",
+          "mean": 0.9558034816911838
+        },
+        "per_layer": {
+          "0": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0166015625,
+              "correct": 0.98236083984375,
+              "pop": 0.0,
+              "merge": 0.00103759765625
+            },
+            "occupancy_mean_live_slots": 27.2493896484375,
+            "read_weight_entropy_nats": 2.632488509766579,
+            "identity_rewrite_share": 0.8387076731904318
+          },
+          "1": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01470947265625,
+              "correct": 0.984619140625,
+              "pop": 0.0,
+              "merge": 0.00067138671875
+            },
+            "occupancy_mean_live_slots": 23.67620849609375,
+            "read_weight_entropy_nats": 2.2930741824926724,
+            "identity_rewrite_share": 0.10004959087527895
+          },
+          "2": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0152587890625,
+              "correct": 0.98321533203125,
+              "pop": 0.0,
+              "merge": 0.00152587890625
+            },
+            "occupancy_mean_live_slots": 23.17083740234375,
+            "read_weight_entropy_nats": 2.0560263077922722,
+            "identity_rewrite_share": 0.09063256564653299
+          },
+          "3": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.014404296875,
+              "correct": 0.98199462890625,
+              "pop": 0.0,
+              "merge": 0.00360107421875
+            },
+            "occupancy_mean_live_slots": 18.15240478515625,
+            "read_weight_entropy_nats": 2.1148195625457986,
+            "identity_rewrite_share": 0.08769967058238548
+          },
+          "4": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01312255859375,
+              "correct": 0.9820556640625,
+              "pop": 0.0,
+              "merge": 0.00482177734375
+            },
+            "occupancy_mean_live_slots": 13.373291015625,
+            "read_weight_entropy_nats": 1.755623135848574,
+            "identity_rewrite_share": 0.08539465506525792
+          },
+          "5": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01116943359375,
+              "correct": 0.98394775390625,
+              "pop": 0.0,
+              "merge": 0.0048828125
+            },
+            "occupancy_mean_live_slots": 10.4932861328125,
+            "read_weight_entropy_nats": 1.6762401616218094,
+            "identity_rewrite_share": 0.08150859127845667
+          },
+          "6": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01312255859375,
+              "correct": 0.9776611328125,
+              "pop": 0.0,
+              "merge": 0.00921630859375
+            },
+            "occupancy_mean_live_slots": 6.1683349609375,
+            "read_weight_entropy_nats": 1.031195912177119,
+            "identity_rewrite_share": 0.08178299413160195
+          },
+          "7": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01239013671875,
+              "correct": 0.979248046875,
+              "pop": 0.0,
+              "merge": 0.00836181640625
+            },
+            "occupancy_mean_live_slots": 7.1883544921875,
+            "read_weight_entropy_nats": 1.368766303870756,
+            "identity_rewrite_share": 0.08214909000249314
+          },
+          "8": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01239013671875,
+              "correct": 0.9788818359375,
+              "pop": 0.0,
+              "merge": 0.00872802734375
+            },
+            "occupancy_mean_live_slots": 6.55010986328125,
+            "read_weight_entropy_nats": 1.1767513124198523,
+            "identity_rewrite_share": 0.07981045018082056
+          },
+          "9": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01116943359375,
+              "correct": 0.9803466796875,
+              "pop": 0.0,
+              "merge": 0.00848388671875
+            },
+            "occupancy_mean_live_slots": 4.24267578125,
+            "read_weight_entropy_nats": 0.8955766596791799,
+            "identity_rewrite_share": 0.07819698667662807
+          },
+          "10": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.009033203125,
+              "correct": 0.98388671875,
+              "pop": 0.0,
+              "merge": 0.007080078125
+            },
+            "occupancy_mean_live_slots": 3.418701171875,
+            "read_weight_entropy_nats": 0.8075485937643121,
+            "identity_rewrite_share": 0.07779156327543424
+          },
+          "11": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01092529296875,
+              "correct": 0.9815673828125,
+              "pop": 0.0,
+              "merge": 0.00750732421875
+            },
+            "occupancy_mean_live_slots": 5.7581787109375,
+            "read_weight_entropy_nats": 1.2796333883236137,
+            "identity_rewrite_share": 0.07648302449944037
+          },
+          "12": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0118408203125,
+              "correct": 0.97869873046875,
+              "pop": 0.0,
+              "merge": 0.00946044921875
+            },
+            "occupancy_mean_live_slots": 3.90289306640625,
+            "read_weight_entropy_nats": 0.9730245779360802,
+            "identity_rewrite_share": 0.07689429373246025
+          },
+          "13": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00665283203125,
+              "correct": 0.98828125,
+              "pop": 0.0,
+              "merge": 0.00506591796875
+            },
+            "occupancy_mean_live_slots": 3.18231201171875,
+            "read_weight_entropy_nats": 0.701971414675058,
+            "identity_rewrite_share": 0.0762104743083004
+          },
+          "14": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0045166015625,
+              "correct": 0.99212646484375,
+              "pop": 0.0,
+              "merge": 0.00335693359375
+            },
+            "occupancy_mean_live_slots": 1.96563720703125,
+            "read_weight_entropy_nats": 0.2532831442664761,
+            "identity_rewrite_share": 0.07517686865579822
+          },
+          "15": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0067138671875,
+              "correct": 0.98773193359375,
+              "pop": 0.0,
+              "merge": 0.00555419921875
+            },
+            "occupancy_mean_live_slots": 2.457275390625,
+            "read_weight_entropy_nats": 0.5311454321968887,
+            "identity_rewrite_share": 0.07390471482419823
+          },
+          "16": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0062255859375,
+              "correct": 0.98883056640625,
+              "pop": 0.0,
+              "merge": 0.00494384765625
+            },
+            "occupancy_mean_live_slots": 2.16558837890625,
+            "read_weight_entropy_nats": 0.31705427146505366,
+            "identity_rewrite_share": 0.07314363310906734
+          },
+          "17": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00665283203125,
+              "correct": 0.9879150390625,
+              "pop": 0.0,
+              "merge": 0.00543212890625
+            },
+            "occupancy_mean_live_slots": 2.044189453125,
+            "read_weight_entropy_nats": 0.32922720338404904,
+            "identity_rewrite_share": 0.07284072655381194
+          },
+          "18": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0054931640625,
+              "correct": 0.989990234375,
+              "pop": 0.0,
+              "merge": 0.0045166015625
+            },
+            "occupancy_mean_live_slots": 1.75592041015625,
+            "read_weight_entropy_nats": 0.41601785381188555,
+            "identity_rewrite_share": 0.0717632552404439
+          },
+          "19": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0008544921875,
+              "correct": 0.99908447265625,
+              "pop": 0.0,
+              "merge": 6.103515625e-05
+            },
+            "occupancy_mean_live_slots": 1.7333984375,
+            "read_weight_entropy_nats": 0.021915612362860236,
+            "identity_rewrite_share": 0.07104893396053516
+          },
+          "20": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.00262451171875,
+              "correct": 0.99554443359375,
+              "pop": 0.0,
+              "merge": 0.0018310546875
+            },
+            "occupancy_mean_live_slots": 1.5750732421875,
+            "read_weight_entropy_nats": 0.18712578322984091,
+            "identity_rewrite_share": 0.0707498007479615
+          },
+          "21": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0009765625,
+              "correct": 0.9986572265625,
+              "pop": 0.0,
+              "merge": 0.0003662109375
+            },
+            "occupancy_mean_live_slots": 1.35400390625,
+            "read_weight_entropy_nats": 0.02314801302314911,
+            "identity_rewrite_share": 0.07071262681823738
+          },
+          "22": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.001953125,
+              "correct": 0.9969482421875,
+              "pop": 0.0,
+              "merge": 0.0010986328125
+            },
+            "occupancy_mean_live_slots": 1.82244873046875,
+            "read_weight_entropy_nats": 0.08160164231606443,
+            "identity_rewrite_share": 0.06991551365250398
+          },
+          "23": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0010986328125,
+              "correct": 0.9986572265625,
+              "pop": 0.0,
+              "merge": 0.000244140625
+            },
+            "occupancy_mean_live_slots": 1.79974365234375,
+            "read_weight_entropy_nats": 0.016024581618465095,
+            "identity_rewrite_share": 0.06930693069306931
+          }
+        },
+        "identity_rewrite_share": 0.10948944614829514,
+        "identity_n_correct": 388010
+      },
+      "decay": {
+        "note": "the DECAY gate's per-token mean per layer (the store rows' survival factor per token), from the trained walk's own projections on the calibration probe windows",
+        "mean_decay_per_layer": {
+          "0": 0.9780649840831757,
+          "1": 0.9491241574287415,
+          "2": 0.9259713590145111,
+          "3": 0.9564617276191711,
+          "4": 0.9332551807165146,
+          "5": 0.9484246224164963,
+          "6": 0.9503873884677887,
+          "7": 0.9270964562892914,
+          "8": 0.9396157711744308,
+          "9": 0.9692579060792923,
+          "10": 0.9757551848888397,
+          "11": 0.9781474322080612,
+          "12": 0.959428459405899,
+          "13": 0.9750960618257523,
+          "14": 0.9813633859157562,
+          "15": 0.9681559503078461,
+          "16": 0.9583715498447418,
+          "17": 0.9627441018819809,
+          "18": 0.9614683538675308,
+          "19": 0.9757943749427795,
+          "20": 0.9626026451587677,
+          "21": 0.9584611505270004,
+          "22": 0.9682803153991699,
+          "23": 0.9451777189970016
+        }
+      }
+    },
+    {
+      "step": 60,
+      "bytes": 6714964,
+      "train_loss": 2.668644303013563,
+      "eval_nll": 2.150275298527309,
+      "eval_windows": 7,
+      "eval_targets": 14336,
+      "diagnostics": {
+        "probe": {
+          "split": "calibration",
+          "windows": 4,
+          "mixers": 24,
+          "regime": "eval, bf16 autocast, the persistent walk the arm trains on (collect=True)",
+          "probe_wall_seconds": 4.7
+        },
+        "key_collapse_watch": {
+          "span_key_std_min": 0.7485523223876953,
+          "span_key_std_mean": 1.1545616313815117,
+          "mean_pairwise_key_cos": 0.14391429990064353,
+          "per_layer_span_key_std": {
+            "0": 1.108670175075531,
+            "1": 1.2681921124458313,
+            "2": 1.2507750391960144,
+            "3": 1.2990159094333649,
+            "4": 1.1913225948810577,
+            "5": 1.321811467409134,
+            "6": 1.2900068163871765,
+            "7": 1.3000847697257996,
+            "8": 1.300220549106598,
+            "9": 1.2764307260513306,
+            "10": 1.1810756027698517,
+            "11": 1.1956208646297455,
+            "12": 1.260372906923294,
+            "13": 1.1495624780654907,
+            "14": 1.2116295397281647,
+            "15": 1.2577113509178162,
+            "16": 1.1309436559677124,
+            "17": 1.1175624132156372,
+            "18": 1.0812137871980667,
+            "19": 0.9761590361595154,
+            "20": 0.9722619503736496,
+            "21": 0.8932308405637741,
+            "22": 0.8824240863323212,
+            "23": 0.7931804805994034
+          },
+          "guard_floor": 0.05,
+          "within_guard": true
+        },
+        "op_rate_per_token_lane0": {
+          "none": 0.0,
+          "append": 0.015370686848958334,
+          "correct": 0.9777043660481771,
+          "pop": 0.0,
+          "merge": 0.006924947102864583
+        },
+        "op_histogram_all_lanes": {
+          "none": 390493,
+          "append": 6044,
+          "correct": 384449,
+          "pop": 0,
+          "merge": 5446
+        },
+        "occupancy": {
+          "note": "live slots at every token, from the walk's recorded pre-decision liveness channel",
+          "mean_live_slots": 14.759348551432291,
+          "rank": 128
+        },
+        "read_weight_entropy": {
+          "units": "nats over the live-slot weight distribution, per token",
+          "mean": 1.678284784226013
+        },
+        "per_layer": {
+          "0": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.017822265625,
+              "correct": 0.97967529296875,
+              "pop": 0.0,
+              "merge": 0.00250244140625
+            },
+            "occupancy_mean_live_slots": 26.68133544921875,
+            "read_weight_entropy_nats": 2.610924404425684,
+            "identity_rewrite_share": 0.8125350445455112
+          },
+          "1": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01763916015625,
+              "correct": 0.97760009765625,
+              "pop": 0.0,
+              "merge": 0.0047607421875
+            },
+            "occupancy_mean_live_slots": 22.48284912109375,
+            "read_weight_entropy_nats": 1.9197537972394816,
+            "identity_rewrite_share": 0.08434788037709934
+          },
+          "2": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0169677734375,
+              "correct": 0.97930908203125,
+              "pop": 0.0,
+              "merge": 0.00372314453125
+            },
+            "occupancy_mean_live_slots": 22.9925537109375,
+            "read_weight_entropy_nats": 1.6994380233459025,
+            "identity_rewrite_share": 0.0839513867248364
+          },
+          "3": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0181884765625,
+              "correct": 0.97467041015625,
+              "pop": 0.0,
+              "merge": 0.00714111328125
+            },
+            "occupancy_mean_live_slots": 20.4893798828125,
+            "read_weight_entropy_nats": 2.1281253756927057,
+            "identity_rewrite_share": 0.0802179222243096
+          },
+          "4": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0172119140625,
+              "correct": 0.97637939453125,
+              "pop": 0.0,
+              "merge": 0.00640869140625
+            },
+            "occupancy_mean_live_slots": 19.14080810546875,
+            "read_weight_entropy_nats": 1.7223153237779372,
+            "identity_rewrite_share": 0.08032756141776583
+          },
+          "5": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0194091796875,
+              "correct": 0.97174072265625,
+              "pop": 0.0,
+              "merge": 0.00885009765625
+            },
+            "occupancy_mean_live_slots": 19.6807861328125,
+            "read_weight_entropy_nats": 2.001741782944553,
+            "identity_rewrite_share": 0.07775893474028013
+          },
+          "6": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0155029296875,
+              "correct": 0.98150634765625,
+              "pop": 0.0,
+              "merge": 0.00299072265625
+            },
+            "occupancy_mean_live_slots": 21.68402099609375,
+            "read_weight_entropy_nats": 1.9961875240920401,
+            "identity_rewrite_share": 0.07773148436042535
+          },
+          "7": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01409912109375,
+              "correct": 0.9813232421875,
+              "pop": 0.0,
+              "merge": 0.00457763671875
+            },
+            "occupancy_mean_live_slots": 16.2574462890625,
+            "read_weight_entropy_nats": 1.9132067555034806,
+            "identity_rewrite_share": 0.07718621719119294
+          },
+          "8": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0152587890625,
+              "correct": 0.98077392578125,
+              "pop": 0.0,
+              "merge": 0.00396728515625
+            },
+            "occupancy_mean_live_slots": 18.7476806640625,
+            "read_weight_entropy_nats": 1.7215934272620756,
+            "identity_rewrite_share": 0.07760283776215073
+          },
+          "9": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0164794921875,
+              "correct": 0.97808837890625,
+              "pop": 0.0,
+              "merge": 0.00543212890625
+            },
+            "occupancy_mean_live_slots": 18.97528076171875,
+            "read_weight_entropy_nats": 2.028130319331644,
+            "identity_rewrite_share": 0.07719188767550703
+          },
+          "10": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01324462890625,
+              "correct": 0.98272705078125,
+              "pop": 0.0,
+              "merge": 0.0040283203125
+            },
+            "occupancy_mean_live_slots": 14.7950439453125,
+            "read_weight_entropy_nats": 2.0111259307637703,
+            "identity_rewrite_share": 0.07682752624060617
+          },
+          "11": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0159912109375,
+              "correct": 0.977294921875,
+              "pop": 0.0,
+              "merge": 0.0067138671875
+            },
+            "occupancy_mean_live_slots": 15.9266357421875,
+            "read_weight_entropy_nats": 2.0929856740618895,
+            "identity_rewrite_share": 0.07669248063952036
+          },
+          "12": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01837158203125,
+              "correct": 0.97296142578125,
+              "pop": 0.0,
+              "merge": 0.0086669921875
+            },
+            "occupancy_mean_live_slots": 16.9669189453125,
+            "read_weight_entropy_nats": 1.916683254791692,
+            "identity_rewrite_share": 0.07596763063797754
+          },
+          "13": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01312255859375,
+              "correct": 0.98187255859375,
+              "pop": 0.0,
+              "merge": 0.0050048828125
+            },
+            "occupancy_mean_live_slots": 14.237060546875,
+            "read_weight_entropy_nats": 1.9737611443575964,
+            "identity_rewrite_share": 0.07453223099397029
+          },
+          "14": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01446533203125,
+              "correct": 0.97906494140625,
+              "pop": 0.0,
+              "merge": 0.0064697265625
+            },
+            "occupancy_mean_live_slots": 13.852294921875,
+            "read_weight_entropy_nats": 1.9099622613695346,
+            "identity_rewrite_share": 0.0768031918209588
+          },
+          "15": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01678466796875,
+              "correct": 0.974609375,
+              "pop": 0.0,
+              "merge": 0.00860595703125
+            },
+            "occupancy_mean_live_slots": 14.839599609375,
+            "read_weight_entropy_nats": 1.8579114085590194,
+            "identity_rewrite_share": 0.07709168336673347
+          },
+          "16": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0140380859375,
+              "correct": 0.97833251953125,
+              "pop": 0.0,
+              "merge": 0.00762939453125
+            },
+            "occupancy_mean_live_slots": 11.24639892578125,
+            "read_weight_entropy_nats": 1.714115532305279,
+            "identity_rewrite_share": 0.07667352922827375
+          },
+          "17": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0125732421875,
+              "correct": 0.982666015625,
+              "pop": 0.0,
+              "merge": 0.0047607421875
+            },
+            "occupancy_mean_live_slots": 14.02825927734375,
+            "read_weight_entropy_nats": 1.914387086571049,
+            "identity_rewrite_share": 0.07639751552795031
+          },
+          "18": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0167236328125,
+              "correct": 0.9730224609375,
+              "pop": 0.0,
+              "merge": 0.01025390625
+            },
+            "occupancy_mean_live_slots": 11.53558349609375,
+            "read_weight_entropy_nats": 1.6714156709418508,
+            "identity_rewrite_share": 0.07684104880190691
+          },
+          "19": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01959228515625,
+              "correct": 0.9638671875,
+              "pop": 0.0,
+              "merge": 0.01654052734375
+            },
+            "occupancy_mean_live_slots": 4.5545654296875,
+            "read_weight_entropy_nats": 0.9172667562524808,
+            "identity_rewrite_share": 0.0780775075987842
+          },
+          "20": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01458740234375,
+              "correct": 0.9755859375,
+              "pop": 0.0,
+              "merge": 0.00982666015625
+            },
+            "occupancy_mean_live_slots": 8.1395263671875,
+            "read_weight_entropy_nats": 1.3181965151937287,
+            "identity_rewrite_share": 0.07682682682682683
+          },
+          "21": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0118408203125,
+              "correct": 0.97747802734375,
+              "pop": 0.0,
+              "merge": 0.01068115234375
+            },
+            "occupancy_mean_live_slots": 2.4266357421875,
+            "read_weight_entropy_nats": 0.4691738991488115,
+            "identity_rewrite_share": 0.07699032157352483
+          },
+          "22": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01019287109375,
+              "correct": 0.98077392578125,
+              "pop": 0.0,
+              "merge": 0.009033203125
+            },
+            "occupancy_mean_live_slots": 2.26568603515625,
+            "read_weight_entropy_nats": 0.4786989913664624,
+            "identity_rewrite_share": 0.07685605824880204
+          },
+          "23": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0087890625,
+              "correct": 0.98358154296875,
+              "pop": 0.0,
+              "merge": 0.00762939453125
+            },
+            "occupancy_mean_live_slots": 2.27801513671875,
+            "read_weight_entropy_nats": 0.29173396212564306,
+            "identity_rewrite_share": 0.07669872789326715
+          }
+        },
+        "identity_rewrite_share": 0.10848252954227999,
+        "identity_n_correct": 384449
+      },
+      "decay": {
+        "note": "the DECAY gate's per-token mean per layer (the store rows' survival factor per token), from the trained walk's own projections on the calibration probe windows",
+        "mean_decay_per_layer": {
+          "0": 0.9761698693037033,
+          "1": 0.8865431994199753,
+          "2": 0.8425145447254181,
+          "3": 0.9315244853496552,
+          "4": 0.8742900341749191,
+          "5": 0.9180250763893127,
+          "6": 0.9084380120038986,
+          "7": 0.9044882506132126,
+          "8": 0.8864636719226837,
+          "9": 0.9274283200502396,
+          "10": 0.9417762011289597,
+          "11": 0.9483388513326645,
+          "12": 0.9229670166969299,
+          "13": 0.9345148503780365,
+          "14": 0.9438924491405487,
+          "15": 0.921387329697609,
+          "16": 0.9283698946237564,
+          "17": 0.9202700704336166,
+          "18": 0.8993701040744781,
+          "19": 0.9711941927671432,
+          "20": 0.9418198764324188,
+          "21": 0.9256953299045563,
+          "22": 0.9601667672395706,
+          "23": 0.9116172194480896
+        }
+      }
+    },
+    {
+      "step": 80,
+      "bytes": 8884476,
+      "train_loss": 2.5170396874409664,
+      "eval_nll": 1.997697149004255,
+      "eval_windows": 7,
+      "eval_targets": 14336,
+      "diagnostics": {
+        "probe": {
+          "split": "calibration",
+          "windows": 4,
+          "mixers": 24,
+          "regime": "eval, bf16 autocast, the persistent walk the arm trains on (collect=True)",
+          "probe_wall_seconds": 4.6
+        },
+        "key_collapse_watch": {
+          "span_key_std_min": 0.8783090710639954,
+          "span_key_std_mean": 1.4074973904838164,
+          "mean_pairwise_key_cos": 0.10503613574352737,
+          "per_layer_span_key_std": {
+            "0": 1.2585017383098602,
+            "1": 1.4539483189582825,
+            "2": 1.4415299892425537,
+            "3": 1.4903303980827332,
+            "4": 1.4035543501377106,
+            "5": 1.445517361164093,
+            "6": 1.4763737916946411,
+            "7": 1.5059576630592346,
+            "8": 1.5204068422317505,
+            "9": 1.4937531054019928,
+            "10": 1.4490291476249695,
+            "11": 1.437890112400055,
+            "12": 1.460449755191803,
+            "13": 1.401228815317154,
+            "14": 1.6462441384792328,
+            "15": 1.553742676973343,
+            "16": 1.4422175586223602,
+            "17": 1.446774423122406,
+            "18": 1.3465949594974518,
+            "19": 1.44829660654068,
+            "20": 1.2591730654239655,
+            "21": 1.2754530310630798,
+            "22": 1.1019561290740967,
+            "23": 1.021013393998146
+          },
+          "guard_floor": 0.05,
+          "within_guard": true
+        },
+        "op_rate_per_token_lane0": {
+          "none": 0.0,
+          "append": 0.016736348470052082,
+          "correct": 0.9778951009114584,
+          "pop": 0.0,
+          "merge": 0.005368550618489583
+        },
+        "op_histogram_all_lanes": {
+          "none": 391105,
+          "append": 6581,
+          "correct": 384524,
+          "pop": 0,
+          "merge": 4222
+        },
+        "occupancy": {
+          "note": "live slots at every token, from the walk's recorded pre-decision liveness channel",
+          "mean_live_slots": 19.840067545572918,
+          "rank": 128
+        },
+        "read_weight_entropy": {
+          "units": "nats over the live-slot weight distribution, per token",
+          "mean": 1.7617703580522437
+        },
+        "per_layer": {
+          "0": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01806640625,
+              "correct": 0.97894287109375,
+              "pop": 0.0,
+              "merge": 0.00299072265625
+            },
+            "occupancy_mean_live_slots": 27.147216796875,
+            "read_weight_entropy_nats": 2.7217385460239067,
+            "identity_rewrite_share": 0.7261674667996758
+          },
+          "1": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0191650390625,
+              "correct": 0.976806640625,
+              "pop": 0.0,
+              "merge": 0.0040283203125
+            },
+            "occupancy_mean_live_slots": 25.8114013671875,
+            "read_weight_entropy_nats": 1.498996363771678,
+            "identity_rewrite_share": 0.08322919270182455
+          },
+          "2": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0181884765625,
+              "correct": 0.9786376953125,
+              "pop": 0.0,
+              "merge": 0.003173828125
+            },
+            "occupancy_mean_live_slots": 25.8790283203125,
+            "read_weight_entropy_nats": 1.5094291414932677,
+            "identity_rewrite_share": 0.08351004116252962
+          },
+          "3": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0185546875,
+              "correct": 0.974853515625,
+              "pop": 0.0,
+              "merge": 0.006591796875
+            },
+            "occupancy_mean_live_slots": 20.5521240234375,
+            "read_weight_entropy_nats": 1.927976488077064,
+            "identity_rewrite_share": 0.07268970698722765
+          },
+          "4": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0174560546875,
+              "correct": 0.97930908203125,
+              "pop": 0.0,
+              "merge": 0.00323486328125
+            },
+            "occupancy_mean_live_slots": 22.6387939453125,
+            "read_weight_entropy_nats": 1.5110659391983696,
+            "identity_rewrite_share": 0.07616079775631038
+          },
+          "5": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01727294921875,
+              "correct": 0.97833251953125,
+              "pop": 0.0,
+              "merge": 0.00439453125
+            },
+            "occupancy_mean_live_slots": 21.93487548828125,
+            "read_weight_entropy_nats": 1.7821311186626008,
+            "identity_rewrite_share": 0.07168257533221037
+          },
+          "6": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0189208984375,
+              "correct": 0.97662353515625,
+              "pop": 0.0,
+              "merge": 0.00445556640625
+            },
+            "occupancy_mean_live_slots": 24.44091796875,
+            "read_weight_entropy_nats": 1.6656691230211131,
+            "identity_rewrite_share": 0.07468283232297981
+          },
+          "7": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.013671875,
+              "correct": 0.98199462890625,
+              "pop": 0.0,
+              "merge": 0.00433349609375
+            },
+            "occupancy_mean_live_slots": 15.4937744140625,
+            "read_weight_entropy_nats": 1.5649707460613091,
+            "identity_rewrite_share": 0.07216110385977997
+          },
+          "8": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01629638671875,
+              "correct": 0.97998046875,
+              "pop": 0.0,
+              "merge": 0.00372314453125
+            },
+            "occupancy_mean_live_slots": 21.61883544921875,
+            "read_weight_entropy_nats": 1.5859507685122283,
+            "identity_rewrite_share": 0.07386646736422521
+          },
+          "9": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01617431640625,
+              "correct": 0.97882080078125,
+              "pop": 0.0,
+              "merge": 0.0050048828125
+            },
+            "occupancy_mean_live_slots": 18.593017578125,
+            "read_weight_entropy_nats": 1.821642750347307,
+            "identity_rewrite_share": 0.070337344889942
+          },
+          "10": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01715087890625,
+              "correct": 0.97918701171875,
+              "pop": 0.0,
+              "merge": 0.003662109375
+            },
+            "occupancy_mean_live_slots": 22.2110595703125,
+            "read_weight_entropy_nats": 1.937301181034746,
+            "identity_rewrite_share": 0.06999937667518544
+          },
+          "11": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0162353515625,
+              "correct": 0.97833251953125,
+              "pop": 0.0,
+              "merge": 0.00543212890625
+            },
+            "occupancy_mean_live_slots": 19.52923583984375,
+            "read_weight_entropy_nats": 2.132298158795646,
+            "identity_rewrite_share": 0.06875038991827313
+          },
+          "12": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0186767578125,
+              "correct": 0.9739990234375,
+              "pop": 0.0,
+              "merge": 0.00732421875
+            },
+            "occupancy_mean_live_slots": 19.6912841796875,
+            "read_weight_entropy_nats": 1.9110029301645701,
+            "identity_rewrite_share": 0.07093620754480512
+          },
+          "13": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01654052734375,
+              "correct": 0.9796142578125,
+              "pop": 0.0,
+              "merge": 0.00384521484375
+            },
+            "occupancy_mean_live_slots": 21.40277099609375,
+            "read_weight_entropy_nats": 1.7589994802321232,
+            "identity_rewrite_share": 0.07233644859813085
+          },
+          "14": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.017333984375,
+              "correct": 0.9765625,
+              "pop": 0.0,
+              "merge": 0.006103515625
+            },
+            "occupancy_mean_live_slots": 19.51239013671875,
+            "read_weight_entropy_nats": 1.890706668438187,
+            "identity_rewrite_share": 0.071625
+          },
+          "15": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0166015625,
+              "correct": 0.9757080078125,
+              "pop": 0.0,
+              "merge": 0.0076904296875
+            },
+            "occupancy_mean_live_slots": 16.61614990234375,
+            "read_weight_entropy_nats": 1.765641160749725,
+            "identity_rewrite_share": 0.07062429625922682
+          },
+          "16": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0155029296875,
+              "correct": 0.98114013671875,
+              "pop": 0.0,
+              "merge": 0.00335693359375
+            },
+            "occupancy_mean_live_slots": 20.8197021484375,
+            "read_weight_entropy_nats": 1.9102485928817323,
+            "identity_rewrite_share": 0.07147744945567652
+          },
+          "17": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01611328125,
+              "correct": 0.9783935546875,
+              "pop": 0.0,
+              "merge": 0.0054931640625
+            },
+            "occupancy_mean_live_slots": 18.92578125,
+            "read_weight_entropy_nats": 1.7502837970772778,
+            "identity_rewrite_share": 0.07242669993761697
+          },
+          "18": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.017333984375,
+              "correct": 0.97491455078125,
+              "pop": 0.0,
+              "merge": 0.00775146484375
+            },
+            "occupancy_mean_live_slots": 17.60296630859375,
+            "read_weight_entropy_nats": 1.6762365239622772,
+            "identity_rewrite_share": 0.0709321980842672
+          },
+          "19": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01702880859375,
+              "correct": 0.97747802734375,
+              "pop": 0.0,
+              "merge": 0.0054931640625
+            },
+            "occupancy_mean_live_slots": 20.89776611328125,
+            "read_weight_entropy_nats": 2.3193290199835124,
+            "identity_rewrite_share": 0.07274430221667187
+          },
+          "20": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01617431640625,
+              "correct": 0.97698974609375,
+              "pop": 0.0,
+              "merge": 0.0068359375
+            },
+            "occupancy_mean_live_slots": 18.61175537109375,
+            "read_weight_entropy_nats": 1.7795260177336498,
+            "identity_rewrite_share": 0.07146873242956207
+          },
+          "21": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01800537109375,
+              "correct": 0.973388671875,
+              "pop": 0.0,
+              "merge": 0.00860595703125
+            },
+            "occupancy_mean_live_slots": 17.22723388671875,
+            "read_weight_entropy_nats": 1.4431423379202033,
+            "identity_rewrite_share": 0.07373965387509406
+          },
+          "22": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01025390625,
+              "correct": 0.98345947265625,
+              "pop": 0.0,
+              "merge": 0.00628662109375
+            },
+            "occupancy_mean_live_slots": 7.56597900390625,
+            "read_weight_entropy_nats": 1.0007877918237817,
+            "identity_rewrite_share": 0.07192949792093341
+          },
+          "23": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01495361328125,
+              "correct": 0.97601318359375,
+              "pop": 0.0,
+              "merge": 0.009033203125
+            },
+            "occupancy_mean_live_slots": 11.43756103515625,
+            "read_weight_entropy_nats": 1.4174139472875702,
+            "identity_rewrite_share": 0.07447939465949596
+          }
+        },
+        "identity_rewrite_share": 0.10036044564188451,
+        "identity_n_correct": 384524
+      },
+      "decay": {
+        "note": "the DECAY gate's per-token mean per layer (the store rows' survival factor per token), from the trained walk's own projections on the calibration probe windows",
+        "mean_decay_per_layer": {
+          "0": 0.9743082672357559,
+          "1": 0.799860268831253,
+          "2": 0.8373475968837738,
+          "3": 0.8903490602970123,
+          "4": 0.8320322185754776,
+          "5": 0.8653952479362488,
+          "6": 0.8428993374109268,
+          "7": 0.8335684239864349,
+          "8": 0.864138051867485,
+          "9": 0.8897586166858673,
+          "10": 0.9023609459400177,
+          "11": 0.930617168545723,
+          "12": 0.8966620862483978,
+          "13": 0.8791771233081818,
+          "14": 0.9015766531229019,
+          "15": 0.886194035410881,
+          "16": 0.8856233656406403,
+          "17": 0.8659895807504654,
+          "18": 0.8678778856992722,
+          "19": 0.9533496797084808,
+          "20": 0.888640508055687,
+          "21": 0.8156834989786148,
+          "22": 0.9181475043296814,
+          "23": 0.871208056807518
+        }
+      }
+    },
+    {
+      "step": 100,
+      "bytes": 11089562,
+      "train_loss": 2.3228351052624236,
+      "eval_nll": 1.9189806835991996,
+      "eval_windows": 7,
+      "eval_targets": 14336,
+      "diagnostics": {
+        "probe": {
+          "split": "calibration",
+          "windows": 4,
+          "mixers": 24,
+          "regime": "eval, bf16 autocast, the persistent walk the arm trains on (collect=True)",
+          "probe_wall_seconds": 4.6
+        },
+        "key_collapse_watch": {
+          "span_key_std_min": 1.07053542137146,
+          "span_key_std_mean": 1.5852577698727448,
+          "mean_pairwise_key_cos": 0.07854934700299054,
+          "per_layer_span_key_std": {
+            "0": 1.3689145147800446,
+            "1": 1.644789218902588,
+            "2": 1.6437213718891144,
+            "3": 1.645586520433426,
+            "4": 1.5704725682735443,
+            "5": 1.624481439590454,
+            "6": 1.6583382785320282,
+            "7": 1.734209269285202,
+            "8": 1.7081826031208038,
+            "9": 1.6641954481601715,
+            "10": 1.6220480799674988,
+            "11": 1.5971077680587769,
+            "12": 1.6442879140377045,
+            "13": 1.4923230707645416,
+            "14": 1.78692826628685,
+            "15": 1.6948789358139038,
+            "16": 1.6071717143058777,
+            "17": 1.5982902944087982,
+            "18": 1.5212624967098236,
+            "19": 1.6257457435131073,
+            "20": 1.4363799691200256,
+            "21": 1.4972050189971924,
+            "22": 1.3820955753326416,
+            "23": 1.2775703966617584
+          },
+          "guard_floor": 0.05,
+          "within_guard": true
+        },
+        "op_rate_per_token_lane0": {
+          "none": 0.0,
+          "append": 0.017443339029947918,
+          "correct": 0.9781723022460938,
+          "pop": 0.0,
+          "merge": 0.004384358723958333
+        },
+        "op_histogram_all_lanes": {
+          "none": 391492,
+          "append": 6859,
+          "correct": 384633,
+          "pop": 0,
+          "merge": 3448
+        },
+        "occupancy": {
+          "note": "live slots at every token, from the walk's recorded pre-decision liveness channel",
+          "mean_live_slots": 22.34166717529297,
+          "rank": 128
+        },
+        "read_weight_entropy": {
+          "units": "nats over the live-slot weight distribution, per token",
+          "mean": 1.7623015085234934
+        },
+        "per_layer": {
+          "0": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01763916015625,
+              "correct": 0.9798583984375,
+              "pop": 0.0,
+              "merge": 0.00250244140625
+            },
+            "occupancy_mean_live_slots": 26.677001953125,
+            "read_weight_entropy_nats": 2.696624144613306,
+            "identity_rewrite_share": 0.6897346455711972
+          },
+          "1": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.020263671875,
+              "correct": 0.97674560546875,
+              "pop": 0.0,
+              "merge": 0.00299072265625
+            },
+            "occupancy_mean_live_slots": 29.25836181640625,
+            "read_weight_entropy_nats": 1.3449112184465835,
+            "identity_rewrite_share": 0.09698181590951696
+          },
+          "2": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0189208984375,
+              "correct": 0.97882080078125,
+              "pop": 0.0,
+              "merge": 0.00225830078125
+            },
+            "occupancy_mean_live_slots": 28.8038330078125,
+            "read_weight_entropy_nats": 1.3802783334319277,
+            "identity_rewrite_share": 0.09428197293758184
+          },
+          "3": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01800537109375,
+              "correct": 0.97723388671875,
+              "pop": 0.0,
+              "merge": 0.0047607421875
+            },
+            "occupancy_mean_live_slots": 22.46728515625,
+            "read_weight_entropy_nats": 1.865087318140877,
+            "identity_rewrite_share": 0.07813378302417089
+          },
+          "4": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01947021484375,
+              "correct": 0.9783935546875,
+              "pop": 0.0,
+              "merge": 0.00213623046875
+            },
+            "occupancy_mean_live_slots": 27.478759765625,
+            "read_weight_entropy_nats": 1.421935528269266,
+            "identity_rewrite_share": 0.08484092326887087
+          },
+          "5": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01824951171875,
+              "correct": 0.978759765625,
+              "pop": 0.0,
+              "merge": 0.00299072265625
+            },
+            "occupancy_mean_live_slots": 25.2926025390625,
+            "read_weight_entropy_nats": 1.8451398542932493,
+            "identity_rewrite_share": 0.07645298079321526
+          },
+          "6": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01904296875,
+              "correct": 0.9781494140625,
+              "pop": 0.0,
+              "merge": 0.0028076171875
+            },
+            "occupancy_mean_live_slots": 27.94012451171875,
+            "read_weight_entropy_nats": 1.6630085626927362,
+            "identity_rewrite_share": 0.08286534381629851
+          },
+          "7": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0142822265625,
+              "correct": 0.98162841796875,
+              "pop": 0.0,
+              "merge": 0.00408935546875
+            },
+            "occupancy_mean_live_slots": 17.90582275390625,
+            "read_weight_entropy_nats": 1.5161864518769845,
+            "identity_rewrite_share": 0.07728657588758316
+          },
+          "8": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01910400390625,
+              "correct": 0.97735595703125,
+              "pop": 0.0,
+              "merge": 0.0035400390625
+            },
+            "occupancy_mean_live_slots": 24.8746337890625,
+            "read_weight_entropy_nats": 1.5175051034574225,
+            "identity_rewrite_share": 0.08005995128957721
+          },
+          "9": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0166015625,
+              "correct": 0.97943115234375,
+              "pop": 0.0,
+              "merge": 0.00396728515625
+            },
+            "occupancy_mean_live_slots": 20.068359375,
+            "read_weight_entropy_nats": 1.823807933007908,
+            "identity_rewrite_share": 0.07552813610020565
+          },
+          "10": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01837158203125,
+              "correct": 0.9786376953125,
+              "pop": 0.0,
+              "merge": 0.00299072265625
+            },
+            "occupancy_mean_live_slots": 25.396728515625,
+            "read_weight_entropy_nats": 1.9281362171107872,
+            "identity_rewrite_share": 0.07558937258326057
+          },
+          "11": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0157470703125,
+              "correct": 0.9814453125,
+              "pop": 0.0,
+              "merge": 0.0028076171875
+            },
+            "occupancy_mean_live_slots": 21.57940673828125,
+            "read_weight_entropy_nats": 2.224972484981833,
+            "identity_rewrite_share": 0.07332089552238806
+          },
+          "12": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01763916015625,
+              "correct": 0.976806640625,
+              "pop": 0.0,
+              "merge": 0.00555419921875
+            },
+            "occupancy_mean_live_slots": 21.15386962890625,
+            "read_weight_entropy_nats": 2.046471577594498,
+            "identity_rewrite_share": 0.07429392651837041
+          },
+          "13": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0186767578125,
+              "correct": 0.9765625,
+              "pop": 0.0,
+              "merge": 0.0047607421875
+            },
+            "occupancy_mean_live_slots": 22.7110595703125,
+            "read_weight_entropy_nats": 1.7504711663600696,
+            "identity_rewrite_share": 0.07675
+          },
+          "14": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01776123046875,
+              "correct": 0.97711181640625,
+              "pop": 0.0,
+              "merge": 0.005126953125
+            },
+            "occupancy_mean_live_slots": 22.29388427734375,
+            "read_weight_entropy_nats": 1.8358501961712261,
+            "identity_rewrite_share": 0.07514523080767069
+          },
+          "15": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0166015625,
+              "correct": 0.9771728515625,
+              "pop": 0.0,
+              "merge": 0.0062255859375
+            },
+            "occupancy_mean_live_slots": 18.73663330078125,
+            "read_weight_entropy_nats": 1.754021730781708,
+            "identity_rewrite_share": 0.0754528419737664
+          },
+          "16": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0172119140625,
+              "correct": 0.9781494140625,
+              "pop": 0.0,
+              "merge": 0.004638671875
+            },
+            "occupancy_mean_live_slots": 22.10089111328125,
+            "read_weight_entropy_nats": 1.9694557357661364,
+            "identity_rewrite_share": 0.07506551853238487
+          },
+          "17": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.017578125,
+              "correct": 0.9765625,
+              "pop": 0.0,
+              "merge": 0.005859375
+            },
+            "occupancy_mean_live_slots": 20.5789794921875,
+            "read_weight_entropy_nats": 1.703433723990138,
+            "identity_rewrite_share": 0.0756875
+          },
+          "18": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01898193359375,
+              "correct": 0.973876953125,
+              "pop": 0.0,
+              "merge": 0.00714111328125
+            },
+            "occupancy_mean_live_slots": 20.93585205078125,
+            "read_weight_entropy_nats": 1.669441495223574,
+            "identity_rewrite_share": 0.0769616445224367
+          },
+          "19": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01751708984375,
+              "correct": 0.9764404296875,
+              "pop": 0.0,
+              "merge": 0.00604248046875
+            },
+            "occupancy_mean_live_slots": 20.262939453125,
+            "read_weight_entropy_nats": 2.183527795058317,
+            "identity_rewrite_share": 0.0746343292911614
+          },
+          "20": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0184326171875,
+              "correct": 0.97625732421875,
+              "pop": 0.0,
+              "merge": 0.00531005859375
+            },
+            "occupancy_mean_live_slots": 23.53533935546875,
+            "read_weight_entropy_nats": 1.7338303648441316,
+            "identity_rewrite_share": 0.07577367927477337
+          },
+          "21": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01605224609375,
+              "correct": 0.978271484375,
+              "pop": 0.0,
+              "merge": 0.00567626953125
+            },
+            "occupancy_mean_live_slots": 18.017578125,
+            "read_weight_entropy_nats": 1.236635179244779,
+            "identity_rewrite_share": 0.07667831295233342
+          },
+          "22": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0152587890625,
+              "correct": 0.97869873046875,
+              "pop": 0.0,
+              "merge": 0.00604248046875
+            },
+            "occupancy_mean_live_slots": 16.23797607421875,
+            "read_weight_entropy_nats": 1.7338856751591505,
+            "identity_rewrite_share": 0.07471156844402868
+          },
+          "23": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01123046875,
+              "correct": 0.9837646484375,
+              "pop": 0.0,
+              "merge": 0.0050048828125
+            },
+            "occupancy_mean_live_slots": 11.89208984375,
+            "read_weight_entropy_nats": 1.4506184140472338,
+            "identity_rewrite_share": 0.07432683955825785
+          }
+        },
+        "identity_rewrite_share": 0.10381584523428827,
+        "identity_n_correct": 384633
+      },
+      "decay": {
+        "note": "the DECAY gate's per-token mean per layer (the store rows' survival factor per token), from the trained walk's own projections on the calibration probe windows",
+        "mean_decay_per_layer": {
+          "0": 0.971963569521904,
+          "1": 0.7582386136054993,
+          "2": 0.803193986415863,
+          "3": 0.8795327544212341,
+          "4": 0.7968622595071793,
+          "5": 0.8748145550489426,
+          "6": 0.8316814303398132,
+          "7": 0.8059287965297699,
+          "8": 0.8452032804489136,
+          "9": 0.8805827498435974,
+          "10": 0.8876920640468597,
+          "11": 0.9259164929389954,
+          "12": 0.901181161403656,
+          "13": 0.8745721727609634,
+          "14": 0.8824562579393387,
+          "15": 0.8745285272598267,
+          "16": 0.8921595364809036,
+          "17": 0.8593562990427017,
+          "18": 0.8554248511791229,
+          "19": 0.9473033249378204,
+          "20": 0.8603836596012115,
+          "21": 0.7571752518415451,
+          "22": 0.8903977572917938,
+          "23": 0.8505043834447861
+        }
+      }
+    },
+    {
+      "step": 120,
+      "bytes": 13277872,
+      "train_loss": 2.065152476023123,
+      "eval_nll": 1.8311604261398315,
+      "eval_windows": 7,
+      "eval_targets": 14336,
+      "diagnostics": {
+        "probe": {
+          "split": "calibration",
+          "windows": 4,
+          "mixers": 24,
+          "regime": "eval, bf16 autocast, the persistent walk the arm trains on (collect=True)",
+          "probe_wall_seconds": 4.6
+        },
+        "key_collapse_watch": {
+          "span_key_std_min": 1.1748573780059814,
+          "span_key_std_mean": 1.6563364739219348,
+          "mean_pairwise_key_cos": 0.08789752228767611,
+          "per_layer_span_key_std": {
+            "0": 1.4392189383506775,
+            "1": 1.6765130162239075,
+            "2": 1.6851834952831268,
+            "3": 1.6497375667095184,
+            "4": 1.612197458744049,
+            "5": 1.6411520838737488,
+            "6": 1.6996772289276123,
+            "7": 1.770789623260498,
+            "8": 1.7536956369876862,
+            "9": 1.6958391070365906,
+            "10": 1.7030111253261566,
+            "11": 1.615478128194809,
+            "12": 1.7604399621486664,
+            "13": 1.5472175776958466,
+            "14": 1.858456313610077,
+            "15": 1.7485877871513367,
+            "16": 1.6733514070510864,
+            "17": 1.6327939927577972,
+            "18": 1.6148512363433838,
+            "19": 1.7267696559429169,
+            "20": 1.5146792531013489,
+            "21": 1.6513850092887878,
+            "22": 1.5657783448696136,
+            "23": 1.5152714252471924
+          },
+          "guard_floor": 0.05,
+          "within_guard": true
+        },
+        "op_rate_per_token_lane0": {
+          "none": 0.0,
+          "append": 0.018564860026041668,
+          "correct": 0.9773483276367188,
+          "pop": 0.0,
+          "merge": 0.004086812337239583
+        },
+        "op_histogram_all_lanes": {
+          "none": 391609,
+          "append": 7300,
+          "correct": 384309,
+          "pop": 0,
+          "merge": 3214
+        },
+        "occupancy": {
+          "note": "live slots at every token, from the walk's recorded pre-decision liveness channel",
+          "mean_live_slots": 24.423634847005207,
+          "rank": 128
+        },
+        "read_weight_entropy": {
+          "units": "nats over the live-slot weight distribution, per token",
+          "mean": 1.7393907796402859
+        },
+        "per_layer": {
+          "0": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0185546875,
+              "correct": 0.97943115234375,
+              "pop": 0.0,
+              "merge": 0.00201416015625
+            },
+            "occupancy_mean_live_slots": 28.0955810546875,
+            "read_weight_entropy_nats": 2.6597438228963117,
+            "identity_rewrite_share": 0.7100392596747056
+          },
+          "1": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.02178955078125,
+              "correct": 0.9761962890625,
+              "pop": 0.0,
+              "merge": 0.00201416015625
+            },
+            "occupancy_mean_live_slots": 32.97027587890625,
+            "read_weight_entropy_nats": 1.2917337049550408,
+            "identity_rewrite_share": 0.10822808553207452
+          },
+          "2": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0196533203125,
+              "correct": 0.9788818359375,
+              "pop": 0.0,
+              "merge": 0.00146484375
+            },
+            "occupancy_mean_live_slots": 30.13873291015625,
+            "read_weight_entropy_nats": 1.3779039555313417,
+            "identity_rewrite_share": 0.0958972440453922
+          },
+          "3": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01751708984375,
+              "correct": 0.980224609375,
+              "pop": 0.0,
+              "merge": 0.00225830078125
+            },
+            "occupancy_mean_live_slots": 24.8992919921875,
+            "read_weight_entropy_nats": 1.935781533856711,
+            "identity_rewrite_share": 0.08069738480697385
+          },
+          "4": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01885986328125,
+              "correct": 0.97784423828125,
+              "pop": 0.0,
+              "merge": 0.0032958984375
+            },
+            "occupancy_mean_live_slots": 25.0399169921875,
+            "read_weight_entropy_nats": 1.3321155423237512,
+            "identity_rewrite_share": 0.08825915985269334
+          },
+          "5": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01788330078125,
+              "correct": 0.97882080078125,
+              "pop": 0.0,
+              "merge": 0.0032958984375
+            },
+            "occupancy_mean_live_slots": 23.68011474609375,
+            "read_weight_entropy_nats": 1.5477767221276564,
+            "identity_rewrite_share": 0.08424268878219118
+          },
+          "6": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01922607421875,
+              "correct": 0.97760009765625,
+              "pop": 0.0,
+              "merge": 0.003173828125
+            },
+            "occupancy_mean_live_slots": 27.2508544921875,
+            "read_weight_entropy_nats": 1.5392741700411425,
+            "identity_rewrite_share": 0.0845351813697946
+          },
+          "7": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.015625,
+              "correct": 0.9805908203125,
+              "pop": 0.0,
+              "merge": 0.0037841796875
+            },
+            "occupancy_mean_live_slots": 20.12969970703125,
+            "read_weight_entropy_nats": 1.3470810525406844,
+            "identity_rewrite_share": 0.08241005850865181
+          },
+          "8": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01885986328125,
+              "correct": 0.97869873046875,
+              "pop": 0.0,
+              "merge": 0.00244140625
+            },
+            "occupancy_mean_live_slots": 25.13671875,
+            "read_weight_entropy_nats": 1.4324712040486076,
+            "identity_rewrite_share": 0.08481446835048331
+          },
+          "9": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0167236328125,
+              "correct": 0.9798583984375,
+              "pop": 0.0,
+              "merge": 0.00341796875
+            },
+            "occupancy_mean_live_slots": 21.27716064453125,
+            "read_weight_entropy_nats": 1.7841770934313173,
+            "identity_rewrite_share": 0.07773763548025414
+          },
+          "10": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01959228515625,
+              "correct": 0.97686767578125,
+              "pop": 0.0,
+              "merge": 0.0035400390625
+            },
+            "occupancy_mean_live_slots": 27.5755615234375,
+            "read_weight_entropy_nats": 1.8734698870965896,
+            "identity_rewrite_share": 0.07897532021243361
+          },
+          "11": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01715087890625,
+              "correct": 0.9793701171875,
+              "pop": 0.0,
+              "merge": 0.00347900390625
+            },
+            "occupancy_mean_live_slots": 24.073486328125,
+            "read_weight_entropy_nats": 2.3480919939049523,
+            "identity_rewrite_share": 0.07347625576467655
+          },
+          "12": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01776123046875,
+              "correct": 0.9764404296875,
+              "pop": 0.0,
+              "merge": 0.00579833984375
+            },
+            "occupancy_mean_live_slots": 20.79962158203125,
+            "read_weight_entropy_nats": 1.9197063883980368,
+            "identity_rewrite_share": 0.07563445430678835
+          },
+          "13": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0194091796875,
+              "correct": 0.97711181640625,
+              "pop": 0.0,
+              "merge": 0.00347900390625
+            },
+            "occupancy_mean_live_slots": 25.41204833984375,
+            "read_weight_entropy_nats": 1.7421323387693881,
+            "identity_rewrite_share": 0.07814354425635579
+          },
+          "14": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.019775390625,
+              "correct": 0.97601318359375,
+              "pop": 0.0,
+              "merge": 0.00421142578125
+            },
+            "occupancy_mean_live_slots": 26.029541015625,
+            "read_weight_entropy_nats": 1.8443921065412037,
+            "identity_rewrite_share": 0.08048277155900194
+          },
+          "15": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01812744140625,
+              "correct": 0.9755859375,
+              "pop": 0.0,
+              "merge": 0.00628662109375
+            },
+            "occupancy_mean_live_slots": 21.62469482421875,
+            "read_weight_entropy_nats": 1.7758984363073247,
+            "identity_rewrite_share": 0.07751501501501501
+          },
+          "16": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01971435546875,
+              "correct": 0.9764404296875,
+              "pop": 0.0,
+              "merge": 0.00384521484375
+            },
+            "occupancy_mean_live_slots": 25.821533203125,
+            "read_weight_entropy_nats": 1.9719369773697026,
+            "identity_rewrite_share": 0.07869733716714589
+          },
+          "17": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01849365234375,
+              "correct": 0.9774169921875,
+              "pop": 0.0,
+              "merge": 0.00408935546875
+            },
+            "occupancy_mean_live_slots": 24.107421875,
+            "read_weight_entropy_nats": 1.7572587706953011,
+            "identity_rewrite_share": 0.07868115399025852
+          },
+          "18": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01904296875,
+              "correct": 0.97442626953125,
+              "pop": 0.0,
+              "merge": 0.00653076171875
+            },
+            "occupancy_mean_live_slots": 22.3896484375,
+            "read_weight_entropy_nats": 1.7690183101890724,
+            "identity_rewrite_share": 0.07873473222674601
+          },
+          "19": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0189208984375,
+              "correct": 0.97625732421875,
+              "pop": 0.0,
+              "merge": 0.00482177734375
+            },
+            "occupancy_mean_live_slots": 24.01507568359375,
+            "read_weight_entropy_nats": 2.2333210626927364,
+            "identity_rewrite_share": 0.07752422632072523
+          },
+          "20": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0191650390625,
+              "correct": 0.97589111328125,
+              "pop": 0.0,
+              "merge": 0.00494384765625
+            },
+            "occupancy_mean_live_slots": 25.06134033203125,
+            "read_weight_entropy_nats": 1.81864701845498,
+            "identity_rewrite_share": 0.07642754393645632
+          },
+          "21": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0196533203125,
+              "correct": 0.97344970703125,
+              "pop": 0.0,
+              "merge": 0.00689697265625
+            },
+            "occupancy_mean_live_slots": 22.31719970703125,
+            "read_weight_entropy_nats": 1.297145051494947,
+            "identity_rewrite_share": 0.08194871151796351
+          },
+          "22": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.017578125,
+              "correct": 0.97662353515625,
+              "pop": 0.0,
+              "merge": 0.00579833984375
+            },
+            "occupancy_mean_live_slots": 21.185791015625,
+            "read_weight_entropy_nats": 1.7619656635949712,
+            "identity_rewrite_share": 0.07862008624460971
+          },
+          "23": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0164794921875,
+              "correct": 0.976318359375,
+              "pop": 0.0,
+              "merge": 0.0072021484375
+            },
+            "occupancy_mean_live_slots": 17.13592529296875,
+            "read_weight_entropy_nats": 1.3843359041050929,
+            "identity_rewrite_share": 0.0797699424856214
+          }
+        },
+        "identity_rewrite_share": 0.10803546104827105,
+        "identity_n_correct": 384309
+      },
+      "decay": {
+        "note": "the DECAY gate's per-token mean per layer (the store rows' survival factor per token), from the trained walk's own projections on the calibration probe windows",
+        "mean_decay_per_layer": {
+          "0": 0.9668508917093277,
+          "1": 0.7530958354473114,
+          "2": 0.816023200750351,
+          "3": 0.8632914125919342,
+          "4": 0.7924655824899673,
+          "5": 0.8367599546909332,
+          "6": 0.8144809156656265,
+          "7": 0.7642460912466049,
+          "8": 0.8328825980424881,
+          "9": 0.8617642372846603,
+          "10": 0.8845623880624771,
+          "11": 0.9365359991788864,
+          "12": 0.8705368041992188,
+          "13": 0.8790678679943085,
+          "14": 0.8847135156393051,
+          "15": 0.8628999590873718,
+          "16": 0.8909303843975067,
+          "17": 0.8694771528244019,
+          "18": 0.8702368289232254,
+          "19": 0.9424785375595093,
+          "20": 0.8800022751092911,
+          "21": 0.7665340304374695,
+          "22": 0.8862504661083221,
+          "23": 0.8227615505456924
+        }
+      }
+    },
+    {
+      "step": 140,
+      "bytes": 15524065,
+      "train_loss": 2.3415618324434218,
+      "eval_nll": 1.7409323624202184,
+      "eval_windows": 7,
+      "eval_targets": 14336,
+      "diagnostics": {
+        "probe": {
+          "split": "calibration",
+          "windows": 4,
+          "mixers": 24,
+          "regime": "eval, bf16 autocast, the persistent walk the arm trains on (collect=True)",
+          "probe_wall_seconds": 4.5
+        },
+        "key_collapse_watch": {
+          "span_key_std_min": 1.2064119577407837,
+          "span_key_std_mean": 1.6648336375753086,
+          "mean_pairwise_key_cos": 0.08320487808668986,
+          "per_layer_span_key_std": {
+            "0": 1.4976112246513367,
+            "1": 1.7472631931304932,
+            "2": 1.7828513383865356,
+            "3": 1.7126647233963013,
+            "4": 1.6852866411209106,
+            "5": 1.6911730766296387,
+            "6": 1.7041933834552765,
+            "7": 1.761992335319519,
+            "8": 1.740553379058838,
+            "9": 1.6879415810108185,
+            "10": 1.7138890624046326,
+            "11": 1.6597208976745605,
+            "12": 1.709089070558548,
+            "13": 1.5473105609416962,
+            "14": 1.8329388201236725,
+            "15": 1.7349505126476288,
+            "16": 1.6202497482299805,
+            "17": 1.6197671592235565,
+            "18": 1.6321969628334045,
+            "19": 1.6604251265525818,
+            "20": 1.5210674405097961,
+            "21": 1.6384248435497284,
+            "22": 1.573559045791626,
+            "23": 1.4808871746063232
+          },
+          "guard_floor": 0.05,
+          "within_guard": true
+        },
+        "op_rate_per_token_lane0": {
+          "none": 0.0,
+          "append": 0.019582112630208332,
+          "correct": 0.9772084554036459,
+          "pop": 0.0,
+          "merge": 0.0032094319661458335
+        },
+        "op_histogram_all_lanes": {
+          "none": 391954,
+          "append": 7700,
+          "correct": 384254,
+          "pop": 0,
+          "merge": 2524
+        },
+        "occupancy": {
+          "note": "live slots at every token, from the walk's recorded pre-decision liveness channel",
+          "mean_live_slots": 27.35557810465495,
+          "rank": 128
+        },
+        "read_weight_entropy": {
+          "units": "nats over the live-slot weight distribution, per token",
+          "mean": 1.7244401405929568
+        },
+        "per_layer": {
+          "0": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01910400390625,
+              "correct": 0.978759765625,
+              "pop": 0.0,
+              "merge": 0.00213623046875
+            },
+            "occupancy_mean_live_slots": 29.3192138671875,
+            "read_weight_entropy_nats": 2.7062617955582864,
+            "identity_rewrite_share": 0.6936268396108756
+          },
+          "1": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0223388671875,
+              "correct": 0.975830078125,
+              "pop": 0.0,
+              "merge": 0.0018310546875
+            },
+            "occupancy_mean_live_slots": 33.97003173828125,
+            "read_weight_entropy_nats": 1.2025513232016365,
+            "identity_rewrite_share": 0.10683012259194395
+          },
+          "2": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0203857421875,
+              "correct": 0.97833251953125,
+              "pop": 0.0,
+              "merge": 0.00128173828125
+            },
+            "occupancy_mean_live_slots": 31.80828857421875,
+            "read_weight_entropy_nats": 1.3394904795890328,
+            "identity_rewrite_share": 0.0917087778401647
+          },
+          "3": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0194091796875,
+              "correct": 0.97857666015625,
+              "pop": 0.0,
+              "merge": 0.00201416015625
+            },
+            "occupancy_mean_live_slots": 29.22247314453125,
+            "read_weight_entropy_nats": 1.8906979320919333,
+            "identity_rewrite_share": 0.07983533961205015
+          },
+          "4": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.019775390625,
+              "correct": 0.9788818359375,
+              "pop": 0.0,
+              "merge": 0.0013427734375
+            },
+            "occupancy_mean_live_slots": 29.879150390625,
+            "read_weight_entropy_nats": 1.3594472761205423,
+            "identity_rewrite_share": 0.08810325476992144
+          },
+          "5": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.018310546875,
+              "correct": 0.97998046875,
+              "pop": 0.0,
+              "merge": 0.001708984375
+            },
+            "occupancy_mean_live_slots": 26.877197265625,
+            "read_weight_entropy_nats": 1.611051394523617,
+            "identity_rewrite_share": 0.08140259093173892
+          },
+          "6": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01971435546875,
+              "correct": 0.9776611328125,
+              "pop": 0.0,
+              "merge": 0.00262451171875
+            },
+            "occupancy_mean_live_slots": 29.54400634765625,
+            "read_weight_entropy_nats": 1.4997015032001864,
+            "identity_rewrite_share": 0.08359345736046947
+          },
+          "7": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0155029296875,
+              "correct": 0.98095703125,
+              "pop": 0.0,
+              "merge": 0.0035400390625
+            },
+            "occupancy_mean_live_slots": 20.9229736328125,
+            "read_weight_entropy_nats": 1.2937327479524152,
+            "identity_rewrite_share": 0.08157043305126929
+          },
+          "8": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01934814453125,
+              "correct": 0.978515625,
+              "pop": 0.0,
+              "merge": 0.00213623046875
+            },
+            "occupancy_mean_live_slots": 27.8951416015625,
+            "read_weight_entropy_nats": 1.3756152117141702,
+            "identity_rewrite_share": 0.08576596806387225
+          },
+          "9": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01824951171875,
+              "correct": 0.9791259765625,
+              "pop": 0.0,
+              "merge": 0.00262451171875
+            },
+            "occupancy_mean_live_slots": 24.6490478515625,
+            "read_weight_entropy_nats": 1.6658557766987512,
+            "identity_rewrite_share": 0.07748410422640568
+          },
+          "10": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0220947265625,
+              "correct": 0.97503662109375,
+              "pop": 0.0,
+              "merge": 0.00286865234375
+            },
+            "occupancy_mean_live_slots": 31.3907470703125,
+            "read_weight_entropy_nats": 1.8717112277971575,
+            "identity_rewrite_share": 0.07730829420970266
+          },
+          "11": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.02001953125,
+              "correct": 0.97760009765625,
+              "pop": 0.0,
+              "merge": 0.00238037109375
+            },
+            "occupancy_mean_live_slots": 29.09649658203125,
+            "read_weight_entropy_nats": 2.4253914837261847,
+            "identity_rewrite_share": 0.07261035150152963
+          },
+          "12": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01873779296875,
+              "correct": 0.97772216796875,
+              "pop": 0.0,
+              "merge": 0.0035400390625
+            },
+            "occupancy_mean_live_slots": 25.15850830078125,
+            "read_weight_entropy_nats": 1.9388560717666097,
+            "identity_rewrite_share": 0.07541045009051751
+          },
+          "13": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.02081298828125,
+              "correct": 0.97674560546875,
+              "pop": 0.0,
+              "merge": 0.00244140625
+            },
+            "occupancy_mean_live_slots": 28.51031494140625,
+            "read_weight_entropy_nats": 1.657879194400342,
+            "identity_rewrite_share": 0.0806098856464413
+          },
+          "14": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.02056884765625,
+              "correct": 0.97637939453125,
+              "pop": 0.0,
+              "merge": 0.0030517578125
+            },
+            "occupancy_mean_live_slots": 29.38165283203125,
+            "read_weight_entropy_nats": 1.823941810805447,
+            "identity_rewrite_share": 0.0787022566731262
+          },
+          "15": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01934814453125,
+              "correct": 0.975830078125,
+              "pop": 0.0,
+              "merge": 0.00482177734375
+            },
+            "occupancy_mean_live_slots": 25.02703857421875,
+            "read_weight_entropy_nats": 1.8854119059046013,
+            "identity_rewrite_share": 0.0761195896922692
+          },
+          "16": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.022705078125,
+              "correct": 0.97454833984375,
+              "pop": 0.0,
+              "merge": 0.00274658203125
+            },
+            "occupancy_mean_live_slots": 32.2152099609375,
+            "read_weight_entropy_nats": 2.1442202599268745,
+            "identity_rewrite_share": 0.07427819878499405
+          },
+          "17": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.02191162109375,
+              "correct": 0.97357177734375,
+              "pop": 0.0,
+              "merge": 0.0045166015625
+            },
+            "occupancy_mean_live_slots": 28.768798828125,
+            "read_weight_entropy_nats": 1.7183241851165578,
+            "identity_rewrite_share": 0.07961883267506739
+          },
+          "18": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0198974609375,
+              "correct": 0.97601318359375,
+              "pop": 0.0,
+              "merge": 0.00408935546875
+            },
+            "occupancy_mean_live_slots": 27.25823974609375,
+            "read_weight_entropy_nats": 1.7127187903124237,
+            "identity_rewrite_share": 0.07954474391845413
+          },
+          "19": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0189208984375,
+              "correct": 0.97833251953125,
+              "pop": 0.0,
+              "merge": 0.00274658203125
+            },
+            "occupancy_mean_live_slots": 27.73284912109375,
+            "read_weight_entropy_nats": 2.395795783940675,
+            "identity_rewrite_share": 0.07274315303512384
+          },
+          "20": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0191650390625,
+              "correct": 0.97711181640625,
+              "pop": 0.0,
+              "merge": 0.00372314453125
+            },
+            "occupancy_mean_live_slots": 26.85223388671875,
+            "read_weight_entropy_nats": 1.751216648029128,
+            "identity_rewrite_share": 0.07502030108064214
+          },
+          "21": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0191650390625,
+              "correct": 0.9736328125,
+              "pop": 0.0,
+              "merge": 0.0072021484375
+            },
+            "occupancy_mean_live_slots": 19.3245849609375,
+            "read_weight_entropy_nats": 1.0410433248828317,
+            "identity_rewrite_share": 0.08343781344032096
+          },
+          "22": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01922607421875,
+              "correct": 0.974365234375,
+              "pop": 0.0,
+              "merge": 0.00640869140625
+            },
+            "occupancy_mean_live_slots": 22.937744140625,
+            "read_weight_entropy_nats": 1.688639034686813,
+            "identity_rewrite_share": 0.07379102981708845
+          },
+          "23": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0152587890625,
+              "correct": 0.9794921875,
+              "pop": 0.0,
+              "merge": 0.0052490234375
+            },
+            "occupancy_mean_live_slots": 18.79193115234375,
+            "read_weight_entropy_nats": 1.387008212284746,
+            "identity_rewrite_share": 0.07608424725822532
+          }
+        },
+        "identity_rewrite_share": 0.10609128336985431,
+        "identity_n_correct": 384254
+      },
+      "decay": {
+        "note": "the DECAY gate's per-token mean per layer (the store rows' survival factor per token), from the trained walk's own projections on the calibration probe windows",
+        "mean_decay_per_layer": {
+          "0": 0.9620049893856049,
+          "1": 0.72151318192482,
+          "2": 0.7995537966489792,
+          "3": 0.8515882343053818,
+          "4": 0.7947112917900085,
+          "5": 0.8362488299608231,
+          "6": 0.8000765442848206,
+          "7": 0.7447842210531235,
+          "8": 0.8059390038251877,
+          "9": 0.8332840204238892,
+          "10": 0.8713454902172089,
+          "11": 0.931124359369278,
+          "12": 0.8718815743923187,
+          "13": 0.8633634746074677,
+          "14": 0.8707602173089981,
+          "15": 0.8743121325969696,
+          "16": 0.8945832699537277,
+          "17": 0.8466871082782745,
+          "18": 0.8457240462303162,
+          "19": 0.9473890215158463,
+          "20": 0.8388471454381943,
+          "21": 0.6895694881677628,
+          "22": 0.8545083254575729,
+          "23": 0.814293771982193
+        }
+      }
+    },
+    {
+      "step": 160,
+      "bytes": 17718312,
+      "train_loss": 2.120611846446991,
+      "eval_nll": 1.6774650471551078,
+      "eval_windows": 7,
+      "eval_targets": 14336,
+      "diagnostics": {
+        "probe": {
+          "split": "calibration",
+          "windows": 4,
+          "mixers": 24,
+          "regime": "eval, bf16 autocast, the persistent walk the arm trains on (collect=True)",
+          "probe_wall_seconds": 4.5
+        },
+        "key_collapse_watch": {
+          "span_key_std_min": 1.3159286975860596,
+          "span_key_std_mean": 1.7181207450727622,
+          "mean_pairwise_key_cos": 0.08381858776556328,
+          "per_layer_span_key_std": {
+            "0": 1.5266473591327667,
+            "1": 1.8337593078613281,
+            "2": 1.9029493927955627,
+            "3": 1.7588357627391815,
+            "4": 1.7609769105911255,
+            "5": 1.7696854174137115,
+            "6": 1.7933358252048492,
+            "7": 1.8312825560569763,
+            "8": 1.8011541366577148,
+            "9": 1.756264328956604,
+            "10": 1.7848946750164032,
+            "11": 1.7126937508583069,
+            "12": 1.7475750744342804,
+            "13": 1.563899964094162,
+            "14": 1.8450162708759308,
+            "15": 1.7363872528076172,
+            "16": 1.636330395936966,
+            "17": 1.6540840566158295,
+            "18": 1.675352782011032,
+            "19": 1.6908962726593018,
+            "20": 1.54934823513031,
+            "21": 1.6652677059173584,
+            "22": 1.649835467338562,
+            "23": 1.5884249806404114
+          },
+          "guard_floor": 0.05,
+          "within_guard": true
+        },
+        "op_rate_per_token_lane0": {
+          "none": 0.0,
+          "append": 0.019292195638020832,
+          "correct": 0.9777119954427084,
+          "pop": 0.0,
+          "merge": 0.0029958089192708335
+        },
+        "op_histogram_all_lanes": {
+          "none": 392038,
+          "append": 7586,
+          "correct": 384452,
+          "pop": 0,
+          "merge": 2356
+        },
+        "occupancy": {
+          "note": "live slots at every token, from the walk's recorded pre-decision liveness channel",
+          "mean_live_slots": 26.9318364461263,
+          "rank": 128
+        },
+        "read_weight_entropy": {
+          "units": "nats over the live-slot weight distribution, per token",
+          "mean": 1.6766784610819727
+        },
+        "per_layer": {
+          "0": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01971435546875,
+              "correct": 0.97857666015625,
+              "pop": 0.0,
+              "merge": 0.001708984375
+            },
+            "occupancy_mean_live_slots": 30.85107421875,
+            "read_weight_entropy_nats": 2.678512178168509,
+            "identity_rewrite_share": 0.7003056196594524
+          },
+          "1": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.02294921875,
+              "correct": 0.97515869140625,
+              "pop": 0.0,
+              "merge": 0.00189208984375
+            },
+            "occupancy_mean_live_slots": 35.2825927734375,
+            "read_weight_entropy_nats": 1.2246361207426264,
+            "identity_rewrite_share": 0.10997058271264944
+          },
+          "2": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0211181640625,
+              "correct": 0.97686767578125,
+              "pop": 0.0,
+              "merge": 0.00201416015625
+            },
+            "occupancy_mean_live_slots": 32.5511474609375,
+            "read_weight_entropy_nats": 1.2722084183313234,
+            "identity_rewrite_share": 0.09634489222118088
+          },
+          "3": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01922607421875,
+              "correct": 0.978759765625,
+              "pop": 0.0,
+              "merge": 0.00201416015625
+            },
+            "occupancy_mean_live_slots": 28.172119140625,
+            "read_weight_entropy_nats": 1.700933310131824,
+            "identity_rewrite_share": 0.08187827388376154
+          },
+          "4": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.02117919921875,
+              "correct": 0.97686767578125,
+              "pop": 0.0,
+              "merge": 0.001953125
+            },
+            "occupancy_mean_live_slots": 30.90802001953125,
+            "read_weight_entropy_nats": 1.2429406147906998,
+            "identity_rewrite_share": 0.09003436426116838
+          },
+          "5": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01800537109375,
+              "correct": 0.97930908203125,
+              "pop": 0.0,
+              "merge": 0.002685546875
+            },
+            "occupancy_mean_live_slots": 25.486083984375,
+            "read_weight_entropy_nats": 1.425492861122985,
+            "identity_rewrite_share": 0.08108444998441883
+          },
+          "6": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.02020263671875,
+              "correct": 0.97784423828125,
+              "pop": 0.0,
+              "merge": 0.001953125
+            },
+            "occupancy_mean_live_slots": 30.33502197265625,
+            "read_weight_entropy_nats": 1.3437773122633732,
+            "identity_rewrite_share": 0.08807190562386867
+          },
+          "7": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01617431640625,
+              "correct": 0.98114013671875,
+              "pop": 0.0,
+              "merge": 0.002685546875
+            },
+            "occupancy_mean_live_slots": 22.94549560546875,
+            "read_weight_entropy_nats": 1.1116670534910083,
+            "identity_rewrite_share": 0.08267496111975117
+          },
+          "8": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01983642578125,
+              "correct": 0.9779052734375,
+              "pop": 0.0,
+              "merge": 0.00225830078125
+            },
+            "occupancy_mean_live_slots": 27.519775390625,
+            "read_weight_entropy_nats": 1.2382491670356008,
+            "identity_rewrite_share": 0.08219947572088379
+          },
+          "9": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01922607421875,
+              "correct": 0.97607421875,
+              "pop": 0.0,
+              "merge": 0.00469970703125
+            },
+            "occupancy_mean_live_slots": 23.109130859375,
+            "read_weight_entropy_nats": 1.5034088746011693,
+            "identity_rewrite_share": 0.07209854927463732
+          },
+          "10": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.02056884765625,
+              "correct": 0.97723388671875,
+              "pop": 0.0,
+              "merge": 0.002197265625
+            },
+            "occupancy_mean_live_slots": 30.202392578125,
+            "read_weight_entropy_nats": 1.7393165517563813,
+            "identity_rewrite_share": 0.07513584410717632
+          },
+          "11": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01904296875,
+              "correct": 0.97833251953125,
+              "pop": 0.0,
+              "merge": 0.00262451171875
+            },
+            "occupancy_mean_live_slots": 27.7584228515625,
+            "read_weight_entropy_nats": 2.404841271620817,
+            "identity_rewrite_share": 0.06712832990205253
+          },
+          "12": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0177001953125,
+              "correct": 0.97906494140625,
+              "pop": 0.0,
+              "merge": 0.00323486328125
+            },
+            "occupancy_mean_live_slots": 25.0445556640625,
+            "read_weight_entropy_nats": 1.930949618773281,
+            "identity_rewrite_share": 0.06857427841157035
+          },
+          "13": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01861572265625,
+              "correct": 0.97955322265625,
+              "pop": 0.0,
+              "merge": 0.0018310546875
+            },
+            "occupancy_mean_live_slots": 27.4879150390625,
+            "read_weight_entropy_nats": 1.4489920522506259,
+            "identity_rewrite_share": 0.07664028911458658
+          },
+          "14": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.02056884765625,
+              "correct": 0.97662353515625,
+              "pop": 0.0,
+              "merge": 0.0028076171875
+            },
+            "occupancy_mean_live_slots": 29.38543701171875,
+            "read_weight_entropy_nats": 1.768452385779876,
+            "identity_rewrite_share": 0.07337041434910319
+          },
+          "15": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01763916015625,
+              "correct": 0.978271484375,
+              "pop": 0.0,
+              "merge": 0.00408935546875
+            },
+            "occupancy_mean_live_slots": 21.9041748046875,
+            "read_weight_entropy_nats": 1.875469526431592,
+            "identity_rewrite_share": 0.06856750686298976
+          },
+          "16": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.02069091796875,
+              "correct": 0.9769287109375,
+              "pop": 0.0,
+              "merge": 0.00238037109375
+            },
+            "occupancy_mean_live_slots": 28.24639892578125,
+            "read_weight_entropy_nats": 2.0884073515548667,
+            "identity_rewrite_share": 0.06884918155691616
+          },
+          "17": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0206298828125,
+              "correct": 0.97528076171875,
+              "pop": 0.0,
+              "merge": 0.00408935546875
+            },
+            "occupancy_mean_live_slots": 26.4605712890625,
+            "read_weight_entropy_nats": 1.79150623196675,
+            "identity_rewrite_share": 0.07215720633331248
+          },
+          "18": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01788330078125,
+              "correct": 0.97882080078125,
+              "pop": 0.0,
+              "merge": 0.0032958984375
+            },
+            "occupancy_mean_live_slots": 23.69732666015625,
+            "read_weight_entropy_nats": 1.7098748263464827,
+            "identity_rewrite_share": 0.07064912390097898
+          },
+          "19": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.017333984375,
+              "correct": 0.97869873046875,
+              "pop": 0.0,
+              "merge": 0.00396728515625
+            },
+            "occupancy_mean_live_slots": 22.24365234375,
+            "read_weight_entropy_nats": 2.3051987700655685,
+            "identity_rewrite_share": 0.06716557530402245
+          },
+          "20": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.020751953125,
+              "correct": 0.9752197265625,
+              "pop": 0.0,
+              "merge": 0.0040283203125
+            },
+            "occupancy_mean_live_slots": 28.340087890625,
+            "read_weight_entropy_nats": 1.7879063504232566,
+            "identity_rewrite_share": 0.06922017774439855
+          },
+          "21": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0179443359375,
+              "correct": 0.9775390625,
+              "pop": 0.0,
+              "merge": 0.0045166015625
+            },
+            "occupancy_mean_live_slots": 22.20721435546875,
+            "read_weight_entropy_nats": 1.271827418220643,
+            "identity_rewrite_share": 0.07554945054945054
+          },
+          "22": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01837158203125,
+              "correct": 0.97698974609375,
+              "pop": 0.0,
+              "merge": 0.004638671875
+            },
+            "occupancy_mean_live_slots": 24.05474853515625,
+            "read_weight_entropy_nats": 1.7956039063454141,
+            "identity_rewrite_share": 0.07040669707003186
+          },
+          "23": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01763916015625,
+              "correct": 0.97802734375,
+              "pop": 0.0,
+              "merge": 0.00433349609375
+            },
+            "occupancy_mean_live_slots": 22.17071533203125,
+            "read_weight_entropy_nats": 1.5801108937526716,
+            "identity_rewrite_share": 0.07083125312031952
+          }
+        },
+        "identity_rewrite_share": 0.10330808527462466,
+        "identity_n_correct": 384452
+      },
+      "decay": {
+        "note": "the DECAY gate's per-token mean per layer (the store rows' survival factor per token), from the trained walk's own projections on the calibration probe windows",
+        "mean_decay_per_layer": {
+          "0": 0.9589347243309021,
+          "1": 0.7126808166503906,
+          "2": 0.7753708213567734,
+          "3": 0.8274786472320557,
+          "4": 0.7604694217443466,
+          "5": 0.8164833337068558,
+          "6": 0.7710080146789551,
+          "7": 0.7115218341350555,
+          "8": 0.7876236587762833,
+          "9": 0.8182594478130341,
+          "10": 0.8521097302436829,
+          "11": 0.9309886693954468,
+          "12": 0.8676640838384628,
+          "13": 0.8362768441438675,
+          "14": 0.8699477016925812,
+          "15": 0.8825226426124573,
+          "16": 0.8940138816833496,
+          "17": 0.8564552962779999,
+          "18": 0.8497030884027481,
+          "19": 0.9471710026264191,
+          "20": 0.8490084707736969,
+          "21": 0.7209587842226028,
+          "22": 0.8636020421981812,
+          "23": 0.8240729719400406
+        }
+      }
+    },
+    {
+      "step": 180,
+      "bytes": 20022866,
+      "train_loss": 2.2810535085297245,
+      "eval_nll": 1.841756020273481,
+      "eval_windows": 7,
+      "eval_targets": 14336,
+      "diagnostics": {
+        "probe": {
+          "split": "calibration",
+          "windows": 4,
+          "mixers": 24,
+          "regime": "eval, bf16 autocast, the persistent walk the arm trains on (collect=True)",
+          "probe_wall_seconds": 4.6
+        },
+        "key_collapse_watch": {
+          "span_key_std_min": 1.2194751501083374,
+          "span_key_std_mean": 1.786405559629202,
+          "mean_pairwise_key_cos": 0.09947642006833728,
+          "per_layer_span_key_std": {
+            "0": 1.6663878560066223,
+            "1": 1.8682925999164581,
+            "2": 1.9764447808265686,
+            "3": 1.8280331194400787,
+            "4": 1.8972240090370178,
+            "5": 1.886175513267517,
+            "6": 1.8686664998531342,
+            "7": 1.826415240764618,
+            "8": 1.8514848947525024,
+            "9": 1.7901345789432526,
+            "10": 1.8007460534572601,
+            "11": 1.7966516315937042,
+            "12": 1.829467535018921,
+            "13": 1.6747171878814697,
+            "14": 1.9302955865859985,
+            "15": 1.8292303085327148,
+            "16": 1.7199148535728455,
+            "17": 1.7837437093257904,
+            "18": 1.7202216386795044,
+            "19": 1.7441466748714447,
+            "20": 1.602323055267334,
+            "21": 1.7261657416820526,
+            "22": 1.6746448278427124,
+            "23": 1.5822055339813232
+          },
+          "guard_floor": 0.05,
+          "within_guard": true
+        },
+        "op_rate_per_token_lane0": {
+          "none": 0.0,
+          "append": 0.01747894287109375,
+          "correct": 0.9793879191080729,
+          "pop": 0.0,
+          "merge": 0.0031331380208333335
+        },
+        "op_histogram_all_lanes": {
+          "none": 391984,
+          "append": 6873,
+          "correct": 385111,
+          "pop": 0,
+          "merge": 2464
+        },
+        "occupancy": {
+          "note": "live slots at every token, from the walk's recorded pre-decision liveness channel",
+          "mean_live_slots": 24.0287348429362,
+          "rank": 128
+        },
+        "read_weight_entropy": {
+          "units": "nats over the live-slot weight distribution, per token",
+          "mean": 1.6541064706071544
+        },
+        "per_layer": {
+          "0": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.019287109375,
+              "correct": 0.97882080078125,
+              "pop": 0.0,
+              "merge": 0.00189208984375
+            },
+            "occupancy_mean_live_slots": 29.59375,
+            "read_weight_entropy_nats": 2.7045308659585676,
+            "identity_rewrite_share": 0.6140175843362224
+          },
+          "1": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.021240234375,
+              "correct": 0.9776611328125,
+              "pop": 0.0,
+              "merge": 0.0010986328125
+            },
+            "occupancy_mean_live_slots": 33.96490478515625,
+            "read_weight_entropy_nats": 1.2845635202144143,
+            "identity_rewrite_share": 0.10257210638032213
+          },
+          "2": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01910400390625,
+              "correct": 0.97918701171875,
+              "pop": 0.0,
+              "merge": 0.001708984375
+            },
+            "occupancy_mean_live_slots": 29.6307373046875,
+            "read_weight_entropy_nats": 1.5752633844402633,
+            "identity_rewrite_share": 0.08763946892725799
+          },
+          "3": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0189208984375,
+              "correct": 0.9793701171875,
+              "pop": 0.0,
+              "merge": 0.001708984375
+            },
+            "occupancy_mean_live_slots": 27.8338623046875,
+            "read_weight_entropy_nats": 1.828097479018457,
+            "identity_rewrite_share": 0.08326062570110931
+          },
+          "4": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0194091796875,
+              "correct": 0.9796142578125,
+              "pop": 0.0,
+              "merge": 0.0009765625
+            },
+            "occupancy_mean_live_slots": 30.100341796875,
+            "read_weight_entropy_nats": 1.5240082845608665,
+            "identity_rewrite_share": 0.08560747663551402
+          },
+          "5": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01708984375,
+              "correct": 0.9801025390625,
+              "pop": 0.0,
+              "merge": 0.0028076171875
+            },
+            "occupancy_mean_live_slots": 23.857666015625,
+            "read_weight_entropy_nats": 1.3906162934706277,
+            "identity_rewrite_share": 0.08512890770955286
+          },
+          "6": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.02081298828125,
+              "correct": 0.97650146484375,
+              "pop": 0.0,
+              "merge": 0.002685546875
+            },
+            "occupancy_mean_live_slots": 30.6561279296875,
+            "read_weight_entropy_nats": 1.4481084886037494,
+            "identity_rewrite_share": 0.09156822301393837
+          },
+          "7": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0152587890625,
+              "correct": 0.982666015625,
+              "pop": 0.0,
+              "merge": 0.0020751953125
+            },
+            "occupancy_mean_live_slots": 21.9573974609375,
+            "read_weight_entropy_nats": 1.2336542663425134,
+            "identity_rewrite_share": 0.08515527950310559
+          },
+          "8": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0184326171875,
+              "correct": 0.97967529296875,
+              "pop": 0.0,
+              "merge": 0.00189208984375
+            },
+            "occupancy_mean_live_slots": 27.58258056640625,
+            "read_weight_entropy_nats": 1.3462895037898448,
+            "identity_rewrite_share": 0.08585134882561835
+          },
+          "9": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01708984375,
+              "correct": 0.97979736328125,
+              "pop": 0.0,
+              "merge": 0.00311279296875
+            },
+            "occupancy_mean_live_slots": 22.06561279296875,
+            "read_weight_entropy_nats": 1.6042837973158128,
+            "identity_rewrite_share": 0.07662119230050458
+          },
+          "10": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0194091796875,
+              "correct": 0.978759765625,
+              "pop": 0.0,
+              "merge": 0.0018310546875
+            },
+            "occupancy_mean_live_slots": 28.112548828125,
+            "read_weight_entropy_nats": 1.756579989389961,
+            "identity_rewrite_share": 0.07975804440009977
+          },
+          "11": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01678466796875,
+              "correct": 0.98046875,
+              "pop": 0.0,
+              "merge": 0.00274658203125
+            },
+            "occupancy_mean_live_slots": 23.70025634765625,
+            "read_weight_entropy_nats": 2.1760466798783282,
+            "identity_rewrite_share": 0.07221115537848606
+          },
+          "12": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01531982421875,
+              "correct": 0.9808349609375,
+              "pop": 0.0,
+              "merge": 0.00384521484375
+            },
+            "occupancy_mean_live_slots": 19.74566650390625,
+            "read_weight_entropy_nats": 1.9094893358134617,
+            "identity_rewrite_share": 0.0747355320472931
+          },
+          "13": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01702880859375,
+              "correct": 0.9791259765625,
+              "pop": 0.0,
+              "merge": 0.00384521484375
+            },
+            "occupancy_mean_live_slots": 22.3189697265625,
+            "read_weight_entropy_nats": 1.4559813677886084,
+            "identity_rewrite_share": 0.07954120433861114
+          },
+          "14": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01690673828125,
+              "correct": 0.98028564453125,
+              "pop": 0.0,
+              "merge": 0.0028076171875
+            },
+            "occupancy_mean_live_slots": 23.9930419921875,
+            "read_weight_entropy_nats": 1.7167497345104878,
+            "identity_rewrite_share": 0.07969615839611481
+          },
+          "15": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01513671875,
+              "correct": 0.9803466796875,
+              "pop": 0.0,
+              "merge": 0.0045166015625
+            },
+            "occupancy_mean_live_slots": 17.6512451171875,
+            "read_weight_entropy_nats": 1.6434864366584483,
+            "identity_rewrite_share": 0.07545760179305193
+          },
+          "16": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.0185546875,
+              "correct": 0.97760009765625,
+              "pop": 0.0,
+              "merge": 0.00384521484375
+            },
+            "occupancy_mean_live_slots": 24.12164306640625,
+            "read_weight_entropy_nats": 1.9413026065202126,
+            "identity_rewrite_share": 0.07654367234813012
+          },
+          "17": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01910400390625,
+              "correct": 0.9759521484375,
+              "pop": 0.0,
+              "merge": 0.00494384765625
+            },
+            "occupancy_mean_live_slots": 24.1754150390625,
+            "read_weight_entropy_nats": 1.7612394138144236,
+            "identity_rewrite_share": 0.0766729205753596
+          },
+          "18": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01751708984375,
+              "correct": 0.97821044921875,
+              "pop": 0.0,
+              "merge": 0.0042724609375
+            },
+            "occupancy_mean_live_slots": 21.8359375,
+            "read_weight_entropy_nats": 1.6975832046039174,
+            "identity_rewrite_share": 0.07905409621264117
+          },
+          "19": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01666259765625,
+              "correct": 0.9779052734375,
+              "pop": 0.0,
+              "merge": 0.00543212890625
+            },
+            "occupancy_mean_live_slots": 18.30194091796875,
+            "read_weight_entropy_nats": 2.028090483978078,
+            "identity_rewrite_share": 0.07452253151916115
+          },
+          "20": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01885986328125,
+              "correct": 0.97802734375,
+              "pop": 0.0,
+              "merge": 0.00311279296875
+            },
+            "occupancy_mean_live_slots": 26.09564208984375,
+            "read_weight_entropy_nats": 1.7313824883308653,
+            "identity_rewrite_share": 0.0758237643534698
+          },
+          "21": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.015869140625,
+              "correct": 0.97967529296875,
+              "pop": 0.0,
+              "merge": 0.00445556640625
+            },
+            "occupancy_mean_live_slots": 20.05224609375,
+            "read_weight_entropy_nats": 1.092535826772029,
+            "identity_rewrite_share": 0.08423151205532366
+          },
+          "22": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.01422119140625,
+              "correct": 0.982421875,
+              "pop": 0.0,
+              "merge": 0.00335693359375
+            },
+            "occupancy_mean_live_slots": 18.919921875,
+            "read_weight_entropy_nats": 1.7150201466704322,
+            "identity_rewrite_share": 0.07579522862823061
+          },
+          "23": {
+            "op_rate_per_token": {
+              "none": 0.0,
+              "append": 0.011474609375,
+              "correct": 0.9822998046875,
+              "pop": 0.0,
+              "merge": 0.0062255859375
+            },
+            "occupancy_mean_live_slots": 10.42218017578125,
+            "read_weight_entropy_nats": 1.1336516961273357,
+            "identity_rewrite_share": 0.0760531875233006
+          }
+        },
+        "identity_rewrite_share": 0.10321439792683149,
+        "identity_n_correct": 385111
+      },
+      "decay": {
+        "note": "the DECAY gate's per-token mean per layer (the store rows' survival factor per token), from the trained walk's own projections on the calibration probe windows",
+        "mean_decay_per_layer": {
+          "0": 0.9593558013439178,
+          "1": 0.7374708503484726,
+          "2": 0.8203276544809341,
+          "3": 0.836269423365593,
+          "4": 0.8034276068210602,
+          "5": 0.7946923673152924,
+          "6": 0.7919797152280807,
+          "7": 0.744842603802681,
+          "8": 0.8017315864562988,
+          "9": 0.8270345479249954,
+          "10": 0.862992525100708,
+          "11": 0.9197069704532623,
+          "12": 0.8695932775735855,
+          "13": 0.8546320199966431,
+          "14": 0.8568292409181595,
+          "15": 0.8589095324277878,
+          "16": 0.8698549270629883,
+          "17": 0.8493652194738388,
+          "18": 0.8548689782619476,
+          "19": 0.9230917543172836,
+          "20": 0.8277625739574432,
+          "21": 0.6431661546230316,
+          "22": 0.853044405579567,
+          "23": 0.7589390873908997
+        }
+      }
+    }
+  ],
+  "read_mask_sweep": {
+    "note": "C4 diagnostic: one layer's mixer output (== its store read, projected) zeroed for the eval pass, one layer at a time, at the step-180 restored checkpoint; plus the all-layers cell (the storeless floor). Ablation effects, not marginals.",
+    "base_nll": 1.841756020273481,
+    "masked_nll_per_layer": {
+      "0": 1.9462306499481201,
+      "1": 1.8908793415342058,
+      "2": 1.8880068744931902,
+      "3": 1.863732899938311,
+      "4": 1.8668773855481828,
+      "5": 1.8594778776168823,
+      "6": 1.8539979798453194,
+      "7": 1.8553039005824499,
+      "8": 1.8521325077329363,
+      "9": 1.848579696246556,
+      "10": 1.8447796957833427,
+      "11": 1.8417851754597254,
+      "12": 1.84762328011649,
+      "13": 1.841255477496556,
+      "14": 1.8468826157706124,
+      "15": 1.841020175388881,
+      "16": 1.8416060038975306,
+      "17": 1.8425489834376745,
+      "18": 1.8443360669272286,
+      "19": 1.8416366747447424,
+      "20": 1.8422882897513253,
+      "21": 1.8444860322134835,
+      "22": 1.847848619733538,
+      "23": 1.8471808774130685
+    },
+    "all_layers_masked_nll": 2.990734883717128,
+    "delta_per_layer": {
+      "0": 0.10447462967463905,
+      "1": 0.04912332126072472,
+      "2": 0.04625085421970909,
+      "3": 0.021976879664829863,
+      "4": 0.025121365274701768,
+      "5": 0.01772185734340126,
+      "6": 0.012241959571838379,
+      "7": 0.013547880308968807,
+      "8": 0.010376487459455186,
+      "9": 0.006823675973074872,
+      "10": 0.003023675509861601,
+      "11": 2.91551862443562e-05,
+      "12": 0.005867259843008954,
+      "13": -0.000500542776925128,
+      "14": 0.005126595497131348,
+      "15": -0.0007358448845999899,
+      "16": -0.00015001637595046802,
+      "17": 0.0007929631641934165,
+      "18": 0.0025800466537475586,
+      "19": -0.0001193455287387124,
+      "20": 0.0005322694778442383,
+      "21": 0.0027300119400024414,
+      "22": 0.006092599460056913,
+      "23": 0.005424857139587402
+    },
+    "all_layers_delta": 1.148978863443647
+  },
+  "peak_allocated_gb": 23.09,
+  "config_sha256": "ca065c47cde0294343c853a0d0aa3a809a9f96f33934399724d12ebdfdf63a26",
+  "session": {
+    "host": "lambda01",
+    "card": "1",
+    "device": "NVIDIA RTX 6000 Ada Generation",
+    "card_gib": 47.38,
+    "torch": "2.9.1+cu128",
+    "triton": "3.5.1"
+  }
+}
