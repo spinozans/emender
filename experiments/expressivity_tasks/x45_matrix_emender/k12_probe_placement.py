@@ -638,26 +638,29 @@ def train_arm(args) -> dict:
             diagnostics = k10_probe_diagnostics(
                 model, stream, windows=args.probe_windows)
             # the address-locality instrument on the baseline too (the
-            # matched anchor for P-2): the exit key tables of the probe
-            # windows per layer, via the K10 collect launch
+            # matched anchor for P-2): one hooked pass over the probe
+            # windows, the exit key tables per layer via the K10 collect
+            # launch (the hook sees the EMBEDDED input; grouped's own x is
+            # the raw 2-D byte tensor)
             from experiments.expressivity_tasks.x42_pile_scale.byte_velocity \
                 import grouped
             rows = _probe_windows(stream, args.probe_windows)
             per_layer_loc = {}
-            for layer_index, block in enumerate(model.blocks):
-                mixer = block.mixer
+
+            def make_loc_hook(layer_index, mixer):
                 pol32 = (_round_f32(mixer.policy.tau_match),
                          _round_f32(mixer.policy.tau_merge),
                          _round_f32(mixer.policy.tau_pop),
                          _round_f32(mixer.policy.tie_break),
                          _round_f32(mixer.policy.read_scale))
-                for row in rows:
-                    x, _y, _v = next(grouped([row], 1))
+
+                def hook(_module, hook_args, _output):
+                    x = hook_args[0]
+                    batch, tokens, _ = x.shape
                     with torch.no_grad(), torch.autocast(
                             "cuda", dtype=torch.bfloat16):
                         payload, write_keys, query_keys, decay = \
                             _project_keyed(mixer, x)
-                        batch, tokens, _ = x.shape
                         out10 = _k10_forward_launch(
                             payload.float(), write_keys.float(),
                             query_keys.float(), decay.float(),
@@ -675,7 +678,22 @@ def train_arm(args) -> dict:
                             stages=3)
                     loc = _address_locality(out10["keys"].float(),
                                             out10["live"])
+                    loc["layer"] = layer_index
                     per_layer_loc.setdefault(layer_index, []).append(loc)
+                return hook
+
+            handles = [block.mixer.register_forward_hook(
+                make_loc_hook(i, block.mixer))
+                for i, block in enumerate(model.blocks)]
+            try:
+                with torch.no_grad(), torch.autocast(
+                        "cuda", dtype=torch.bfloat16):
+                    for row in rows:
+                        xb, _yb, _vb = next(grouped([row], 1))
+                        model.features(xb)
+            finally:
+                for handle in handles:
+                    handle.remove()
             pooled = [dict(layer=l,
                            pearson_r=(float(sum(s["pearson_r"] for s in ss)
                                             / len(ss))
