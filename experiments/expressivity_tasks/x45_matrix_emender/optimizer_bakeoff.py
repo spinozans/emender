@@ -380,7 +380,13 @@ def _train_with_snapshots(model, arm, stream, targets, label, log_path,
             torch.cuda.synchronize()
             opt_seconds.append(time.monotonic() - opt_start)
             if adapter["muon_metrics"]:
-                last_muon_metrics = optimizer.last_metrics
+                # ScheduleFreeWrapper forwards state/param_groups but not
+                # arbitrary attributes; the hybrid's metrics live on .base.
+                holder = optimizer
+                if not hasattr(holder, "last_metrics") \
+                        and getattr(holder, "base", None) is not None:
+                    holder = holder.base
+                last_muon_metrics = getattr(holder, "last_metrics", None)
             elapsed += time.monotonic() - start
             step += 1
             seen += n
