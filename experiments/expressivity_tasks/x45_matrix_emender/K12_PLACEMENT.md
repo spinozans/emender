@@ -148,8 +148,26 @@ the estimator's whole-window replay (one light kernel, one program per
 (batch·head) row).  The K10 suite stays GREEN with the new module loaded
 (19 passed); the K12 suite is 18 tests.
 
-## 3. Two findings the gates surfaced, stated honestly
+## 3. The findings the gates and the probe surfaced, stated honestly
 
+* **THE POSITIVE FIXED-w BRACKET IS FORWARD-DEGENERATE — a defect of the
+  RULING, not the execution (the supervisor's own correction).**  The
+  placement choice is `argmax over free slots of w·sim`, which is
+  INVARIANT under positive scaling of `w`: the ruled bracket
+  {+0.25, +0.5, +1.0} is provably ONE forward-distinct machine, and the
+  three arms landed **bit-identical** (the same constant-180
+  1.8508401427950179, the same post-cooldown 1.6892253501074654, the same
+  EMA, the same 818 placement fires, the same read-mask sweep) — a receipt
+  of both the degeneracy and the probe's run-to-run determinism, which is
+  the one good that came of it.  **The corrected family structure for any
+  future placement work: the forward-distinct placement policies are
+  exactly `{w = 0 (first-free), w > 0 (locality), w < 0 (anti-locality)}`**
+  — the magnitude matters ONLY through the estimator's softmax
+  temperature, i.e. only for the LEARNED arm's gradient dynamics, never in
+  the forward.  The informative fixed controls are therefore the SIGNS;
+  the anti-local control (`placement_fixedminus0p25`) was
+  supervisor-approved as the completing arm after the degeneracy was
+  receipted.
 * **The K10 eager oracle's MERGE branch carries a LATENT MULTI-LANE BUG**
   (found by this lane's placement-regime gate fixture; fixed in THIS
   module's oracle copy only — no `k10_*`/`k11_*` file edited).  The
@@ -167,10 +185,23 @@ the estimator's whole-window replay (one light kernel, one program per
   the operator, not touched here.
 * **The op chain structurally throttles placement** (F1, above): the
   fire-rate instrument reads honestly as "the lever exists only in
-  multi-free-slot windows", which the trained machine's op mix makes rare.
-  The probe measures whether that rare window is load-bearing; the
-  registration's three-way read makes every outcome a result, including
-  THE HONEST NULL.
+  multi-free-slot windows", which the trained machine's op mix makes rare
+  (POP 0 %, MERGE 0.3 % per token) — measured at 11–13 % of APPENDs, i.e.
+  ~0.2 % of tokens.  The probe measures whether that rare window is
+  load-bearing; the registration's three-way read makes every outcome a
+  result, including THE HONEST NULL.
+* **The address-locality instrument's own bug, caught before any arm was
+  banked**: `torch.corrcoef` takes numpy semantics (each ROW is a variable)
+  — the pooled (n_pairs, 2) sample matrix must be TRANSPOSED; the
+  untransposed call returned the degenerate r = 1.0 on every fixture.  A
+  synthetic sanity check (random keys must give r ≈ 0) caught it; the
+  learned arm's first landing was discarded and re-ran with the fixed
+  instrument (bit-identically in every other channel — a determinism
+  receipt).  An honest bonus measurement from the fixed instrument: the
+  FIRST-FREE rule itself already carries TEMPORAL address locality at
+  init (mean r = −0.146 over 24 layers on the untrained machine — adjacent
+  slots are written at adjacent times, hence similar mimetic keys), so the
+  trained baseline's own r is the only honest anchor for P-2.
 
 ## 4. Commands
 
