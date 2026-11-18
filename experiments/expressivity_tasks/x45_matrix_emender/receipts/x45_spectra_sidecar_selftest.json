@@ -1,0 +1,64 @@
+{
+  "n_states": 2048,
+  "load_before": {
+    "uptime_s": 5090808,
+    "loadavg_1": 48.89,
+    "loadavg_5": 65.05,
+    "loadavg_15": 61.4,
+    "running": 29,
+    "total": 6728,
+    "nproc": 256,
+    "note": "sampled before pool enable and mid-run; 32 hard-capped single-thread workers on the box; the GPU-driven main process keeps OMP_NUM_THREADS=4"
+  },
+  "bit_equal_same_lapack_reference": true,
+  "max_abs_pr_diff_vs_svdvals": 0.00035858154296875,
+  "magma_cross_backend": {
+    "bit_equal": false,
+    "max_abs_pr_diff": 5.340576171875e-05,
+    "note": "different LAPACK implementations differ at ulp scale (measured ~1e-4 at PR scale ~60, relative ~2e-6); decision-equality holds unless an observation sits inside this band of a threshold"
+  },
+  "full_microbatch_workload": {
+    "n_matrices": 48768,
+    "wall_s": 4.47,
+    "ms_per_matrix": 0.0917
+  },
+  "pool_stats": {
+    "workers": 32,
+    "chunk": 16384,
+    "n_requests": 2,
+    "n_matrices": 50816,
+    "seconds": 3.93,
+    "ms_per_matrix": 0.07738147672237618,
+    "load_at_enable": {
+      "uptime_s": 5090808,
+      "loadavg_1": 48.89,
+      "loadavg_5": 65.05,
+      "loadavg_15": 61.4,
+      "running": 29,
+      "total": 6728,
+      "nproc": 256,
+      "note": "sampled before pool enable and mid-run; 32 hard-capped single-thread workers on the box; the GPU-driven main process keeps OMP_NUM_THREADS=4"
+    },
+    "load_now": {
+      "uptime_s": 5090825,
+      "loadavg_1": 45.88,
+      "loadavg_5": 63.59,
+      "loadavg_15": 60.98,
+      "running": 32,
+      "total": 6772,
+      "nproc": 256,
+      "note": "sampled before pool enable and mid-run; 32 hard-capped single-thread workers on the box; the GPU-driven main process keeps OMP_NUM_THREADS=4"
+    }
+  },
+  "load_after": {
+    "uptime_s": 5090826,
+    "loadavg_1": 47.33,
+    "loadavg_5": 63.6,
+    "loadavg_15": 60.99,
+    "running": 30,
+    "total": 6737,
+    "nproc": 256,
+    "note": "sampled before pool enable and mid-run; 32 hard-capped single-thread workers on the box; the GPU-driven main process keeps OMP_NUM_THREADS=4"
+  },
+  "verdict": "guards met"
+}
