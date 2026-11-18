@@ -431,6 +431,7 @@ class GrowingGDN2Core(torch.nn.Module):
         self.name_prefix = ""      # set by install_growth (model-level names)
         self.n_events = 0
         self.last_probe = None      # per-scan telemetry (the driver samples)
+        self._pending_fire = None   # the fire awaiting its post-event receipt
 
     @property
     def num_heads(self):
@@ -484,6 +485,16 @@ class GrowingGDN2Core(torch.nn.Module):
                 iota = iota_from_trajectory(h, b, khat).mean(dim=(0, 2))
                 fire_idx = int(np.argmax(smoothed >= self.tau)) \
                     if bool((smoothed >= self.tau).any()) else None
+                if self._pending_fire is not None:
+                    # the post-event per-head PR receipt: the first boundary
+                    # AFTER the event (the new heads entered exact zeros)
+                    self._pending_fire[
+                        "post_event_first_boundary_pr_per_head"] = \
+                        pr[:, 0, :].mean(0).tolist()
+                    self._pending_fire["pr_mean_drop_at_event"] = \
+                        self._pending_fire["fire_boundary_pr_mean"] \
+                        - float(mean_series[0])
+                    self._pending_fire = None
             telemetry["spans"].append(dict(
                 t0=t0, heads=cur.num_heads,
                 pr_mean=float(mean_series.mean()),
@@ -502,10 +513,16 @@ class GrowingGDN2Core(torch.nn.Module):
                                      param_map, smoothed[fire_idx], seed,
                                      name_prefix=self.name_prefix)
                     events.append(ev)
-                    telemetry["fires"].append(dict(
+                    fire_record = dict(
                         boundary=boundary, heads=cur.num_heads,
                         new_heads=new_heads,
-                        fire_smoothed_pr=float(smoothed[fire_idx]), seed=seed))
+                        fire_smoothed_pr=float(smoothed[fire_idx]),
+                        fire_boundary_pr_mean=float(mean_series[fire_idx]),
+                        fire_boundary_pr_per_head=
+                            pr[:, fire_idx, :].mean(0).tolist(),
+                        seed=seed)
+                    telemetry["fires"].append(fire_record)
+                    self._pending_fire = fire_record
                     spans[-1] = (t0, boundary, cur)
                     with torch.inference_mode():
                         # the kernel asserts a float32 initial state; the
@@ -1665,6 +1682,98 @@ def cmd_arm(args) -> dict:
         pool.close()
 
 
+def cmd_lock(args) -> dict:
+    """The supervisor's calibrated-τ branch (the 2026-11-22 ruling on the
+    calibration's escalation receipt): the registered τ_sat = 96 is
+    UNREACHABLE on real text at both scanned horizons, so the locked
+    trigger is τ_cal = the trained fixed machine's own per-layer
+    smoothed-PR ceiling at the locked horizon (8192) -- growth fires
+    exactly when a boundary is MORE saturated than anything the fixed
+    machine exhibits.  Committed BEFORE any growth arm runs (the §5
+    calibration branch's own rule).  CPU-only: it reads the committed
+    calibration receipts and writes the lock."""
+    cal_path = RECEIPTS / "gdn2_growth_c3_calibration_8192.json"
+    cal = json.loads(cal_path.read_text())
+    if cal["tau_reachable"]:
+        raise RuntimeError("the 8192 calibration says 96 IS reachable; the "
+                           "calibrated branch does not apply")
+    ceiling = max(cal["pr"]["post_cooldown"]["per_layer_smoothed_max"]
+                  .values())
+    argmax = [k for k, v in cal["pr"]["post_cooldown"]
+              ["per_layer_smoothed_max"].items() if v == ceiling]
+    lock = dict(
+        locked=True, context=8192,
+        tau_sat=ceiling,
+        tau_registered=TAU_SAT,
+        tau_branch=dict(
+            rule="the supervisor's calibrated branch (the escalation ruling "
+                 "on the committed calibration receipts): tau_cal = the "
+                 "trained fixed machine's own per-layer smoothed-PR ceiling "
+                 "at the locked horizon, measured on the post-cooldown "
+                 "(PRIMARY-scored) trained state",
+            value=ceiling, argmax_layer=argmax,
+            semantics="growth fires exactly when a boundary is MORE "
+                      "saturated than anything the fixed machine exhibits",
+            hazard="the K8 idle-store hazard stated verbatim: PR ~20 of 128 "
+                   "is the fixed machine's own regime ceiling, NOT absolute "
+                   "capacity; the growth arm tests growth-past-the-exhibited-"
+                   "regime, not growth at capacity.  The registered-96 "
+                   "informative-null branch's verdict is delivered by the "
+                   "reachability receipts themselves (PR max ~25 vs 96 at "
+                   "both horizons) and is receipted permanently there",
+            event_receipts="every firing event receipts its PR value, the "
+                          "per-head PR at the fire boundary, the window "
+                          "position (boundary), the post-event first-"
+                          "boundary per-head PR, and the mean PR drop at "
+                          "the event",
+            reachability=dict(
+                horizon_8192=dict(
+                    receipt="receipts/gdn2_growth_c3_calibration_8192.json",
+                    tau_reachable=False, pr_mean=cal["pr"]["post_cooldown"]
+                    ["mean"], pr_max=cal["pr"]["post_cooldown"]["max"]),
+                horizon_16384=dict(
+                    receipt="receipts/"
+                            "gdn2_growth_c3_calibration_16384.json",
+                    tau_reachable=json.loads((RECEIPTS /
+                        "gdn2_growth_c3_calibration_16384.json").read_text())
+                    ["tau_reachable"])),
+            fixed_arm_primary_reference=cal["scores"]["primary"]["eval_nll"]),
+        horizon_rule="8192 LOCKED per the ruling (the shortest scanned "
+                     "horizon; same reachability verdict; the emender fold "
+                     "arithmetic is decisive: 4x deeper, not 8x)",
+        protocol=dict(exposure_targets=EXPOSURE_TARGETS,
+                      windows_per_step=windows_per_step(8192),
+                      landing_targets=175 * windows_per_step(8192) * 8192,
+                      constant_steps_expected=175,
+                      cooldown_steps=COOLDOWN_STEPS,
+                      cooldown_fraction=round(COOLDOWN_STEPS / 175, 4),
+                      segment=SEGMENT, head_cap=HEAD_CAP, smooth=SMOOTH,
+                      seed=SEED, eval_windows=EVAL_WINDOWS,
+                      microbatch=dict(gdn2=microbatch_for(8192, "gdn2"),
+                                      emender=microbatch_for(8192, "emender")),
+                      stream="the registered flagship stream's documents, "
+                             "full 8192-byte windows from eligible "
+                             "documents only (byte_length >= 8193), "
+                             "document-bounded, split-disjoint",
+                      optimizer="plain AdamW at the registered gdn2 "
+                                "nomination's transferred settings, all "
+                                "four arms (the K6/K8/side-by-side "
+                                "convention; identical numbers on both "
+                                "machines)"),
+        predictions=dict(PREDICTIONS, tau_note=
+            "P-G2's 'trigger fired in-regime' clause reads at the CALIBRATED "
+            "tau (the registered 96's informative-null verdict is the "
+            "reachability receipt); P-G3's adjudication is PENDING the "
+            "emender arm's landing (the ~36h matched-exposure long pole, "
+            "detached per the ruling)"),
+        eligible_documents=cal["eligible_documents"],
+        bindings=regime_bindings(), git=matched_arms.git_state())
+    atomic_json(RECEIPTS / "gdn2_growth_c3_regime.json", lock)
+    print(json.dumps(dict(locked=True, context=8192, tau_cal=ceiling,
+                          argmax_layer=argmax), indent=1), flush=True)
+    return lock
+
+
 def cmd_assemble(args) -> dict:
     """The four-arm table + the P-G1/P-G2/P-G3 adjudication (the margins read
     against the pre-stated 0.075 endpoint band, post-cooldown PRIMARY)."""
@@ -1777,6 +1886,10 @@ def main():
     sub.add_parser("calibrate", help="the tau_sat calibration scan on both "
                                      "horizons + the regime lock")
 
+    sub.add_parser("lock", help="the supervisor's calibrated-tau lock "
+                                "(reads the committed calibration receipts; "
+                                "CPU-only)")
+
     p = sub.add_parser("arm", help="one C3 arm at the locked regime")
     p.add_argument("--arm", required=True, choices=ARMS)
     p.add_argument("--seed", type=int, default=SEED)
@@ -1797,6 +1910,8 @@ def main():
         print(json.dumps(dict(verdict=receipt["verdict"]), indent=1))
     elif args.command == "calibrate":
         cmd_calibrate(args)
+    elif args.command == "lock":
+        cmd_lock(args)
     elif args.command == "arm":
         cmd_arm(args)
     elif args.command == "assemble":
