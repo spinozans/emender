@@ -684,10 +684,19 @@ def assemble(args) -> dict:
         gdn2_muon3x_gates_adamw=arm_curve(
             MUON_CONTROL_RUNS / "gdn2_muon3x_gates_adamw_seed3401"),
     )
-    for run_dir in sorted(RUNS.glob("*_seed*")):
-        label = run_dir.name[:-len("_seed3401")] \
-            if run_dir.name.endswith("_seed3401") else run_dir.name
-        curves[label] = arm_curve(run_dir)
+    # this lane's arms: <label>_seed<seed> run dirs -> the arm's key is the
+    # label at seed 3401, <label>_seed<seed> at any other seed (the smoke
+    # shakedown receipts are never arms of the table)
+    lane_dirs = {}
+    for run_dir in sorted(list(RUNS.glob("*_seed3401"))
+                          + list(RUNS.glob("*_seed3402"))):
+        m = re.fullmatch(r"(?P<label>.+)_seed(?P<seed>\d+)", run_dir.name)
+        if not m or m["label"].startswith("smoke_"):
+            continue
+        key = (m["label"] if m["seed"] == "3401"
+               else f"{m['label']}_seed{m['seed']}")
+        lane_dirs[key] = run_dir
+        curves[key] = arm_curve(run_dir)
 
     overlay = []
     for step in CHECKPOINT_STEPS:
@@ -714,12 +723,9 @@ def assemble(args) -> dict:
         }
         if label in paths:
             return _final_of(paths[label])
-        run_dir = RUNS / f"{label}_seed3401"
-        if not run_dir.exists():
-            run_dir = RUNS / f"{label}_seed{SECOND_SEED}"
-        if not run_dir.exists():
-            return None
-        return _final_of(run_dir)
+        if label in lane_dirs:
+            return _final_of(lane_dirs[label])
+        return None
 
     finals = {label: final_of(label) for label in curves}
 
