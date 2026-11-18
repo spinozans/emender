@@ -896,8 +896,11 @@ def gdn2_saturation_diagnostics(model, windows, ctx, pool, tau=TAU_SAT):
             iota_mean=float(iota.mean()), iota_max=float(iota.max()))
         curves_pr.append(boundary_pr.mean(axis=0).tolist())
         curves_iota.append(boundary_iota.mean(axis=0).tolist())
-    agg_pr = np.concatenate([r["pr"].reshape(-1, r["pr"].shape[-1])
-                             for r in store])
+    # the GROWN model has MIXED per-layer head counts (the calibrated-tau
+    # branch grows only the layers whose own PR regime crosses), so the
+    # global aggregate flattens per-head values instead of stacking [n, H]
+    # matrices across layers
+    agg_pr = np.concatenate([r["pr"].reshape(-1) for r in store])
     return dict(
         windows=len(windows), context=ctx, tau=tau,
         regime="eval, bf16 autocast, the kernel's own per-chunk trajectory",
@@ -1592,7 +1595,13 @@ def cmd_arm(args) -> dict:
         model = model.cuda().train()
         grow_sink = None
         if args.arm == "gdn2_growth":
-            install_growth(model, sink)
+            wrappers = install_growth(model, sink)
+            # the LOCKED tau (the regime lock's calibrated branch) is the
+            # arm's trigger; the default is the registered 96, which the
+            # calibration receipts proved unreachable -- an arm that probed
+            # at 96 would be a fixed-2 duplicate by construction
+            for wrapper in wrappers:
+                wrapper.tau = tau
             grow_sink = sink
         label = args.arm if not args.smoke else f"{args.arm}_smoke"
         out = RUNS / f"{label}_seed{args.seed}"
@@ -1656,6 +1665,9 @@ def cmd_arm(args) -> dict:
         receipt = dict(
             probe="gdn2_growth_c3", arm=args.arm, seed=args.seed, context=ctx,
             tau_sat=tau, machine=machine,
+            wrapper_tau="the regime lock's tau (set on every wrapper at "
+                        "install; the registered-96 default would make the "
+                        "arm a fixed-2 duplicate by construction)",
             parameters=dict(
                 total=sum(p.numel() for p in model.parameters()),
                 delta_vs_registered=None),
