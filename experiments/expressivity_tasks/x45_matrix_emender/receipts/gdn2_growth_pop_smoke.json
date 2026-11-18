@@ -1,0 +1,214 @@
+{
+ "probe": "gdn2_growth_pop_smoke",
+ "registration": "PREREGISTRATION_GDN2_GROWTH_POP.md (draft)",
+ "config": {
+  "layer": "GDN2ExternalMLPLayer(dim=576, expansion=2., head_dim=128, use_conv=True) -- the registered 150M arm's mixer shape",
+  "pop_semantics": "HEAD-RECYCLING (state surgery only: S_h -> 0 at 64-token boundaries on the per-head saturation statistic; operator sign-off pending -- escalated before the arms lock)",
+  "trigger": "per-head participation ratio PR >= tau_pop (registered candidate 0.75*d_k = 96, calibrated per the growth registration's disclosed protocol), smoothed over the last 4 boundaries, reset on fire",
+  "seed": 3421
+ },
+ "environment": {
+  "torch": "2.9.1+cu128",
+  "device": "NVIDIA RTX 6000 Ada Generation"
+ },
+ "ps0_wrapper_parity": {
+  "fp32_max_abs_diff": 1.979060471057892e-09,
+  "fp32_bit_identical": false,
+  "bf16_max_abs_diff": 0.0,
+  "o_core_abs_max": 0.003032544394955039,
+  "note": "the arms' wrapper (the 64-token segmented real pass, no events) vs the core's own training forward; the never-fires control reproduces GDN2 exactly (the growth smoke's S-2 receipt: the segmentation is the kernel's own chunk decomposition, bit-identical)",
+  "verdict": "met"
+ },
+ "ps1_inertness": {
+  "fp32_max_abs_diff_pop_disabled_vs_growth_only": 0.0,
+  "bit_identical": true,
+  "trigger_decisions_unreachable_tau": [],
+  "trigger_fires_reachable_tau": 31,
+  "live_walk_output_diff_vs_plain": 0.0034352722577750683,
+  "note": "the pop-disabled arm IS GDN2+growth: with tau_pop unreachable the armed walk is bit-identical to the growth-only walk across a mid-window growth event",
+  "verdict": "met"
+ },
+ "ps2_pop_carry_legality": {
+  "forced_pops": {
+   "8": [
+    1
+   ],
+   "20": [
+    3
+   ],
+   "28": [
+    0
+   ]
+  },
+  "popped_head_state_exact_zero": {
+   "chunk_8_head_1_state_abs_max": 0.0,
+   "chunk_20_head_3_state_abs_max": 0.0,
+   "chunk_28_head_0_state_abs_max": 0.0
+  },
+  "per_head_isolation": {
+   "head_2_final_state_max_abs_diff": 0.0,
+   "head_2_bit_identical": true
+  },
+  "max_abs_output_diff_before_first_pop": 0.0,
+  "popped_head_refill_frobenius": {
+   "chunk_8_head_1_mass_one_chunk_after": 2.004936456680298,
+   "chunk_20_head_3_mass_one_chunk_after": 1.5845563411712646,
+   "chunk_28_head_0_mass_one_chunk_after": 1.7782119512557983
+  },
+  "max_abs_output_diff_full_walk": 0.0017345750238746405,
+  "note": "exact zero at the surgery boundary (the exact-capacity receipt: GDN2's own erase/decay never reach zero at a step); per-head isolation by the kernel's construction; refill mass within one chunk (the recycled head's keys are live -- it writes into its virgin state immediately)",
+  "verdict": "met"
+ },
+ "ps3_gradient_legality": {
+  "masked_carry_leaf_grads": {
+   "walk_mask_max_abs": [
+    0.0009334055939689279,
+    0.0007821028120815754,
+    0.0004506086406763643,
+    8.050045289564878e-05,
+    0.0001740824372973293
+   ],
+   "explicit_slice_max_abs": [
+    0.0009334055939689279,
+    0.0007821028120815754,
+    0.0004506086406763643,
+    8.050045289564878e-05,
+    0.0001740824372973293
+   ],
+   "max_abs_diff_between_constructions": 0.0
+  },
+  "zero_flow_backward": {
+   "popped_head_prepop_state_grad_abs_max": 0.0,
+   "other_head_prepop_state_grad_abs_max": 0.0008502014097757638,
+   "note": "the pop kills the gradient flow from post-pop reads into the popped content (the exact-capacity backward -- the same semantics as our machine's POP S[j]=0); the other head's carry gradient flows normally"
+  },
+  "train_through_pops": {
+   "losses": [
+    0.9995720386505127,
+    0.9993807673454285,
+    0.9991215467453003,
+    0.998703122138977
+   ],
+   "grads_finite": true,
+   "live_reentry": [
+    {
+     "step": 0,
+     "loss": 0.9995720386505127,
+     "n_pop_fires": 7,
+     "head1_k_proj_grad_abs_max": 2.083743311231956e-06,
+     "head1_o_proj_col_grad_abs_max": 1.2730911294056568e-06
+    },
+    {
+     "step": 1,
+     "loss": 0.9993807673454285,
+     "n_pop_fires": 7,
+     "head1_k_proj_grad_abs_max": 3.0100545700406656e-06,
+     "head1_o_proj_col_grad_abs_max": 1.6637096678095986e-06
+    },
+    {
+     "step": 2,
+     "loss": 0.9991215467453003,
+     "n_pop_fires": 7,
+     "head1_k_proj_grad_abs_max": 4.314299076213501e-06,
+     "head1_o_proj_col_grad_abs_max": 2.4702585506020114e-06
+    },
+    {
+     "step": 3,
+     "loss": 0.998703122138977,
+     "n_pop_fires": 7,
+     "head1_k_proj_grad_abs_max": 6.84782344251289e-06,
+     "head1_o_proj_col_grad_abs_max": 4.026687292935094e-06
+    }
+   ],
+   "parameter_set_unchanged": true,
+   "note": "a pop is state-only surgery: no parameter is created, removed or re-shaped and the optimizer state is untouched by construction (the receipt is the unchanged parameter set); the recycled head re-enters training live"
+  },
+  "verdict": "met"
+ },
+ "ps4_long_horizon_tolerance": {
+  "T8192_heads_2": {
+   "forward_backward_wall_s": 0.045,
+   "grads_finite": true,
+   "peak_allocated_gb": 0.97
+  },
+  "T8192_heads_4": {
+   "forward_backward_wall_s": 0.052,
+   "grads_finite": true,
+   "peak_allocated_gb": 1.57
+  },
+  "T8192_heads_8": {
+   "forward_backward_wall_s": 0.09,
+   "grads_finite": true,
+   "peak_allocated_gb": 3.05
+  },
+  "T8192_growth_pop_walk": {
+   "wall_s": 4.74,
+   "n_pop_fires": 127,
+   "output_finite": true,
+   "final_state_finite": true
+  },
+  "T16384_heads_2": {
+   "forward_backward_wall_s": 15.928,
+   "grads_finite": true,
+   "peak_allocated_gb": 1.91
+  },
+  "T16384_heads_4": {
+   "forward_backward_wall_s": 16.116,
+   "grads_finite": true,
+   "peak_allocated_gb": 3.09
+  },
+  "T16384_heads_8": {
+   "forward_backward_wall_s": 54.018,
+   "grads_finite": true,
+   "peak_allocated_gb": 6.04
+  },
+  "T16384_growth_pop_walk": {
+   "wall_s": 9.532,
+   "n_pop_fires": 255,
+   "output_finite": true,
+   "final_state_finite": true
+  },
+  "verdict": "met"
+ },
+ "ps5_statistic_anchors": {
+  "shape": {
+   "batch": 2,
+   "T": 8192,
+   "heads": 2,
+   "d_k": 128,
+   "boundaries": 128
+  },
+  "per_head_smoothed_pr": [
+   {
+    "head": 0,
+    "smoothed_max": 46.10416221618652,
+    "smoothed_last": 46.00545406341553,
+    "raw_max": 46.55115509033203,
+    "raw_mean": 45.76619567270354
+   },
+   {
+    "head": 1,
+    "smoothed_max": 67.21597099304199,
+    "smoothed_last": 67.05238723754883,
+    "raw_max": 67.66738891601562,
+    "raw_mean": 66.62093587559978
+   }
+  ],
+  "growth_statistic_mean_over_heads": {
+   "max": 56.91509246826172,
+   "last": 56.490394592285156,
+   "tau_sat": 96.0
+  },
+  "svd_wall_s_per_walk": 2.707,
+  "note": "at init, random inputs: the per-head PR (the POP trigger statistic) and the mean-over-heads PR (the growth trigger statistic) from the real kernel's own trajectory; the in-regime calibration on the C3 stream is the threshold's authority (the growth registration's disclosed protocol)",
+  "verdict": "receipted (anchors, no pass/fail)"
+ },
+ "gates": {
+  "PS-0 wrapper parity": true,
+  "PS-1 inertness at birth": true,
+  "PS-2 pop carry legality": true,
+  "PS-3 gradient legality": true,
+  "PS-4 long-horizon tolerance": true,
+  "PS-5 statistic anchors": true
+ }
+}
