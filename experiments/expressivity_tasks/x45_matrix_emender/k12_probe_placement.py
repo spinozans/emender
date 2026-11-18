@@ -212,7 +212,9 @@ def _address_locality(keys: torch.Tensor, live: torch.Tensor) -> dict:
             or float(pool[:, 1].std()) == 0:
         return dict(pearson_r=None, n_pairs=int(pool.shape[0]),
                     note="degenerate spread")
-    r = float(torch.corrcoef(pool)[0, 1])
+    # torch.corrcoef uses numpy semantics (each ROW is a variable): the
+    # pooled sample matrix is (n_pairs, 2) -> transpose to (2, n_pairs)
+    r = float(torch.corrcoef(pool.t())[0, 1])
     return dict(pearson_r=r, n_pairs=int(pool.shape[0]))
 
 
@@ -640,6 +642,7 @@ def train_arm(args) -> dict:
             # windows per layer, via the K10 collect launch
             from experiments.expressivity_tasks.x42_pile_scale.byte_velocity \
                 import grouped
+            rows = _probe_windows(stream, args.probe_windows)
             per_layer_loc = {}
             for layer_index, block in enumerate(model.blocks):
                 mixer = block.mixer
