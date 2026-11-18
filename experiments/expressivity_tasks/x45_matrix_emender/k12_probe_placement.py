@@ -114,6 +114,13 @@ ARMS = {
                                         placement_init=0.5, trainable=False),
     "placement_fixed1p0_seed3401": dict(kind="placement", seed=3401,
                                         placement_init=1.0, trainable=False),
+    # the completing control (supervisor-approved after the positive bracket
+    # proved forward-degenerate: the placement choice is argmax(w*sim),
+    # invariant to positive scaling, so the forward-distinct family is
+    # exactly {w=0, w>0, w<0} -- the learned arm moved 29/48 heads NEGATIVE,
+    # and the anti-local direction was the one untested)
+    "placement_fixedminus0p25_seed3401": dict(
+        kind="placement", seed=3401, placement_init=-0.25, trainable=False),
     # second seeds: allowed for any placement arm once the win bar is met
     "placement_learned_seed3402": dict(kind="placement", seed=3402,
                                       placement_init=0.0, trainable=True),
@@ -123,6 +130,8 @@ ARMS = {
                                         placement_init=0.5, trainable=False),
     "placement_fixed1p0_seed3402": dict(kind="placement", seed=3402,
                                         placement_init=1.0, trainable=False),
+    "placement_fixedminus0p25_seed3402": dict(
+        kind="placement", seed=3402, placement_init=-0.25, trainable=False),
     "baseline_seed3402": dict(kind="baseline", seed=3402,
                               placement_init=None, trainable=None),
 }
