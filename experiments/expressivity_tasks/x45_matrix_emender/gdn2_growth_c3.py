@@ -1041,14 +1041,14 @@ def growth_snapshot(model) -> dict:
 
 
 def train_c3(label, model, opt_cfg, stream, ctx, machine, out, pool,
-             grow_sink=None, smoke=False):
+             grow_sink=None, smoke=False, micro_override=None):
     """The corrected-protocol loop (the banked probe protocol + the 24-step
     cooldown): matched 20M exposure, honest clock, the protocol's own grad
     clip, EMA over the constant phase, CPU snapshots at the checkpoint grid,
     growth-event processing (grad merge -> optimizer surgery -> EMA surgery)
     between backward and the optimizer step.  Returns (run, log_rows)."""
     batch = 2 if smoke else windows_per_step(ctx)
-    micro = microbatch_for(ctx, machine)
+    micro = micro_override if micro_override else microbatch_for(ctx, machine)
     if smoke:
         micro = min(micro, 1)
     warmup = opt_cfg["warmup_steps"]
@@ -1587,7 +1587,8 @@ def cmd_arm(args) -> dict:
             probe="gdn2_growth_c3", arm=args.arm, seed=args.seed,
             context=ctx, tau_sat=tau, exposure_targets=EXPOSURE_TARGETS,
             windows_per_step=windows_per_step(ctx),
-            microbatch=microbatch_for(ctx, machine),
+            microbatch=(args.microbatch if args.microbatch
+                        else microbatch_for(ctx, machine)),
             cooldown_steps=COOLDOWN_STEPS, optimizer=opt_cfg, summary=summary,
             identity=identity,
             smoke=bool(args.smoke),
@@ -1629,7 +1630,8 @@ def cmd_arm(args) -> dict:
             for wrapper in [b.layer.gdn2.gdn2 for b in model.model.blocks]:
                 wrapper.tau = args.smoke_tau
         run = train_c3(label, model, opt_cfg, stream, ctx, machine, out,
-                       pool, grow_sink=grow_sink, smoke=args.smoke)
+                       pool, grow_sink=grow_sink, smoke=args.smoke,
+                       micro_override=args.microbatch)
         if run["status"] != "completed":
             raise RuntimeError(f"the {args.arm} arm {run['status']}")
         scores = score_arm(model, run, eval_windows, ctx, label)
@@ -1896,6 +1898,11 @@ def main():
     p.add_argument("--smoke", action="store_true",
                    help="the machinery shakedown (tiny exposure; "
                         "receipted, never scored)")
+    p.add_argument("--microbatch", type=int, default=None,
+                   help="memory-knob override (grad accumulation is exact; "
+                        "the growth arm runs checkpoint-free, so its "
+                        "activation footprint is the honest price and the "
+                        "override is receipted in the arm's config)")
     p.add_argument("--smoke-tau", type=float, default=40.0,
                    help="SMOKE-ONLY forced trigger threshold (the arms "
                         "always run the locked tau)")
