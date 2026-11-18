@@ -144,9 +144,17 @@ exists, the dense contribution goes nowhere (zero).** The deposit:
   0/1, so it is ordinary schedule data: K4's `persistent_scan_trajectory`
   (imported verbatim, lane-generic) replays it bit-exactly and the certified
   scan theorems cover it as any other scheduled additive write;
-* **touches live rows only** (P3): it never creates liveness, never re-files
-  a key, never enters the decision chain (P2) — the discrete op sequence is
-  bit-invariant to the deposit at fixed inputs, receipted by the 0-flip gate;
+* **fires on the live guards alone, and touches live rows only** (P3): it
+  never creates liveness, never re-files a key, never enters the decision
+  chain (P2) — the discrete op sequence is bit-invariant to the deposit at
+  fixed inputs, receipted by the 0-flip gate.  The deposit's VALUE is the
+  gate's output — born at exact zero, which is the IDENTITY by IEEE
+  arithmetic (`x + ±0 = x`, the −0.0 corner receipted by the tests) — so the
+  lane fires on the live guards alone and the gradient reaches the zero-born
+  scalar at step 0.  (A value-dependent no-op rule was considered and
+  REFUSED: it would make the recorded op code a function of the deposit value
+  and cut the birth gradient — a dead dense channel, the exact failure P5
+  exists to prevent.)
 * **composes with the ops, stated honestly**: at a CORRECT token the op's
   overwrite lands first and the deposit adds on top (`S[best] := p` then
   `S[best] += dense_t`); at an APPEND token the op allocates the free row
@@ -156,10 +164,6 @@ exists, the dense contribution goes nowhere (zero).** The deposit:
   the winner's tokens) the deposit is the only write. **The five ops
   (APPEND/POP/MERGE unchanged), the thresholds, the key lane and the
   liveness arithmetic are the K10 registration's verbatim.**
-* **A zero deposit is a no-op** (defined, tested): when the token's `dense_t`
-  is exactly zero (at birth, always; after training, only if the gated payload
-  vanishes), lane 2 is recorded `op=NONE` and nothing is applied — this is
-  what makes the birth bit-parity exact (§3 gate A).
 
 G2 carries NO write-strength gate and NO read-out gate (its lane-0 arithmetic
 is the incumbent's verbatim): it isolates the dense channel.
@@ -175,10 +179,13 @@ card budget.
 
 K6/K10's defined-order spec applies unchanged (balanced binary tree folds,
 fp32 decision/read arithmetic, correctly-rounded `sqrt.rn`/`div.rn`, libdevice
-`exp`, `mul.rn`/`add.rn` — no FMA contraction). The gates add: one
-`sub.rn`/`mul.rn`/`add.rn` triple per gated CORRECT (the blend) and one
-`mul.rn` per gated APPEND (the admission), on the value lane; the deposit adds
-one `add.rn` at the best row. The recorded lane-0 payload is the BLENDED lane
+`exp`, `mul.rn`/`add.rn` — no FMA contraction). The gates add: the
+CORRECT blend's defined-order form `g·p + (1−g)·lam·v_pre` (one `sub.rn`, three
+`mul.rn`, one `add.rn` — the same value as `v_dec + g·(p−v_dec)` in exact
+arithmetic, chosen so the register walk keeps K10's registered lane order AND
+the unity-gate birth is the incumbent's overwrite bit for bit), one `mul.rn`
+per gated APPEND (the admission), and one `add.rn` per dense deposit at the
+best row. The recorded lane-0 payload is the BLENDED lane
 value, so the recorded schedule replays through K4's kernel verbatim — the
 gate never appears in the replay at all. Decisions, payload lanes, read
 weights, the value state, the key table and the reads are therefore
@@ -189,16 +196,16 @@ schedule.
 ### 1.5 Parameter accounting (stated, not hidden)
 
 Each gate channel is one `nn.Linear(width, heads, bias=True)` plus one per-head
-scalar: 576·2 + 2 = **1,154 parameters per mixer per channel**. The arms ADD
+zero-born scalar: 576·2 + 2 + 2 = **1,156 parameters per mixer per channel**. The arms ADD
 parameters to the audited winner (no MLP re-solve: the backbone stays the
 banked winner's byte-for-byte, so each arm differs from the winner ONLY by its
 gate projections):
 
 | arm | added channels | added params | total | vs 149,981,808 |
 |---|---|---:|---:|---:|
-| G1 | write gate + read-out gate | 55,392 | 150,037,200 | +0.037 % |
-| G2 | dense gate | 27,696 | 150,009,504 | +0.018 % |
-| G3 | all three | 83,088 | 150,064,896 | +0.055 % |
+| G1 | write gate + read-out gate | 55,488 | 150,037,296 | +0.037 % |
+| G2 | dense gate | 27,744 | 150,009,552 | +0.018 % |
+| G3 | all three | 83,232 | 150,065,040 | +0.055 % |
 
 All three sit inside the capacity tolerance (0.1 %); the additions are 0.3–0.5
 of GDN2's own gate-matrix share expressed as a fraction of parameters
@@ -269,10 +276,11 @@ probe's receipt.
    asserting the decision channels equal. **The birth-parity / plumbing
    receipt (P5): at `g_write ≡ 1`, `g_out ≡ 1`, `dense ≡ 0` the k11 scan's
    discrete schedule, key table and liveness are bit-identical to K10's own
-   launch on the same inputs; the value state and reads sit within the
-   measured fp32 floor** (the CORRECT blend's `v + 1·(p−v)` re-rounds the
-   overwrite — ≤ 1 ulp per write, Sterbenz-exact in the identity regime —
-   stated, measured, not hidden). **The replay receipt:** the 3-lane
+   launch on the same inputs, and the value state and reads are bit-identical
+   up to the −0.0 corner** (the CORRECT blend's `g·p + (1−g)·lam·v_pre` form
+   degenerates to the incumbent's overwrite exactly at g = 1; the dense
+   lane's zero deposit is the identity by IEEE arithmetic) — the
+   differing-element count is receipted, not estimated. **The replay receipt:** the 3-lane
    recorded schedule rebuilds the forward's own segment checkpoints
    bit-exactly through K4's imported kernel, dense lane included.
 2. **Gate B — gradient parity within measured floors.** The fp64 `gradcheck`
