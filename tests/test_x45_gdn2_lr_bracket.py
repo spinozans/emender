@@ -103,11 +103,15 @@ def test_the_second_seed_rule_thresholds_are_the_banked_artifacts_numbers():
 def test_the_step1_receipt_keys_on_the_banked_probe_row_at_seed_3401():
     """Seed 3401's step-1 reference is the banked gdn2 probe's own first row
     (the optimizer cannot touch the first forward); other seeds have no
-    banked GDN2 row, so the reference comes from the first same-seed bracket
-    arm or is honestly absent."""
+    banked GDN2 row, so the reference is the first same-seed bracket arm's
+    own first row -- receipted against that arm's training.jsonl, never a
+    restated constant."""
     assert _sibling_step1_loss(3401, "gdn2_muon4x_gates_adamw") \
         == GDN2_BANKED_STEP1_LOSS == 5.948033220866492
-    # no same-seed bracket arm has landed yet at seed 3402 -> no reference
-    # (recorded honestly, never silently asserted)
-    assert _sibling_step1_loss(3402, "gdn2_muon4x_gates_adamw") in (
-        None, _sibling_step1_loss(3402, "gdn2_muon5x_gates_adamw"))
+    # the 5x arm's seed-3402 row has landed: it is the same-seed reference
+    first3402 = json.loads(
+        (X45 / "gdn2_lr_bracket_runs/gdn2_muon5x_gates_adamw_seed3402"
+         "/training.jsonl").read_text().splitlines()[0])["loss"]
+    assert _sibling_step1_loss(3402, "gdn2_muon4x_gates_adamw") == first3402
+    # and the arm that IS the reference excludes itself honestly
+    assert _sibling_step1_loss(3402, "gdn2_muon5x_gates_adamw") is None
