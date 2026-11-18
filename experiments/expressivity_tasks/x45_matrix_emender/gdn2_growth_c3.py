@@ -1088,8 +1088,7 @@ def train_c3(label, model, opt_cfg, stream, ctx, machine, out, pool,
             return None
         growth_row = None
         probe_row = None
-        if grow_sink is not None and grow_sink["events"]:
-            events = grow_sink["events"]
+        if grow_sink is not None and pending_wake:
             # the second-step wake-up receipt: the previous step's events'
             # new-head internals must now receive nonzero gradient (the
             # o_proj columns moved at the first post-event step)
@@ -1101,6 +1100,9 @@ def train_c3(label, model, opt_cfg, stream, ctx, machine, out, pool,
                             float(p_new.grad[ev.heads_old * HEAD_DIM:]
                                   .abs().max())
                         break
+            pending_wake = []
+        if grow_sink is not None and grow_sink["events"]:
+            events = grow_sink["events"]
             receipts = merge_event_grads(events)
             wake_receipts.extend(receipts)
             pending_wake = list(zip(receipts, events))
