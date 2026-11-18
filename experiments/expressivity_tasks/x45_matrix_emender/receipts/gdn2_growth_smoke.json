@@ -1,0 +1,138 @@
+{
+ "probe": "gdn2_growth_smoke",
+ "registration": "PREREGISTRATION_GDN2_GROWTH.md (draft, section 6)",
+ "config": {
+  "layer": "GDN2ExternalMLPLayer(dim=576, expansion=2., head_dim=128, use_conv=True) -- the registered 150M arm's mixer shape",
+  "axis": "heads (supervisor-decided 2026-11-22); snap {2,4,8}",
+  "seed": 3401
+ },
+ "environment": {
+  "torch": "2.9.1+cu128",
+  "device": "NVIDIA RTX 6000 Ada Generation"
+ },
+ "s1_inertness": {
+  "fp32_max_abs_diff_wake_up": 5.364418029785156e-07,
+  "fp32_bit_identical": false,
+  "fp32_max_abs_diff_fully_alive_birth": 0.0018566399812698364,
+  "o_old_abs_max": 0.5254161357879639,
+  "parameters": {
+   "old": 3814978,
+   "grown": 5343556,
+   "delta": 1528578,
+   "note": "growth adds trainable parameters (the K8 zero-parameter property does not transfer: GDN2's keys are learned)"
+  },
+  "bf16_max_abs_diff_wake_up": 0.00390625,
+  "verdict": "met"
+ },
+ "s2_segmentation": {
+  "segment_len": 64,
+  "T": 2048,
+  "max_abs_output_diff_whole_vs_segments": 0.0,
+  "segments_bit_identical": true,
+  "max_abs_state_diff_vs_kernel_trajectory": 0.0,
+  "mid_window_growth": {
+   "fire_boundary": 1024,
+   "max_abs_output_diff_full_walk": 5.135661922395229e-07,
+   "old_head_projection_diff_at_event": 4.76837158203125e-07,
+   "old_head_final_state_diff": 1.819990575313568e-05,
+   "new_head_final_state_frobenius_norm": 3.374612808227539
+  },
+  "h_shape": [
+   2,
+   32,
+   2,
+   128,
+   256
+  ],
+  "verdict": "met"
+ },
+ "s3_train": {
+  "carry_grad_check": {
+   "relative_max_grad_diffs_q_k_v_b_w": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "max_relative": 0.0,
+   "note": "whole-window vs 64-token-segment carried path, fp32; the kernel's backward returns dh0 so the carry is differentiable"
+  },
+  "losses": [
+   1.0126773118972778,
+   0.9946279525756836,
+   0.9775000810623169,
+   0.9606360197067261,
+   0.9434378147125244
+  ],
+  "grads_finite": true,
+  "optimizer_carry": {
+   "shared_slice_exp_avg_max_diff": 0.0,
+   "new_region_exp_avg_abs_max": 0.0
+  },
+  "wake_up": {
+   "first_post_event_step": {
+    "loss": 0.9606360197067261,
+    "o_proj_new_column_grad_abs_max": 1.461919282519375e-06,
+    "o_proj_old_column_grad_abs_max": 3.5174848562746774e-06,
+    "new_head_k_proj_grad_abs_max": 0.0
+   },
+   "second_post_event_step": {
+    "loss": 0.9254380464553833,
+    "new_head_k_proj_grad_abs_max": 1.1691669214997091e-06,
+    "o_proj_new_column_weight_abs_max": 0.0012995923170819879
+   }
+  },
+  "verdict": "met"
+ },
+ "s4_kernel_tolerance": {
+  "heads_2": {
+   "forward_backward_wall_s": 0.017,
+   "grads_finite": true,
+   "peak_allocated_gb": 0.27
+  },
+  "heads_4": {
+   "forward_backward_wall_s": 0.019,
+   "grads_finite": true,
+   "peak_allocated_gb": 0.43
+  },
+  "heads_8": {
+   "forward_backward_wall_s": 0.064,
+   "grads_finite": true,
+   "peak_allocated_gb": 0.81
+  },
+  "verdict": "met"
+ },
+ "s5_statistics": {
+  "shape": {
+   "batch": 2,
+   "T": 2048,
+   "heads": 2,
+   "d_k": 128,
+   "d_v": 256,
+   "boundaries": 32
+  },
+  "participation_ratio": {
+   "definition": "PR(S) = (sum sigma)^2 / sum sigma^2 per (head, 64-token boundary state = h[:, c+1], the state AFTER chunk c; the empty initial state h[:, 0] is excluded), d_k=128; tau_sat = 0.75*d_k = 96",
+   "first_boundary_mean": 40.04820728302002,
+   "last_boundary_mean": 48.35860633850098,
+   "mean": 48.44734837931971,
+   "min": 36.5241813659668,
+   "max": 56.60475540161133
+  },
+  "delta_self_interference": {
+   "definition": "iota = mean_t ||S_entry^T (b.k)|| / (||S_entry||_F ||b.k||) per (head, segment); the entry state of segment c is h[:, c] (the state after chunk c-1; the first segment's entry is the empty state, clamped denominator); NON-GATING co-diagnostic",
+   "mean": 0.09223455904157163,
+   "min": 0.0,
+   "max": 0.1470288187265396
+  },
+  "verdict": "receipted (anchors, no pass/fail)"
+ },
+ "gates": {
+  "S-1 inertness": true,
+  "S-2 segmentation": true,
+  "S-3 train-through-event": true,
+  "S-4 kernel tolerance": true,
+  "S-5 statistic anchors": true
+ }
+}
