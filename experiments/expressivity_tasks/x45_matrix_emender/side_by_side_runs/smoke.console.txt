@@ -1,0 +1,19 @@
+gpu_lease: granted GPUs: 0 (pid 1456412)
+leased card: 0
+{"arm": "k10_separated_keys", "label": "k10_tuned_armed", "card": "0", "seed": 3401, "parameters": 149981808}
+  checkpoint step 1: bytes 117712 train 5.7851 eval 5.6224
+  checkpoint step 2: bytes 248784 train 5.6153 eval 5.2659
+  checkpoint step 3: bytes 364722 train 5.2787 eval 4.8211
+  read-mask layer 0: nll 5.0402 (base 4.8211)
+  read-mask layer 1: nll 4.9473 (base 4.8211)
+{"label": "k10_tuned_armed", "exposure_bytes": 364722, "exposure_steps": 3, "final_eval_nll": 4.821145738874163, "bytes_per_s": 11377.807722313988}
+committed: X45 side-by-side: the tuned-winner armed run (the gap-vs-phase checkpoint curve, per-layer telemetry at every checkpoint, the C4 read-mask sweep), protocol-equivalent bit-for-bit to the banked confirm cell
+[pin-autotune] pinned mode: 18 kernels / 30 (name,key) configs from registry (set NDM_PIN_TRITON_AUTOTUNE=0 to restore sweep)
+{"arm": "gdn2", "label": "gdn2_armed", "card": "0", "seed": 3401}
+/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/checkpoint.py:85: UserWarning: None of the inputs have requires_grad=True. Gradients will be None
+  warnings.warn(
+  checkpoint step 1: bytes 117712 train 5.9480 eval 5.7045
+  checkpoint step 2: bytes 248784 train 5.7187 eval 5.2953
+  checkpoint step 3: bytes 364722 train 5.3282 eval 4.7838
+{"label": "gdn2_armed", "exposure_bytes": 364722, "exposure_steps": 3, "final_eval_nll": 4.783779076167515, "bytes_per_s": 36427.31126720545}
+committed: X45 side-by-side: the gdn2 armed run (the checkpoint curve + its own gate/state telemetry), protocol-equivalent bit-for-bit to the banked gdn2 row

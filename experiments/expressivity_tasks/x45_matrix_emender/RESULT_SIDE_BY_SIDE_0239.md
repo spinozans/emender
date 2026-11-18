@@ -1,15 +1,12 @@
 # RESULT_SIDE_BY_SIDE_0239.md — why GDN2 (1.5837) beats the tuned winner (1.8227) by 0.2390 nats
 
-**Date:** 2026-11-18/19 · **Status:** §0 pre-stated and committed before any
-run; §1/§2/§4 landed and committed with the curve (all three armed runs
-protocol-equivalent bit-for-bit); §3 (the C1 extension) in flight at that
-commit, completed below; §5/§6 completed after the extension landed.
-· **Authorisation:** the operator's side-by-side gap-dissection directive —
-DIAGNOSIS ONLY, no model changes, no fixes; ranked causes with receipts.
-signatures, the checkpoint plan, and the C1 fair-tuning extension's exact
-protocol are stated and committed BEFORE any run of this lane launches. The
-build (`side_by_side.py`) is committed with them. No result in this document
-predates its run.
+**Date:** 2026-11-18/19 · **Status: complete** — §0 pre-stated and committed
+before any run; §1/§2/§4 (the curve, per-layer, gdn2-side tables) landed and
+committed with the curve, all three armed runs protocol-equivalent
+bit-for-bit; §3's C1 extension generation landed and the full analysis
+(§5/§6) is committed with it. · **Authorisation:** the operator's
+side-by-side gap-dissection directive — DIAGNOSIS ONLY, no model changes, no
+fixes; ranked causes with receipts.
 
 ## The question, and the two models
 
@@ -309,8 +306,8 @@ the one store behaving like a long-lived byte cache rather than the
 short-horizon contextual memory every other layer learned.
 * **The store's eval contribution is concentrated in the first ~7 layers**
 (Δ +0.079 / +0.044 / +0.060 / +0.033 / +0.021 / +0.021 / +0.017); layers
-7–23 are near-decorative individually (|Δ| ≤ 0.012, five of them ≤ 0.002,
-two slightly NEGATIVE). Most of the 24 stores' reads barely matter to
+7–23 are near-decorative individually (|Δ| ≤ 0.0125, seven of them ≤ 0.002,
+three of those slightly NEGATIVE). Most of the 24 stores' reads barely matter to
 held-out NLL at this exposure — the machine runs 24 stores to bank ~0.33
 nats of single-layer ablation effect, mostly from its first seven.
 * **The store's regime is LEARNED and arrives late — the C2/C5 mechanism
@@ -344,10 +341,42 @@ to the banked per-eval log (its resume convention — receipts
 §1/§2/§4 landed and were committed first, per the directive's commit order):
 the first three evaluations of the extension's generation had landed —
 1.6748 / 1.6677 / 1.7089, **all three WORSE than the incumbent's 1.6546** —
-consistent with C1's pre-stated predicted signature (a). The section is
-completed below when the generation lands.
+consistent with C1's pre-stated predicted signature (a). Completed below.
 
-TO BE COMPLETED with the generation's final receipts.
+**The generation's result** (all 8 evaluations on the search's own
+16.8 M-target scoreboard, seed 3401):
+
+| eval | config (lr / wd / warmup / read_scale) | NLL |
+|---:|---|---:|
+| 9 | 8.69e-4 / 0.0711 / 57 / 3.218 | 1.6748 |
+| 10 | 3.37e-4 / 0.1753 / 57 / 3.183 | 1.6677 |
+| 11 | 2.05e-4 / 0.5390 / 43 / 3.324 | 1.7089 |
+| 12 | 3.57e-4 / 0.1672 / 64 / 3.934 | 1.6604 |
+| 13 | 2.75e-4 / 0.1922 / 18 / 2.725 | 1.6948 |
+| **14** | **3.96e-4 / 0.1486 / 21 / 3.162** | **1.6514** |
+| 15 | 2.04e-4 / 0.0679 / 84 / 2.865 | 1.7388 |
+| 16 | 2.27e-4 / 0.1772 / 64 / 1.999 | timeout (scored inf by the machinery's rank rule; the subprocess exceeded the 3000 s per-eval guard — stated, not smoothed) |
+
+* **The extension buys −0.0032 nats at the probe objective** (1.6546 →
+1.6514, eval 14) — one candidate in eight. Seven of eight no better than
+the incumbent; the trajectory stays concave and shallow, exactly the
+pre-stated signature (a). The whole tuning story so far: the transfer
+1.6775 → gen-1 1.6546 → gen-2 1.6514 = **−0.0261 nats of search on a
+0.161-nat probe-objective deficit to gdn2's banked 1.5163 anchor** — 16 %
+of it — on a scoreboard (§1's config-shape artifact) that itself inflates
+tuning's protocol-scale value.
+* **The honest bound on C1 at the ladder's own protocol:** the banked
+confirmation already showed the gen-1 incumbent's probe-objective gain
+shrinks to −0.0191 at the protocol (inside the ~0.1-nat checkpoint-variance
+band), and §1's tuned-vs-transferred curve shows the incumbent's advantage
+is an EARLY-phase artifact (+0.03 at steps 5–20) that reverses mid-training.
+A gen-2 incumbent's −0.0032 at the probe objective cannot own more than
+~0.02–0.03 nats of the 0.239 headline. **C1 is bounded, small, and not where
+the gap lives.** Symmetry, restated: gdn2's nomination came from a
+144-candidate search; the winner's arm has now had 17 evaluations. Phase 2
+(tau_match / tau_pop) remains unrun — one more generation ≈ 3.5 h did not
+fit the lane's budget, and both generations' receipts say the space around
+the incumbent is flat.
 
 ## 4. GDN2's side of the table (gate/state telemetry)
 
@@ -389,8 +418,91 @@ payload directions whose top write op is byte-identity CORRECT (§2).
 
 ## 5. The C1–C5 disposition and the ranked residual attribution
 
-TO BE FILLED.
+Every candidate cause, its pre-stated signature (§0), and what the data
+showed:
+
+| cause | pre-stated signature | what the receipts show | verdict |
+|---|---|---|---|
+| **C1** tuning-budget asymmetry | the extension buys O(0.01–0.03) and stays an order of magnitude short; and/or the curve shows the tuned config leading early, converging late | the extension bought **−0.0032** at the probe objective (7 of 8 candidates no better than the incumbent); the whole 17-eval search owns −0.0261 on a 0.161 probe-objective deficit; the tuned-vs-transferred curve shows the incumbent's advantage is an early-phase artifact (+0.033 at step 5) that REVERSES from step 60 on | **CONFIRMED as bounded-and-small** — signature (b) exactly, and signature (a)'s shape at a magnitude slightly UNDER the pre-stated band (−0.0032 < O(0.01–0.03)); the pre-stated attribution rule assigns it to C1 as shown. C1 owns ≤ ~0.02–0.03 nats of the headline |
+| **C2** init/early regime | the full gap present at steps 1/5/10/20, flat after; identity share ≥ ~0.5 everywhere from the start | the deficit is present EARLY and at MORE than its final size (0.36/0.42 at steps 10/20) — but it is NOT flat after: it NARROWS to ~0.16 by step 60 as the store comes online; identity share ≥0.5 holds ONLY in layer 0 (0.80–0.87 at every checkpoint), not everywhere | **PARTIAL — the divergence is early, but it is transient.** C2 receipts WHERE the arms diverge, not the endpoint residual |
+| **C3** late plateau (the CMAES prior) | gap flat early, opening after step K; the winner keeps pace then stalls | the OPPOSITE shape: the deficit is LARGEST early (0.42 at step 20), narrows to a **flat 0.162 ± 0.018 plateau over steps 60–160**; the winner's eval descends steadily 2.46 → 1.67 with no stall and no widening | **REFUTED at this protocol** — the per-token+keys form does NOT hit the chunked arm's plateau |
+| **C4** layer-0 / specific-layer drag | the affected layers anomalous at all checkpoints; the read-mask probes show the layer's store decorative or load-bearing | layer 0 IS anomalous at every checkpoint (identity 0.80–0.87, never leaves the byte regime) — and its read is the **most load-bearing single layer** (+0.0794 mask-delta), NOT decorative; layers 7–23 are near-decorative (|Δ| ≤ 0.0125); the store's eval value concentrates in layers 0–6 | **SPLIT verdict:** the anomaly is real and structural, but it EARNS its keep — "layer-0 drag" as dead weight is refuted; the per-layer concentration is C5's face |
+| **C5** value/read-form residual | our live-mass/entropy materially below gdn2's effective state activity | the winner's store: CORRECT 0.979/token (byte-identity update-in-place), reads over ~27 live slots with entropy 1.73 (≈ **e^1.73 ≈ 5.6 effective rows**); gdn2: dense channel-gated writes EVERY token (w ≈ 0.5 on every channel), full-state reads, horizons 2.1–7.4 tokens; the winner LEARNED gdn2's memory timescale over the run (DECAY 0.983→0.862, occupancy 6→27) so the timescale is NOT the residual — the WRITE/READ FORM is | **CONFIRMED as the load-bearing mechanism** |
+
+### The ranked residual attribution of the 0.2391 headline
+
+Stated as an honest decomposition of the measured number — with the caveat
+that ablation deltas are sub-additive (§2) and causes C4/C5 are faces of one
+value-side structure, not separable marginals:
+
+1. **Endpoint checkpoint-eval variance: ≈ 0.075 nats (~30 %) — measurement,
+   not mechanism.** At step 160 the gap is 0.164; both arms' evals JUMPED at
+   the step-180 boundary (the winner +0.153, gdn2 +0.078 — the same
+   late-train noise and 7-window eval-boundary variance the ladder doc
+   blemish receipts on gdn2's own row). The steady-state gap at matched
+   exposure is **≈ 0.16 nats**; the headline 0.2391 is the endpoint draw on
+   top of it. (A slice of the late rise could be real late-training noise
+   in the winner's regime — not separable at one seed, stated.)
+2. **The value/read-form residual (C5, with C4 as its per-layer face): ≈
+   0.14 nats — THE mechanism.** Receipts: the op mix is byte-identity
+   update-in-place (CORRECT 0.979/token, APPEND 0.019, MERGE 0.002, POP 0);
+   the read supports ≈ 5.6 effective rows of ~27 live slots (entropy 1.73)
+   against gdn2's dense every-token delta writes and full-state reads; most
+   of 24 stores are individually near-decorative at eval (layers 7–23,
+   |Δ| ≤ 0.0125) — the machine spends 24 stores to bank a sparse hot-set
+   cache whose value concentrates in its first seven layers; layer 0 is
+   structurally byte-identity (0.80–0.87 at every checkpoint) and the most
+   load-bearing single read. The address side is NOT the residual (the keys
+   work: layers 1–23 identity share 0.08; the KEY-COLLAPSE guard holds
+   throughout); the memory TIMESCALE is not the residual (the winner
+   converged on gdn2's 3–7-token horizon by itself). What remains is what
+   the value channel writes and what the read can use.
+3. **C1 tuning asymmetry: ≤ ~0.02–0.03 nats (~10 %), bounded by the
+   extension.** §3's receipts. Inside the variance band at the protocol;
+   the tuned-to-a-horizon artifact means even this bound is generous.
+4. **C2's early-regime divergence (transient; ~0 at the endpoint, but the
+   mechanism's onset receipt):** the deficit was 0.36–0.42 at steps 10–20
+   because gdn2's memory is architectural (on from step 1) while the
+   winner's store must LEARN its regime (occupancy 5.7 → 27, DECAY 0.98 →
+   0.86 over the first 5–9 MB). Same root as (2): the write policy is
+   learned, not given.
+5. **C3: 0 — refuted** (no late plateau at this protocol).
+
+**Bottom line.** GDN2's 0.2390-nat lead at the matched protocol decomposes
+into ~0.075 nats of endpoint eval variance and ~0.16 nats of steady-state
+deficit, of which tuning owns ≤ ~0.02–0.03 and the rest is the store's
+**write/read form**: a sparse, byte-identity-CORRECT-dominated cache that
+learns its memory regime late, versus gdn2's always-on dense gated delta
+writes. Structure first, tuning second — the ladder's spine, now with the
+residual's mechanism receipted layer by layer.
 
 ## 6. The named next lever
 
-TO BE FILLED.
+The dissection names ONE lever, and it is not a hyperparameter and not the
+key side: **the value channel's write form**. The receipts converge on it
+from three directions —
+
+* the address side already works (layers 1–23 identity share 0.08, keys
+  spread, KEY-COLLAPSE guard held throughout) and layer 0's byte-identity
+  is structural (§2), so further addressing work cannot move the residual;
+* the memory timescale already converged on gdn2's (the winner LEARNED
+  3–7-token horizons by itself), so decay/schedule policy is not the
+  binding constraint;
+* the write op is 97.9 % byte-identity CORRECT over a ~27-slot hot set, and
+  17 of 24 stores are individually near-decorative at eval — the store's
+  problem is WHAT the value channel writes (near-functions of the byte)
+  and how little of it the read can use (≈ 5.6 effective rows).
+
+The concrete next stage this points at, in the lane's own registered order:
+a write-side change that makes payloads contextual rather than byte-derived
+— the K10 registration's own named follow-up (**ordered / Wheeler-style
+keys: addresses of addresses**, `K10_SEPARATED_KEYS.md` §5) is the
+key-side version, but this dissection's evidence says the VALUE side is
+the binding one: payloads/DECAY structured so a write carries
+context-conditioned content gdn2-style (a dense, gated delta at every
+token) instead of a byte-identity replay. The C1 receipt bounds what
+optimizer work can buy on top (≤ ~0.02–0.03); the C2 receipt adds the
+secondary benefit: a write form that is useful from step 1 removes the
+5 MB of learning the learned-schedule store currently spends reaching
+the regime gdn2 has by construction. Diagnosis only — no model was changed
+in this lane; any such change needs its own registration and gates.
