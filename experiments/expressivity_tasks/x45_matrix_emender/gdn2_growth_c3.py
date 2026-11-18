@@ -706,6 +706,19 @@ def build_gdn2_heads(heads: int, seed: int):
     _, policy, nom = L.build_policy("lattice_gdn2")
     original = external_gdn2.GDN2ExternalMLPLayer
 
+    # pin the BANKED geometry BEFORE the heads patch: gdn_config's capacity
+    # probe builds a GDNBlock, so a heads-forcing patch would silently
+    # re-derive the backbone (a wrong-width model, not the registered arm at
+    # H=8).  Pre-warming the cache with the plain constructor pins
+    # (width, depth, hidden) at the banked arm's own geometry; the patch
+    # below then forces ONLY the head count on the real blocks.  The born-
+    # large control is intentionally larger (growth adds parameters; §4:
+    # the delta is a first-class column).
+    part8_surface.gdn_config.cache_clear()
+    with patch.object(scale_surface, "VOCAB", 256), \
+            patch.object(part8_surface, "VOCAB", 256):
+        part8_surface.gdn_config(BV.CAPACITY)
+
     def forced(*args, **kwargs):
         kwargs.pop("num_heads", None)
         kwargs["expansion"] = policy.expansion
@@ -719,7 +732,6 @@ def build_gdn2_heads(heads: int, seed: int):
                     patch.object(scale_surface, "VOCAB", 256), \
                     patch.object(part8_surface, "VOCAB", 256), \
                     patch.object(external_gdn2, "GDN2ExternalMLPLayer", forced):
-                part8_surface.gdn_config.cache_clear()
                 self.model = part8_surface.GDNModel("150M", BV.CAPACITY)
             with torch.no_grad():
                 for module in self.model.modules():
@@ -729,6 +741,8 @@ def build_gdn2_heads(heads: int, seed: int):
                     core = block.layer.gdn2.gdn2
                     core.A_log.add_(math.log(policy.decay_rate_scale))
                     core.dt_bias.add_(policy.dt_bias_shift)
+            assert self.model.width == 640 and len(self.model.blocks) == 27, \
+                (self.model.width, len(self.model.blocks))
             self.criterion = FusedLinearCrossEntropyLoss()
             self.arm = "gdn2"
 

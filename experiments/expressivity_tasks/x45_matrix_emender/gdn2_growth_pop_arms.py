@@ -757,6 +757,7 @@ def _arm_train_loop(model, wrappers, optimizer, optimizer_config, stream,
             loss_sum = 0.0
             step_pops = 0
             step_growth = None
+            gate_counts = dict(pr_crossings=0, with_read_floor=0)
             probe_s = spectra_s = real_s = 0.0
             for x, y, valid in grouped(rows, microbatch, context):
                 ids = x
@@ -774,6 +775,8 @@ def _arm_train_loop(model, wrappers, optimizer, optimizer_config, stream,
                 mb_idx += 1
                 # ---- the plan
                 event_receipt = {}
+                gate_counts.update(pop_trigger.count_gates(stats)) \
+                    if pop_enabled else None
                 plan, pops_all = decide_plan(
                     wrappers, stats, growth_mean, growth_trigger, pop_trigger,
                     growth_enabled, pop_enabled, event_receipt,
@@ -861,6 +864,7 @@ def _arm_train_loop(model, wrappers, optimizer, optimizer_config, stream,
                        loss=loss_sum, phase=phase,
                        lr_factor=lr_factor(step - 1, cooldown_k),
                        pops_this_step=step_pops,
+                       pop_gate_counts=gate_counts,
                        growth_event=step_growth,
                        walls=dict(probe_s=round(probe_s, 2),
                                   spectra_s=round(spectra_s, 2),
