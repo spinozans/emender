@@ -165,11 +165,15 @@ class SpectraPool:
         """Exact eigenvalues of a symmetric [m, DIM, DIM] batch (fp32).
         The Gram is handed to the workers through shared memory in chunks of
         ``self.chunk``; each worker computes values-only eigvalsh on its
-        shard of the shared buffer."""
+        shard of the shared buffer.  Each chunk copy is a direct
+        device-to-host ``copy_`` into a torch tensor VIEWING the shared
+        buffer when the input is on CUDA (no intermediate host copy; the
+        same bytes land in the same places, the workers' computation is
+        unchanged)."""
         assert gram.ndim == 3 and gram.shape[1:] == (DIM, DIM), \
             tuple(gram.shape)
         device = gram.device
-        gram = gram.float().cpu().numpy()
+        gram = gram.float()
         out = np.empty((gram.shape[0], DIM), dtype=np.float32)
         t0 = time.time()
         for start in range(0, gram.shape[0], self.chunk):
@@ -177,7 +181,10 @@ class SpectraPool:
             in_view = np.frombuffer(
                 self._in_shm.buf, dtype=np.float32,
                 count=self.chunk * DIM * DIM).reshape(self.chunk, DIM, DIM)
-            in_view[:m] = gram[start:start + m]
+            if device.type == "cuda":
+                torch.from_numpy(in_view)[:m].copy_(gram[start:start + m])
+            else:
+                in_view[:m] = gram[start:start + m].numpy()
             shard = max(1, m // self.workers)
             bounds = [(i, min(i + shard, m))
                       for i in range(0, m, shard)]
