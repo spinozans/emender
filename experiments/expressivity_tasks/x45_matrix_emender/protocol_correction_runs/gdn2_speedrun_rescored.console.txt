@@ -1,0 +1,28 @@
+gpu_lease: granted GPUs: 4 (pid 3031149)
+leased card: 4
+[pin-autotune] pinned mode: 18 kernels / 30 (name,key) configs from registry (set NDM_PIN_TRITON_AUTOTUNE=0 to restore sweep)
+{"arm": "gdn2_speedrun_rescored", "machine": "gdn2", "card": "4", "seed": 3401, "recipe": "speedrun", "parameters": 149855670, "muon_params": 191, "adamw_params": 406}
+  gdn2_speedrun_rescored step 25 83s 2.9MB loss 2.9574
+  gdn2_speedrun_rescored step 50 169s 5.6MB loss 1.9522
+  gdn2_speedrun_rescored step 75 256s 8.3MB loss 1.5530
+  gdn2_speedrun_rescored step 100 342s 11.1MB loss 1.7575
+  gdn2_speedrun_rescored step 125 429s 13.9MB loss 1.7350
+  gdn2_speedrun_rescored step 150 516s 16.6MB loss 2.0562
+  gdn2_speedrun_rescored step 175 603s 19.5MB loss 1.8128
+  gdn2_speedrun_rescored cooldown 20/24 690s 22.2MB loss 2.5023
+  gdn2_speedrun_rescored cooldown 24/24 704s 22.7MB loss 2.7929
+/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/checkpoint.py:85: UserWarning: None of the inputs have requires_grad=True. Gradients will be None
+  warnings.warn(
+  constant step 1: eval 5.8786
+  constant step 5: eval 5.2153
+  constant step 10: eval 3.8159
+  constant step 20: eval 2.6485
+  constant step 40: eval 1.9543
+  constant step 80: eval 1.5374
+  constant step 120: eval 1.4149
+  constant step 160: eval 1.3688
+  constant step 180: eval 1.3951
+  EMA at step 180: eval 1.3803
+  post-cooldown final (step 204): eval 1.3522
+{"label": "gdn2_speedrun_rescored", "status": "completed", "exposure_steps": 180, "total_steps": 204, "final_eval_nll_constant_lr": 1.3950541530336653, "final_eval_nll_post_cooldown": 1.3521734476089478, "ema_eval_nll": 1.3803383282252721}
+committed: X45 protocol correction: the gdn2_speedrun_rescored arm landed (the literature-backed scoring fixes applied to the velocity probe: a 24-step linear cooldown after the constant-LR budget + EMA-0.99 scoring, and the recipe-correct Moonlight Muon arms at 1x the AdamW-tuned LR -- both machines' banked best speedrun rows re-scored and the Moonlight recipe run on both machines, RMS-matching receipted by measured update RMS on both groups)

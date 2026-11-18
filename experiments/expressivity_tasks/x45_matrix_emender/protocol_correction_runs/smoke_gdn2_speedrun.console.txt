@@ -1,0 +1,14 @@
+gpu_lease: granted GPUs: 4 (pid 3024521)
+leased card: 4
+[pin-autotune] pinned mode: 18 kernels / 30 (name,key) configs from registry (set NDM_PIN_TRITON_AUTOTUNE=0 to restore sweep)
+{"arm": "gdn2_speedrun_rescored", "machine": "gdn2", "card": "4", "seed": 3401, "recipe": "speedrun", "parameters": 149855670, "muon_params": 191, "adamw_params": 406}
+  gdn2_speedrun_rescored cooldown 3/3 20s 0.7MB loss 5.4067
+/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/checkpoint.py:85: UserWarning: None of the inputs have requires_grad=True. Gradients will be None
+  warnings.warn(
+  constant step 1: eval 5.8786
+  constant step 2: eval 5.7853
+  constant step 3: eval 5.6474
+  EMA at step 3: eval 5.9216
+  post-cooldown final (step 6): eval 5.1958
+{"label": "gdn2_speedrun_rescored", "status": "completed", "exposure_steps": 3, "total_steps": 6, "final_eval_nll_constant_lr": 5.64741461617606, "final_eval_nll_post_cooldown": 5.195788587842669, "ema_eval_nll": 5.921563557216099}
+committed: X45 protocol correction: the gdn2_speedrun_rescored arm landed (the literature-backed scoring fixes applied to the velocity probe: a 24-step linear cooldown after the constant-LR budget + EMA-0.99 scoring, and the recipe-correct Moonlight Muon arms at 1x the AdamW-tuned LR -- both machines' banked best speedrun rows re-scored and the Moonlight recipe run on both machines, RMS-matching receipted by measured update RMS on both groups) (smoke)

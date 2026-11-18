@@ -1,0 +1,199 @@
+{
+  "probe": "the protocol correction assemble",
+  "no_prediction": {
+    "rule": "NO DIRECTIONAL PREDICTION is pre-stated for any arm: the literature does not say which machine benefits more from the corrected instrument or from the Moonlight LR point -- the gate-surface difference (our 27.7K learned gate params vs GDN2's 27.4M) makes both directions live; this lane measures, and any reversal is reported as plainly as any confirmation"
+  },
+  "corrected_scoring": {
+    "primary": "post-cooldown eval: a linear cooldown of 24 steps (13.3% of the 180-step constant-LR budget) appended after the banked matched-exposure landing, same stream/data order, LR factor (25 - k)/24 for cooldown step k (1.0 -> 1/24, never zero), both hybrid groups scaling equally; the corrected score is the post-cooldown calibration eval",
+    "secondary": "EMA iterate at step 180 (no extra data): decay 0.99, initialized at the init weights, updated after every constant-phase optimizer step, NOT updated during the cooldown; RANKING-ONLY -- its absolute number is biased toward mid-run weights (stated, not smoothed)",
+    "cooldown_steps": 24,
+    "cooldown_fraction": 0.1333,
+    "cooldown_form": "linear",
+    "ema_decay": 0.99,
+    "exposure_note": "the cooldown steps see ~2.7M more targets (~13%), identical across arms -- a stated protocol EXTENSION; the step-180 constant-LR eval is retained so every banked row stays comparable",
+    "citations": {
+      "river_valley": "Wen et al., ICLR 2025, arXiv:2410.05192 -- constant-LR loss carries an LR-dependent oscillation penalty that decay/averaging removes",
+      "cooldown": "Haegele et al., NeurIPS 2024, arXiv:2405.18392 -- constant-LR + short cooldown matches cosine at full scale",
+      "averaging": "Defazio et al., arXiv:2405.15682 -- iterate averaging as the schedule-free fix for the same penalty",
+      "moonlight": "Liu et al. (Moonshot AI), arXiv:2502.16982 -- with the update RMS matched to AdamW's (~0.2; AdamW typical 0.2-0.4), Muon directly reuses the LR and weight decay tuned for AdamW, i.e. ~1x the AdamW-tuned LR, WITH weight decay",
+      "horizon": "Bjorck et al., ICLR 2025 -- the optimal LR shrinks with token horizon; probe-tuned LRs transfer only downscaled"
+    }
+  },
+  "horizon_transfer_rule": {
+    "rule": "board runs transfer probe-optimal LRs DOWNSCALED: eta_board = eta_probe_opt * (D_probe / D_board)^alpha, with alpha FIT at our scale from a two-budget bracket (re-run the top config at 2x probe budget and take the local optimum shift) -- Bjorck et al.'s power-law FORM, never their imported exponent (fitted at far larger scale); PLUS the hard gate: top-k configs must hold rank stability at 2x probe budget under the corrected scoring before any board transfer",
+    "probe_targets": 20000000,
+    "board_seconds": 2700,
+    "board_targets_estimate": "~91.7M (2700 s at gdn2's banked 33,958 bytes/s), ~4.6x the probe exposure",
+    "alpha_provenance": "DEFERRED to the board-prep stage: the two-budget bracket that fits alpha is a multi-arm search outside this lane's budget; the rule is pre-stated now and the fit is labelled as not-yet-run",
+    "hard_gate": "rank stability at 2x probe budget under the corrected scoring is a HARD gate for any board transfer"
+  },
+  "banked": {
+    "our_best": {
+      "label": "muon4x_banked_seed3402",
+      "machine": "winner",
+      "seed": 3402,
+      "final": 1.4899048124040877,
+      "lr_multiplier": 4,
+      "run_dir": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/routing_symmetry_runs/muon4x_banked_seed3402"
+    },
+    "gdn2_best": {
+      "label": "gdn2_muon5x_gates_adamw_seed3401",
+      "machine": "gdn2",
+      "seed": 3401,
+      "final": 1.3950541530336653,
+      "lr_multiplier": 5,
+      "run_dir": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/gdn2_lr_bracket_runs/gdn2_muon5x_gates_adamw_seed3401"
+    },
+    "refs": {
+      "our_adamw": 1.822737353188651,
+      "gdn2_adamw": 1.5836738858904158,
+      "gdn2_muon3x_gates_adamw": 1.4150957890919276
+    },
+    "banked_margin": 0.09485065937042236
+  },
+  "bands": {
+    "endpoint_variance": 0.075,
+    "winner_seed_delta": 0.011948040553501738
+  },
+  "arms": {
+    "winner_speedrun_rescored": {
+      "machine": "winner",
+      "recipe": "speedrun",
+      "seed": 3402,
+      "status": "completed",
+      "constant_lr": 1.4899048124040877,
+      "post_cooldown": 1.4338248457227434,
+      "ema_180": 1.5408323151724679,
+      "cooldown_drop": 0.056079966681344295,
+      "banked_final": 1.4899048124040877,
+      "rerun_minus_banked": 0.0,
+      "muon_update_rms": 0.18180252157240884,
+      "adamw_update_rms": 0.4585749816766034,
+      "train_seconds_constant": 1897.1,
+      "train_seconds_total": 2146.8
+    },
+    "winner_moonlight": {
+      "machine": "winner",
+      "recipe": "moonlight",
+      "seed": 3402,
+      "status": "completed",
+      "constant_lr": 1.7359622887202673,
+      "post_cooldown": 1.620744024004255,
+      "ema_180": 2.0629438843045915,
+      "cooldown_drop": 0.11521826471601226,
+      "banked_final": 1.4899048124040877,
+      "rerun_minus_banked": 0.24605747631617958,
+      "muon_update_rms": 0.17426519177121844,
+      "adamw_update_rms": 0.45146427848023474,
+      "train_seconds_constant": 1900.7,
+      "train_seconds_total": 2150.7
+    },
+    "gdn2_speedrun_rescored": {
+      "machine": "gdn2",
+      "recipe": "speedrun",
+      "seed": 3401,
+      "status": "completed",
+      "constant_lr": 1.3950541530336653,
+      "post_cooldown": 1.3521734476089478,
+      "ema_180": 1.3803383282252721,
+      "cooldown_drop": 0.04288070542471756,
+      "banked_final": 1.3950541530336653,
+      "rerun_minus_banked": 0.0,
+      "muon_update_rms": 0.18033083280489617,
+      "adamw_update_rms": 0.32723273883624276,
+      "train_seconds_constant": 620.2,
+      "train_seconds_total": 704.1
+    },
+    "gdn2_moonlight": {
+      "machine": "gdn2",
+      "recipe": "moonlight",
+      "seed": 3401,
+      "status": "completed",
+      "constant_lr": 1.4549791472298759,
+      "post_cooldown": 1.3960357904434204,
+      "ema_180": 1.5765506369726998,
+      "cooldown_drop": 0.05894335678645546,
+      "banked_final": 1.3950541530336653,
+      "rerun_minus_banked": 0.05992499419621056,
+      "muon_update_rms": 0.17950155492353148,
+      "adamw_update_rms": 0.3268194961255913,
+      "train_seconds_constant": 616.0,
+      "train_seconds_total": 699.0
+    }
+  },
+  "the_gap": {
+    "question": "does the 0.0949 banked best-vs-best gap survive the instrument fix?",
+    "banked_margin": 0.09485065937042236,
+    "corrected_speedrun_best_vs_best": {
+      "margin": 0.08165139811379563,
+      "verdict": "GDN2 AHEAD, outside the 0.075-nat endpoint-variance band"
+    },
+    "moonlight_best_vs_best": {
+      "margin": 0.22470823356083458,
+      "verdict": "GDN2 AHEAD, outside the 0.075-nat endpoint-variance band"
+    },
+    "ema_crosscheck": {
+      "speedrun": {
+        "margin": 0.16049398694719574,
+        "verdict": "GDN2 AHEAD, outside the 0.075-nat endpoint-variance band"
+      },
+      "moonlight": {
+        "margin": 0.4863932473318917,
+        "verdict": "GDN2 AHEAD, outside the 0.075-nat endpoint-variance band"
+      },
+      "note": "the secondary instrument's ranking cross-check; its absolute numbers are biased toward mid-run weights"
+    }
+  },
+  "recipe_delta": {
+    "ours": {
+      "post_cooldown": {
+        "speedrun": 1.4338248457227434,
+        "moonlight": 1.620744024004255,
+        "speedrun_minus_moonlight": -0.1869191782815116
+      },
+      "ema_180": {
+        "speedrun": 1.5408323151724679,
+        "moonlight": 2.0629438843045915,
+        "speedrun_minus_moonlight": -0.5221115691321236
+      },
+      "constant_lr": {
+        "speedrun": 1.4899048124040877,
+        "moonlight": 1.7359622887202673,
+        "speedrun_minus_moonlight": -0.24605747631617958
+      },
+      "note": "speedrun minus moonlight, per scoring; positive = the Moonlight recipe scores BETTER (lower NLL) on this machine under that scoring"
+    },
+    "gdn2": {
+      "post_cooldown": {
+        "speedrun": 1.3521734476089478,
+        "moonlight": 1.3960357904434204,
+        "speedrun_minus_moonlight": -0.043862342834472656
+      },
+      "ema_180": {
+        "speedrun": 1.3803383282252721,
+        "moonlight": 1.5765506369726998,
+        "speedrun_minus_moonlight": -0.19621230874742768
+      },
+      "constant_lr": {
+        "speedrun": 1.3950541530336653,
+        "moonlight": 1.4549791472298759,
+        "speedrun_minus_moonlight": -0.05992499419621056
+      },
+      "note": "speedrun minus moonlight, per scoring; positive = the Moonlight recipe scores BETTER (lower NLL) on this machine under that scoring"
+    }
+  },
+  "banked_comparability": {
+    "ours": {
+      "banked_final": 1.4899048124040877,
+      "rerun_constant_lr": 1.4899048124040877,
+      "rerun_minus_banked": 0.0,
+      "note": "the re-scored speedrun arm re-ran the banked best row's own config/seed: the constant-LR step-180 score must land on the banked final (within GPU-nondeterminism noise) for the corrected scores to differ from the banked row ONLY by the instrument"
+    },
+    "gdn2": {
+      "banked_final": 1.3950541530336653,
+      "rerun_constant_lr": 1.3950541530336653,
+      "rerun_minus_banked": 0.0,
+      "note": "the re-scored speedrun arm re-ran the banked best row's own config/seed: the constant-LR step-180 score must land on the banked final (within GPU-nondeterminism noise) for the corrected scores to differ from the banked row ONLY by the instrument"
+    }
+  }
+}
