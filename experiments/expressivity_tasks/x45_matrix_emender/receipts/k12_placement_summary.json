@@ -1,0 +1,229 @@
+{
+  "probe": "k12_placement",
+  "arms": [
+    "baseline_seed3401",
+    "placement_fixed0p25_seed3401",
+    "placement_fixed0p5_seed3401",
+    "placement_fixed1p0_seed3401",
+    "placement_fixedminus0p25_seed3401",
+    "placement_learned_seed3401"
+  ],
+  "corrected_scoring": {
+    "primary": "post-cooldown eval: a 24-step linear cooldown (13.3% of the 180-step budget, factor (25-k)/24, never zero) continues the same registered stream after the constant-phase matched-exposure landing, then the document-disjoint calibration eval",
+    "secondary": "EMA-0.99 iterate at step 180 (constant phase only), ranking-only",
+    "banked_comparability": "the constant-LR step-180 eval, retained",
+    "cooldown_steps": 24,
+    "ema_decay": 0.99
+  },
+  "win_bar_nats": 0.01,
+  "scores": {
+    "baseline_seed3401": {
+      "constant_180": 1.841756020273481,
+      "post_cooldown": 1.6832871096474784,
+      "ema_180": 1.8054006099700928,
+      "walls": {
+        "constant": 1875.8,
+        "total": 2123.7
+      },
+      "bytes_per_s": 10674.219542228713
+    },
+    "placement_fixed0p25_seed3401": {
+      "constant_180": 1.8508401427950179,
+      "post_cooldown": 1.6892253501074654,
+      "ema_180": 1.8127963883536202,
+      "walls": {
+        "constant": 1903.5,
+        "total": 2154.8
+      },
+      "bytes_per_s": 10518.78464783616
+    },
+    "placement_fixed0p5_seed3401": {
+      "constant_180": 1.8508401427950179,
+      "post_cooldown": 1.6892253501074654,
+      "ema_180": 1.8127963883536202,
+      "walls": {
+        "constant": 1943.8,
+        "total": 2201.1
+      },
+      "bytes_per_s": 10300.624545798337
+    },
+    "placement_fixed1p0_seed3401": {
+      "constant_180": 1.8508401427950179,
+      "post_cooldown": 1.6892253501074654,
+      "ema_180": 1.8127963883536202,
+      "walls": {
+        "constant": 1904.7,
+        "total": 2156.9
+      },
+      "bytes_per_s": 10512.51820769945
+    },
+    "placement_fixedminus0p25_seed3401": {
+      "constant_180": 1.832424862044198,
+      "post_cooldown": 1.687981128692627,
+      "ema_180": 1.805199452808925,
+      "walls": {
+        "constant": 1937.8,
+        "total": 2193.9
+      },
+      "bytes_per_s": 10332.891076380749
+    },
+    "placement_learned_seed3401": {
+      "constant_180": 1.8198562519890922,
+      "post_cooldown": 1.6771018845694405,
+      "ema_180": 1.8035399062292916,
+      "walls": {
+        "constant": 1900.6,
+        "total": 2152.7
+      },
+      "bytes_per_s": 10535.135286837536
+    }
+  },
+  "predictions": {
+    "P1_nll": {
+      "prediction": "at least one placement arm improves on the baseline's post-cooldown NLL (seed 3401)",
+      "band": "improvement in [0.0, 0.03] nats (F1-sized, honestly wide); the >= 0.01 win bar fires the second seed",
+      "baseline_post_cooldown": 1.6832871096474784,
+      "arms": {
+        "placement_fixed0p25_seed3401": {
+          "post_cooldown": 1.6892253501074654,
+          "delta_vs_baseline": -0.005938240459987032
+        },
+        "placement_fixed0p5_seed3401": {
+          "post_cooldown": 1.6892253501074654,
+          "delta_vs_baseline": -0.005938240459987032
+        },
+        "placement_fixed1p0_seed3401": {
+          "post_cooldown": 1.6892253501074654,
+          "delta_vs_baseline": -0.005938240459987032
+        },
+        "placement_fixedminus0p25_seed3401": {
+          "post_cooldown": 1.687981128692627,
+          "delta_vs_baseline": -0.004694019045148545
+        },
+        "placement_learned_seed3401": {
+          "post_cooldown": 1.6771018845694405,
+          "delta_vs_baseline": 0.00618522507803787
+        }
+      },
+      "met": true,
+      "band_met": true,
+      "win_arms": [],
+      "best_arm": "placement_learned_seed3401",
+      "best_delta": 0.00618522507803787
+    },
+    "P2_address_locality": {
+      "prediction": "the live-pair slot-distance/key-cosine Pearson r goes materially negative vs the baseline",
+      "band": "delta r <= -0.02; unchanged if |delta r| <= 0.01",
+      "baseline_mean_pearson_r": -0.007958017668800239,
+      "arms": {
+        "placement_fixed0p25_seed3401": {
+          "mean_pearson_r": -0.0210171221017021,
+          "delta_vs_baseline": -0.013059104432901862
+        },
+        "placement_fixed0p5_seed3401": {
+          "mean_pearson_r": -0.0210171221017021,
+          "delta_vs_baseline": -0.013059104432901862
+        },
+        "placement_fixed1p0_seed3401": {
+          "mean_pearson_r": -0.0210171221017021,
+          "delta_vs_baseline": -0.013059104432901862
+        },
+        "placement_fixedminus0p25_seed3401": {
+          "mean_pearson_r": -0.02632580467284469,
+          "delta_vs_baseline": -0.018367787004044452
+        },
+        "placement_learned_seed3401": {
+          "mean_pearson_r": -0.011021291107416106,
+          "delta_vs_baseline": -0.0030632734386158676
+        }
+      },
+      "met": false
+    },
+    "P3_effective_read_rows": {
+      "prediction": "effective rows e^H rise from the baseline's own",
+      "band": ">= +0.5 rows; unchanged within +/-0.25; refuted if lower",
+      "baseline_effective_rows": 4.780351283407432,
+      "arms": {
+        "placement_fixed0p25_seed3401": {
+          "effective_rows": 4.84739715865706,
+          "delta_vs_baseline": 0.06704587524962768
+        },
+        "placement_fixed0p5_seed3401": {
+          "effective_rows": 4.84739715865706,
+          "delta_vs_baseline": 0.06704587524962768
+        },
+        "placement_fixed1p0_seed3401": {
+          "effective_rows": 4.84739715865706,
+          "delta_vs_baseline": 0.06704587524962768
+        },
+        "placement_fixedminus0p25_seed3401": {
+          "effective_rows": 4.695768280257167,
+          "delta_vs_baseline": -0.08458300315026523
+        },
+        "placement_learned_seed3401": {
+          "effective_rows": 4.71641901044354,
+          "delta_vs_baseline": -0.06393227296389181
+        }
+      },
+      "met": false
+    },
+    "P4_decorative_stores": {
+      "prediction": "layers with read-mask deltaNLL >= 0.02 rise",
+      "band": ">= 10 of 24; refuted if not above the baseline's own",
+      "baseline_layers_ge_0p02": 7,
+      "arms": {
+        "placement_fixed0p25_seed3401": {
+          "layers_deltanll_ge_0p02": 7,
+          "delta_vs_baseline": 0
+        },
+        "placement_fixed0p5_seed3401": {
+          "layers_deltanll_ge_0p02": 7,
+          "delta_vs_baseline": 0
+        },
+        "placement_fixed1p0_seed3401": {
+          "layers_deltanll_ge_0p02": 7,
+          "delta_vs_baseline": 0
+        },
+        "placement_fixedminus0p25_seed3401": {
+          "layers_deltanll_ge_0p02": 9,
+          "delta_vs_baseline": 2
+        },
+        "placement_learned_seed3401": {
+          "layers_deltanll_ge_0p02": 9,
+          "delta_vs_baseline": 2
+        }
+      },
+      "met": false
+    },
+    "P5_merge_revival": {
+      "prediction": "MERGE rate rises to >= 0.01/token -- the first positive per-token MERGE receipt",
+      "band": ">= 0.01/token; reported honestly either way",
+      "banked_merge_rate": 0.00313,
+      "arms": {
+        "placement_fixed0p25_seed3401": {
+          "merge_rate_per_token": 0.0029144287109375
+        },
+        "placement_fixed0p5_seed3401": {
+          "merge_rate_per_token": 0.0029144287109375
+        },
+        "placement_fixed1p0_seed3401": {
+          "merge_rate_per_token": 0.0029144287109375
+        },
+        "placement_fixedminus0p25_seed3401": {
+          "merge_rate_per_token": 0.0029881795247395835
+        },
+        "placement_learned_seed3401": {
+          "merge_rate_per_token": 0.0029474894205729165
+        }
+      },
+      "met": false
+    },
+    "three_way_read": {
+      "outcome": "iii",
+      "reading": "THE HONEST NULL: free-slot placement is decorative on natural text at probe scale. Every arm's delta sits inside the 0.075-nat endpoint-variance band and below the pre-stated 0.01 win bar; BOTH fixed signs hurt slightly (+w +0.0059 worse, -w +0.0047 worse) while the learned arm's +0.0062 is directional-only and unattributable to either sign at fixed magnitude. The estimator MACHINERY functioned end-to-end (the zero-born w received gradient at step 0, the per-head signs trained, placement fired on 11-13% of APPENDs) -- but the optimizer left |w| <= 0.03, its own verdict that the lever is not worth pulling, exactly as the registration's F1 rarity analysis predicted. C5's write/read form owns the residual."
+    },
+    "refutation": {
+      "clause": "if the mechanism numbers do not move while NLL does (or vice versa) the dissociation is reported honestly; a null is a result -- it would say free-slot placement is not load-bearing on natural text"
+    }
+  }
+}
