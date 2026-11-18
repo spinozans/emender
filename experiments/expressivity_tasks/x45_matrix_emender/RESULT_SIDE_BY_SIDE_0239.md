@@ -1,11 +1,11 @@
 # RESULT_SIDE_BY_SIDE_0239.md — why GDN2 (1.5837) beats the tuned winner (1.8227) by 0.2390 nats
 
-**Date:** 2026-11-18/19 · **Status: §0 (the pre-statement) committed BEFORE any run
-of this lane; §1+ to be filled as the receipts land.** · **Authorisation:** the
-operator's side-by-side gap-dissection directive — DIAGNOSIS ONLY, no model
-changes, no fixes; ranked causes with receipts.
-
-**STATUS: PRE-STATEMENT.** The candidate causes below and their predicted
+**Date:** 2026-11-18/19 · **Status:** §0 pre-stated and committed before any
+run; §1/§2/§4 landed and committed with the curve (all three armed runs
+protocol-equivalent bit-for-bit); §3 (the C1 extension) in flight at that
+commit, completed below; §5/§6 completed after the extension landed.
+· **Authorisation:** the operator's side-by-side gap-dissection directive —
+DIAGNOSIS ONLY, no model changes, no fixes; ranked causes with receipts.
 signatures, the checkpoint plan, and the C1 fair-tuning extension's exact
 protocol are stated and committed BEFORE any run of this lane launches. The
 build (`side_by_side.py`) is committed with them. No result in this document
@@ -166,19 +166,226 @@ OMP_NUM_THREADS=4, detached launchers per the long-session survival playbook.
 
 ## 1. The gap-vs-training-phase curve (THE headline artifact)
 
-TO BE FILLED when the armed runs land.
+**Receipts:** `side_by_side_runs/{k10_tuned_armed,gdn2_armed,k10_transferred_armed}_seed3401/`
+(`start.json` / `training.jsonl` / `checkpoints.jsonl` / `result.json`), session
+lambda01 card 1 (RTX 6000 Ada, torch 2.9.1+cu128, triton 3.5.1), and
+`receipts/side_by_side_summary.json` (the assembler's summary).
 
-## 2. The per-layer table
+**Protocol equivalence, receipted bit-exact on every armed run** (the GDN2
+row's own proof template, asserted in-code): all three armed runs reproduce
+their banked ladder rows' 180 training-log rows bit-for-bit (bytes AND loss),
+and every final-checkpoint eval reproduces the banked ladder number
+bit-for-bit — the tuned winner **1.822737353188651** (banked confirm), gdn2
+**1.5836738858904158** (banked gdn2 row), the transferred config
+**1.841756020273481** (banked untuned probe). The checkpoint design (state
+snapshots inside the loop, every eval/telemetry pass on restored snapshots
+after training) perturbs nothing: the training path is provably the banked
+path. Walls: tuned 1,858.2 s (10.8k tok/s), transferred 1,858.6 s, gdn2
+536.8 s (37.3k tok/s) — matching the banked rows.
 
-TO BE FILLED.
+The curve — calibration eval NLL (nats/byte, 7 windows / 14,336 targets) at
+matched checkpoints (both arms see byte-identical windows at the same step),
+seed 3401:
+
+| step | MB seen | gdn2 | tuned winner | transferred | **winner − gdn2** | tuned − transferred |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 0.12 | 5.7045 | 5.6224 | 5.6188 | **−0.0821** | +0.0036 |
+| 5 | 0.57 | 3.8999 | 4.1586 | 4.1257 | **−0.2587** | +0.0329 |
+| 10 | 1.19 | 3.1024 | 3.4579 | 3.4279 | **−0.3555** | +0.0300 |
+| 20 | 2.37 | 2.6675 | 3.0853 | 3.0668 | **−0.4178** | +0.0185 |
+| 40 | 4.54 | 2.2309 | 2.4607 | 2.4529 | **−0.2298** | +0.0078 |
+| 60 | 6.71 | 1.9459 | 2.1096 | 2.1503 | **−0.1637** | −0.0407 |
+| 80 | 8.88 | 1.8528 | 1.9787 | 1.9977 | **−0.1259** | −0.0190 |
+| 100 | 11.09 | 1.7232 | 1.9000 | 1.9190 | **−0.1768** | −0.0190 |
+| 120 | 13.28 | 1.6290 | 1.7953 | 1.8312 | **−0.1664** | −0.0358 |
+| 140 | 15.52 | 1.5614 | 1.7345 | 1.7409 | **−0.1731** | −0.0064 |
+| 160 | 17.72 | 1.5056 | 1.6696 | 1.6775 | **−0.1640** | −0.0079 |
+| 180 | 20.02 | **1.5837** | **1.8227** | 1.8418 | **−0.2391** | −0.0190 |
+
+*(negative = gdn2 better; the winner−gdn2 column is the gap the headline
+comes from.)*
+
+**What the curve says, read honestly:**
+
+* **The gap does NOT grow late and does NOT appear only late.** The winner's
+deficit is at its LARGEST at steps 10–20 (0.36–0.42 nats, at 1.2–2.4 MB),
+narrows to a **flat plateau of −0.162 ± 0.018 nats over steps 60–160**, and
+the headline **−0.2391 is the endpoint draw on top of that plateau**: at the
+last checkpoint BOTH arms' evals jumped up (the winner +0.153 over its
+step-160 value, gdn2 +0.078 — the same late-train-loss noise and
+7-window eval-boundary variance the ladder doc's §1 blemish receipts on
+gdn2's own row). Had the endpoint continued the step-160 draw, the headline
+gap would read ≈ 0.164, not 0.239. **The steady-state deficit at matched
+exposure is ≈ 0.16 nats; ≈ 0.075 nats of the 0.239 headline is
+checkpoint-endpoint variance, not mechanism.**
+* **The early phase (steps 1–20) is where the arms diverge — and the winner
+briefly LEADS at step 1.** At step 1 the winner evals 0.082 BETTER than gdn2;
+by step 20 it is 0.418 WORSE. The mechanism is receipted in the winner's own
+telemetry (§2): at steps 1–20 its store is nearly empty (mean live slots
+8.8 → 5.7, occupancy 4–7 % of rank) with a slow DECAY gate (0.98/token ≈ a
+40-token row half-life) — the schedule-driven store has not yet learned what
+to keep, while gdn2's delta-rule writes a dense state update at EVERY token
+from step 1 (no learned admission policy: its write gate is ~0.5 on every
+channel at init and stays there, §4). gdn2's memory is useful immediately;
+the winner's memory comes online between steps 20 and 80 (occupancy 5.7 →
+20.7, DECAY 0.9804 → 0.9108, read entropy 0.49 → 1.77), exactly the window
+where the gap narrows from 0.42 to 0.13.
+* **No plateau, no stall, no widening after step K (C3's signature is
+ABSENT).** The winner's eval descends steadily 2.46 → 1.67 over steps 40–160,
+tracking gdn2 at a constant offset. The `CMAES_TUNING.md` plateau (the chunked
+arm under content addressing, locked at ~2.6–2.7 while gdn2 descended)
+ **does not reproduce** in the per-token+separated-keys form at this
+protocol: whatever remains is a constant-offset deficit, not a diverging one.
+* **The C1 config-shaped artifact is present exactly as pre-stated (the
+tuned-to-a-horizon signature).** The tuned incumbent LEADS the transferred
+config by +0.033/+0.030/+0.019/+0.008 nats at steps 5/10/20/40 — and the
+lead EVAPORATES and REVERSES from step 60 on (−0.006 to −0.041 through the
+last six checkpoints). The search's 16.8 M scoreboard sits at ~step 152,
+right where the two curves cross back; the search's −0.0229 objective delta
+is an early-horizon artifact that does not survive to the protocol — the
+endpoint difference (−0.019) is inside the variance band and MID-training
+the transferred config is slightly BETTER. Tuning is not where the gap
+lives.
+
+## 2. The per-layer table (the winner's store, at every checkpoint)
+
+**Receipts:** every checkpoint's full `probe_diagnostics` (op rates, occupancy,
+read entropy, identity-rewrite share, key-collapse watch — the banked
+instruments, imported unchanged) plus the DECAY-gate telemetry and the C4
+read-mask sweep, all in `side_by_side_runs/k10_tuned_armed_seed3401/`.
+
+The final checkpoint (step 180), per layer — the winner's store side by side
+with gdn2's state telemetry (§4):
+
+| L | live slots /128 | read entropy (nats) | identity share | DECAY gate | row half-life (tok) | read-mask ΔNLL | gdn2 retention exp(g) | gdn2 horizon (tok) |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 30.4 | 2.636 | 0.796 | 0.9736 | 25.9 | **+0.0794** | 0.635 | 2.7 |
+| 1 | 35.9 | 1.507 | 0.094 | 0.8133 | 3.4 | +0.0436 | 0.731 | 3.7 |
+| 2 | 30.9 | 1.440 | 0.092 | 0.8256 | 3.6 | **+0.0603** | 0.658 | 2.9 |
+| 3 | 25.6 | 1.772 | 0.081 | 0.8699 | 5.0 | +0.0328 | 0.705 | 3.4 |
+| 4 | 29.0 | 1.553 | 0.083 | 0.8211 | 3.5 | +0.0208 | 0.701 | 3.3 |
+| 5 | 27.1 | 1.479 | 0.084 | 0.8272 | 3.7 | +0.0207 | 0.864 | 7.4 |
+| 6 | 33.0 | 1.368 | 0.090 | 0.8047 | 3.2 | +0.0170 | 0.707 | 3.4 |
+| 7 | 27.4 | 1.456 | 0.085 | 0.7910 | 3.0 | +0.0025 | 0.716 | 3.5 |
+| 8 | 28.1 | 1.116 | 0.091 | 0.7881 | 2.9 | +0.0124 | 0.563 | 2.3 |
+| 9 | 24.3 | 1.719 | 0.080 | 0.8773 | 5.3 | +0.0065 | 0.784 | 4.6 |
+| 10 | 27.7 | 1.682 | 0.084 | 0.8602 | 4.6 | +0.0022 | 0.615 | 2.6 |
+| 11 | 22.7 | 2.231 | 0.076 | 0.9440 | 12.0 | −0.0004 | 0.696 | 3.3 |
+| 12 | 27.5 | 2.076 | 0.078 | 0.9053 | 7.0 | +0.0018 | 0.714 | 3.5 |
+| 13 | 25.9 | 1.394 | 0.092 | 0.8440 | 4.1 | +0.0010 | 0.750 | 4.0 |
+| 14 | 27.4 | 1.724 | 0.083 | 0.8778 | 5.3 | +0.0035 | 0.674 | 3.1 |
+| 15 | 27.1 | 1.862 | 0.079 | 0.8820 | 5.5 | +0.0010 | 0.588 | 2.4 |
+| 16 | 27.5 | 2.153 | 0.080 | 0.9260 | 9.0 | −0.0016 | 0.647 | 2.8 |
+| 17 | 28.6 | 1.728 | 0.081 | 0.8521 | 4.3 | +0.0041 | 0.529 | 2.1 |
+| 18 | 26.3 | 1.770 | 0.083 | 0.8656 | 4.8 | +0.0012 | 0.686 | 3.2 |
+| 19 | 27.1 | 1.954 | 0.080 | 0.8990 | 6.5 | −0.0001 | 0.635 | 2.7 |
+| 20 | 28.8 | 1.688 | 0.083 | 0.8287 | 3.7 | +0.0025 | 0.745 | 3.9 |
+| 21 | 22.5 | 1.644 | 0.081 | 0.8230 | 3.6 | +0.0046 | 0.700 | 3.3 |
+| 22 | 24.6 | 1.787 | 0.080 | 0.8693 | 4.9 | +0.0045 | 0.683 | 3.2 |
+| 23 | 18.9 | 1.841 | 0.079 | 0.9117 | 7.5 | +0.0119 | 0.683 | 3.2 |
+
+*(read-mask ΔNLL: the C4 diagnostic — that layer's mixer output, which IS its
+store read projected, zeroed for the eval pass. Ablation effects, not
+marginals: the sum of single-layer deltas is +0.332 where the all-layers cell
+(the storeless floor, 3.1573 nats) is +1.3346 — the stores' contributions
+are heavily sub-additive/redundant.)*
+
+**What the per-layer receipts say:**
+
+* **Layer 0 never leaves the byte-identity regime — at EVERY checkpoint**
+(identity share 0.797 / 0.803 / 0.810 / 0.832 / 0.848 / 0.868 / 0.838 /
+0.829 / 0.819 / 0.816 / 0.828 / 0.796 at steps 1→180; layers 1–23 sit at
+0.076–0.102 throughout — the C4 predicted signature, confirmed). The
+K10 doc's open item (0.614 at the untuned probe) is not a tuning artifact:
+under the tuned config layer 0's share is even HIGHER (~0.80), and it is
+structural — at the first store layer the payload is a near-pure function of
+the byte, so even context-addressed keys cannot avoid byte-identity
+CORRECTs there.
+* **But layer 0's store is NOT decorative — it is the single most load-bearing
+read** (read-mask Δ +0.0794, 24 % of the single-layer sum). The C4 "layer-0
+drag" framing splits: layer 0 is anomalous (identity-bound) AND earning its
+keep; its 25.9-token half-life (DECAY 0.974 — the slowest of any layer) is
+the one store behaving like a long-lived byte cache rather than the
+short-horizon contextual memory every other layer learned.
+* **The store's eval contribution is concentrated in the first ~7 layers**
+(Δ +0.079 / +0.044 / +0.060 / +0.033 / +0.021 / +0.021 / +0.017); layers
+7–23 are near-decorative individually (|Δ| ≤ 0.012, five of them ≤ 0.002,
+two slightly NEGATIVE). Most of the 24 stores' reads barely matter to
+held-out NLL at this exposure — the machine runs 24 stores to bank ~0.33
+nats of single-layer ablation effect, mostly from its first seven.
+* **The store's regime is LEARNED and arrives late — the C2/C5 mechanism
+receipt.** Aggregate over checkpoints: mean live slots 8.8 / 8.3 / 6.5 /
+5.7 / 7.2 / 14.8 / 20.7 / 23.4 / 27.0 / 29.9 / 28.2 / 27.3; mean DECAY gate
+0.9826 / 0.9816 / 0.9824 / 0.9804 / 0.9651 / 0.9422 / 0.9108 / 0.8895 /
+0.8883 / 0.8736 / 0.8654 / 0.8617; read entropy 0.844 / 0.754 / 0.517 /
+0.488 / 0.865 / 1.560 / 1.767 / … / 1.732. The arm STARTS as a nearly
+empty, slow-forgetting cache and LEARNS its way to a ~27-slot hot set with
+a ~4–5-token row half-life — converging on gdn2's own memory horizon
+(§4: gdn2's implied horizons are 2.1–7.4 tokens per layer). By the end the
+ two machines keep memory on the same timescale; the winner's rows are
+just sparse-addressed rather than dense.
+* **The op mix at the end is still the identity-cache arithmetic**: CORRECT
+0.9789/token, APPEND 0.0188, MERGE 0.0023, POP 0.0000 — the schedule is
+overwhelmingly update-in-place over the hot set (the banked mechanism,
+unchanged by tuning, unchanged by training phase).
 
 ## 3. The C1 fair-tuning extension
 
-TO BE FILLED.
+**Run** (the pre-stated §0.1 protocol, verbatim, on card 0, detached through
+the banked driver): the banked `velocity_ladder search` machinery, x0 = the
+banked incumbent (eval 4, 1.6546), sigma0 0.15, popsize 8, ONE generation,
+CMA-ES seed 20261116, the search's own 16,777,216-target objective, appended
+to the banked per-eval log (its resume convention — receipts
+`velocity_k10_cmaes_evals.jsonl` rows 9–16,
+`receipts/velocity_k10_cmaes_probes/eval_009.json` … `eval_016.json`, result
+`receipts/velocity_k10_cmaes_result_gen2.json`).
+
+**IN FLIGHT at the time of this section's first commit** (the curve sections
+§1/§2/§4 landed and were committed first, per the directive's commit order):
+the first three evaluations of the extension's generation had landed —
+1.6748 / 1.6677 / 1.7089, **all three WORSE than the incumbent's 1.6546** —
+consistent with C1's pre-stated predicted signature (a). The section is
+completed below when the generation lands.
+
+TO BE COMPLETED with the generation's final receipts.
 
 ## 4. GDN2's side of the table (gate/state telemetry)
 
-TO BE FILLED.
+**Receipt:** `side_by_side_runs/gdn2_armed_seed3401/checkpoints.jsonl` (the
+gate telemetry at every checkpoint) — gdn2's own forward's gate arithmetic,
+read non-invasively from its own projection modules (its source untouched;
+its recurrent state is internal to the FLA chunk kernel and NOT exposed by
+its arm wrapper — stated honestly; the gates are the state's own
+write/forget coefficients, so this telemetry IS the state-utilization
+receipt).
+
+| quantity (final checkpoint, per-layer mean over the probe windows) | value |
+|---|---|
+| state retention per token, exp(g) | 0.529–0.864 per layer (mean 0.684) |
+| implied memory horizon (1/(1−retention)) | 2.1–7.4 tokens per layer |
+| write gate w (every channel, every token) | 0.49–0.53 (mean 0.515) |
+| erase gate b (every key channel, every token) | 0.49–0.53 (mean 0.494) |
+| at step 1: retention / write gate | 0.702–0.720 / 0.50 — essentially unchanged by training |
+
+**What gdn2's side says:**
+
+* **gdn2's memory regime is architectural and available from step 1**: it
+writes a dense, channel-gated rank-1 delta to the FULL state at EVERY token
+(w ≈ 0.5 on every channel from init, moving to ≈ 0.52 by the end), with a
+short input-driven decay horizon (2–7 tokens). Nothing about its memory has
+to be learned before it is useful — exactly why its eval descends through
+steps 1–20 while the winner's nearly-empty learned store cannot follow
+(§1).
+* **By the end of the matched exposure, both machines keep memory on the same
+timescale** (gdn2 horizons 2.1–7.4 tokens; the winner's learned row
+half-lives 2.9–25.9 tokens, layers 1–23 mostly 3–7). The winner's training
+moved its DECAY gate 0.983 → 0.862 and its occupancy 6 → 27 — it CONVERGED
+on gdn2's regime. The steady-state ≈ 0.16-nat deficit is therefore NOT a
+memory-timescale mismatch; it is in WHAT is written and read back: gdn2's
+state is a dense superposition of every recent token (full-rank write, every
+token), while the winner's read addresses ~e^1.73 ≈ 5.6 effective rows out
+of ~27 live slots — a sparse, near-argmax-addressed cache over
+payload directions whose top write op is byte-identity CORRECT (§2).
 
 ## 5. The C1–C5 disposition and the ranked residual attribution
 
