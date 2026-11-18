@@ -1,0 +1,102 @@
+{
+  "probe": "gdn2_growth_pop arm",
+  "arm": "gdn2_growth",
+  "context": 8192,
+  "seed": 3401,
+  "exposure_targets": 20000000,
+  "growth_enabled": true,
+  "pop_enabled": false,
+  "thresholds": {
+    "context": 8192,
+    "tau_sat": 19.205211639404297,
+    "tau_sat_source": "the C3 lane's committed calibrated growth threshold (receipts/gdn2_growth_c3_regime.json, imported verbatim -- the same growth trigger on the same regime for cross-lane comparability)",
+    "tau_pop": 17.5004940032959,
+    "tau_pop_rule": "the calibrated-below-registered discipline (the supervisor's ruling, mirroring the C3 lane's tau_cal rule at the POP trigger's own granularity): the trained fixed machine's own PER-HEAD smoothed-PR ceiling, measured on the post-cooldown (PRIMARY-scored) trained state",
+    "tau_read": 0.012357033789157867,
+    "tau_read_rule": "P25 of the smoothed read-mass among per-head-saturated observations (smoothed PR >= tau_pop, the ceiling population: one argmax-boundary observation per (block, head)), on the post-cooldown trained state; pre-committed before the arms run",
+    "hazard": "the K8 idle-store hazard stated verbatim: the calibrated tau_pop is the fixed machine's own regime ceiling, NOT absolute capacity; the arm tests capacity management past the exhibited regime, not capacity management at capacity",
+    "tau_registered_unreachable": {
+      "tau_sat": 96.0,
+      "tau_pop": 96.0,
+      "verdict": "the registered 0.75*d_k = 96 thresholds are UNREACHABLE on the real C3 stream at both scanned horizons (this lane's receipts and the C3 lane's committed calibration receipts: trained fixed GDN2 PR mean ~7.5, max ~24, smoothed per-layer max ~19, per-head ceiling receipted below) -- the informative null branch of the registered 96 thresholds is delivered by these reachability receipts and is attached to the registration permanently",
+      "receipt": "experiments/expressivity_tasks/x45_matrix_emender/receipts/gdn2_growth_pop_calibration_8192.json"
+    },
+    "n_ceiling_observations": 1,
+    "committed_by": "gdn2_growth_pop calibrate (the locked regime, the disclosed trained-state protocol)"
+  },
+  "thresholds_note": "the calibration's committed thresholds (experiments/expressivity_tasks/x45_matrix_emender/receipts/gdn2_growth_pop_calibration_8192_thresholds.json)",
+  "windows_per_step": 14,
+  "optimizer": {
+    "lr": 0.0005420185524740253,
+    "betas": [
+      0.9,
+      0.9392004369596886
+    ],
+    "weight_decay": 0.20059436743465126,
+    "warmup_steps": 69,
+    "microbatch": 8
+  },
+  "summary": {
+    "base_arm": "gdn2",
+    "parameters": {
+      "total": 149855670
+    },
+    "nomination": {
+      "arm": "gdn2",
+      "receipt": "/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/receipts/byte_velocity_nominations/gdn2.json",
+      "receipt_sha256": "5e7ab164973366817699a9df21eb1714c9203c49e44a65566c048842f2034813",
+      "generation": 7,
+      "candidate": 1,
+      "search_score": 1.3930157472689946
+    },
+    "policy": {
+      "lr": 0.0005420185524740253,
+      "microbatch": 8,
+      "beta2": 0.9392004369596886,
+      "weight_decay": 0.20059436743465126,
+      "warmup_steps": 69,
+      "init_scale": 1.3483482393728117,
+      "decay_rate_scale": 0.48706005128019486,
+      "dt_bias_shift": 1.7178302439489688,
+      "expansion": 2.0
+    }
+  },
+  "identity": {
+    "stream": "flagship_beyond_100gb",
+    "source": "/mnt/nvme2n1/erikg/pile.txt",
+    "source_size": 1307910802540,
+    "manifest": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/documents.jsonl.gz",
+    "manifest_sha256": "48b9095eeccb023ff1cb2a4f6da899a8b3e4eb3b76b2804e730f1d6ad031c414",
+    "registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/registration.json",
+    "registration_sha256": "c36f84cfd1a59530a7991a4be6c1f68b424a79c5b7de169eabfc90d3cd31cc31",
+    "boundary_bytes": 100000000000,
+    "lattice_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_150M_LATTICE.md",
+    "lattice_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c"
+  },
+  "versions": {
+    "torch": "2.9.1+cu128",
+    "triton": "3.5.1"
+  },
+  "corrected_scoring": {
+    "primary": "post-cooldown eval (24-step linear cooldown after the matched-exposure constant-LR landing)",
+    "secondary": "EMA-0.99 iterate at the constant-phase end (ranking-only)",
+    "retained": "constant-LR eval at the last shape-compatible checkpoint (banked-comparability column)"
+  },
+  "no_prediction": "NO DIRECTIONAL PREDICTION on the headline: a tie means the C2 exact-capacity claim is controller-only on GDN2's architecture too (the honest verdict); a win is the op thesis's first positive receipt on the dense machine",
+  "session": {
+    "card": "6",
+    "device": "NVIDIA RTX 6000 Ada Generation"
+  },
+  "git": {
+    "commit": "bb32bbb2e05f7df0f76f2e852d85d6de67fb4744",
+    "relevant_paths_dirty": "M experiments/expressivity_tasks/x45_matrix_emender/k8_runs/grow.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/c3_runs_arm_emender_growable.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/c3_runs_arm_gdn2_fixed.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/c3_runs_arm_gdn2_fixed_8.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/c3_runs_arm_gdn2_growth.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/c3_runs_calibrate.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/gdn2_growth_pop_runs/gdn2_growth.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/gdn2_growth_pop_runs/smoke_pop.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/gdn2_growth_pop_runs/smoke_pop/\n?? experiments/expressivity_tasks/x45_matrix_emender/k11_runs/g1_seed3401.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/k11_runs/g1_seed3401/\n?? experiments/expressivity_tasks/x45_matrix_emender/k11_runs/g2_seed3401.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/k11_runs/g2_seed3401/\n?? experiments/expressivity_tasks/x45_matrix_emender/k12_runs/baseline_seed3401.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/k12_runs/baseline_seed3401.crashed_incomplete/\n?? experiments/expressivity_tasks/x45_matrix_emender/k12_runs/placement_fixed0p25_seed3401.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/k12_runs/placement_learned_seed3401.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/k12_runs/placement_learned_seed3401.discarded_localitybug/\n?? experiments/expressivity_tasks/x45_matrix_emender/k12_runs/smoke/\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m1_fused_d2_lr1e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m1_fused_d2_lr1e-03_seed3402.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m1_fused_d2_lr1e-03_seed3403.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m1_fused_d2_sweep.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m2_fused_d2_lr1e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m2_fused_d2_lr1e-03_seed3402.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m2_fused_d2_lr1e-03_seed3403.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m2_fused_d2_sweep.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m2_separated_d1_keydim.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c1_lr1e-03_seed3403.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c1_lr3e-04_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c1_lr3e-04_seed3402.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c1_lr3e-04_seed3403.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr1e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr1e-03_seed3402.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr1e-03_seed3403.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr3e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr3e-03_seed3402.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr3e-03_seed3403.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr3e-04_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr3e-04_seed3402.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr3e-04_seed3403.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_sweep.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/smoke/k12_placement_learned_seed3401.json",
+    "branch": "main"
+  },
+  "config_sha256": "16eaeaf6952932608359d7f44fdeba9273c6968d723b036a470e3744ee998495",
+  "pid": 2941673,
+  "started_ns": 1795035671304284061,
+  "parameters": {
+    "total": 149855670,
+    "trainable": 149855670
+  }
+}

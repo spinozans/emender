@@ -443,6 +443,24 @@ class RecyclingTrigger:
                                  tau_read=self.tau_read))
         return pops, receipts
 
+    def count_gates(self, stats) -> dict:
+        """Diagnosability receipts for the two-component gate: per window,
+        how many (block, head) upward PR crossings happened, how many of
+        them ALSO satisfied the read floor -- so a never-fires arm is
+        interpretable (which component blocked)."""
+        crossings = poppable = 0
+        for _layer, s in stats.items():
+            sm_pr = _smoothed(s["pr"], self.window)
+            sm_rd = _smoothed(s["read"], self.window)
+            prev = torch.cat(
+                [torch.zeros(1, sm_pr.shape[1], device=sm_pr.device),
+                 sm_pr[:-1]], dim=0)
+            cross = (sm_pr >= self.tau_pop) & (prev < self.tau_pop)
+            stale = sm_rd <= self.tau_read
+            crossings += int(cross.sum())
+            poppable += int((cross & stale).sum())
+        return dict(pr_crossings=crossings, with_read_floor=poppable)
+
 
 # --------------------------------------------------------------------------
 # The probe pass and the window statistics
