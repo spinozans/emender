@@ -1,0 +1,24 @@
+gpu_lease: granted GPUs: 3 (pid 2393498)
+leased card: 3
+[pin-autotune] pinned mode: 18 kernels / 30 (name,key) configs from registry (set NDM_PIN_TRITON_AUTOTUNE=0 to restore sweep)
+{"arm": "gdn2_muon3x", "card": "3", "seed": 3401, "parameters": 149855670, "muon_params": 353, "adamw_params": 244}
+  gdn2_muon3x step 25 82s 2.9MB loss 3.3393
+  gdn2_muon3x step 50 167s 5.6MB loss 2.5619
+  gdn2_muon3x step 75 252s 8.3MB loss 1.9223
+  gdn2_muon3x step 100 339s 11.1MB loss 2.0354
+  gdn2_muon3x step 125 425s 13.9MB loss 1.8486
+  gdn2_muon3x step 150 512s 16.6MB loss 2.1748
+  gdn2_muon3x step 175 599s 19.5MB loss 1.9278
+/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/checkpoint.py:85: UserWarning: None of the inputs have requires_grad=True. Gradients will be None
+  warnings.warn(
+  checkpoint step 1: bytes 117712 train 5.9480 eval 5.8986
+  checkpoint step 5: bytes 567019 train 5.6698 eval 5.5076
+  checkpoint step 10: bytes 1190731 train 4.5952 eval 4.4089
+  checkpoint step 20: bytes 2367970 train 3.8549 eval 3.1477
+  checkpoint step 40: bytes 4542086 train 2.8985 eval 2.5227
+  checkpoint step 80: bytes 8884476 train 2.5404 eval 1.8670
+  checkpoint step 120: bytes 13277872 train 1.8121 eval 1.5898
+  checkpoint step 160: bytes 17718312 train 1.9135 eval 1.4604
+  checkpoint step 180: bytes 20022866 train 1.8436 eval 1.4702
+{"label": "gdn2_muon3x", "status": "completed", "exposure_bytes": 20022866, "exposure_steps": 180, "final_eval_nll": 1.4702048471995763, "bytes_per_s": 32520.492677635597}
+committed: X45 symmetric Muon control: the gdn2_muon3x arm landed (GDN2 + the bake-off's hybrid Muon at 3x its own AdamW LR, the checkpoint-eval curve at the probe protocol)
