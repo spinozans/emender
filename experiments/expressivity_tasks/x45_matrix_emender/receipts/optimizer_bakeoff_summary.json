@@ -1,0 +1,625 @@
+{
+  "probe": "optimizer bake-off assemble",
+  "banked": {
+    "k10_tuned": 1.822737353188651,
+    "k10_untuned": 1.841756020273481,
+    "gdn2": 1.5836738858904158
+  },
+  "sf_prediction": {
+    "arm": "sf",
+    "direction": "eliminates the first-10-steps hole (the step<=20 deficit vs gdn2) by design",
+    "refuted_if": "opens the same hole or worse (step-10 deficit at or above the incumbent's 0.3555)",
+    "incumbent_step10_deficit": 0.35550427436828613,
+    "incumbent_step20_deficit": 0.41776544707162033,
+    "measured": {
+      "step10_deficit": -0.023921591894966898,
+      "step20_deficit": -0.0060176849365234375,
+      "max_deficit_steps_le_20": -0.0060176849365234375,
+      "note": "deficit vs gdn2's banked curve (arm NLL minus gdn2 NLL at the same step); positive = the arm is WORSE"
+    },
+    "verdict": "MET: the hole is ELIMINATED (the step-10 deficit -0.0239 is at/below the steady-state band, not the incumbent's 0.3555 hole)"
+  },
+  "arms": {
+    "sf": {
+      "family": "sf-adamw",
+      "status": "completed",
+      "spec": {
+        "optimizer": "schedulefree.AdamWScheduleFree",
+        "lr": 0.00033427141575371284,
+        "betas": [
+          0.9,
+          0.9392004369596886
+        ],
+        "weight_decay": 0.17422187309224696,
+        "warmup_steps": 0,
+        "r": 0.0,
+        "weight_lr_power": 2.0
+      },
+      "train_seconds": 2781.7,
+      "bytes_per_s": 7198.186135774019,
+      "final_eval_nll": 1.7173972470419747,
+      "final_vs_banked_incumbent": -0.10534010614667633,
+      "first_10_steps_hole": {
+        "step10_deficit": -0.023921591894966898,
+        "step20_deficit": -0.0060176849365234375,
+        "max_deficit_steps_le_20": -0.0060176849365234375,
+        "note": "deficit vs gdn2's banked curve (arm NLL minus gdn2 NLL at the same step); positive = the arm is WORSE"
+      },
+      "steady_deficit_mean_steps_80_160": 0.18732734521230063,
+      "curve": [
+        {
+          "step": 1,
+          "bytes": 117712,
+          "arm_eval_nll": 4.291926179613386,
+          "arm_train_loss": 5.785070835425993,
+          "gdn2_eval_nll": 5.704494271959577,
+          "deficit_vs_gdn2": -1.4125680923461914,
+          "incumbent_eval_nll": 5.622360365731375,
+          "arm_minus_incumbent": -1.3304341861179898
+        },
+        {
+          "step": 5,
+          "bytes": 567019,
+          "arm_eval_nll": 3.276339292526245,
+          "arm_train_loss": 3.6521464313258694,
+          "gdn2_eval_nll": 3.899909666606358,
+          "deficit_vs_gdn2": -0.6235703740801131,
+          "incumbent_eval_nll": 4.158613273075649,
+          "arm_minus_incumbent": -0.882273980549404
+        },
+        {
+          "step": 10,
+          "bytes": 1190731,
+          "arm_eval_nll": 3.0784430844443187,
+          "arm_train_loss": 3.3040353059768677,
+          "gdn2_eval_nll": 3.1023646763392856,
+          "deficit_vs_gdn2": -0.023921591894966898,
+          "incumbent_eval_nll": 3.4578689507075717,
+          "arm_minus_incumbent": -0.37942586626325303
+        },
+        {
+          "step": 20,
+          "bytes": 2367970,
+          "arm_eval_nll": 2.6615078449249268,
+          "arm_train_loss": 3.5334946884055958,
+          "gdn2_eval_nll": 2.66752552986145,
+          "deficit_vs_gdn2": -0.0060176849365234375,
+          "incumbent_eval_nll": 3.0852909769330705,
+          "arm_minus_incumbent": -0.42378313200814377
+        },
+        {
+          "step": 40,
+          "bytes": 4542086,
+          "arm_eval_nll": 2.3183919361659457,
+          "arm_train_loss": 2.6913631180414246,
+          "gdn2_eval_nll": 2.23093387058803,
+          "deficit_vs_gdn2": 0.0874580655779158,
+          "incumbent_eval_nll": 2.4607278278895786,
+          "arm_minus_incumbent": -0.1423358917236328
+        },
+        {
+          "step": 80,
+          "bytes": 8884476,
+          "arm_eval_nll": 2.0039853879383633,
+          "arm_train_loss": 2.494929876951163,
+          "gdn2_eval_nll": 1.852820668901716,
+          "deficit_vs_gdn2": 0.1511647190366474,
+          "incumbent_eval_nll": 1.9786864519119263,
+          "arm_minus_incumbent": 0.02529893602643707
+        },
+        {
+          "step": 120,
+          "bytes": 13277872,
+          "arm_eval_nll": 1.8273347445896693,
+          "arm_train_loss": 2.0698557738799184,
+          "gdn2_eval_nll": 1.6289756979261125,
+          "deficit_vs_gdn2": 0.19835904666355675,
+          "incumbent_eval_nll": 1.7953453404562814,
+          "arm_minus_incumbent": 0.03198940413338791
+        },
+        {
+          "step": 160,
+          "bytes": 17718312,
+          "arm_eval_nll": 1.718040176800319,
+          "arm_train_loss": 2.106114447116852,
+          "gdn2_eval_nll": 1.5055819068636214,
+          "deficit_vs_gdn2": 0.2124582699366977,
+          "incumbent_eval_nll": 1.669589979307992,
+          "arm_minus_incumbent": 0.04845019749232704
+        },
+        {
+          "step": 180,
+          "bytes": 20022866,
+          "arm_eval_nll": 1.7173972470419747,
+          "arm_train_loss": 2.055134961730034,
+          "gdn2_eval_nll": 1.5836738858904158,
+          "deficit_vs_gdn2": 0.13372336115155892,
+          "incumbent_eval_nll": 1.822737353188651,
+          "arm_minus_incumbent": -0.10534010614667633
+        }
+      ]
+    },
+    "sf_prior": {
+      "family": "sf-adamw",
+      "status": "completed",
+      "spec": {
+        "optimizer": "schedulefree.AdamWScheduleFree",
+        "lr": 0.001,
+        "betas": [
+          0.9,
+          0.95
+        ],
+        "weight_decay": 0.01,
+        "warmup_steps": 0,
+        "r": 0.0,
+        "weight_lr_power": 2.0
+      },
+      "train_seconds": 1854.4,
+      "bytes_per_s": 10797.340938423333,
+      "final_eval_nll": 1.8549834660121374,
+      "final_vs_banked_incumbent": 0.03224611282348633,
+      "first_10_steps_hole": {
+        "step10_deficit": 0.11196429388863693,
+        "step20_deficit": 0.3315575122833252,
+        "max_deficit_steps_le_20": 0.3315575122833252,
+        "note": "deficit vs gdn2's banked curve (arm NLL minus gdn2 NLL at the same step); positive = the arm is WORSE"
+      },
+      "steady_deficit_mean_steps_80_160": 0.3325495606377011,
+      "curve": [
+        {
+          "step": 1,
+          "bytes": 117712,
+          "arm_eval_nll": 4.397342477525983,
+          "arm_train_loss": 5.785070835425993,
+          "gdn2_eval_nll": 5.704494271959577,
+          "deficit_vs_gdn2": -1.3071517944335938,
+          "incumbent_eval_nll": 5.622360365731375,
+          "arm_minus_incumbent": -1.2250178882053921
+        },
+        {
+          "step": 5,
+          "bytes": 567019,
+          "arm_eval_nll": 3.3145973341805592,
+          "arm_train_loss": 3.9019064417069265,
+          "gdn2_eval_nll": 3.899909666606358,
+          "deficit_vs_gdn2": -0.5853123324257989,
+          "incumbent_eval_nll": 4.158613273075649,
+          "arm_minus_incumbent": -0.8440159388950899
+        },
+        {
+          "step": 10,
+          "bytes": 1190731,
+          "arm_eval_nll": 3.2143289702279225,
+          "arm_train_loss": 3.2277951538562775,
+          "gdn2_eval_nll": 3.1023646763392856,
+          "deficit_vs_gdn2": 0.11196429388863693,
+          "incumbent_eval_nll": 3.4578689507075717,
+          "arm_minus_incumbent": -0.2435399804796492
+        },
+        {
+          "step": 20,
+          "bytes": 2367970,
+          "arm_eval_nll": 2.9990830421447754,
+          "arm_train_loss": 3.937055133536747,
+          "gdn2_eval_nll": 2.66752552986145,
+          "deficit_vs_gdn2": 0.3315575122833252,
+          "incumbent_eval_nll": 3.0852909769330705,
+          "arm_minus_incumbent": -0.08620793478829514
+        },
+        {
+          "step": 40,
+          "bytes": 4542086,
+          "arm_eval_nll": 2.5152107647487094,
+          "arm_train_loss": 2.9637983930758223,
+          "gdn2_eval_nll": 2.23093387058803,
+          "deficit_vs_gdn2": 0.28427689416067947,
+          "incumbent_eval_nll": 2.4607278278895786,
+          "arm_minus_incumbent": 0.05448293685913086
+        },
+        {
+          "step": 80,
+          "bytes": 8884476,
+          "arm_eval_nll": 2.1498909166881015,
+          "arm_train_loss": 2.6940528960156698,
+          "gdn2_eval_nll": 1.852820668901716,
+          "deficit_vs_gdn2": 0.2970702477863856,
+          "incumbent_eval_nll": 1.9786864519119263,
+          "arm_minus_incumbent": 0.17120446477617524
+        },
+        {
+          "step": 120,
+          "bytes": 13277872,
+          "arm_eval_nll": 1.9790585722242082,
+          "arm_train_loss": 2.226707689886735,
+          "gdn2_eval_nll": 1.6289756979261125,
+          "deficit_vs_gdn2": 0.3500828742980957,
+          "incumbent_eval_nll": 1.7953453404562814,
+          "arm_minus_incumbent": 0.18371323176792687
+        },
+        {
+          "step": 160,
+          "bytes": 17718312,
+          "arm_eval_nll": 1.8560774666922433,
+          "arm_train_loss": 2.2081345915794373,
+          "gdn2_eval_nll": 1.5055819068636214,
+          "deficit_vs_gdn2": 0.3504955598286219,
+          "incumbent_eval_nll": 1.669589979307992,
+          "arm_minus_incumbent": 0.18648748738425125
+        },
+        {
+          "step": 180,
+          "bytes": 20022866,
+          "arm_eval_nll": 1.8549834660121374,
+          "arm_train_loss": 2.2187084011353346,
+          "gdn2_eval_nll": 1.5836738858904158,
+          "deficit_vs_gdn2": 0.27130958012172157,
+          "incumbent_eval_nll": 1.822737353188651,
+          "arm_minus_incumbent": 0.03224611282348633
+        }
+      ]
+    },
+    "muon1x": {
+      "family": "hybrid-muon",
+      "status": "completed",
+      "spec": {
+        "optimizer": "bakeoff_optimizers.HybridMuonX45",
+        "lr": 0.00033427141575371284,
+        "lr_multiplier": 1,
+        "betas": [
+          0.9,
+          0.9392004369596886
+        ],
+        "weight_decay": 0.17422187309224696,
+        "warmup_steps": 45,
+        "muon_params": "embeddings + projections (embed, head, mixer value/key/query_key/out, mlp w1/w2/w3)",
+        "momentum": 0.95,
+        "nesterov": true,
+        "update_scaling": "0.2*sqrt(max(shape)) (hybrid_muon, pinned)"
+      },
+      "train_seconds": 3009.1,
+      "bytes_per_s": 6654.056224459319,
+      "final_eval_nll": 1.6541725397109985,
+      "final_vs_banked_incumbent": -0.1685648134776525,
+      "first_10_steps_hole": {
+        "step10_deficit": 2.4555228778294156,
+        "step20_deficit": 2.2019462926047186,
+        "max_deficit_steps_le_20": 2.4555228778294156,
+        "note": "deficit vs gdn2's banked curve (arm NLL minus gdn2 NLL at the same step); positive = the arm is WORSE"
+      },
+      "steady_deficit_mean_steps_80_160": 0.28064077808743426,
+      "curve": [
+        {
+          "step": 1,
+          "bytes": 117712,
+          "arm_eval_nll": 5.809198243277414,
+          "arm_train_loss": 5.785070835425993,
+          "gdn2_eval_nll": 5.704494271959577,
+          "deficit_vs_gdn2": 0.1047039713178366,
+          "incumbent_eval_nll": 5.622360365731375,
+          "arm_minus_incumbent": 0.1868378775460382
+        },
+        {
+          "step": 5,
+          "bytes": 567019,
+          "arm_eval_nll": 5.738454818725586,
+          "arm_train_loss": 5.735945489481771,
+          "gdn2_eval_nll": 3.899909666606358,
+          "deficit_vs_gdn2": 1.8385451521192278,
+          "incumbent_eval_nll": 4.158613273075649,
+          "arm_minus_incumbent": 1.5798415456499368
+        },
+        {
+          "step": 10,
+          "bytes": 1190731,
+          "arm_eval_nll": 5.557887554168701,
+          "arm_train_loss": 5.392115890979767,
+          "gdn2_eval_nll": 3.1023646763392856,
+          "deficit_vs_gdn2": 2.4555228778294156,
+          "incumbent_eval_nll": 3.4578689507075717,
+          "arm_minus_incumbent": 2.1000186034611295
+        },
+        {
+          "step": 20,
+          "bytes": 2367970,
+          "arm_eval_nll": 4.869471822466169,
+          "arm_train_loss": 5.134008926839203,
+          "gdn2_eval_nll": 2.66752552986145,
+          "deficit_vs_gdn2": 2.2019462926047186,
+          "incumbent_eval_nll": 3.0852909769330705,
+          "arm_minus_incumbent": 1.7841808455330983
+        },
+        {
+          "step": 40,
+          "bytes": 4542086,
+          "arm_eval_nll": 3.5587169102260043,
+          "arm_train_loss": 3.9101622240899143,
+          "gdn2_eval_nll": 2.23093387058803,
+          "deficit_vs_gdn2": 1.3277830396379744,
+          "incumbent_eval_nll": 2.4607278278895786,
+          "arm_minus_incumbent": 1.0979890823364258
+        },
+        {
+          "step": 80,
+          "bytes": 8884476,
+          "arm_eval_nll": 2.3306709698268344,
+          "arm_train_loss": 2.8302084599908337,
+          "gdn2_eval_nll": 1.852820668901716,
+          "deficit_vs_gdn2": 0.4778503009251185,
+          "incumbent_eval_nll": 1.9786864519119263,
+          "arm_minus_incumbent": 0.35198451791490815
+        },
+        {
+          "step": 120,
+          "bytes": 13277872,
+          "arm_eval_nll": 1.8775327546255929,
+          "arm_train_loss": 2.1494586531214948,
+          "gdn2_eval_nll": 1.6289756979261125,
+          "deficit_vs_gdn2": 0.24855705669948036,
+          "incumbent_eval_nll": 1.7953453404562814,
+          "arm_minus_incumbent": 0.08218741416931152
+        },
+        {
+          "step": 160,
+          "bytes": 17718312,
+          "arm_eval_nll": 1.6210968835013253,
+          "arm_train_loss": 2.096441239118576,
+          "gdn2_eval_nll": 1.5055819068636214,
+          "deficit_vs_gdn2": 0.11551497663770394,
+          "incumbent_eval_nll": 1.669589979307992,
+          "arm_minus_incumbent": -0.04849309580666672
+        },
+        {
+          "step": 180,
+          "bytes": 20022866,
+          "arm_eval_nll": 1.6541725397109985,
+          "arm_train_loss": 2.05692184722385,
+          "gdn2_eval_nll": 1.5836738858904158,
+          "deficit_vs_gdn2": 0.07049865382058274,
+          "incumbent_eval_nll": 1.822737353188651,
+          "arm_minus_incumbent": -0.1685648134776525
+        }
+      ]
+    },
+    "muon3x": {
+      "family": "hybrid-muon",
+      "status": "completed",
+      "spec": {
+        "optimizer": "bakeoff_optimizers.HybridMuonX45",
+        "lr": 0.0010028142472611385,
+        "lr_multiplier": 3,
+        "betas": [
+          0.9,
+          0.9392004369596886
+        ],
+        "weight_decay": 0.17422187309224696,
+        "warmup_steps": 45,
+        "muon_params": "embeddings + projections (embed, head, mixer value/key/query_key/out, mlp w1/w2/w3)",
+        "momentum": 0.95,
+        "nesterov": true,
+        "update_scaling": "0.2*sqrt(max(shape)) (hybrid_muon, pinned)"
+      },
+      "train_seconds": 1912.8,
+      "bytes_per_s": 10467.754573731427,
+      "final_eval_nll": 1.514617647443499,
+      "final_vs_banked_incumbent": -0.30811970574515213,
+      "first_10_steps_hole": {
+        "step10_deficit": 1.962259428841727,
+        "step20_deficit": 1.1404385566711426,
+        "max_deficit_steps_le_20": 1.962259428841727,
+        "note": "deficit vs gdn2's banked curve (arm NLL minus gdn2 NLL at the same step); positive = the arm is WORSE"
+      },
+      "steady_deficit_mean_steps_80_160": -0.03239709422701879,
+      "curve": [
+        {
+          "step": 1,
+          "bytes": 117712,
+          "arm_eval_nll": 5.801285539354597,
+          "arm_train_loss": 5.785070835425993,
+          "gdn2_eval_nll": 5.704494271959577,
+          "deficit_vs_gdn2": 0.09679126739501953,
+          "incumbent_eval_nll": 5.622360365731375,
+          "arm_minus_incumbent": 0.17892517362322113
+        },
+        {
+          "step": 5,
+          "bytes": 567019,
+          "arm_eval_nll": 5.613800185067313,
+          "arm_train_loss": 5.657156747724509,
+          "gdn2_eval_nll": 3.899909666606358,
+          "deficit_vs_gdn2": 1.7138905184609547,
+          "incumbent_eval_nll": 4.158613273075649,
+          "arm_minus_incumbent": 1.4551869119916638
+        },
+        {
+          "step": 10,
+          "bytes": 1190731,
+          "arm_eval_nll": 5.064624105181013,
+          "arm_train_loss": 4.895941495895386,
+          "gdn2_eval_nll": 3.1023646763392856,
+          "deficit_vs_gdn2": 1.962259428841727,
+          "incumbent_eval_nll": 3.4578689507075717,
+          "arm_minus_incumbent": 1.6067551544734409
+        },
+        {
+          "step": 20,
+          "bytes": 2367970,
+          "arm_eval_nll": 3.8079640865325928,
+          "arm_train_loss": 4.390282155923367,
+          "gdn2_eval_nll": 2.66752552986145,
+          "deficit_vs_gdn2": 1.1404385566711426,
+          "incumbent_eval_nll": 3.0852909769330705,
+          "arm_minus_incumbent": 0.7226731095995222
+        },
+        {
+          "step": 40,
+          "bytes": 4542086,
+          "arm_eval_nll": 2.7015069893428256,
+          "arm_train_loss": 3.15397567558967,
+          "gdn2_eval_nll": 2.23093387058803,
+          "deficit_vs_gdn2": 0.4705731187547957,
+          "incumbent_eval_nll": 2.4607278278895786,
+          "arm_minus_incumbent": 0.24077916145324707
+        },
+        {
+          "step": 80,
+          "bytes": 8884476,
+          "arm_eval_nll": 1.8426745278494698,
+          "arm_train_loss": 2.31296302929391,
+          "gdn2_eval_nll": 1.852820668901716,
+          "deficit_vs_gdn2": -0.010146141052246094,
+          "incumbent_eval_nll": 1.9786864519119263,
+          "arm_minus_incumbent": -0.13601192406245644
+        },
+        {
+          "step": 120,
+          "bytes": 13277872,
+          "arm_eval_nll": 1.5825652735573905,
+          "arm_train_loss": 1.8282077908266883,
+          "gdn2_eval_nll": 1.6289756979261125,
+          "deficit_vs_gdn2": -0.046410424368722,
+          "incumbent_eval_nll": 1.7953453404562814,
+          "arm_minus_incumbent": -0.21278006689889084
+        },
+        {
+          "step": 160,
+          "bytes": 17718312,
+          "arm_eval_nll": 1.464947189603533,
+          "arm_train_loss": 1.9285126775503159,
+          "gdn2_eval_nll": 1.5055819068636214,
+          "deficit_vs_gdn2": -0.04063471726008827,
+          "incumbent_eval_nll": 1.669589979307992,
+          "arm_minus_incumbent": -0.20464278970445893
+        },
+        {
+          "step": 180,
+          "bytes": 20022866,
+          "arm_eval_nll": 1.514617647443499,
+          "arm_train_loss": 1.876320831744936,
+          "gdn2_eval_nll": 1.5836738858904158,
+          "deficit_vs_gdn2": -0.06905623844691688,
+          "incumbent_eval_nll": 1.822737353188651,
+          "arm_minus_incumbent": -0.30811970574515213
+        }
+      ]
+    },
+    "sf_muon": {
+      "family": "sf-wrapped-hybrid-muon",
+      "status": "completed",
+      "spec": {
+        "optimizer": "schedulefree.ScheduleFreeWrapper(HybridMuonX45)",
+        "lr": 0.00033427141575371284,
+        "betas": [
+          0.9,
+          0.9392004369596886
+        ],
+        "base_weight_decay": 0.0,
+        "warmup_steps": 0,
+        "wrapper_momentum": 0.9,
+        "weight_decay_at_y": 0.17422187309224696
+      },
+      "train_seconds": 1919.5,
+      "bytes_per_s": 10431.156739841828,
+      "final_eval_nll": 2.3561249119894847,
+      "final_vs_banked_incumbent": 0.5333875588008337,
+      "first_10_steps_hole": {
+        "step10_deficit": 1.6803463527134488,
+        "step20_deficit": 1.4934381757463724,
+        "max_deficit_steps_le_20": 1.6803463527134488,
+        "note": "deficit vs gdn2's banked curve (arm NLL minus gdn2 NLL at the same step); positive = the arm is WORSE"
+      },
+      "steady_deficit_mean_steps_80_160": 1.0602266731716339,
+      "curve": [
+        {
+          "step": 1,
+          "bytes": 117712,
+          "arm_eval_nll": 5.629640442984445,
+          "arm_train_loss": 5.785070835425993,
+          "gdn2_eval_nll": 5.704494271959577,
+          "deficit_vs_gdn2": -0.07485382897513215,
+          "incumbent_eval_nll": 5.622360365731375,
+          "arm_minus_incumbent": 0.00728007725306945
+        },
+        {
+          "step": 5,
+          "bytes": 567019,
+          "arm_eval_nll": 5.235780239105225,
+          "arm_train_loss": 5.313616038310855,
+          "gdn2_eval_nll": 3.899909666606358,
+          "deficit_vs_gdn2": 1.3358705724988664,
+          "incumbent_eval_nll": 4.158613273075649,
+          "arm_minus_incumbent": 1.0771669660295755
+        },
+        {
+          "step": 10,
+          "bytes": 1190731,
+          "arm_eval_nll": 4.782711029052734,
+          "arm_train_loss": 4.613067269325256,
+          "gdn2_eval_nll": 3.1023646763392856,
+          "deficit_vs_gdn2": 1.6803463527134488,
+          "incumbent_eval_nll": 3.4578689507075717,
+          "arm_minus_incumbent": 1.3248420783451627
+        },
+        {
+          "step": 20,
+          "bytes": 2367970,
+          "arm_eval_nll": 4.160963705607823,
+          "arm_train_loss": 4.576281275485897,
+          "gdn2_eval_nll": 2.66752552986145,
+          "deficit_vs_gdn2": 1.4934381757463724,
+          "incumbent_eval_nll": 3.0852909769330705,
+          "arm_minus_incumbent": 1.075672728674752
+        },
+        {
+          "step": 40,
+          "bytes": 4542086,
+          "arm_eval_nll": 3.574949400765555,
+          "arm_train_loss": 3.843340976513483,
+          "gdn2_eval_nll": 2.23093387058803,
+          "deficit_vs_gdn2": 1.3440155301775252,
+          "incumbent_eval_nll": 2.4607278278895786,
+          "arm_minus_incumbent": 1.1142215728759766
+        },
+        {
+          "step": 80,
+          "bytes": 8884476,
+          "arm_eval_nll": 3.039554630007063,
+          "arm_train_loss": 3.458625325323021,
+          "gdn2_eval_nll": 1.852820668901716,
+          "deficit_vs_gdn2": 1.186733961105347,
+          "incumbent_eval_nll": 1.9786864519119263,
+          "arm_minus_incumbent": 1.0608681780951366
+        },
+        {
+          "step": 120,
+          "bytes": 13277872,
+          "arm_eval_nll": 2.696859666279384,
+          "arm_train_loss": 2.9274120251209603,
+          "gdn2_eval_nll": 1.6289756979261125,
+          "deficit_vs_gdn2": 1.0678839683532715,
+          "incumbent_eval_nll": 1.7953453404562814,
+          "arm_minus_incumbent": 0.9015143258231026
+        },
+        {
+          "step": 160,
+          "bytes": 17718312,
+          "arm_eval_nll": 2.4316439969199046,
+          "arm_train_loss": 2.772148013114929,
+          "gdn2_eval_nll": 1.5055819068636214,
+          "deficit_vs_gdn2": 0.9260620900562833,
+          "incumbent_eval_nll": 1.669589979307992,
+          "arm_minus_incumbent": 0.7620540176119126
+        },
+        {
+          "step": 180,
+          "bytes": 20022866,
+          "arm_eval_nll": 2.3561249119894847,
+          "arm_train_loss": 2.726943054593104,
+          "gdn2_eval_nll": 1.5836738858904158,
+          "deficit_vs_gdn2": 0.7724510260990689,
+          "incumbent_eval_nll": 1.822737353188651,
+          "arm_minus_incumbent": 0.5333875588008337
+        }
+      ]
+    }
+  }
+}

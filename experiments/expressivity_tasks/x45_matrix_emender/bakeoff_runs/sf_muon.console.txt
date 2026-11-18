@@ -1,31 +1,21 @@
-gpu_lease: granted GPUs: 2 (pid 2302656)
+gpu_lease: granted GPUs: 2 (pid 2313986)
 leased card: 2
 {"arm": "sf_muon", "family": "sf-wrapped-hybrid-muon", "card": "2", "seed": 3401, "parameters": 149981808}
-Traceback (most recent call last):
-  File "<frozen runpy>", line 198, in _run_module_as_main
-  File "<frozen runpy>", line 88, in _run_code
-  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/optimizer_bakeoff.py", line 681, in <module>
-    main()
-  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/optimizer_bakeoff.py", line 675, in main
-    run_arm(args)
-  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/optimizer_bakeoff.py", line 480, in run_arm
-    run = _train_with_snapshots(
-          ^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/optimizer_bakeoff.py", line 379, in _train_with_snapshots
-    optimizer.step()
-  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 120, in decorate_context
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/schedulefree/wrap_schedulefree.py", line 151, in step
-    self.base.step()
-  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/optim/optimizer.py", line 517, in wrapper
-    out = func(*args, **kwargs)
-          ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 120, in decorate_context
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/bakeoff_optimizers.py", line 116, in step
-    buf = state["momentum_buffer"]
-          ~~~~~^^^^^^^^^^^^^^^^^^^
-KeyError: 'momentum_buffer'
+  sf_muon step 25 266s 2.9MB loss 4.2080
+  sf_muon step 50 532s 5.6MB loss 3.5721
+  sf_muon step 75 800s 8.3MB loss 3.1543
+  sf_muon step 100 1067s 11.1MB loss 3.1961
+  sf_muon step 125 1334s 13.9MB loss 2.9227
+  sf_muon step 150 1601s 16.6MB loss 3.1061
+  sf_muon step 175 1866s 19.5MB loss 2.6679
+  checkpoint step 1: bytes 117712 train 5.7851 eval 5.6296
+  checkpoint step 5: bytes 567019 train 5.3136 eval 5.2358
+  checkpoint step 10: bytes 1190731 train 4.6131 eval 4.7827
+  checkpoint step 20: bytes 2367970 train 4.5763 eval 4.1610
+  checkpoint step 40: bytes 4542086 train 3.8433 eval 3.5749
+  checkpoint step 80: bytes 8884476 train 3.4586 eval 3.0396
+  checkpoint step 120: bytes 13277872 train 2.9274 eval 2.6969
+  checkpoint step 160: bytes 17718312 train 2.7721 eval 2.4316
+  checkpoint step 180: bytes 20022866 train 2.7269 eval 2.3561
+{"label": "sf_muon", "status": "completed", "exposure_bytes": 20022866, "exposure_steps": 180, "final_eval_nll": 2.3561249119894847, "bytes_per_s": 10431.156739841828}
 committed: X45 optimizer bake-off: the sf_muon arm landed (the checkpoint-eval curve at the probe protocol, the approved conventions receipted in the run)
