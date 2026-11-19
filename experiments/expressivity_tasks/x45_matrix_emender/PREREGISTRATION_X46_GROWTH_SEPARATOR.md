@@ -4,9 +4,11 @@
 the derived ceilings are committed (`ff9098b5`, machine-checked:
 `test_x46_growth_separator.py`, `receipts/x46_selftest.json`) BEFORE this
 registration; the arm runner is FAIL-CLOSED until this file carries the
-string `OPERATOR-SIGNED` with a date. The escalation items are in §8 — the
-operator's rulings there EDIT this registration before sign-off; the
-predictions in §1-§7 are then frozen.
+string `OPERATOR-SIGNED` with a date. The supervisor's seven rulings
+(2026-11-30) are in §8 and are AMENDED INTO this registration (§5, §6 P-2);
+the signature gate is the OPERATOR's. On their signature the sweep runs:
+`calibrate` (GDN2 τ) → LR grid seed 3401 at n∈{64, 320} → headline seeds
+3401/3402 → the n=640 matched-grown-state cell → `assemble`.
 
 ## 1. The question
 
@@ -124,67 +126,43 @@ the pre-stated sections of this registration are never edited after
 sign-off; every adjudication quotes the ceiling table and the band; a
 refutation is reported as a refutation, never excused.
 
-## 8. ESCALATION ITEMS (the operator's rulings EDIT this section, then sign)
+## 8. THE RULINGS (supervisor, all seven -- 2026-11-30; these AMEND this
+registration; the OPERATOR-SIGNED gate is the operator's, not the
+supervisor's -- the arms run only on their signature)
 
-1. **The derived ceilings' exact algebra** (§4): the ours linear-channel
-   ceiling `min(1,R/N) + rest/128` (slot-count + swap argument, depth-1
-   linear scope, the depth-2 superposition escape refutation-clause-
-   guarded) and the GDN2 key-space ceiling (per-head exact 128;
-   sum-of-heads 256 pre-stated as the OPTIMISTIC effective capacity;
-   Welch closed form `sqrt((n−d)/d)` pinning per-head reliability at
-   n≈2d). Sign off, amend, or restate.
-2. **The gdn2-growth trigger semantics on the constructed stream:**
-   (a) CALIBRATED (implemented; the C3 discipline: τ_cal = the trained
-   fixed machine's per-layer smoothed-PR ceiling on THIS stream,
-   `calibrate` commits it before the arms) vs (b) FORCED (task-derived:
-   fire at the first boundary past the per-head exact bound — NOT
-   implemented, refused by name). The task text permits either
-   ("calibrated-OR-forced"); a ruling is required before the gdn2-growth
-   headline cells run. The implemented default is (a).
-3. **Machine scale:** the GDN2 arms at probe scale (2 blocks of the
-   registered mixer shape, per the separator discipline) vs the 150M
-   registered machine on the same constructed stream (the C3 lane's
-   builder). Probe scale is registered here; the 150M variant is a
-   disclosed alternative requiring its own budget ruling.
-4. **The n ladder and the headline N=320** (past both fixed ceilings with
-   margin; 640 for the matched-state pressure cell): sign off or amend
-   before the arms run.
-5. **Unexpected ceiling behavior** (standing, already exercised once
-   pre-lock): any machine pinning well ABOVE its derived ceiling + band
-   (a refutation), any trigger that fails to fire on the constructed
-   stream, any growth event pathology -- escalated with receipts, never
-   tuned live.  The pre-lock calibration already located one NOT-TIGHT
-   bound honestly (ours-fixed pins at 0.2226 below its 0.4047 ceiling:
-   item 8) -- reported, not excused; the bound stays an upper bound.
-6. **The bootstrap protocol (NEW, receipted -- a ruling required before the
-   arms run).** The construction has a razor-edge cold-start saddle
-   (disclosed in the RESULT doc §0.5): the escape time at n=64 is
-   chaotically numerics-sensitive (eager ~700 steps; the K6-kernel path and
-   fused-AdamW variants dwell past 1200 at identical init/data/optimizer,
-   gradient parity 1e-6 relative).  A **uniform n-ladder curriculum
-   warm-start** (implemented as `--curriculum`, e.g. 16,32,64,128,256 at
-   250-300 steps per stage, applied IDENTICALLY to every arm, optimizer
-   state carried in) collapses it: 0.9647 at n=64 in 19 s of wall.  The
-   ruling: (a) the ladder protocol (recommended; receipted), or (b) longer
-   cold cells at the honest dwell cost (the n=320 dwell is expected in the
-   thousands of steps, chaotically variable), or (c) both (the ladder for
-   the measured cells, one cold-start cell per machine as the saddle
-   receipt).
-7. **The P-2 escape bar (proposed amendment, pending the ruling).** The
-   first calibration data (RESULT §0.5): ours-growable at n=320 reaches
-   0.582 at a 300-step cell (still climbing) vs its fixed twin's 0.2226
-   -- 2.6x, far beyond the band, with the lag gradient flat
-   ([0.59, 0.58, 0.58, 0.58] vs the fixed [0.34, 0.25, 0.18, 0.12]: no
-   recency penalty, no eviction -- the escape mechanism receipted
-   directly).  Proposed: P-2's escape criterion reads "beats its fixed
-   twin by more than the band, growth events receipted, and the lag
-   gradient flat"; the >= 0.90 level is reported as the budgeted sweep's
-   measured outcome, not the escape bar.  The operator may keep the
-   0.90 bar (the sweep then budgets for it).
-8. **The ours ceiling's tightness (disclosed, not a refutation).** The
-   first data point pins ours-fixed at 0.2226, BELOW the derived 0.4047:
-   slot churn and read dilution bind earlier than the slot count (the
-   receipts: ~222 APPENDs + ~95 POPs per window at the pair writes; the
-   recency gradient; the dead stratum at chance).  The slot-count ceiling
-   stays a valid UPPER bound (the refutation clause fires only above it);
-   the pin's mechanism receipts are first-class columns.
+1. **The derived ceilings' algebra: SIGNED OFF** (the Welch-bound derivation
+   for GDN2 and the slot-count+aliasing-swap derivation for ours,
+   machine-checked, refutation-clause-guarded on both superposition
+   escapes).  No amendment.
+2. **The not-tight ours ceiling: DISCLOSED AS-IS, accepted.**  A valid-but-
+   not-tight bound with the pin at 0.2226 and the mechanism receipts (slot
+   churn, read dilution, the recency gradient, the dead stratum at chance)
+   is richer than a tight bound; the refutation clause stays one-sided.
+3. **The gdn2-growth trigger: CALIBRATED** (the C3 discipline on THIS
+   stream; tau_cal committed by `calibrate` BEFORE the headline arms; every
+   fire receipted with its PR value and window position per the C3
+   convention).  FORCED stays refused by name; an under-firing calibrated
+   trigger in a headline cell is escalated with the receipt, never
+   silently substituted.
+4. **Machine scale: PROBE-SCALE** (2 blocks of the registered mixer shape,
+   the separator tradition -- granularity, key-separation, Wheeler all ran
+   probe-scale).  The 150M-machine cell is the disclosed alternative, NOT
+   run -- scope discipline; a follow-up can take it to 150M under its own
+   sign-off.
+5. **The n ladder: {64, 320, 640}** as proposed -- 64 the learnable
+   control, 320 the headline (carrying the 2.6x pre-lock evidence), 640
+   the matched-grown-state pressure cell where ours-vs-GDN2 at matched
+   grown state is the prize read.
+6. **The bootstrap: the UNIFORM CURRICULUM LADDER is PRIMARY** (receipted:
+   collapses the cold-start saddle, 0.9647 at n=64 in 19 s, identical on
+   every arm, optimizer state carried -- fair by construction); longer
+   cold cells only as labeled secondary robustness if budget remains; the
+   saddle disclosure and the non-fused-AdamW receipt are in the protocol
+   section verbatim.
+7. **The P-2 escape bar: AMENDED**, with both readings kept and honestly
+   separated (the P-2 text above): the mechanism-based escape claim (beats
+   the fixed twin beyond the band + events + flat lag gradient) is the
+   PRIMARY and was lockable BEFORE any headline cell (the pre-lock cells
+   are calibration per the key-separation §6 precedent; this amendment
+   would have been illegitimate after the lock); the >= 0.90 solvability
+   level is the non-gating SECONDARY, budgeted per the protocol section.
