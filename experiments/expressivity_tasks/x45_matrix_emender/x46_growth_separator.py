@@ -231,18 +231,32 @@ def byte_layout(n: int):
     """Positions: BOS at 0; binding i's 3 bytes at 1+3i..1+3i+2 (the value
     byte LAST: the byte LM's next-byte prediction at the key_lo position IS
     the binding); probe j's triple at 1+3n+3j.. (target = the value byte,
-    predicted from the key_lo position)."""
+    predicted from the key_lo position).  The window is then padded to the
+    64-token statistic boundary (``byte_window_length``)."""
     bind_positions = tuple(1 + 3 * i + 2 for i in range(n))
     probe_positions = tuple(1 + 3 * n + 3 * j + 2 for j in range(n))
     return bind_positions, probe_positions
 
 
+def byte_window_length(n: int) -> int:
+    """The byte window's length, padded up to the registered 64-token
+    statistic boundary: the committed GDN2 growth wrapper's trajectory
+    arithmetic (``iota_from_trajectory``) assumes segment-aligned windows,
+    and the wrapper is imported verbatim, never edited.  The padding is
+    constructed-stream PAD at the document's end -- never a probe target,
+    never scored (the loss is probe-positions only)."""
+    raw = 6 * n + 1
+    boundary = GROW_BOUNDARY_TOKENS
+    return ((raw + boundary - 1) // boundary) * boundary
+
+
 def make_byte_batch(window: Window) -> dict:
-    """The byte-encoding window: ids (B, 6n+1), targets (B, n) value bytes."""
+    """The byte-encoding window: ids (B, byte_window_length(n)), targets
+    (B, n) value bytes."""
     keys, values, order = window.keys, window.values, window.order
     batch, n = keys.shape
     bind_positions, probe_positions = byte_layout(n)
-    ids = torch.full((batch, 6 * n + 1), BYTE_PAD, dtype=torch.long)
+    ids = torch.full((batch, byte_window_length(n)), BYTE_PAD, dtype=torch.long)
     ids[:, 0] = BYTE_BOS
     hi = KEY_HI_BASE + keys // 32
     lo = KEY_LO_BASE + keys % 32
@@ -307,9 +321,11 @@ def ceiling_record(machine: str, n: int, *, rank: int | None = None,
     """The honest automata-bound arithmetic for one arm's receipt."""
     if machine.startswith("ours"):
         capacity = matrix_capacity(rank)
-        algebra = (f"slot-count: the store holds {rank} rows; a full store "
-                   f"never APPENDs (POP-or-drop), so <= {rank} live bindings; "
-                   f"aliased rows resolve at most one probe of a pair")
+        algebra = (f"slot-count: the store holds {rank} rows; a post-fill "
+                   f"binding enters only by destroying a live row (every "
+                   f"post-fill APPEND paid by a POP), so <= {rank} live "
+                   f"bindings; aliased rows resolve at most one probe of a "
+                   f"pair")
     elif machine.startswith("gdn2"):
         capacity = gdn2_capacity(heads)
         algebra = (f"key-space: per-head d_k={HEAD_DIM} (exact retrieval needs "
