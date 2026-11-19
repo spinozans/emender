@@ -1,0 +1,1514 @@
+{
+  "probe": "k11b_channel_gates assemble (gate C)",
+  "corrected_scoring": {
+    "primary": "post-cooldown eval: a linear cooldown of 24 steps (13.3% of the 180-step constant-LR budget) appended after the banked matched-exposure landing, same stream/data order, LR factor (25 - k)/24 for cooldown step k (1.0 -> 1/24, never zero), both hybrid groups scaling equally; the corrected score is the post-cooldown calibration eval",
+    "secondary": "EMA iterate at step 180 (no extra data): decay 0.99, initialized at the init weights, updated after every constant-phase optimizer step, NOT updated during the cooldown; RANKING-ONLY -- its absolute number is biased toward mid-run weights (stated, not smoothed)",
+    "cooldown_steps": 24,
+    "cooldown_fraction": 0.1333,
+    "cooldown_form": "linear",
+    "ema_decay": 0.99,
+    "exposure_note": "the cooldown steps see ~2.7M more targets (~13%), identical across arms -- a stated protocol EXTENSION; the step-180 constant-LR eval is retained so every banked row stays comparable",
+    "citations": {
+      "river_valley": "Wen et al., ICLR 2025, arXiv:2410.05192 -- constant-LR loss carries an LR-dependent oscillation penalty that decay/averaging removes",
+      "cooldown": "Haegele et al., NeurIPS 2024, arXiv:2405.18392 -- constant-LR + short cooldown matches cosine at full scale",
+      "averaging": "Defazio et al., arXiv:2405.15682 -- iterate averaging as the schedule-free fix for the same penalty",
+      "moonlight": "Liu et al. (Moonshot AI), arXiv:2502.16982 -- with the update RMS matched to AdamW's (~0.2; AdamW typical 0.2-0.4), Muon directly reuses the LR and weight decay tuned for AdamW, i.e. ~1x the AdamW-tuned LR, WITH weight decay",
+      "horizon": "Bjorck et al., ICLR 2025 -- the optimal LR shrinks with token horizon; probe-tuned LRs transfer only downscaled"
+    }
+  },
+  "anchors": {
+    "banked": {
+      "constant_lr": {
+        "seed3401": 1.4907409463609969,
+        "seed3402": 1.4899048124040877,
+        "note": "the banked winner config's own constant-LR step-180 rows (routing_symmetry_runs/muon4x_banked_seed{3401,3402})"
+      },
+      "post_cooldown": {
+        "seed3402": 1.4338248457227434,
+        "note": "the corrected post-cooldown banked best (protocol_correction_runs/winner_speedrun_rescored, seed 3402 -- the banked best row's own config re-scored)"
+      },
+      "ema180": {
+        "seed3402": 1.5408323151724679,
+        "note": "the secondary EMA-0.99 iterate at step 180, banked (ranking-only instrument)"
+      },
+      "gdn2": {
+        "constant_lr": 1.3950541530336653,
+        "post_cooldown": 1.3521734476089478,
+        "ema180": 1.3803383282252721,
+        "note": "the banked GDN2 best rows (the cross-machine context; the ~0.08 residual this stage dissects)"
+      }
+    },
+    "mechanism": {
+      "identity_rewrite_share": [
+        0.118,
+        0.122
+      ],
+      "read_entropy_nats": [
+        1.515,
+        1.6
+      ],
+      "effective_read_rows": [
+        4.55,
+        4.95
+      ],
+      "occupancy_mean_live_slots": [
+        33.5,
+        35.2
+      ],
+      "sweep_layers_ge_threshold": {
+        "k11_arms": [
+          5,
+          6
+        ],
+        "side_by_side_adamw": 7
+      },
+      "sweep_near_decorative": {
+        "k11_arms": [
+          16,
+          17
+        ],
+        "side_by_side_adamw": 17
+      },
+      "sweep_threshold": 0.02,
+      "sweep_near_band": 0.0125,
+      "sweep_total": 24,
+      "caveat": "the K11 lane's same-config seed-matched step-180 anchors (both seeds) -- the references any granularity effect would have to move; the side-by-side's AdamW-era sweep anchors are quoted alongside (the muon4x-era banked sweep was never run)"
+    },
+    "banked_mechanism": {
+      "seed3401_step180": {
+        "identity_rewrite_share": 0.12220044317888193,
+        "read_entropy_nats": 1.5150481063949617,
+        "occupancy_mean_live_slots": 33.49335734049479,
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.022992451985677082,
+          "correct": 0.9743779500325521,
+          "pop": 0.0,
+          "merge": 0.0026295979817708335
+        },
+        "constant_lr_nll": 1.4907409463609969
+      },
+      "seed3402_step180": {
+        "identity_rewrite_share": 0.11799608786375947,
+        "read_entropy_nats": 1.600236432712681,
+        "occupancy_mean_live_slots": 35.15362294514974,
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.023668924967447918,
+          "correct": 0.9737930297851562,
+          "pop": 0.0,
+          "merge": 0.0025380452473958335
+        },
+        "constant_lr_nll": 1.4899048124040877
+      },
+      "seed3402_post_cooldown": {
+        "identity_rewrite_share": 0.1179643202876504,
+        "read_entropy_nats": 1.538525497965773,
+        "occupancy_mean_live_slots": 32.76612091064453,
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02294921875,
+          "correct": 0.9746373494466146,
+          "pop": 0.0,
+          "merge": 0.0024134318033854165
+        },
+        "post_cooldown_nll": 1.4338248457227434
+      }
+    },
+    "bands": {
+      "endpoint_variance": 0.075,
+      "winner_seed_delta": 0.011948040553501738,
+      "win_bar": 0.01,
+      "gap_closure_bar": 0.02
+    }
+  },
+  "arms": {
+    "p1_seed3401": {
+      "arm": "p1",
+      "seed": 3401,
+      "status": "completed",
+      "frozen": false,
+      "constant_lr": 1.482308762414115,
+      "post_cooldown": 1.4346973896026611,
+      "ema_180": 1.5205639941351754,
+      "cooldown_drop": 0.04761137281145378,
+      "step1_bit_identical": true,
+      "identity_share": 0.1218378976949234,
+      "read_entropy": 1.5306821362511418,
+      "effective_rows": 4.621327877044678,
+      "occupancy": 33.40863037109375,
+      "decay_gate_drift": 0.006904754376591882,
+      "parameters": 152537760,
+      "train_seconds_constant": 2033.7
+    },
+    "p2_seed3401": {
+      "arm": "p2",
+      "seed": 3401,
+      "status": "completed",
+      "frozen": false,
+      "constant_lr": 1.4835089615413122,
+      "post_cooldown": 1.4269216571535384,
+      "ema_180": 1.5148698772702898,
+      "cooldown_drop": 0.05658730438777382,
+      "step1_bit_identical": true,
+      "identity_share": 0.12185770957302433,
+      "read_entropy": 1.5151494328545896,
+      "effective_rows": 4.550101280212402,
+      "occupancy": 33.739341735839844,
+      "decay_gate_drift": 0.006957791490397843,
+      "parameters": 156076752,
+      "train_seconds_constant": 2116.2
+    },
+    "p3_seed3401": {
+      "arm": "p3",
+      "seed": 3401,
+      "status": "completed",
+      "frozen": false,
+      "constant_lr": 1.4748810018811906,
+      "post_cooldown": 1.4235332352774483,
+      "ema_180": 1.5065132890428816,
+      "cooldown_drop": 0.051347766603742295,
+      "step1_bit_identical": true,
+      "identity_share": 0.12136938121627686,
+      "read_entropy": 1.5438229347009105,
+      "effective_rows": 4.6824564933776855,
+      "occupancy": 33.80874379475912,
+      "decay_gate_drift": 0.0068834020421491005,
+      "parameters": 158638848,
+      "train_seconds_constant": 2137.4
+    },
+    "p3_seed3402": {
+      "arm": "p3",
+      "seed": 3402,
+      "status": "completed",
+      "frozen": false,
+      "constant_lr": 1.4929371731621879,
+      "post_cooldown": 1.4234301022120885,
+      "ema_180": 1.5260611602238245,
+      "cooldown_drop": 0.06950707095009934,
+      "step1_bit_identical": true,
+      "identity_share": 0.11938888917876765,
+      "read_entropy": 1.513122265394416,
+      "effective_rows": 4.540886878967285,
+      "occupancy": 32.9161122639974,
+      "decay_gate_drift": 0.007451246054794562,
+      "parameters": 158638848,
+      "train_seconds_constant": 2142.9
+    }
+  },
+  "frozen_control": {
+    "arm": "p1",
+    "seed": 3401,
+    "status": "completed",
+    "frozen": true,
+    "constant_lr": 1.488684960774013,
+    "post_cooldown": 1.4371232305254256,
+    "ema_180": 1.527319005557469,
+    "cooldown_drop": 0.051561730248587345,
+    "step1_bit_identical": true,
+    "identity_share": null,
+    "read_entropy": null,
+    "effective_rows": null,
+    "occupancy": null,
+    "decay_gate_drift": null,
+    "parameters": 152537760,
+    "train_seconds_constant": 1986.3,
+    "label": "p1_frozen_seed3401",
+    "divergence": {
+      "per_step": [
+        {
+          "step": 1,
+          "banked_loss": 5.785070835425993,
+          "loss": 5.785070835425993,
+          "delta": 0.0,
+          "bit_identical": true
+        },
+        {
+          "step": 2,
+          "banked_loss": 5.786157786846161,
+          "loss": 5.786039113998413,
+          "delta": -0.00011867284774780273,
+          "bit_identical": false
+        },
+        {
+          "step": 3,
+          "banked_loss": 5.735527331903637,
+          "loss": 5.73716983076402,
+          "delta": 0.0016424988603827018,
+          "bit_identical": false
+        },
+        {
+          "step": 4,
+          "banked_loss": 5.684888195381812,
+          "loss": 5.685740621260215,
+          "delta": 0.0008524258784028405,
+          "bit_identical": false
+        },
+        {
+          "step": 5,
+          "banked_loss": 5.616012913228713,
+          "loss": 5.616086165674914,
+          "delta": 7.325244620126625e-05,
+          "bit_identical": false
+        },
+        {
+          "step": 6,
+          "banked_loss": 5.526678071915827,
+          "loss": 5.524251970509919,
+          "delta": -0.002426101405907488,
+          "bit_identical": false
+        },
+        {
+          "step": 7,
+          "banked_loss": 5.306956713388738,
+          "loss": 5.313716830254842,
+          "delta": 0.006760116866104227,
+          "bit_identical": false
+        },
+        {
+          "step": 8,
+          "banked_loss": 5.194422245025635,
+          "loss": 5.1954182386398315,
+          "delta": 0.0009959936141967773,
+          "bit_identical": false
+        },
+        {
+          "step": 9,
+          "banked_loss": 4.937201082706451,
+          "loss": 4.93913209438324,
+          "delta": 0.00193101167678833,
+          "bit_identical": false
+        },
+        {
+          "step": 10,
+          "banked_loss": 4.682808816432953,
+          "loss": 4.676977574825287,
+          "delta": -0.005831241607666016,
+          "bit_identical": false
+        },
+        {
+          "step": 11,
+          "banked_loss": 4.300717353820801,
+          "loss": 4.301732182502747,
+          "delta": 0.0010148286819458008,
+          "bit_identical": false
+        },
+        {
+          "step": 12,
+          "banked_loss": 4.2079780995845795,
+          "loss": 4.2063634395599365,
+          "delta": -0.0016146600246429443,
+          "bit_identical": false
+        },
+        {
+          "step": 13,
+          "banked_loss": 4.265872976939422,
+          "loss": 4.265489264335236,
+          "delta": -0.000383712604185682,
+          "bit_identical": false
+        },
+        {
+          "step": 14,
+          "banked_loss": 4.505862263071403,
+          "loss": 4.505346661160983,
+          "delta": -0.0005156019104202159,
+          "bit_identical": false
+        },
+        {
+          "step": 15,
+          "banked_loss": 4.454012338622135,
+          "loss": 4.4539439279246835,
+          "delta": -6.841069745178174e-05,
+          "bit_identical": false
+        },
+        {
+          "step": 16,
+          "banked_loss": 4.36941377750819,
+          "loss": 4.369061198736189,
+          "delta": -0.000352578772001344,
+          "bit_identical": false
+        },
+        {
+          "step": 17,
+          "banked_loss": 4.073218550725282,
+          "loss": 4.075413609347203,
+          "delta": 0.002195058621921042,
+          "bit_identical": false
+        },
+        {
+          "step": 18,
+          "banked_loss": 3.465135497671348,
+          "loss": 3.467999362785659,
+          "delta": 0.002863865114310915,
+          "bit_identical": false
+        },
+        {
+          "step": 19,
+          "banked_loss": 4.149299020331546,
+          "loss": 4.148058299377278,
+          "delta": -0.001240720954267971,
+          "bit_identical": false
+        },
+        {
+          "step": 20,
+          "banked_loss": 4.191254936223509,
+          "loss": 4.188017702256142,
+          "delta": -0.0032372339673676365,
+          "bit_identical": false
+        },
+        {
+          "step": 21,
+          "banked_loss": 3.787117195868282,
+          "loss": 3.782974539216802,
+          "delta": -0.004142656651479726,
+          "bit_identical": false
+        },
+        {
+          "step": 22,
+          "banked_loss": 3.7052039490140807,
+          "loss": 3.7037250604977547,
+          "delta": -0.001478888516325938,
+          "bit_identical": false
+        },
+        {
+          "step": 23,
+          "banked_loss": 3.685351221704815,
+          "loss": 3.684246910071764,
+          "delta": -0.001104311633051136,
+          "bit_identical": false
+        },
+        {
+          "step": 24,
+          "banked_loss": 3.7487647053377056,
+          "loss": 3.749179480099155,
+          "delta": 0.00041477476144935466,
+          "bit_identical": false
+        },
+        {
+          "step": 25,
+          "banked_loss": 3.6522398520926385,
+          "loss": 3.6538329534729757,
+          "delta": 0.0015931013803371918,
+          "bit_identical": false
+        },
+        {
+          "step": 26,
+          "banked_loss": 3.8045663205902804,
+          "loss": 3.807630459711512,
+          "delta": 0.0030641391212316016,
+          "bit_identical": false
+        },
+        {
+          "step": 27,
+          "banked_loss": 3.5368140415154015,
+          "loss": 3.535150901537795,
+          "delta": -0.001663139977606587,
+          "bit_identical": false
+        },
+        {
+          "step": 28,
+          "banked_loss": 3.528384428794819,
+          "loss": 3.529740859578133,
+          "delta": 0.0013564307833138223,
+          "bit_identical": false
+        },
+        {
+          "step": 29,
+          "banked_loss": 3.3982216759911643,
+          "loss": 3.4065413967701237,
+          "delta": 0.008319720778959372,
+          "bit_identical": false
+        },
+        {
+          "step": 30,
+          "banked_loss": 3.4628275071190044,
+          "loss": 3.4637949159849004,
+          "delta": 0.000967408865895969,
+          "bit_identical": false
+        },
+        {
+          "step": 31,
+          "banked_loss": 3.7972613908920927,
+          "loss": 3.8067716038144104,
+          "delta": 0.009510212922317685,
+          "bit_identical": false
+        },
+        {
+          "step": 32,
+          "banked_loss": 3.3134344014707917,
+          "loss": 3.316601001179558,
+          "delta": 0.0031665997087664266,
+          "bit_identical": false
+        },
+        {
+          "step": 33,
+          "banked_loss": 3.2077669554309085,
+          "loss": 3.2124792200015166,
+          "delta": 0.004712264570608138,
+          "bit_identical": false
+        },
+        {
+          "step": 34,
+          "banked_loss": 2.9843173495270197,
+          "loss": 2.9930522986121315,
+          "delta": 0.008734949085111854,
+          "bit_identical": false
+        },
+        {
+          "step": 35,
+          "banked_loss": 2.9941821549478362,
+          "loss": 2.984631401691433,
+          "delta": -0.009550753256403421,
+          "bit_identical": false
+        },
+        {
+          "step": 36,
+          "banked_loss": 3.0267833981799686,
+          "loss": 3.0312920994351344,
+          "delta": 0.004508701255165892,
+          "bit_identical": false
+        },
+        {
+          "step": 37,
+          "banked_loss": 3.0398277786808485,
+          "loss": 3.039671652287321,
+          "delta": -0.0001561263935276891,
+          "bit_identical": false
+        },
+        {
+          "step": 38,
+          "banked_loss": 3.061264466687018,
+          "loss": 3.0571511766548864,
+          "delta": -0.004113290032131456,
+          "bit_identical": false
+        },
+        {
+          "step": 39,
+          "banked_loss": 2.9182624181790673,
+          "loss": 2.9174264171541515,
+          "delta": -0.0008360010249157668,
+          "bit_identical": false
+        },
+        {
+          "step": 40,
+          "banked_loss": 3.0215783138309154,
+          "loss": 3.0117168910112624,
+          "delta": -0.009861422819652965,
+          "bit_identical": false
+        },
+        {
+          "step": 41,
+          "banked_loss": 3.064722849412283,
+          "loss": 3.0615073932183523,
+          "delta": -0.0032154561939305992,
+          "bit_identical": false
+        },
+        {
+          "step": 42,
+          "banked_loss": 2.6291967596129195,
+          "loss": 2.629552362308292,
+          "delta": 0.00035560269537260325,
+          "bit_identical": false
+        },
+        {
+          "step": 43,
+          "banked_loss": 2.9678327176768367,
+          "loss": 2.9645930057597543,
+          "delta": -0.0032397119170823885,
+          "bit_identical": false
+        },
+        {
+          "step": 44,
+          "banked_loss": 2.896525579810661,
+          "loss": 2.8910651268019776,
+          "delta": -0.0054604530086832526,
+          "bit_identical": false
+        },
+        {
+          "step": 45,
+          "banked_loss": 2.613646491632248,
+          "loss": 2.603842187738556,
+          "delta": -0.009804303893691912,
+          "bit_identical": false
+        },
+        {
+          "step": 46,
+          "banked_loss": 2.6960136392611562,
+          "loss": 2.6883480469615226,
+          "delta": -0.0076655922996335946,
+          "bit_identical": false
+        },
+        {
+          "step": 47,
+          "banked_loss": 2.665431368577493,
+          "loss": 2.6595886934730997,
+          "delta": -0.00584267510439318,
+          "bit_identical": false
+        },
+        {
+          "step": 48,
+          "banked_loss": 2.770471757230389,
+          "loss": 2.7750221591848185,
+          "delta": 0.004550401954429351,
+          "bit_identical": false
+        },
+        {
+          "step": 49,
+          "banked_loss": 2.7209327258476304,
+          "loss": 2.722313928335118,
+          "delta": 0.0013812024874875206,
+          "bit_identical": false
+        },
+        {
+          "step": 50,
+          "banked_loss": 2.5020858612709413,
+          "loss": 2.5037431594980353,
+          "delta": 0.0016572982270939285,
+          "bit_identical": false
+        },
+        {
+          "step": 51,
+          "banked_loss": 2.6433828082241715,
+          "loss": 2.645311999078103,
+          "delta": 0.0019291908539313951,
+          "bit_identical": false
+        },
+        {
+          "step": 52,
+          "banked_loss": 2.4914966896047543,
+          "loss": 2.4996994896016567,
+          "delta": 0.008202799996902321,
+          "bit_identical": false
+        },
+        {
+          "step": 53,
+          "banked_loss": 2.3956408548399684,
+          "loss": 2.4120056861219434,
+          "delta": 0.01636483128197508,
+          "bit_identical": false
+        },
+        {
+          "step": 54,
+          "banked_loss": 2.7239939908238573,
+          "loss": 2.739958862374925,
+          "delta": 0.015964871551067628,
+          "bit_identical": false
+        },
+        {
+          "step": 55,
+          "banked_loss": 2.5088048165542367,
+          "loss": 2.5068255882097734,
+          "delta": -0.0019792283444632908,
+          "bit_identical": false
+        },
+        {
+          "step": 56,
+          "banked_loss": 2.4663442676820155,
+          "loss": 2.4687037907178095,
+          "delta": 0.002359523035794009,
+          "bit_identical": false
+        },
+        {
+          "step": 57,
+          "banked_loss": 2.4472358808447536,
+          "loss": 2.4314894562193023,
+          "delta": -0.015746424625451283,
+          "bit_identical": false
+        },
+        {
+          "step": 58,
+          "banked_loss": 2.3900450684722783,
+          "loss": 2.39287081992705,
+          "delta": 0.0028257514547718188,
+          "bit_identical": false
+        },
+        {
+          "step": 59,
+          "banked_loss": 2.358158638092561,
+          "loss": 2.3572325331834882,
+          "delta": -0.0009261049090727447,
+          "bit_identical": false
+        },
+        {
+          "step": 60,
+          "banked_loss": 2.5618448620498984,
+          "loss": 2.562200251471874,
+          "delta": 0.0003553894219754383,
+          "bit_identical": false
+        },
+        {
+          "step": 61,
+          "banked_loss": 2.449303944857676,
+          "loss": 2.4469645515202125,
+          "delta": -0.00233939333746358,
+          "bit_identical": false
+        },
+        {
+          "step": 62,
+          "banked_loss": 2.4341861605308677,
+          "loss": 2.424999315959245,
+          "delta": -0.009186844571622554,
+          "bit_identical": false
+        },
+        {
+          "step": 63,
+          "banked_loss": 2.3808174792322667,
+          "loss": 2.378055839514187,
+          "delta": -0.0027616397180798558,
+          "bit_identical": false
+        },
+        {
+          "step": 64,
+          "banked_loss": 2.2254564285976834,
+          "loss": 2.229658459436224,
+          "delta": 0.004202030838540427,
+          "bit_identical": false
+        },
+        {
+          "step": 65,
+          "banked_loss": 2.1733120250397575,
+          "loss": 2.1649970319017204,
+          "delta": -0.008314993138037075,
+          "bit_identical": false
+        },
+        {
+          "step": 66,
+          "banked_loss": 2.3662765178772234,
+          "loss": 2.374740199735841,
+          "delta": 0.008463681858617456,
+          "bit_identical": false
+        },
+        {
+          "step": 67,
+          "banked_loss": 2.3180252181275827,
+          "loss": 2.322679838109296,
+          "delta": 0.004654619981713459,
+          "bit_identical": false
+        },
+        {
+          "step": 68,
+          "banked_loss": 2.224721271677645,
+          "loss": 2.2298013340809213,
+          "delta": 0.0050800624032762975,
+          "bit_identical": false
+        },
+        {
+          "step": 69,
+          "banked_loss": 2.307661608391523,
+          "loss": 2.3124247566662244,
+          "delta": 0.004763148274701479,
+          "bit_identical": false
+        },
+        {
+          "step": 70,
+          "banked_loss": 2.531820129579983,
+          "loss": 2.541538194156145,
+          "delta": 0.009718064576162089,
+          "bit_identical": false
+        },
+        {
+          "step": 71,
+          "banked_loss": 2.0838324735463787,
+          "loss": 2.0864342309647674,
+          "delta": 0.0026017574183887504,
+          "bit_identical": false
+        },
+        {
+          "step": 72,
+          "banked_loss": 2.230558154342992,
+          "loss": 2.2267204519940114,
+          "delta": -0.0038377023489806206,
+          "bit_identical": false
+        },
+        {
+          "step": 73,
+          "banked_loss": 2.0941905310869546,
+          "loss": 2.094681480293597,
+          "delta": 0.0004909492066422771,
+          "bit_identical": false
+        },
+        {
+          "step": 74,
+          "banked_loss": 1.8591690808534622,
+          "loss": 1.86198228597641,
+          "delta": 0.002813205122947693,
+          "bit_identical": false
+        },
+        {
+          "step": 75,
+          "banked_loss": 1.8531712293624878,
+          "loss": 1.8580547720193863,
+          "delta": 0.0048835426568984985,
+          "bit_identical": false
+        },
+        {
+          "step": 76,
+          "banked_loss": 1.9864751976349657,
+          "loss": 1.9842698628489446,
+          "delta": -0.0022053347860211403,
+          "bit_identical": false
+        },
+        {
+          "step": 77,
+          "banked_loss": 1.9982756141364626,
+          "loss": 1.9977887543688861,
+          "delta": -0.000486859767576453,
+          "bit_identical": false
+        },
+        {
+          "step": 78,
+          "banked_loss": 2.1493938518473055,
+          "loss": 2.147830524122733,
+          "delta": -0.0015633277245723498,
+          "bit_identical": false
+        },
+        {
+          "step": 79,
+          "banked_loss": 2.226446532420578,
+          "loss": 2.238016407103869,
+          "delta": 0.011569874683290848,
+          "bit_identical": false
+        },
+        {
+          "step": 80,
+          "banked_loss": 2.2633004420586693,
+          "loss": 2.262176952160395,
+          "delta": -0.0011234898982741548,
+          "bit_identical": false
+        },
+        {
+          "step": 81,
+          "banked_loss": 2.1585939805193277,
+          "loss": 2.1565136293053095,
+          "delta": -0.0020803512140181724,
+          "bit_identical": false
+        },
+        {
+          "step": 82,
+          "banked_loss": 2.1294402399617716,
+          "loss": 2.138076249843659,
+          "delta": 0.008636009881887396,
+          "bit_identical": false
+        },
+        {
+          "step": 83,
+          "banked_loss": 1.9806481749113596,
+          "loss": 1.9871980697894394,
+          "delta": 0.006549894878079776,
+          "bit_identical": false
+        },
+        {
+          "step": 84,
+          "banked_loss": 1.9538039550357396,
+          "loss": 1.9590245422320895,
+          "delta": 0.005220587196349991,
+          "bit_identical": false
+        },
+        {
+          "step": 85,
+          "banked_loss": 1.7319563299080591,
+          "loss": 1.7303950449572372,
+          "delta": -0.0015612849508219728,
+          "bit_identical": false
+        },
+        {
+          "step": 86,
+          "banked_loss": 2.0404831568525337,
+          "loss": 2.0435028020824215,
+          "delta": 0.0030196452298878462,
+          "bit_identical": false
+        },
+        {
+          "step": 87,
+          "banked_loss": 1.966701415804847,
+          "loss": 1.9611009074406887,
+          "delta": -0.005600508364158374,
+          "bit_identical": false
+        },
+        {
+          "step": 88,
+          "banked_loss": 2.0542063775576422,
+          "loss": 2.05206344395344,
+          "delta": -0.0021429336042020353,
+          "bit_identical": false
+        },
+        {
+          "step": 89,
+          "banked_loss": 2.141847353759546,
+          "loss": 2.154169570242869,
+          "delta": 0.01232221648332299,
+          "bit_identical": false
+        },
+        {
+          "step": 90,
+          "banked_loss": 2.2527982827949597,
+          "loss": 2.2563281402798028,
+          "delta": 0.003529857484843024,
+          "bit_identical": false
+        },
+        {
+          "step": 91,
+          "banked_loss": 2.3770019203576487,
+          "loss": 2.376052980039419,
+          "delta": -0.0009489403182296741,
+          "bit_identical": false
+        },
+        {
+          "step": 92,
+          "banked_loss": 2.1314909291186876,
+          "loss": 2.138583091810744,
+          "delta": 0.00709216269205637,
+          "bit_identical": false
+        },
+        {
+          "step": 93,
+          "banked_loss": 1.9059250542504274,
+          "loss": 1.913853445092071,
+          "delta": 0.007928390841643651,
+          "bit_identical": false
+        },
+        {
+          "step": 94,
+          "banked_loss": 1.8629466085908917,
+          "loss": 1.8704244311313087,
+          "delta": 0.007477822540417067,
+          "bit_identical": false
+        },
+        {
+          "step": 95,
+          "banked_loss": 2.270501337919167,
+          "loss": 2.2423634019830363,
+          "delta": -0.028137935936130898,
+          "bit_identical": false
+        },
+        {
+          "step": 96,
+          "banked_loss": 2.019742597399658,
+          "loss": 2.0251972989681364,
+          "delta": 0.005454701568478271,
+          "bit_identical": false
+        },
+        {
+          "step": 97,
+          "banked_loss": 2.018200298216022,
+          "loss": 2.0214456726705126,
+          "delta": 0.0032453744544906904,
+          "bit_identical": false
+        },
+        {
+          "step": 98,
+          "banked_loss": 2.0445495502400157,
+          "loss": 2.040513853318645,
+          "delta": -0.004035696921370846,
+          "bit_identical": false
+        },
+        {
+          "step": 99,
+          "banked_loss": 2.0500658559441582,
+          "loss": 2.0468342234809755,
+          "delta": -0.0032316324631826987,
+          "bit_identical": false
+        },
+        {
+          "step": 100,
+          "banked_loss": 1.9489151694505549,
+          "loss": 1.9563058565560585,
+          "delta": 0.007390687105503613,
+          "bit_identical": false
+        },
+        {
+          "step": 101,
+          "banked_loss": 2.0017762906802172,
+          "loss": 2.007272594555249,
+          "delta": 0.0054963038750317494,
+          "bit_identical": false
+        },
+        {
+          "step": 102,
+          "banked_loss": 2.1533425191431705,
+          "loss": 2.1554842936029415,
+          "delta": 0.0021417744597709287,
+          "bit_identical": false
+        },
+        {
+          "step": 103,
+          "banked_loss": 1.9389303319862268,
+          "loss": 1.947413001812463,
+          "delta": 0.008482669826236133,
+          "bit_identical": false
+        },
+        {
+          "step": 104,
+          "banked_loss": 1.8223529230227475,
+          "loss": 1.8244308116283472,
+          "delta": 0.0020778886055996537,
+          "bit_identical": false
+        },
+        {
+          "step": 105,
+          "banked_loss": 2.124516847396245,
+          "loss": 2.1356730872678455,
+          "delta": 0.011156239871600526,
+          "bit_identical": false
+        },
+        {
+          "step": 106,
+          "banked_loss": 1.8789494475899435,
+          "loss": 1.88328331134421,
+          "delta": 0.004333863754266476,
+          "bit_identical": false
+        },
+        {
+          "step": 107,
+          "banked_loss": 1.6804936543999769,
+          "loss": 1.6837935395643304,
+          "delta": 0.003299885164353533,
+          "bit_identical": false
+        },
+        {
+          "step": 108,
+          "banked_loss": 1.9024852528919178,
+          "loss": 1.9293992538307145,
+          "delta": 0.0269140009387967,
+          "bit_identical": false
+        },
+        {
+          "step": 109,
+          "banked_loss": 2.123731548951927,
+          "loss": 2.137722848961609,
+          "delta": 0.013991300009682295,
+          "bit_identical": false
+        },
+        {
+          "step": 110,
+          "banked_loss": 1.9360753136376778,
+          "loss": 1.9418789817541404,
+          "delta": 0.005803668116462601,
+          "bit_identical": false
+        },
+        {
+          "step": 111,
+          "banked_loss": 1.670527726941359,
+          "loss": 1.6783771332467086,
+          "delta": 0.007849406305349582,
+          "bit_identical": false
+        },
+        {
+          "step": 112,
+          "banked_loss": 1.9386281790106987,
+          "loss": 1.942291910573542,
+          "delta": 0.0036637315628431644,
+          "bit_identical": false
+        },
+        {
+          "step": 113,
+          "banked_loss": 1.8193674349276647,
+          "loss": 1.8267055337488822,
+          "delta": 0.007338098821217498,
+          "bit_identical": false
+        },
+        {
+          "step": 114,
+          "banked_loss": 1.7247560514138485,
+          "loss": 1.7277652576673697,
+          "delta": 0.0030092062535211905,
+          "bit_identical": false
+        },
+        {
+          "step": 115,
+          "banked_loss": 1.7812682458768276,
+          "loss": 1.783192638870879,
+          "delta": 0.0019243929940513382,
+          "bit_identical": false
+        },
+        {
+          "step": 116,
+          "banked_loss": 2.0360683453245474,
+          "loss": 2.0456452117955,
+          "delta": 0.009576866470952794,
+          "bit_identical": false
+        },
+        {
+          "step": 117,
+          "banked_loss": 1.8126528813012597,
+          "loss": 1.822892298805952,
+          "delta": 0.01023941750469226,
+          "bit_identical": false
+        },
+        {
+          "step": 118,
+          "banked_loss": 1.7468208737556647,
+          "loss": 1.75426605628174,
+          "delta": 0.007445182526075289,
+          "bit_identical": false
+        },
+        {
+          "step": 119,
+          "banked_loss": 2.3316845897444978,
+          "loss": 2.3299195502847616,
+          "delta": -0.0017650394597361618,
+          "bit_identical": false
+        },
+        {
+          "step": 120,
+          "banked_loss": 1.7868416617181788,
+          "loss": 1.7952551489781554,
+          "delta": 0.008413487259976593,
+          "bit_identical": false
+        },
+        {
+          "step": 121,
+          "banked_loss": 1.930738454850775,
+          "loss": 1.9395257274528814,
+          "delta": 0.008787272602106322,
+          "bit_identical": false
+        },
+        {
+          "step": 122,
+          "banked_loss": 1.851828626320525,
+          "loss": 1.871568064957545,
+          "delta": 0.01973943863701999,
+          "bit_identical": false
+        },
+        {
+          "step": 123,
+          "banked_loss": 1.6471236230970976,
+          "loss": 1.6489746577366833,
+          "delta": 0.0018510346395856914,
+          "bit_identical": false
+        },
+        {
+          "step": 124,
+          "banked_loss": 1.8531948029994965,
+          "loss": 1.8587709069252014,
+          "delta": 0.005576103925704956,
+          "bit_identical": false
+        },
+        {
+          "step": 125,
+          "banked_loss": 1.865559676822428,
+          "loss": 1.8733331098446546,
+          "delta": 0.00777343302222655,
+          "bit_identical": false
+        },
+        {
+          "step": 126,
+          "banked_loss": 2.013121771260708,
+          "loss": 2.0214349820301436,
+          "delta": 0.008313210769435475,
+          "bit_identical": false
+        },
+        {
+          "step": 127,
+          "banked_loss": 1.9405802081529588,
+          "loss": 1.9459239234761792,
+          "delta": 0.0053437153232203105,
+          "bit_identical": false
+        },
+        {
+          "step": 128,
+          "banked_loss": 1.6696684990313795,
+          "loss": 1.673430006442499,
+          "delta": 0.003761507411119469,
+          "bit_identical": false
+        },
+        {
+          "step": 129,
+          "banked_loss": 1.7007725108055065,
+          "loss": 1.7058212655827314,
+          "delta": 0.005048754777224884,
+          "bit_identical": false
+        },
+        {
+          "step": 130,
+          "banked_loss": 1.8471774254563433,
+          "loss": 1.8502714981877033,
+          "delta": 0.003094072731359976,
+          "bit_identical": false
+        },
+        {
+          "step": 131,
+          "banked_loss": 1.8155450198551732,
+          "loss": 1.8220956912952628,
+          "delta": 0.006550671440089584,
+          "bit_identical": false
+        },
+        {
+          "step": 132,
+          "banked_loss": 1.8926054556404988,
+          "loss": 1.8843679914578009,
+          "delta": -0.008237464182697884,
+          "bit_identical": false
+        },
+        {
+          "step": 133,
+          "banked_loss": 1.665488606804979,
+          "loss": 1.6685164451104453,
+          "delta": 0.0030278383054662683,
+          "bit_identical": false
+        },
+        {
+          "step": 134,
+          "banked_loss": 2.040120961168926,
+          "loss": 2.0473680762419804,
+          "delta": 0.0072471150730542,
+          "bit_identical": false
+        },
+        {
+          "step": 135,
+          "banked_loss": 1.7811297865899431,
+          "loss": 1.7847889416379514,
+          "delta": 0.003659155048008289,
+          "bit_identical": false
+        },
+        {
+          "step": 136,
+          "banked_loss": 1.6866357183547103,
+          "loss": 1.6921991569390789,
+          "delta": 0.005563438584368585,
+          "bit_identical": false
+        },
+        {
+          "step": 137,
+          "banked_loss": 1.8665994920929294,
+          "loss": 1.8704386668560917,
+          "delta": 0.003839174763162312,
+          "bit_identical": false
+        },
+        {
+          "step": 138,
+          "banked_loss": 1.9237358191427765,
+          "loss": 1.9256600612057329,
+          "delta": 0.0019242420629563828,
+          "bit_identical": false
+        },
+        {
+          "step": 139,
+          "banked_loss": 1.9726548297803022,
+          "loss": 1.974798892072568,
+          "delta": 0.002144062292265936,
+          "bit_identical": false
+        },
+        {
+          "step": 140,
+          "banked_loss": 2.0787465042686604,
+          "loss": 2.0837594916086197,
+          "delta": 0.005012987339959363,
+          "bit_identical": false
+        },
+        {
+          "step": 141,
+          "banked_loss": 1.734311122800006,
+          "loss": 1.7369558554448203,
+          "delta": 0.0026447326448142405,
+          "bit_identical": false
+        },
+        {
+          "step": 142,
+          "banked_loss": 1.815560015683459,
+          "loss": 1.818065470143434,
+          "delta": 0.002505454459974965,
+          "bit_identical": false
+        },
+        {
+          "step": 143,
+          "banked_loss": 1.8855229135683043,
+          "loss": 1.8850553660928997,
+          "delta": -0.00046754747540456165,
+          "bit_identical": false
+        },
+        {
+          "step": 144,
+          "banked_loss": 1.6779919474135951,
+          "loss": 1.6784983920254315,
+          "delta": 0.0005064446118363541,
+          "bit_identical": false
+        },
+        {
+          "step": 145,
+          "banked_loss": 1.8807005304061766,
+          "loss": 1.882151487264881,
+          "delta": 0.0014509568587044441,
+          "bit_identical": false
+        },
+        {
+          "step": 146,
+          "banked_loss": 1.8122841227105917,
+          "loss": 1.815455477695609,
+          "delta": 0.003171354985017416,
+          "bit_identical": false
+        },
+        {
+          "step": 147,
+          "banked_loss": 1.843393709701557,
+          "loss": 1.847448445243144,
+          "delta": 0.0040547355415871955,
+          "bit_identical": false
+        },
+        {
+          "step": 148,
+          "banked_loss": 1.7187653342698725,
+          "loss": 1.7209655153574221,
+          "delta": 0.002200181087549602,
+          "bit_identical": false
+        },
+        {
+          "step": 149,
+          "banked_loss": 1.6507738537032461,
+          "loss": 1.6491742329539412,
+          "delta": -0.0015996207493049752,
+          "bit_identical": false
+        },
+        {
+          "step": 150,
+          "banked_loss": 2.1437585450572474,
+          "loss": 2.140016380871299,
+          "delta": -0.0037421641859483046,
+          "bit_identical": false
+        },
+        {
+          "step": 151,
+          "banked_loss": 1.6819517274219722,
+          "loss": 1.6843074161876639,
+          "delta": 0.002355688765691699,
+          "bit_identical": false
+        },
+        {
+          "step": 152,
+          "banked_loss": 2.0233307342741855,
+          "loss": 2.0237667122175726,
+          "delta": 0.0004359779433871225,
+          "bit_identical": false
+        },
+        {
+          "step": 153,
+          "banked_loss": 1.7915842107176039,
+          "loss": 1.7929072354795532,
+          "delta": 0.001323024761949343,
+          "bit_identical": false
+        },
+        {
+          "step": 154,
+          "banked_loss": 1.649777893553602,
+          "loss": 1.6500398083965861,
+          "delta": 0.00026191484298410117,
+          "bit_identical": false
+        },
+        {
+          "step": 155,
+          "banked_loss": 1.9118655138309466,
+          "loss": 1.9134112184651062,
+          "delta": 0.0015457046341595948,
+          "bit_identical": false
+        },
+        {
+          "step": 156,
+          "banked_loss": 2.067016058575959,
+          "loss": 2.0618628403638337,
+          "delta": -0.005153218212125221,
+          "bit_identical": false
+        },
+        {
+          "step": 157,
+          "banked_loss": 1.6382975927192787,
+          "loss": 1.6378653989728937,
+          "delta": -0.00043219374638492347,
+          "bit_identical": false
+        },
+        {
+          "step": 158,
+          "banked_loss": 2.707450748338986,
+          "loss": 2.7441178399518784,
+          "delta": 0.03666709161289239,
+          "bit_identical": false
+        },
+        {
+          "step": 159,
+          "banked_loss": 2.0056994016554963,
+          "loss": 2.019887967949633,
+          "delta": 0.014188566294136784,
+          "bit_identical": false
+        },
+        {
+          "step": 160,
+          "banked_loss": 1.9155101031064987,
+          "loss": 1.9085610955953598,
+          "delta": -0.006949007511138916,
+          "bit_identical": false
+        },
+        {
+          "step": 161,
+          "banked_loss": 1.9056883190949923,
+          "loss": 1.9143628902140672,
+          "delta": 0.008674571119074992,
+          "bit_identical": false
+        },
+        {
+          "step": 162,
+          "banked_loss": 1.896562526895606,
+          "loss": 1.897695558479946,
+          "delta": 0.0011330315843400829,
+          "bit_identical": false
+        },
+        {
+          "step": 163,
+          "banked_loss": 2.727247267961502,
+          "loss": 2.7305511832237244,
+          "delta": 0.00330391526222229,
+          "bit_identical": false
+        },
+        {
+          "step": 164,
+          "banked_loss": 2.59326434135437,
+          "loss": 2.5966319143772125,
+          "delta": 0.0033675730228424072,
+          "bit_identical": false
+        },
+        {
+          "step": 165,
+          "banked_loss": 2.442999631166458,
+          "loss": 2.4434042274951935,
+          "delta": 0.00040459632873535156,
+          "bit_identical": false
+        },
+        {
+          "step": 166,
+          "banked_loss": 2.3358013033866882,
+          "loss": 2.3308103382587433,
+          "delta": -0.004990965127944946,
+          "bit_identical": false
+        },
+        {
+          "step": 167,
+          "banked_loss": 2.293030232191086,
+          "loss": 2.2893866300582886,
+          "delta": -0.003643602132797241,
+          "bit_identical": false
+        },
+        {
+          "step": 168,
+          "banked_loss": 2.1773504316806793,
+          "loss": 2.1708563566207886,
+          "delta": -0.006494075059890747,
+          "bit_identical": false
+        },
+        {
+          "step": 169,
+          "banked_loss": 2.17902309926141,
+          "loss": 2.1758513346849027,
+          "delta": -0.0031717645765074742,
+          "bit_identical": false
+        },
+        {
+          "step": 170,
+          "banked_loss": 2.3116410800965643,
+          "loss": 2.282850817860442,
+          "delta": -0.028790262236122466,
+          "bit_identical": false
+        },
+        {
+          "step": 171,
+          "banked_loss": 2.2127420144235996,
+          "loss": 2.1748354868103164,
+          "delta": -0.03790652761328328,
+          "bit_identical": false
+        },
+        {
+          "step": 172,
+          "banked_loss": 2.1109893806036015,
+          "loss": 2.0737871793859375,
+          "delta": -0.037202201217664044,
+          "bit_identical": false
+        },
+        {
+          "step": 173,
+          "banked_loss": 2.2094115246210393,
+          "loss": 2.1885792247595823,
+          "delta": -0.02083229986145696,
+          "bit_identical": false
+        },
+        {
+          "step": 174,
+          "banked_loss": 2.1206246413703007,
+          "loss": 2.1042563576762925,
+          "delta": -0.016368283694008223,
+          "bit_identical": false
+        },
+        {
+          "step": 175,
+          "banked_loss": 1.960882269532489,
+          "loss": 1.9479811518766512,
+          "delta": -0.01290111765583779,
+          "bit_identical": false
+        },
+        {
+          "step": 176,
+          "banked_loss": 1.8679155967125938,
+          "loss": 1.8522521191240373,
+          "delta": -0.015663477588556463,
+          "bit_identical": false
+        },
+        {
+          "step": 177,
+          "banked_loss": 1.926729235226633,
+          "loss": 1.9174730247733727,
+          "delta": -0.009256210453260305,
+          "bit_identical": false
+        },
+        {
+          "step": 178,
+          "banked_loss": 1.8420332828165997,
+          "loss": 1.8274553597682854,
+          "delta": -0.01457792304831429,
+          "bit_identical": false
+        },
+        {
+          "step": 179,
+          "banked_loss": 1.9509578913957677,
+          "loss": 1.907591327864579,
+          "delta": -0.04336656353118862,
+          "bit_identical": false
+        },
+        {
+          "step": 180,
+          "banked_loss": 1.87490244061742,
+          "loss": 1.8610326614940844,
+          "delta": -0.013869779123335535,
+          "bit_identical": false
+        }
+      ],
+      "step1_bit_identical": true,
+      "steps_bit_identical": 1,
+      "max_abs_delta": 0.04336656353118862,
+      "note": "the per-channel DECAY adjoint's channel-sum reduction order differs from the incumbent's fused scalar reduction: beyond step 1 the frozen trajectory diverges in ULPs by construction (registration 2.4) -- the control measures everything-except-gate-learning at the band's scale"
+    }
+  },
+  "best_arm_post_cooldown": "p3_seed3402",
+  "corrected_ladder_row": {
+    "label": "p3_seed3402",
+    "arm": "p3",
+    "seed": 3402,
+    "constant_lr": 1.4929371731621879,
+    "post_cooldown_primary": 1.4234301022120885,
+    "ema_180_secondary": 1.5260611602238245,
+    "vs_banked_constant": 0.0030323607581002054,
+    "vs_corrected_anchor": -0.010394743510654836,
+    "vs_gdn2_post_cooldown": 0.07125665460314079
+  },
+  "second_seed_read": {
+    "label": "p3_seed3402",
+    "constant_lr": 1.4929371731621879,
+    "post_cooldown_primary": 1.4234301022120885,
+    "ema_180_secondary": 1.5260611602238245,
+    "seed_matched_vs_banked_constant": 0.0030323607581002054,
+    "seed_matched_vs_corrected_anchor": -0.010394743510654836,
+    "seed_delta_primary": 0.0
+  },
+  "the_question": {
+    "reading": "a win below the gap-closure bar (p3_seed3401: 0.0103 vs the 0.01 win bar and the 0.02 closure bar): reported as measured; the second seed decides whether it survives, the reading is held for the operator",
+    "best_closure": [
+      "p3_seed3401",
+      0.01029161044529503
+    ]
+  }
+}

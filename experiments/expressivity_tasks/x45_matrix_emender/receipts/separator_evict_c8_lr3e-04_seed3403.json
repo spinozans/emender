@@ -1,0 +1,203 @@
+{
+ "task": "evict",
+ "chunk_tokens": 8,
+ "lr": 0.0003,
+ "seed": 3403,
+ "rank": 8,
+ "steps": 3000,
+ "batch": 256,
+ "device": "cuda",
+ "policy": {
+  "ops": true,
+  "tau_match": 0.45,
+  "tau_merge": 0.85,
+  "tau_pop": 0.1,
+  "tie_break": 1e-06,
+  "read_scale": 2.0,
+  "grow": false,
+  "grow_trigger": 0.5,
+  "grow_window": 4,
+  "grow_window_tokens": 512,
+  "grow_geometric": 2.0,
+  "grow_stride_floor": 64
+ },
+ "window": {
+  "window": 16,
+  "n_pairs": 6,
+  "n_probes": 3,
+  "pair_positions": [
+   4,
+   5,
+   6,
+   7,
+   8,
+   9
+  ],
+  "probe_positions": [
+   10,
+   12,
+   14
+  ],
+  "chance": 0.03125
+ },
+ "metrics": {
+  "value_acc": 0.6148275136947632,
+  "value_acc_readable": 0.7929224967956543,
+  "value_acc_blind": 0.2582457959651947,
+  "n_readable": 8195,
+  "n_blind": 4093,
+  "n_probes": 12288,
+  "chance": 0.03125
+ },
+ "curve_tail": [
+  {
+   "step": 1500,
+   "loss": 1.9196081161499023,
+   "value_acc": 0.5185546875
+  },
+  {
+   "step": 2000,
+   "loss": 1.6508299112319946,
+   "value_acc": 0.5615234375
+  },
+  {
+   "step": 2500,
+   "loss": 1.5924381017684937,
+   "value_acc": 0.5944010615348816
+  },
+  {
+   "step": 3000,
+   "loss": 1.5722941160202026,
+   "value_acc": 0.60546875
+  }
+ ],
+ "walls_s": 81.1,
+ "channels": {
+  "chunk_tokens": 8,
+  "per_layer": [
+   {
+    "layer": 0,
+    "pair_op_counts": {
+     "append": 2048,
+     "correct": 180,
+     "none": 0
+    },
+    "op_histogram": {
+     "none": 8194,
+     "append": 4096,
+     "correct": 938,
+     "pop": 3156,
+     "merge": 0
+    },
+    "stored_frac": 1.0,
+    "weight_on_answer_row": {
+     "all": {
+      "n": 1536,
+      "mean": 0.7429419755935669,
+      "max": 1.8815882205963135,
+      "min": 0.06481465697288513
+     },
+     "readable": {
+      "n": 1020,
+      "mean": 0.9455734491348267,
+      "max": 1.8815882205963135,
+      "min": 0.07952769845724106
+     },
+     "blind": {
+      "n": 516,
+      "mean": 0.3423911929130554,
+      "max": 1.5102128982543945,
+      "min": 0.06481465697288513
+     },
+     "live_blind": {
+      "n": 348,
+      "mean": 0.3530106246471405,
+      "max": 1.5102128982543945,
+      "min": 0.06481465697288513
+     },
+     "blind_append": null,
+     "blind_correct": {
+      "n": 86,
+      "mean": 0.7365670204162598,
+      "max": 1.5102128982543945,
+      "min": 0.13538503646850586
+     }
+    },
+    "accuracy": {
+     "readable": 0.7823529839515686,
+     "blind": 0.2344961166381836,
+     "blind_append": null,
+     "blind_correct": 0.6511628031730652,
+     "blind_intact": 0.2816092073917389
+    }
+   },
+   {
+    "layer": 1,
+    "pair_op_counts": {
+     "append": 2048,
+     "correct": 365,
+     "none": 0
+    },
+    "op_histogram": {
+     "none": 8006,
+     "append": 4096,
+     "correct": 2484,
+     "pop": 1418,
+     "merge": 380
+    },
+    "stored_frac": 1.0,
+    "weight_on_answer_row": {
+     "all": {
+      "n": 1536,
+      "mean": 1.2125428915023804,
+      "max": 2.3735036849975586,
+      "min": 0.1390468329191208
+     },
+     "readable": {
+      "n": 1020,
+      "mean": 1.4925087690353394,
+      "max": 2.3735036849975586,
+      "min": 0.1465914249420166
+     },
+     "blind": {
+      "n": 516,
+      "mean": 0.6591219902038574,
+      "max": 2.255664825439453,
+      "min": 0.1390468329191208
+     },
+     "live_blind": {
+      "n": 344,
+      "mean": 0.655451238155365,
+      "max": 2.255664825439453,
+      "min": 0.1390468329191208
+     },
+     "blind_append": null,
+     "blind_correct": {
+      "n": 187,
+      "mean": 1.1669602394104004,
+      "max": 2.255664825439453,
+      "min": 0.18992559611797333
+     }
+    },
+    "accuracy": {
+     "readable": 0.7823529839515686,
+     "blind": 0.2344961166381836,
+     "blind_append": null,
+     "blind_correct": 0.5026738047599792,
+     "blind_intact": 0.30523255467414856
+    }
+   }
+  ]
+ },
+ "torch": "2.9.1+cu128",
+ "destruction": {
+  "layer": 0,
+  "pop_count": 3156,
+  "correct_count": 938,
+  "probes": 1536,
+  "destroyed_frac": 0.4296875,
+  "acc_when_destroyed": 0.48636361956596375,
+  "acc_when_intact": 0.6826483607292175,
+  "blind_acc_when_intact": 0.2816092073917389
+ }
+}

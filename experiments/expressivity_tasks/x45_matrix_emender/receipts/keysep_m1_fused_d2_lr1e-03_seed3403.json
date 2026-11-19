@@ -1,0 +1,210 @@
+{
+ "task": "m1",
+ "arm": "fused",
+ "lr": 0.001,
+ "seed": 3403,
+ "key_dim": 16,
+ "depth": 2,
+ "steps": 3000,
+ "batch": 256,
+ "device": "cuda",
+ "window": 13,
+ "probe_positions": [
+  9,
+  11
+ ],
+ "chance": 0.03125,
+ "policy": {
+  "ops": true,
+  "tau_match": 0.45,
+  "tau_merge": 0.85,
+  "tau_pop": 0.1,
+  "tie_break": 1e-06,
+  "read_scale": 2.0,
+  "grow": false,
+  "grow_trigger": 0.5,
+  "grow_window": 4,
+  "grow_window_tokens": 512,
+  "grow_geometric": 2.0,
+  "grow_stride_floor": 64
+ },
+ "metrics": {
+  "value_acc": 1.0,
+  "probe_acc": [
+   1.0,
+   1.0
+  ],
+  "n_probes": 8192,
+  "chance": 0.03125
+ },
+ "curve_tail": [
+  {
+   "step": 100,
+   "loss": 1.0234534740447998,
+   "value_acc": 0.705078125
+  },
+  {
+   "step": 150,
+   "loss": 0.1678900420665741,
+   "value_acc": 0.97412109375
+  },
+  {
+   "step": 200,
+   "loss": 0.027735017240047455,
+   "value_acc": 1.0
+  },
+  {
+   "step": 250,
+   "loss": 0.0146524328738451,
+   "value_acc": 0.9990234375
+  },
+  {
+   "step": 300,
+   "loss": 0.0035110819153487682,
+   "value_acc": 1.0
+  },
+  {
+   "step": 350,
+   "loss": 0.0006398393888957798,
+   "value_acc": 1.0
+  },
+  {
+   "step": 400,
+   "loss": 0.0005357639165595174,
+   "value_acc": 0.998046875
+  },
+  {
+   "step": 450,
+   "loss": 0.000274903723038733,
+   "value_acc": 0.99951171875
+  },
+  {
+   "step": 500,
+   "loss": 0.003202875843271613,
+   "value_acc": 0.99853515625
+  },
+  {
+   "step": 1000,
+   "loss": 8.847563570668626e-09,
+   "value_acc": 1.0
+  },
+  {
+   "step": 1500,
+   "loss": 3.2812693007144844e-06,
+   "value_acc": 1.0
+  },
+  {
+   "step": 2000,
+   "loss": 3.213061816609297e-08,
+   "value_acc": 1.0
+  },
+  {
+   "step": 2500,
+   "loss": 4.367838073449093e-07,
+   "value_acc": 1.0
+  },
+  {
+   "step": 3000,
+   "loss": 4.2142314526927294e-08,
+   "value_acc": 1.0
+  }
+ ],
+ "walls_s": 462.8,
+ "channels": {
+  "arm": "fused",
+  "per_layer": [
+   {
+    "layer": 0,
+    "op_histogram": {
+     "none": 6656,
+     "append": 3780,
+     "correct": 2876,
+     "pop": 0,
+     "merge": 0
+    },
+    "identity_rewrite_frac": 1.0,
+    "copy2_op_counts": {
+     "append": 0,
+     "correct": 512,
+     "merge": 0,
+     "pop": 0,
+     "none": 0
+    },
+    "copy_slots_equal_frac": 1.0,
+    "identical_live_row_pairs": 0,
+    "answer_row_mass": {
+     "mean_true": 0.6855118870735168,
+     "mean_other": 0.829810619354248,
+     "mean_signed_gap": -0.14429871737957,
+     "frac_true_heavier": 0.3349609375
+    },
+    "merged_x_row_mass": {
+     "mean": 0.5875887870788574,
+     "max": 1.2182105779647827
+    },
+    "accuracy_per_probe": [
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "layer": 1,
+    "op_histogram": {
+     "none": 6656,
+     "append": 1335,
+     "correct": 5321,
+     "pop": 0,
+     "merge": 0
+    },
+    "identity_rewrite_frac": 0.126953125,
+    "copy2_op_counts": {
+     "append": 0,
+     "correct": 512,
+     "merge": 0,
+     "pop": 0,
+     "none": 0
+    },
+    "copy_slots_equal_frac": 0.126953125,
+    "identical_live_row_pairs": 0,
+    "answer_row_mass": {
+     "mean_true": 1.7748297452926636,
+     "mean_other": 2.920236110687256,
+     "mean_signed_gap": -1.1454064846038818,
+     "frac_true_heavier": 0.39453125
+    },
+    "merged_x_row_mass": {
+     "mean": 1.1870561838150024,
+     "max": 7.5940022468566895
+    },
+    "accuracy_per_probe": [
+     1.0,
+     1.0
+    ]
+   }
+  ],
+  "value_acc": 1.0
+ },
+ "params": 68034,
+ "torch": "2.9.1+cu128",
+ "composite": {
+  "note": "layer-2 payload cosines at the reveal (binding) writes: the value component plus the window-invariant context components (prev_1..3 = the marker/frame/X directions) and the layer-1 read output (the injection channel). cos_to_prev_* are signed; |cos| is the component share.",
+  "reveals": [
+   {
+    "position": 5,
+    "cos_to_value": -0.028411194682121277,
+    "cos_to_prev_1": 0.1276702582836151,
+    "cos_to_prev_2": 0.22499752044677734,
+    "cos_to_prev_3": 0.22064627707004547,
+    "cos_to_l1_read": 0.24080824851989746
+   },
+   {
+    "position": 8,
+    "cos_to_value": -0.014535309746861458,
+    "cos_to_prev_1": 0.023857980966567993,
+    "cos_to_prev_2": 0.08852922171354294,
+    "cos_to_prev_3": 0.023739902302622795,
+    "cos_to_l1_read": 0.054570116102695465
+   }
+  ]
+ }
+}
