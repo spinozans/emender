@@ -485,8 +485,8 @@ def main():
     microbatch = optimizer_config.get("microbatch", MICROBATCH)
     n, chunks = _first_step_rows(stream, microbatch)
     receipt_r2(model, chunks, n, receipt)
+    receipt.pop("_converted_model", None)
     if not args.skip_r3:
-        model = receipt.pop("_converted_model")
         # r2 converted its model in place; r3 needs the UNCONVERTED forward,
         # so rebuild fresh (same seed, same build order)
         del model

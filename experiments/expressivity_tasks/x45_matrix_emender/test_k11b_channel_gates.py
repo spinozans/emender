@@ -553,6 +553,75 @@ def test_gate_b_mixer_birth_output_bit_identical_to_k10():
 
 
 @needs_cuda
+def test_gate_b_birth_survives_the_clamp_bound_carrier_corner():
+    """The falsifier's corner, PINNED PERMANENTLY (receipt 57e1f942): a
+    bf16-SATURATING sigmoid position through the PRODUCTION autocast
+    expression. The incumbent's clamp bound 1-1e-6 rounds to exactly 1.0 in
+    its bf16 carrier (its own effective ceiling); a naive fp32 clamp of the
+    promoted per-channel product would preserve 0.999999 and break the
+    mimetic-neutral birth -- one such position in 32,768 at the probe's
+    layer 4 amplified to a 6.6e-5 step-1 loss delta and the falsifier
+    correctly refused the lane. The bounds act in the incumbent's carrier
+    dtype, so the born mixer reproduces the K10 mixer bit for bit INCLUDING
+    this corner; bit-parity fixtures must go through the production
+    expression under autocast, and this test is the standing remedy."""
+    from experiments.expressivity_tasks.x45_matrix_emender.model import (
+        MatrixMixer, MatrixShape, DECAY_FLOOR)
+    from experiments.expressivity_tasks.x45_matrix_emender.k10_separated_keys \
+        import convert_model_to_separated_keys
+
+    class Stub(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.blocks = [torch.nn.Module()]
+            self.blocks[0].mixer = MatrixMixer(MatrixShape(
+                width=64, depth=1, hidden=128, heads=2, value_dim=32,
+                rank=16, rank_max=16), POLICY, 64)
+            self.blocks[0].mixer = convert_model_to_separated_keys(
+                self).blocks[0].mixer
+
+    stub = Stub()
+    k10_mixer = stub.blocks[0].mixer
+    stub = convert_model_to_channel_gates(stub, arm="p1")
+    mixer = stub.blocks[0].mixer.to(DEVICE)
+    k10_mixer = k10_mixer.to(DEVICE)
+    # craft the corner: head 0's decay bias saturates the bf16 sigmoid to
+    # EXACTLY 1.0 everywhere; head 1 stays mid-range (the heterogeneous
+    # fixture -- the conversion shares the module objects, so one mutation
+    # sets both mixers)
+    with torch.no_grad():
+        k10_mixer.decay.weight.zero_()
+        k10_mixer.decay.bias[0].fill_(20.0)
+        k10_mixer.decay.bias[1].fill_(0.0)
+    x = torch.randn(2, 64, 64, device=DEVICE)
+    with torch.no_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
+        lam_vec, lam_inc = mixer.channel_decay(x)
+        decay10 = torch.sigmoid(k10_mixer.decay(x)).clamp(
+            min=DECAY_FLOOR, max=1.0 - 1e-6)
+    assert lam_inc.dtype == torch.bfloat16, \
+        "the production autocast regime must carry the incumbent's dtype"
+    assert bool((lam_inc[:, :, 0] == 1.0).all()), \
+        "the fixture must saturate head 0's bf16 sigmoid to exactly 1.0"
+    assert bool((lam_inc[:, :, 1] == 0.5).all()), \
+        "head 1 must stay mid-range (the heterogeneous fixture)"
+    assert torch.equal(
+        lam_vec,
+        decay10.unsqueeze(-1).expand_as(lam_vec).to(lam_vec.dtype)), \
+        "the born per-channel decay must equal the incumbent's expression " \
+        "value-for-value INCLUDING the saturating corner"
+    assert float(lam_vec[:, :, 0].max()) == 1.0, \
+        ("the saturating positions must be EXACTLY 1.0 (the incumbent's own "
+         "bf16-rounded ceiling), never the naive fp32 clamp's "
+         "0.9999989867210388")
+    with torch.no_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
+        out_k11b, _ = mixer.mix(x)
+        out_k10, _ = k10_mixer.mix(x)
+    assert torch.equal(out_k11b, out_k10), \
+        "the born mixer must reproduce the K10 mixer's output bit for bit " \
+        "at the saturating corner"
+
+
+@needs_cuda
 def test_gate_b_trajectory_replay_bit_exact():
     """The replay receipt: the lane-specific per-channel trajectory kernel
     rebuilds the forward's own segment checkpoints bit-exactly from the

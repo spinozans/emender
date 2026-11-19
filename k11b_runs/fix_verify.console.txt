@@ -1,0 +1,110 @@
+gpu_lease: granted GPUs: 0 (pid 3144429)
+verify leased card: 0
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/erikg/emender
+configfile: pyproject.toml
+plugins: timeout-2.4.0, anyio-4.13.0
+timeout: 600.0s
+timeout method: signal
+timeout func_only: False
+collected 21 items / 20 deselected / 1 selected
+
+experiments/expressivity_tasks/x45_matrix_emender/test_k11b_channel_gates.py . [100%]
+
+======================= 1 passed, 20 deselected in 3.39s =======================
+CORNER TEST EXITCODE 0
+{
+ "r1_scan_level_production_regime": {
+  "fixture": {
+   "batch": 8,
+   "tokens": 2048,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "key_dim": 16,
+   "segment_tokens": 64,
+   "payload_dtype": "bf16 (autocast)",
+   "keys_dtype": "bf16",
+   "decay_dtype": "fp32 (production; gate A used bf16)",
+   "gates": "the (1,1,1,1) bf16 dummy the p1 arm passes",
+   "warps": 8,
+   "policy": {
+    "ops": true,
+    "tau_match": 0.45,
+    "tau_merge": 0.85,
+    "tau_pop": 0.1,
+    "tie_break": 1e-06,
+    "read_scale": 2.7870458737509636,
+    "grow": false,
+    "grow_trigger": 0.5,
+    "grow_window": 4,
+    "grow_window_tokens": 512,
+    "grow_geometric": 2.0,
+    "grow_stride_floor": 64
+   }
+  },
+  "channels": {
+   "reads": {
+    "bit_identical": true,
+    "differing": 0,
+    "max_abs_delta": 0.0
+   },
+   "state": {
+    "bit_identical": true,
+    "differing": 0,
+    "max_abs_delta": 0.0
+   },
+   "live": {
+    "bit_identical": true,
+    "differing": 0,
+    "max_abs_delta": null
+   },
+   "keys": {
+    "bit_identical": true,
+    "differing": 0,
+    "max_abs_delta": 0.0
+   }
+  },
+  "verdict": "bit-identical at the production scan regime"
+ },
+ "r2_model_level_step1": {
+  "n_targets": 117712,
+  "microbatches": 8,
+  "unconverted_step1_loss": 5.785070835425993,
+  "unconverted_vs_banked": {
+   "banked": 5.785070835425993,
+   "delta": 0.0,
+   "bit_identical": true
+  },
+  "converted_step1_loss": 5.785070835425993,
+  "converted_vs_falsifier": {
+   "falsifier": 5.785136661889908,
+   "delta": -6.582646391439795e-05,
+   "bit_identical": false
+  },
+  "per_microbatch_k10": [
+   5.8012003898620605,
+   5.7819743156433105,
+   5.751809120178223,
+   5.76844596862793,
+   5.7907538414001465,
+   5.772055625915527,
+   5.811271667480469,
+   5.804966926574707
+  ],
+  "per_microbatch_k11b": [
+   5.8012003898620605,
+   5.7819743156433105,
+   5.751809120178223,
+   5.76844596862793,
+   5.7907538414001465,
+   5.772055625915527,
+   5.811271667480469,
+   5.804966926574707
+  ],
+  "verdict": "unexpected: one of the two rows did not reproduce -- see the numbers"
+ }
+}
+DIAG POSTFIX EXITCODE 0
+VERIFY EXITCODE 0

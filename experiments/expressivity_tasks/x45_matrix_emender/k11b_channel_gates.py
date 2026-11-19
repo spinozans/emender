@@ -1489,14 +1489,35 @@ class ChannelGatedSeparatedMixer(nn.Module):
     def channel_decay(self, x: torch.Tensor):
         """The per-channel DECAY vector and the registered scalar it wraps:
         ``lam_vec = clamp(lam_inc * (1 + m_f*sigmoid(f_proj(x))), floor,
-        1-1e-6)`` -- at birth exactly ``lam_inc`` on every channel."""
+        1-1e-6)`` -- at birth exactly ``lam_inc`` on every channel.
+
+        THE CLAMP BOUNDS ACT IN THE INCUMBENT'S CARRIER DTYPE (the
+        falsifier's corner, receipt 57e1f942, fixed per the supervisor's R1
+        ruling): under the production autocast regime ``lam_inc`` is bf16,
+        in which the registered bound ``1-1e-6`` ROUNDS TO EXACTLY 1.0 --
+        the incumbent's own effective ceiling, its expression rounding the
+        same way -- while a naive fp32 clamp of the promoted product would
+        preserve ``0.999999`` and break the mimetic-neutral birth at every
+        sigmoid-saturating position (one such position in 32,768 at the
+        probe's layer 4 amplified to a 6.6e-5 step-1 loss delta). The
+        bounds below are the carrier's own rounding of the registered
+        constants, so at birth ``lam_vec`` is bit-equal to the registered
+        scalar on every channel, corners included; beyond birth the
+        effective ceiling under autocast is the incumbent's own 1.0 (the
+        disclosed deviation), and in fp32 contexts the paper bound
+        survives."""
         lam_inc = torch.sigmoid(self.decay(x)).clamp(min=DECAY_FLOOR,
                                                      max=1.0 - 1e-6)
         f = torch.sigmoid(self.f_proj(x)).view(
             x.shape[0], x.shape[1], self.heads, self.value_dim)
         factor = 1.0 + self.decay_scalar.view(1, 1, -1, 1) * f
+        if lam_inc.dtype == torch.bfloat16:
+            floor = float(torch.tensor(DECAY_FLOOR, dtype=torch.bfloat16))
+            ceiling = float(torch.tensor(1.0 - 1e-6, dtype=torch.bfloat16))
+        else:
+            floor, ceiling = DECAY_FLOOR, 1.0 - 1e-6
         lam_vec = torch.clamp(lam_inc.unsqueeze(-1) * factor,
-                              min=DECAY_FLOOR, max=1.0 - 1e-6)
+                              min=floor, max=ceiling)
         return lam_vec, lam_inc
 
     def mix(self, x: torch.Tensor):
