@@ -24,6 +24,56 @@ engine commit (40 passed in 40:28; `k11b_runs/k10_k11_suites_console.txt`),
 and the lane's own 20-test suite green at 32:54
 (`k11b_runs/test_suite_console.txt`).
 
+## 0.5 The falsifier's job receipt and the corner it caught (the ledger)
+
+**The frozen-gates falsifier control is the instrument that caught a real
+defect every parity receipt missed, and its lesson is now standing law in
+the suite.**  The control's first run FAILED its step-1 bar: the frozen
+p1 arm's step-1 train loss `5.785136661889908` vs the banked same-seed
+row's `5.785070835425993` (delta 6.6e-5) — at exact-zero gate parameters,
+so a forward-at-birth parity break, not gate learning
+(`k11b_runs/p1_frozen_seed3401_prefixbreak/`, root-caused and receipted in
+`k11b_runs/birth_diagnostic.json`, commit `57e1f942`):
+
+* **Why every prior receipt missed it:** gate A/B's fixtures hand BOTH
+  kernels *explicit* decay tensors — the parity comparison never went
+  through `channel_decay`'s production expression under the bf16 autocast
+  regime — and the committed mixer-level birth fixture's data never
+  saturates the sigmoid to bf16 1.0.  **The lesson, stated plainly:
+  bit-parity fixtures must go through the production expression under
+  autocast.**  The new suite test
+  (`test_gate_b_birth_survives_the_clamp_bound_carrier_corner` — a
+  heterogeneous fixture with head 0's decay bias saturating the bf16
+  sigmoid to exactly 1.0) is the standing remedy, and the 21-test suite is
+  green with it (`a856362a`).
+* **The corner, a receipt-worthy micro-finding:** the incumbent's clamp
+  bound `1-1e-6` rounds to EXACTLY 1.0 in its bf16 carrier (its own
+  effective ceiling), while `channel_decay`'s mul-by-factor promoted the
+  per-channel product to fp32, whose clamp preserves `0.999999`.  At the
+  probe's layer 4, ONE saturating bf16 position in 32,768 diverged at
+  birth by exactly `1.0133e-6 = 1.0 - fp32(1-1e-6)`; that single-position
+  ULP difference produced 11,044 differing reads and amplified through
+  twenty more layers to the 6.6e-5 step-1 loss delta.  **ULP-scale birth
+  defects do not stay ULP-scale — which is WHY the bar is bit-identity and
+  not a tolerance.**
+* **The fix (the supervisor's R1 ruling, option A):** the clamp bounds
+  now act in the incumbent's carrier dtype (`9630f5c6`) — at birth
+  `lam_vec` is bit-equal to the registered scalar on every channel,
+  corners included; beyond birth the effective ceiling under autocast is
+  the incumbent's own 1.0 (the disclosed deviation), and in fp32 contexts
+  the paper bound survives.  The postfix proof: the converted p1 build's
+  step-1 loss is `5.785070835425993` — BIT-IDENTICAL to the banked row
+  (`k11b_runs/birth_diagnostic_postfix.json`).  The control then PASSED
+  on the fixed engine (`f7051b72`): step-1 bit-identical, the per-step
+  divergence exactly as registration 2.4 discloses (ULP-scale
+  compounding, max |delta| 0.0434 at step 180), and the landing at
+  parity (post-cooldown 1.4371 vs the 1.4338 anchor).
+* The receipts in this document were RE-RUN on the fixed engine and are
+  green throughout (only the timing fields moved); the engine change
+  touches the birth expression only — the kernels, the oracle and the
+  recorded-schedule channels are untouched, and their receipts are
+  unchanged in substance.
+
 ## 1. Gate A — oracle parity, the 0-flip bar, and the birth parity (P2/P5)
 
 The k11b kernel path vs the NEW eager per-token oracle
@@ -121,11 +171,14 @@ gate-D pattern):
 
 | path | forward ms/scan | backward ms/scan | fwd vs | bwd vs |
 |---|---:|---:|---:|---:|
-| k11b (per-channel, 2-lane) | 23.32 | 18.26 | **1.286× K10** / 1.080× K11 | **1.053× K10** / 1.010× K11 |
-| k11 (gated, 3-lane) | 21.59 | 18.07 | 1.191× K10 | 1.042× K10 |
-| k10 (same session) | 18.13 | 17.34 | — | — |
+| k11b (per-channel, 2-lane) | 23.10 | 18.29 | **1.274× K10** / 1.071× K11 | **1.057× K10** / 1.006× K11 |
+| k11 (gated, 3-lane) | 21.57 | 18.17 | 1.190× K10 | 1.050× K10 |
+| k10 (same session) | 18.13 | 17.30 | — | — |
 
-Forward throughput 702,668 tok/s at the registered shape.  The per-channel
+Forward throughput 709,318 tok/s at the registered shape (the post-fix
+re-run; the pre-fix run measured 23.32/18.26 ms and 702,668 tok/s — the
+walls are the same within session noise, as expected for an engine change
+that touches only the birth expression).  The per-channel
 form adds per token: one (VP,) DECAY vector load and one (VP,) gate load
 (vs K11's two scalars), the per-channel CORRECT blend (elementwise in the
 value dim), and in the backward one (BV,) dlam and one (BV,) dgate store
@@ -147,4 +200,7 @@ OMP_NUM_THREADS=4 CUDA_VISIBLE_DEVICES=1 /home/erikg/emender/.venv/bin/python -m
 The committed engine suite (`test_k11b_channel_gates.py` — 20/20 green at
 the engine commit `0cec7202`, re-run green in the harvest session at
 32:54) and the committed K10/K11 suites re-run green with the module
-loaded (40 passed, 40:28).
+loaded (40 passed, 40:28).  On the FIXED engine the lane's suite is
+**21/21** (the falsifier's corner guard included, 39:26) and the K10/K11
+suites **40/40** with the fixed module loaded (49:56)
+(`k11b_runs/*_postfix.console.txt`).
