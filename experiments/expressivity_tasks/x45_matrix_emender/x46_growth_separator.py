@@ -719,7 +719,8 @@ def require_operator_signoff():
                          "the derivation and construction must be committed "
                          "and signed before any headline arm runs")
     for line in PREREGISTRATION.read_text().splitlines():
-        if line.strip().startswith("Status:") and SIGNED_MARK in line:
+        stripped = line.strip().lstrip("*").strip()
+        if stripped.startswith("Status:") and SIGNED_MARK in stripped:
             return True
     raise ValueError(f"fail-closed: {PREREGISTRATION.name}'s status line is "
                      f"not {SIGNED_MARK}; the pre-stated predictions need "
