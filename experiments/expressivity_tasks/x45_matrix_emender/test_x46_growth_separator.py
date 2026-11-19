@@ -227,14 +227,22 @@ def test_keys_are_distinct_and_values_addressable():
 
 # ------------------------------------------------------------- fail-closed
 
-def test_arm_refuses_without_operator_signoff(tmp_path):
-    """The headline gate: with an unsigned (or missing) PREREGISTRATION the
-    arm runner refuses by name."""
+def test_arm_refuses_without_operator_signoff(tmp_path, monkeypatch):
+    """The headline gate: an unsigned (or missing) PREREGISTRATION refuses
+    by name -- and the gate is STATUS-LINE-only: the registration's own
+    prose that DESCRIBES the gate contains the mark and must never satisfy
+    it (the real registration does)."""
     from experiments.expressivity_tasks.x45_matrix_emender import (
         x46_growth_separator as mod)
     real = mod.PREREGISTRATION
+    # the real, current registration is a DRAFT: it must refuse
+    with pytest.raises(ValueError, match="fail-closed"):
+        mod.require_operator_signoff()
     unsigned = tmp_path / "PREREGISTRATION_X46_GROWTH_SEPARATOR.md"
-    unsigned.write_text("Status: DRAFT -- PENDING OPERATOR SIGN-OFF\n")
+    unsigned.write_text(
+        "Status: DRAFT -- PENDING OPERATOR SIGN-OFF\n"
+        "...the arm runner is FAIL-CLOSED until this file carries the\n"
+        "string `OPERATOR-SIGNED` with a date...\n")
     mod.PREREGISTRATION = unsigned
     try:
         with pytest.raises(ValueError, match="fail-closed"):
@@ -248,7 +256,9 @@ def test_arm_accepts_operator_signoff(tmp_path):
         x46_growth_separator as mod)
     real = mod.PREREGISTRATION
     signed = tmp_path / "PREREGISTRATION_X46_GROWTH_SEPARATOR.md"
-    signed.write_text("Status: OPERATOR-SIGNED (2026-11-30)\n")
+    signed.write_text(
+        "**Status: OPERATOR-SIGNED (2026-12-01)** -- the seven rulings in §8\n"
+        "are amended in; the sweep may run.\n")
     mod.PREREGISTRATION = signed
     try:
         mod.require_operator_signoff()

@@ -711,16 +711,19 @@ def build_gdn2_arm(grow: bool, seed: int, tau: float = float("inf"),
 
 def require_operator_signoff():
     """The headline gate: refuse to run any arm/sweep/assemble until the
-    PREREGISTRATION carries an OPERATOR-SIGNED status line."""
+    PREREGISTRATION's STATUS LINE carries an OPERATOR-SIGNED mark with a
+    date (a Status line only -- the prose that DESCRIBES the gate contains
+    the mark and must never satisfy it)."""
     if not PREREGISTRATION.exists():
         raise ValueError(f"fail-closed: {PREREGISTRATION.name} is missing; "
                          "the derivation and construction must be committed "
                          "and signed before any headline arm runs")
-    text = PREREGISTRATION.read_text()
-    if SIGNED_MARK not in text:
-        raise ValueError(f"fail-closed: {PREREGISTRATION.name} is not "
-                         f"{SIGNED_MARK}; the pre-stated predictions need "
-                         "operator sign-off before any headline arm runs")
+    for line in PREREGISTRATION.read_text().splitlines():
+        if line.strip().startswith("Status:") and SIGNED_MARK in line:
+            return True
+    raise ValueError(f"fail-closed: {PREREGISTRATION.name}'s status line is "
+                     f"not {SIGNED_MARK}; the pre-stated predictions need "
+                     "operator sign-off before any headline arm runs")
 
 
 def require_lease() -> str:
