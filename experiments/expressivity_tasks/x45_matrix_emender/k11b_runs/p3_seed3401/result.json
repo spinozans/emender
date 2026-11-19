@@ -1,0 +1,3244 @@
+{
+  "probe": "k11b_channel_gates (gate C)",
+  "arm": "p3",
+  "seed": 3401,
+  "frozen": false,
+  "channels": {
+    "decay": true,
+    "write": true,
+    "read": true
+  },
+  "arm_note": "+ PER-CHANNEL READ GATES (the g_proj analog), combined: r_vec = 1 + m_o*sigmoid(g_proj(x)) per channel, reads *= r_vec before the out projection",
+  "corrected_scoring": {
+    "primary": "post-cooldown eval: a linear cooldown of 24 steps (13.3% of the 180-step constant-LR budget) appended after the banked matched-exposure landing, same stream/data order, LR factor (25 - k)/24 for cooldown step k (1.0 -> 1/24, never zero), both hybrid groups scaling equally; the corrected score is the post-cooldown calibration eval",
+    "secondary": "EMA iterate at step 180 (no extra data): decay 0.99, initialized at the init weights, updated after every constant-phase optimizer step, NOT updated during the cooldown; RANKING-ONLY -- its absolute number is biased toward mid-run weights (stated, not smoothed)",
+    "cooldown_steps": 24,
+    "cooldown_fraction": 0.1333,
+    "cooldown_form": "linear",
+    "ema_decay": 0.99,
+    "exposure_note": "the cooldown steps see ~2.7M more targets (~13%), identical across arms -- a stated protocol EXTENSION; the step-180 constant-LR eval is retained so every banked row stays comparable",
+    "citations": {
+      "river_valley": "Wen et al., ICLR 2025, arXiv:2410.05192 -- constant-LR loss carries an LR-dependent oscillation penalty that decay/averaging removes",
+      "cooldown": "Haegele et al., NeurIPS 2024, arXiv:2405.18392 -- constant-LR + short cooldown matches cosine at full scale",
+      "averaging": "Defazio et al., arXiv:2405.15682 -- iterate averaging as the schedule-free fix for the same penalty",
+      "moonlight": "Liu et al. (Moonshot AI), arXiv:2502.16982 -- with the update RMS matched to AdamW's (~0.2; AdamW typical 0.2-0.4), Muon directly reuses the LR and weight decay tuned for AdamW, i.e. ~1x the AdamW-tuned LR, WITH weight decay",
+      "horizon": "Bjorck et al., ICLR 2025 -- the optimal LR shrinks with token horizon; probe-tuned LRs transfer only downscaled"
+    }
+  },
+  "status": "completed",
+  "exposure_bytes": 20022866,
+  "exposure_steps": 180,
+  "total_bytes": 22745198,
+  "total_steps": 204,
+  "cooldown_steps": 24,
+  "train_seconds_constant": 2137.4,
+  "train_seconds_total": 2419.4,
+  "bytes_per_s": 9367.784364544434,
+  "optimizer_step_seconds": {
+    "mean_steady": 0.17505406895413614,
+    "note": "steps 10+; the honest clock's own measure, per step"
+  },
+  "parameters": 158638848,
+  "parameters_added": 8657040,
+  "parameters_added_share": 0.05457,
+  "final_eval_nll_constant_lr": 1.4748810018811906,
+  "final_eval_nll_post_cooldown": 1.4235332352774483,
+  "ema_eval_nll": 1.5065132890428816,
+  "cooldown_drop": 0.051347766603742295,
+  "step1_train_loss": 5.785070835425993,
+  "step1_bit_identical_to_banked": true,
+  "frozen_divergence_receipt": null,
+  "banked_constant_same_seed": 1.4907409463609969,
+  "scores": [
+    {
+      "kind": "constant",
+      "step": 1,
+      "bytes": 117712,
+      "train_loss": 5.785070835425993,
+      "eval_nll": 5.796414239065988,
+      "eval_windows": 7,
+      "eval_targets": 14336
+    },
+    {
+      "kind": "constant",
+      "step": 5,
+      "bytes": 567019,
+      "train_loss": 5.616515798513468,
+      "eval_nll": 5.54146500996181,
+      "eval_windows": 7,
+      "eval_targets": 14336
+    },
+    {
+      "kind": "constant",
+      "step": 10,
+      "bytes": 1190731,
+      "train_loss": 4.674991130828857,
+      "eval_nll": 4.839727537972586,
+      "eval_windows": 7,
+      "eval_targets": 14336
+    },
+    {
+      "kind": "constant",
+      "step": 20,
+      "bytes": 2367970,
+      "train_loss": 4.19165761074675,
+      "eval_nll": 3.5699710164751326,
+      "eval_windows": 7,
+      "eval_targets": 14336
+    },
+    {
+      "kind": "constant",
+      "step": 40,
+      "bytes": 4542086,
+      "train_loss": 2.9916669624740044,
+      "eval_nll": 2.5511081559317454,
+      "eval_windows": 7,
+      "eval_targets": 14336
+    },
+    {
+      "kind": "constant",
+      "step": 80,
+      "bytes": 8884476,
+      "train_loss": 2.220356204502291,
+      "eval_nll": 1.7699788638523646,
+      "eval_windows": 7,
+      "eval_targets": 14336
+    },
+    {
+      "kind": "constant",
+      "step": 120,
+      "bytes": 13277872,
+      "train_loss": 1.7779156430693266,
+      "eval_nll": 1.5446606193270003,
+      "eval_windows": 7,
+      "eval_targets": 14336
+    },
+    {
+      "kind": "constant",
+      "step": 160,
+      "bytes": 17718312,
+      "train_loss": 1.9076690524816513,
+      "eval_nll": 1.4471431629998344,
+      "eval_windows": 7,
+      "eval_targets": 14336
+    },
+    {
+      "kind": "constant",
+      "step": 180,
+      "bytes": 20022866,
+      "train_loss": 1.8444785258353307,
+      "eval_nll": 1.4748810018811906,
+      "eval_windows": 7,
+      "eval_targets": 14336
+    },
+    {
+      "kind": "ema_180",
+      "step": 180,
+      "bytes": 20022866,
+      "eval_nll": 1.5065132890428816,
+      "eval_windows": 7,
+      "eval_targets": 14336,
+      "ema_decay": 0.99,
+      "note": "ranking-only: biased toward mid-run weights"
+    },
+    {
+      "kind": "post_cooldown",
+      "step": 204,
+      "bytes": 22745198,
+      "eval_nll": 1.4235332352774483,
+      "eval_windows": 7,
+      "eval_targets": 14336
+    }
+  ],
+  "anchors": {
+    "banked": {
+      "constant_lr": {
+        "seed3401": 1.4907409463609969,
+        "seed3402": 1.4899048124040877,
+        "note": "the banked winner config's own constant-LR step-180 rows (routing_symmetry_runs/muon4x_banked_seed{3401,3402})"
+      },
+      "post_cooldown": {
+        "seed3402": 1.4338248457227434,
+        "note": "the corrected post-cooldown banked best (protocol_correction_runs/winner_speedrun_rescored, seed 3402 -- the banked best row's own config re-scored)"
+      },
+      "ema180": {
+        "seed3402": 1.5408323151724679,
+        "note": "the secondary EMA-0.99 iterate at step 180, banked (ranking-only instrument)"
+      },
+      "gdn2": {
+        "constant_lr": 1.3950541530336653,
+        "post_cooldown": 1.3521734476089478,
+        "ema180": 1.3803383282252721,
+        "note": "the banked GDN2 best rows (the cross-machine context; the ~0.08 residual this stage dissects)"
+      }
+    },
+    "mechanism_anchors": {
+      "identity_rewrite_share": [
+        0.118,
+        0.122
+      ],
+      "read_entropy_nats": [
+        1.515,
+        1.6
+      ],
+      "effective_read_rows": [
+        4.55,
+        4.95
+      ],
+      "occupancy_mean_live_slots": [
+        33.5,
+        35.2
+      ],
+      "sweep_layers_ge_threshold": {
+        "k11_arms": [
+          5,
+          6
+        ],
+        "side_by_side_adamw": 7
+      },
+      "sweep_near_decorative": {
+        "k11_arms": [
+          16,
+          17
+        ],
+        "side_by_side_adamw": 17
+      },
+      "sweep_threshold": 0.02,
+      "sweep_near_band": 0.0125,
+      "sweep_total": 24,
+      "caveat": "the K11 lane's same-config seed-matched step-180 anchors (both seeds) -- the references any granularity effect would have to move; the side-by-side's AdamW-era sweep anchors are quoted alongside (the muon4x-era banked sweep was never run)"
+    },
+    "banked_mechanism": {
+      "seed3401_step180": {
+        "identity_rewrite_share": 0.12220044317888193,
+        "read_entropy_nats": 1.5150481063949617,
+        "occupancy_mean_live_slots": 33.49335734049479,
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.022992451985677082,
+          "correct": 0.9743779500325521,
+          "pop": 0.0,
+          "merge": 0.0026295979817708335
+        },
+        "constant_lr_nll": 1.4907409463609969
+      },
+      "seed3402_step180": {
+        "identity_rewrite_share": 0.11799608786375947,
+        "read_entropy_nats": 1.600236432712681,
+        "occupancy_mean_live_slots": 35.15362294514974,
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.023668924967447918,
+          "correct": 0.9737930297851562,
+          "pop": 0.0,
+          "merge": 0.0025380452473958335
+        },
+        "constant_lr_nll": 1.4899048124040877
+      },
+      "seed3402_post_cooldown": {
+        "identity_rewrite_share": 0.1179643202876504,
+        "read_entropy_nats": 1.538525497965773,
+        "occupancy_mean_live_slots": 32.76612091064453,
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02294921875,
+          "correct": 0.9746373494466146,
+          "pop": 0.0,
+          "merge": 0.0024134318033854165
+        },
+        "post_cooldown_nll": 1.4338248457227434
+      }
+    },
+    "bands": {
+      "endpoint_variance": 0.075,
+      "winner_seed_delta": 0.011948040553501738,
+      "win_bar": 0.01,
+      "gap_closure_bar": 0.02
+    }
+  },
+  "diagnostics_step180": {
+    "op_rate_per_token_lane0": {
+      "none": 0.0,
+      "append": 0.022824605305989582,
+      "correct": 0.974700927734375,
+      "pop": 0.0,
+      "merge": 0.0024744669596354165
+    },
+    "op_histogram_all_lanes": {
+      "none": 392243,
+      "append": 8975,
+      "correct": 383268,
+      "pop": 0,
+      "merge": 1946
+    },
+    "occupancy": {
+      "note": "live slots at every token, from the walk's recorded pre-decision liveness channel",
+      "mean_live_slots": 33.80874379475912,
+      "rank": 128
+    },
+    "read_weight_entropy": {
+      "units": "nats over the live-slot weight distribution, per token",
+      "mean": 1.5438229347009105
+    },
+    "per_layer": {
+      "0": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.01904296875,
+          "correct": 0.97967529296875,
+          "pop": 0.0,
+          "merge": 0.00128173828125
+        },
+        "occupancy_mean_live_slots": 30.66217041015625,
+        "read_weight_entropy_nats": 2.774165807145365,
+        "identity_rewrite_share": 0.7342844682574294
+      },
+      "1": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02166748046875,
+          "correct": 0.97723388671875,
+          "pop": 0.0,
+          "merge": 0.0010986328125
+        },
+        "occupancy_mean_live_slots": 34.08062744140625,
+        "read_weight_entropy_nats": 1.179319008071072,
+        "identity_rewrite_share": 0.1151083630004372
+      },
+      "2": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02703857421875,
+          "correct": 0.972412109375,
+          "pop": 0.0,
+          "merge": 0.00054931640625
+        },
+        "occupancy_mean_live_slots": 43.02783203125,
+        "read_weight_entropy_nats": 1.0557025560939026,
+        "identity_rewrite_share": 0.12521968365553604
+      },
+      "3": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02520751953125,
+          "correct": 0.97467041015625,
+          "pop": 0.0,
+          "merge": 0.0001220703125
+        },
+        "occupancy_mean_live_slots": 41.61077880859375,
+        "read_weight_entropy_nats": 1.199260523450858,
+        "identity_rewrite_share": 0.10846014152420315
+      },
+      "4": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.0263671875,
+          "correct": 0.97265625,
+          "pop": 0.0,
+          "merge": 0.0009765625
+        },
+        "occupancy_mean_live_slots": 41.78582763671875,
+        "read_weight_entropy_nats": 0.655883386534601,
+        "identity_rewrite_share": 0.14206827309236947
+      },
+      "5": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02386474609375,
+          "correct": 0.97467041015625,
+          "pop": 0.0,
+          "merge": 0.00146484375
+        },
+        "occupancy_mean_live_slots": 37.07916259765625,
+        "read_weight_entropy_nats": 0.9801986239628496,
+        "identity_rewrite_share": 0.10113344605172522
+      },
+      "6": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02581787109375,
+          "correct": 0.97314453125,
+          "pop": 0.0,
+          "merge": 0.00103759765625
+        },
+        "occupancy_mean_live_slots": 40.7607421875,
+        "read_weight_entropy_nats": 0.979379897124603,
+        "identity_rewrite_share": 0.09796788760662319
+      },
+      "7": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02618408203125,
+          "correct": 0.97308349609375,
+          "pop": 0.0,
+          "merge": 0.000732421875
+        },
+        "occupancy_mean_live_slots": 43.24932861328125,
+        "read_weight_entropy_nats": 1.478025465286471,
+        "identity_rewrite_share": 0.09082355892868343
+      },
+      "8": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02532958984375,
+          "correct": 0.973388671875,
+          "pop": 0.0,
+          "merge": 0.00128173828125
+        },
+        "occupancy_mean_live_slots": 40.812744140625,
+        "read_weight_entropy_nats": 1.0430873466458155,
+        "identity_rewrite_share": 0.11894908452470529
+      },
+      "9": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02203369140625,
+          "correct": 0.97564697265625,
+          "pop": 0.0,
+          "merge": 0.0023193359375
+        },
+        "occupancy_mean_live_slots": 32.59893798828125,
+        "read_weight_entropy_nats": 2.2029218874038228,
+        "identity_rewrite_share": 0.07413199874882702
+      },
+      "10": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02703857421875,
+          "correct": 0.97052001953125,
+          "pop": 0.0,
+          "merge": 0.00244140625
+        },
+        "occupancy_mean_live_slots": 40.7574462890625,
+        "read_weight_entropy_nats": 1.6488385668718704,
+        "identity_rewrite_share": 0.08181875353751336
+      },
+      "11": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02099609375,
+          "correct": 0.975341796875,
+          "pop": 0.0,
+          "merge": 0.003662109375
+        },
+        "occupancy_mean_live_slots": 28.1597900390625,
+        "read_weight_entropy_nats": 1.7708772436606925,
+        "identity_rewrite_share": 0.08423028785982478
+      },
+      "12": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02264404296875,
+          "correct": 0.97589111328125,
+          "pop": 0.0,
+          "merge": 0.00146484375
+        },
+        "occupancy_mean_live_slots": 33.97357177734375,
+        "read_weight_entropy_nats": 1.3636468496914311,
+        "identity_rewrite_share": 0.09143786353117768
+      },
+      "13": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02587890625,
+          "correct": 0.97296142578125,
+          "pop": 0.0,
+          "merge": 0.00115966796875
+        },
+        "occupancy_mean_live_slots": 39.8721923828125,
+        "read_weight_entropy_nats": 1.151619587401151,
+        "identity_rewrite_share": 0.09924095100683772
+      },
+      "14": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02410888671875,
+          "correct": 0.9736328125,
+          "pop": 0.0,
+          "merge": 0.00225830078125
+        },
+        "occupancy_mean_live_slots": 36.8409423828125,
+        "read_weight_entropy_nats": 1.5717612724509191,
+        "identity_rewrite_share": 0.08970661985957874
+      },
+      "15": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02276611328125,
+          "correct": 0.97296142578125,
+          "pop": 0.0,
+          "merge": 0.0042724609375
+        },
+        "occupancy_mean_live_slots": 31.7650146484375,
+        "read_weight_entropy_nats": 1.1576622318627487,
+        "identity_rewrite_share": 0.08638103004830312
+      },
+      "16": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02398681640625,
+          "correct": 0.971923828125,
+          "pop": 0.0,
+          "merge": 0.00408935546875
+        },
+        "occupancy_mean_live_slots": 34.19781494140625,
+        "read_weight_entropy_nats": 1.7350615635113886,
+        "identity_rewrite_share": 0.08057020849032906
+      },
+      "17": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.0205078125,
+          "correct": 0.97528076171875,
+          "pop": 0.0,
+          "merge": 0.00421142578125
+        },
+        "occupancy_mean_live_slots": 26.96392822265625,
+        "read_weight_entropy_nats": 1.4417009451474339,
+        "identity_rewrite_share": 0.08648851617748295
+      },
+      "18": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.0234375,
+          "correct": 0.9716796875,
+          "pop": 0.0,
+          "merge": 0.0048828125
+        },
+        "occupancy_mean_live_slots": 31.244140625,
+        "read_weight_entropy_nats": 1.478988043669089,
+        "identity_rewrite_share": 0.0964824120603015
+      },
+      "19": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02313232421875,
+          "correct": 0.97198486328125,
+          "pop": 0.0,
+          "merge": 0.0048828125
+        },
+        "occupancy_mean_live_slots": 29.99591064453125,
+        "read_weight_entropy_nats": 1.9543187486642037,
+        "identity_rewrite_share": 0.07893249607535321
+      },
+      "20": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02056884765625,
+          "correct": 0.9759521484375,
+          "pop": 0.0,
+          "merge": 0.00347900390625
+        },
+        "occupancy_mean_live_slots": 28.48590087890625,
+        "read_weight_entropy_nats": 2.6398257286768745,
+        "identity_rewrite_share": 0.07429643527204503
+      },
+      "21": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.01495361328125,
+          "correct": 0.98193359375,
+          "pop": 0.0,
+          "merge": 0.00311279296875
+        },
+        "occupancy_mean_live_slots": 19.2158203125,
+        "read_weight_entropy_nats": 2.3437232542573736,
+        "identity_rewrite_share": 0.07458975634012929
+      },
+      "22": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.01885986328125,
+          "correct": 0.9775390625,
+          "pop": 0.0,
+          "merge": 0.00360107421875
+        },
+        "occupancy_mean_live_slots": 25.2867431640625,
+        "read_weight_entropy_nats": 1.3532081831357627,
+        "identity_rewrite_share": 0.09946303696303696
+      },
+      "23": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.016357421875,
+          "correct": 0.9786376953125,
+          "pop": 0.0,
+          "merge": 0.0050048828125
+        },
+        "occupancy_mean_live_slots": 18.98248291015625,
+        "read_weight_entropy_nats": 1.8925737121015511,
+        "identity_rewrite_share": 0.07808407134838469
+      }
+    },
+    "identity_rewrite_share": 0.12136938121627686,
+    "identity_n_correct": 383268,
+    "probe": {
+      "split": "calibration",
+      "windows": 4,
+      "mixers": 24,
+      "regime": "eval, bf16 autocast, the k11b persistent walk the arm trains on (collect=True)",
+      "probe_wall_seconds": 5.4
+    },
+    "effective_read_rows": 4.6824564933776855,
+    "gate_telemetry": {
+      "note": "per-layer means over the probe windows: the born-identity drift -- the per-channel decay gate's distance from the REGISTERED SCALAR (how far the per-channel timescales opened), the write gate's distance from 1, the read gate's distance from 1 (born at exact identity per channel, P5)",
+      "per_layer": {
+        "0": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.003892055945470929,
+            "max": 0.008324384689331055,
+            "lam_vec_mean": 0.9827755689620972,
+            "lam_vec_min": 0.8450272679328918,
+            "lam_vec_max": 1.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.049901869148015976,
+            "max": 0.12467259168624878
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.006572950631380081,
+            "max": 0.012342393398284912
+          }
+        },
+        "1": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.009651546366512775,
+            "max": 0.021775126457214355,
+            "lam_vec_mean": 0.7296549081802368,
+            "lam_vec_min": 0.014867653138935566,
+            "lam_vec_max": 0.994251549243927
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.007126467302441597,
+            "max": 0.013391315937042236
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.0009312736801803112,
+            "max": 0.00099945068359375
+          }
+        },
+        "2": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.010344352573156357,
+            "max": 0.016990184783935547,
+            "lam_vec_mean": 0.7443959712982178,
+            "lam_vec_min": 0.002924711909145117,
+            "lam_vec_max": 0.9894933700561523
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.004960290621966124,
+            "max": 0.011940181255340576
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.0014357608743011951,
+            "max": 0.0018105506896972656
+          }
+        },
+        "3": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.00429521081969142,
+            "max": 0.006867110729217529,
+            "lam_vec_mean": 0.7776381969451904,
+            "lam_vec_min": 0.010910587385296822,
+            "lam_vec_max": 0.9959462881088257
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.008182267658412457,
+            "max": 0.020862817764282227
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.004246024414896965,
+            "max": 0.00456392765045166
+          }
+        },
+        "4": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.011348229832947254,
+            "max": 0.02961021661758423,
+            "lam_vec_mean": 0.545268714427948,
+            "lam_vec_min": 0.007027935702353716,
+            "lam_vec_max": 0.9883751273155212
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.012930448167026043,
+            "max": 0.049356698989868164
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.010340753011405468,
+            "max": 0.01394343376159668
+          }
+        },
+        "5": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.007121876813471317,
+            "max": 0.023052453994750977,
+            "lam_vec_mean": 0.6779547929763794,
+            "lam_vec_min": 0.006529281847178936,
+            "lam_vec_max": 0.9994168281555176
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.0068187471479177475,
+            "max": 0.03276342153549194
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.005899894051253796,
+            "max": 0.010851263999938965
+          }
+        },
+        "6": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.008365255780518055,
+            "max": 0.023339927196502686,
+            "lam_vec_mean": 0.7053099870681763,
+            "lam_vec_min": 0.0031657377257943153,
+            "lam_vec_max": 0.9974508881568909
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.018234040588140488,
+            "max": 0.06692659854888916
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.01035199873149395,
+            "max": 0.012185871601104736
+          }
+        },
+        "7": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.012142345309257507,
+            "max": 0.023024439811706543,
+            "lam_vec_mean": 0.7751740217208862,
+            "lam_vec_min": 0.005098352674394846,
+            "lam_vec_max": 0.9916498064994812
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.021437810733914375,
+            "max": 0.07581716775894165
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.008993173018097878,
+            "max": 0.013867497444152832
+          }
+        },
+        "8": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.012670560739934444,
+            "max": 0.025865256786346436,
+            "lam_vec_mean": 0.7477757930755615,
+            "lam_vec_min": 0.003451406257227063,
+            "lam_vec_max": 0.9920673966407776
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.009597865864634514,
+            "max": 0.02686864137649536
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.005357289221137762,
+            "max": 0.00839078426361084
+          }
+        },
+        "9": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.0035352727863937616,
+            "max": 0.003999233245849609,
+            "lam_vec_mean": 0.8951400518417358,
+            "lam_vec_min": 0.025247842073440552,
+            "lam_vec_max": 1.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.024962972849607468,
+            "max": 0.09031492471694946
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.01421977486461401,
+            "max": 0.024472296237945557
+          }
+        },
+        "10": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.007299101911485195,
+            "max": 0.009386420249938965,
+            "lam_vec_mean": 0.8432576656341553,
+            "lam_vec_min": 0.027328938245773315,
+            "lam_vec_max": 0.9921780824661255
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.028220534324645996,
+            "max": 0.08984684944152832
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.01179154496639967,
+            "max": 0.014524579048156738
+          }
+        },
+        "11": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.011449630372226238,
+            "max": 0.016393840312957764,
+            "lam_vec_mean": 0.8926279544830322,
+            "lam_vec_min": 0.0048327818512916565,
+            "lam_vec_max": 1.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.04279882833361626,
+            "max": 0.10304766893386841
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.008392597548663616,
+            "max": 0.014149487018585205
+          }
+        },
+        "12": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.007665527984499931,
+            "max": 0.01126033067703247,
+            "lam_vec_mean": 0.7913474440574646,
+            "lam_vec_min": 0.0031488363165408373,
+            "lam_vec_max": 0.9921256899833679
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.027660749852657318,
+            "max": 0.11374372243881226
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.022689446806907654,
+            "max": 0.03623694181442261
+          }
+        },
+        "13": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.00805419310927391,
+            "max": 0.01366490125656128,
+            "lam_vec_mean": 0.7876172065734863,
+            "lam_vec_min": 0.0020167373586446047,
+            "lam_vec_max": 1.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.035439468920230865,
+            "max": 0.12009274959564209
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.01993558555841446,
+            "max": 0.03962218761444092
+          }
+        },
+        "14": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.010823672637343407,
+            "max": 0.020485281944274902,
+            "lam_vec_mean": 0.8148206472396851,
+            "lam_vec_min": 0.005799128673970699,
+            "lam_vec_max": 0.9928451776504517
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.0437687411904335,
+            "max": 0.12552130222320557
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.023319007828831673,
+            "max": 0.037649333477020264
+          }
+        },
+        "15": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.010856767185032368,
+            "max": 0.017666757106781006,
+            "lam_vec_mean": 0.7960728406906128,
+            "lam_vec_min": 0.003762293141335249,
+            "lam_vec_max": 0.9903348088264465
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.04186609014868736,
+            "max": 0.11071944236755371
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.026605680584907532,
+            "max": 0.04020535945892334
+          }
+        },
+        "16": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.008983233943581581,
+            "max": 0.010963737964630127,
+            "lam_vec_mean": 0.8566491603851318,
+            "lam_vec_min": 0.018979951739311218,
+            "lam_vec_max": 0.9903424978256226
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.034366264939308167,
+            "max": 0.11031174659729004
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.02288784459233284,
+            "max": 0.036715805530548096
+          }
+        },
+        "17": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.006632095202803612,
+            "max": 0.016795754432678223,
+            "lam_vec_mean": 0.8281068801879883,
+            "lam_vec_min": 0.006001002620905638,
+            "lam_vec_max": 0.9987757205963135
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.03900272771716118,
+            "max": 0.10287988185882568
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.024606268852949142,
+            "max": 0.03828895092010498
+          }
+        },
+        "18": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.005583884194493294,
+            "max": 0.013098061084747314,
+            "lam_vec_mean": 0.7070305943489075,
+            "lam_vec_min": 0.0003990615950897336,
+            "lam_vec_max": 0.9946911931037903
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.05007531866431236,
+            "max": 0.11482691764831543
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.034466203302145004,
+            "max": 0.04285740852355957
+          }
+        },
+        "19": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.0047730812802910805,
+            "max": 0.010521233081817627,
+            "lam_vec_mean": 0.9210872054100037,
+            "lam_vec_min": 0.09566249698400497,
+            "lam_vec_max": 0.9964722990989685
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.04565722495317459,
+            "max": 0.10102075338363647
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.02443101815879345,
+            "max": 0.032711684703826904
+          }
+        },
+        "20": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.0026313611306250095,
+            "max": 0.0035490989685058594,
+            "lam_vec_mean": 0.9802210330963135,
+            "lam_vec_min": 0.6546680927276611,
+            "lam_vec_max": 1.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.039629340171813965,
+            "max": 0.06531566381454468
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.01254343707114458,
+            "max": 0.015527129173278809
+          }
+        },
+        "21": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.001208282308652997,
+            "max": 0.01740056276321411,
+            "lam_vec_mean": 0.9908334016799927,
+            "lam_vec_min": 0.901900589466095,
+            "lam_vec_max": 1.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.06897473335266113,
+            "max": 0.1031380295753479
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.01847534067928791,
+            "max": 0.022605836391448975
+          }
+        },
+        "22": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.0008002063259482384,
+            "max": 0.001624763011932373,
+            "lam_vec_mean": 0.5420743227005005,
+            "lam_vec_min": 0.0009991740807890892,
+            "lam_vec_max": 0.9944689869880676
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.05086430534720421,
+            "max": 0.08293145895004272
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.02697164937853813,
+            "max": 0.03823220729827881
+          }
+        },
+        "23": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.0038155680522322655,
+            "max": 0.007810413837432861,
+            "lam_vec_mean": 0.8831669092178345,
+            "lam_vec_min": 0.40691477060317993,
+            "lam_vec_max": 1.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.03210924565792084,
+            "max": 0.05200541019439697
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.01583688333630562,
+            "max": 0.018733203411102295
+          }
+        }
+      },
+      "decay_gate_mean_distance_from_registered_scalar": 0.0068834020421491005,
+      "write_gate_mean_distance_from_1": 0.03298722424369771,
+      "read_gate_mean_distance_from_1": 0.015054225048515946,
+      "n_layers": 96
+    }
+  },
+  "diagnostics_post_cooldown": {
+    "op_rate_per_token_lane0": {
+      "none": 0.0,
+      "append": 0.02353668212890625,
+      "correct": 0.9743423461914062,
+      "pop": 0.0,
+      "merge": 0.0021209716796875
+    },
+    "op_histogram_all_lanes": {
+      "none": 392382,
+      "append": 9255,
+      "correct": 383127,
+      "pop": 0,
+      "merge": 1668
+    },
+    "occupancy": {
+      "note": "live slots at every token, from the walk's recorded pre-decision liveness channel",
+      "mean_live_slots": 34.807352701822914,
+      "rank": 128
+    },
+    "read_weight_entropy": {
+      "units": "nats over the live-slot weight distribution, per token",
+      "mean": 1.548652978153847
+    },
+    "per_layer": {
+      "0": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.0186767578125,
+          "correct": 0.98028564453125,
+          "pop": 0.0,
+          "merge": 0.00103759765625
+        },
+        "occupancy_mean_live_slots": 30.2939453125,
+        "read_weight_entropy_nats": 2.7825873467650832,
+        "identity_rewrite_share": 0.723118112197248
+      },
+      "1": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.0220947265625,
+          "correct": 0.976318359375,
+          "pop": 0.0,
+          "merge": 0.0015869140625
+        },
+        "occupancy_mean_live_slots": 33.39324951171875,
+        "read_weight_entropy_nats": 1.1452120886701576,
+        "identity_rewrite_share": 0.12015503875968993
+      },
+      "2": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.0262451171875,
+          "correct": 0.97308349609375,
+          "pop": 0.0,
+          "merge": 0.00067138671875
+        },
+        "occupancy_mean_live_slots": 41.299560546875,
+        "read_weight_entropy_nats": 1.1065798164520488,
+        "identity_rewrite_share": 0.12187166781659663
+      },
+      "3": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.0262451171875,
+          "correct": 0.9736328125,
+          "pop": 0.0,
+          "merge": 0.0001220703125
+        },
+        "occupancy_mean_live_slots": 42.80267333984375,
+        "read_weight_entropy_nats": 1.1941932040886816,
+        "identity_rewrite_share": 0.11396690070210631
+      },
+      "4": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.0267333984375,
+          "correct": 0.972412109375,
+          "pop": 0.0,
+          "merge": 0.0008544921875
+        },
+        "occupancy_mean_live_slots": 41.39398193359375,
+        "read_weight_entropy_nats": 0.5529443156620206,
+        "identity_rewrite_share": 0.14656038162189305
+      },
+      "5": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02490234375,
+          "correct": 0.97393798828125,
+          "pop": 0.0,
+          "merge": 0.00115966796875
+        },
+        "occupancy_mean_live_slots": 37.42596435546875,
+        "read_weight_entropy_nats": 0.9079699569873596,
+        "identity_rewrite_share": 0.10854170583443003
+      },
+      "6": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02532958984375,
+          "correct": 0.9737548828125,
+          "pop": 0.0,
+          "merge": 0.00091552734375
+        },
+        "occupancy_mean_live_slots": 39.43865966796875,
+        "read_weight_entropy_nats": 0.9583021796617383,
+        "identity_rewrite_share": 0.09740503948852952
+      },
+      "7": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02606201171875,
+          "correct": 0.9730224609375,
+          "pop": 0.0,
+          "merge": 0.00091552734375
+        },
+        "occupancy_mean_live_slots": 41.8514404296875,
+        "read_weight_entropy_nats": 1.4504929147933714,
+        "identity_rewrite_share": 0.09415380755237737
+      },
+      "8": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02459716796875,
+          "correct": 0.9742431640625,
+          "pop": 0.0,
+          "merge": 0.00115966796875
+        },
+        "occupancy_mean_live_slots": 39.71429443359375,
+        "read_weight_entropy_nats": 1.0602666261316103,
+        "identity_rewrite_share": 0.11740383410600175
+      },
+      "9": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02276611328125,
+          "correct": 0.97540283203125,
+          "pop": 0.0,
+          "merge": 0.0018310546875
+        },
+        "occupancy_mean_live_slots": 34.98968505859375,
+        "read_weight_entropy_nats": 2.1654064661127563,
+        "identity_rewrite_share": 0.0747137225455228
+      },
+      "10": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02874755859375,
+          "correct": 0.96875,
+          "pop": 0.0,
+          "merge": 0.00250244140625
+        },
+        "occupancy_mean_live_slots": 42.87652587890625,
+        "read_weight_entropy_nats": 1.8352162892724109,
+        "identity_rewrite_share": 0.07844002016129033
+      },
+      "11": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.020751953125,
+          "correct": 0.976806640625,
+          "pop": 0.0,
+          "merge": 0.00244140625
+        },
+        "occupancy_mean_live_slots": 29.982666015625,
+        "read_weight_entropy_nats": 1.8545014307332377,
+        "identity_rewrite_share": 0.08910272431892027
+      },
+      "12": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.0235595703125,
+          "correct": 0.9757080078125,
+          "pop": 0.0,
+          "merge": 0.000732421875
+        },
+        "occupancy_mean_live_slots": 35.23016357421875,
+        "read_weight_entropy_nats": 1.3034567485859643,
+        "identity_rewrite_share": 0.09527086200425372
+      },
+      "13": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.027099609375,
+          "correct": 0.9715576171875,
+          "pop": 0.0,
+          "merge": 0.0013427734375
+        },
+        "occupancy_mean_live_slots": 41.17242431640625,
+        "read_weight_entropy_nats": 1.2257240492946995,
+        "identity_rewrite_share": 0.10484985550948611
+      },
+      "14": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02667236328125,
+          "correct": 0.97161865234375,
+          "pop": 0.0,
+          "merge": 0.001708984375
+        },
+        "occupancy_mean_live_slots": 39.49169921875,
+        "read_weight_entropy_nats": 1.5362508575335094,
+        "identity_rewrite_share": 0.0897041271436648
+      },
+      "15": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.0255126953125,
+          "correct": 0.97027587890625,
+          "pop": 0.0,
+          "merge": 0.00421142578125
+        },
+        "occupancy_mean_live_slots": 34.84088134765625,
+        "read_weight_entropy_nats": 1.1536696768995023,
+        "identity_rewrite_share": 0.08787821601560043
+      },
+      "16": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02520751953125,
+          "correct": 0.97174072265625,
+          "pop": 0.0,
+          "merge": 0.0030517578125
+        },
+        "occupancy_mean_live_slots": 35.25634765625,
+        "read_weight_entropy_nats": 1.7308044880846971,
+        "identity_rewrite_share": 0.08190440298976195
+      },
+      "17": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02056884765625,
+          "correct": 0.97613525390625,
+          "pop": 0.0,
+          "merge": 0.0032958984375
+        },
+        "occupancy_mean_live_slots": 27.03070068359375,
+        "read_weight_entropy_nats": 1.4441882843032487,
+        "identity_rewrite_share": 0.08891389983117615
+      },
+      "18": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.025634765625,
+          "correct": 0.970458984375,
+          "pop": 0.0,
+          "merge": 0.00390625
+        },
+        "occupancy_mean_live_slots": 34.03912353515625,
+        "read_weight_entropy_nats": 1.475043210624542,
+        "identity_rewrite_share": 0.09735849056603774
+      },
+      "19": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02386474609375,
+          "correct": 0.971435546875,
+          "pop": 0.0,
+          "merge": 0.00469970703125
+        },
+        "occupancy_mean_live_slots": 30.50213623046875,
+        "read_weight_entropy_nats": 1.9414244382976613,
+        "identity_rewrite_share": 0.07740638351344559
+      },
+      "20": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02154541015625,
+          "correct": 0.97576904296875,
+          "pop": 0.0,
+          "merge": 0.002685546875
+        },
+        "occupancy_mean_live_slots": 30.6898193359375,
+        "read_weight_entropy_nats": 2.6699890226169396,
+        "identity_rewrite_share": 0.07387252142365672
+      },
+      "21": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.017578125,
+          "correct": 0.97869873046875,
+          "pop": 0.0,
+          "merge": 0.00372314453125
+        },
+        "occupancy_mean_live_slots": 23.8060302734375,
+        "read_weight_entropy_nats": 2.5887757093078285,
+        "identity_rewrite_share": 0.07483629560336763
+      },
+      "22": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.0181884765625,
+          "correct": 0.97808837890625,
+          "pop": 0.0,
+          "merge": 0.00372314453125
+        },
+        "occupancy_mean_live_slots": 24.73291015625,
+        "read_weight_entropy_nats": 1.1278152354007007,
+        "identity_rewrite_share": 0.1022776911076443
+      },
+      "23": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.01629638671875,
+          "correct": 0.9810791015625,
+          "pop": 0.0,
+          "merge": 0.00262451171875
+        },
+        "occupancy_mean_live_slots": 23.12158203125,
+        "read_weight_entropy_nats": 1.956857119412555,
+        "identity_rewrite_share": 0.07894736842105263
+      }
+    },
+    "identity_rewrite_share": 0.12259642364020286,
+    "identity_n_correct": 383127,
+    "probe": {
+      "split": "calibration",
+      "windows": 4,
+      "mixers": 24,
+      "regime": "eval, bf16 autocast, the k11b persistent walk the arm trains on (collect=True)",
+      "probe_wall_seconds": 5.4
+    },
+    "effective_read_rows": 4.705128192901611,
+    "gate_telemetry": {
+      "note": "per-layer means over the probe windows: the born-identity drift -- the per-channel decay gate's distance from the REGISTERED SCALAR (how far the per-channel timescales opened), the write gate's distance from 1, the read gate's distance from 1 (born at exact identity per channel, P5)",
+      "per_layer": {
+        "0": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.004124864935874939,
+            "max": 0.008293390274047852,
+            "lam_vec_mean": 0.9837443828582764,
+            "lam_vec_min": 0.7710083723068237,
+            "lam_vec_max": 1.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.05497466400265694,
+            "max": 0.13639122247695923
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.007618957199156284,
+            "max": 0.014581084251403809
+          }
+        },
+        "1": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.0106853898614645,
+            "max": 0.023703455924987793,
+            "lam_vec_mean": 0.7361958622932434,
+            "lam_vec_min": 0.01072489283978939,
+            "lam_vec_max": 0.9936482906341553
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.009809007868170738,
+            "max": 0.01950615644454956
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.0030253329314291477,
+            "max": 0.0036706924438476562
+          }
+        },
+        "2": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.010125571861863136,
+            "max": 0.01756352186203003,
+            "lam_vec_mean": 0.751481294631958,
+            "lam_vec_min": 0.002923204330727458,
+            "lam_vec_max": 0.9908299446105957
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.00690745934844017,
+            "max": 0.018588542938232422
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.0015615588054060936,
+            "max": 0.0016480684280395508
+          }
+        },
+        "3": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.0042030648328363895,
+            "max": 0.007809937000274658,
+            "lam_vec_mean": 0.7783297300338745,
+            "lam_vec_min": 0.0075464555993676186,
+            "lam_vec_max": 0.9971058964729309
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.009919455274939537,
+            "max": 0.02600473165512085
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.005323993973433971,
+            "max": 0.006978213787078857
+          }
+        },
+        "4": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.01100706122815609,
+            "max": 0.031716883182525635,
+            "lam_vec_mean": 0.48684975504875183,
+            "lam_vec_min": 0.003778002457693219,
+            "lam_vec_max": 0.9864349365234375
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.014879245311021805,
+            "max": 0.05915391445159912
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.011886556632816792,
+            "max": 0.01519930362701416
+          }
+        },
+        "5": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.007594152353703976,
+            "max": 0.026907026767730713,
+            "lam_vec_mean": 0.6256431341171265,
+            "lam_vec_min": 0.003608117578551173,
+            "lam_vec_max": 0.9984130859375
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.009839406237006187,
+            "max": 0.04435741901397705
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.006760374177247286,
+            "max": 0.01088249683380127
+          }
+        },
+        "6": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.008090579882264137,
+            "max": 0.02610146999359131,
+            "lam_vec_mean": 0.6714702248573303,
+            "lam_vec_min": 0.002258797874674201,
+            "lam_vec_max": 0.9983640909194946
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.0204620324075222,
+            "max": 0.07728534936904907
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.012840953655540943,
+            "max": 0.01437234878540039
+          }
+        },
+        "7": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.013328490778803825,
+            "max": 0.02626824378967285,
+            "lam_vec_mean": 0.7462499141693115,
+            "lam_vec_min": 0.007845006883144379,
+            "lam_vec_max": 0.9865262508392334
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.023532509803771973,
+            "max": 0.08317720890045166
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.009421019814908504,
+            "max": 0.01454085111618042
+          }
+        },
+        "8": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.01258577685803175,
+            "max": 0.02670949697494507,
+            "lam_vec_mean": 0.7471245527267456,
+            "lam_vec_min": 0.0024545101914554834,
+            "lam_vec_max": 0.9929553866386414
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.009889254346489906,
+            "max": 0.0302923321723938
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.007508937735110521,
+            "max": 0.009494304656982422
+          }
+        },
+        "9": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.0034705535508692265,
+            "max": 0.0050084590911865234,
+            "lam_vec_mean": 0.8892921805381775,
+            "lam_vec_min": 0.013285325840115547,
+            "lam_vec_max": 1.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.025831392034888268,
+            "max": 0.09517693519592285
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.014740579761564732,
+            "max": 0.02574247121810913
+          }
+        },
+        "10": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.007651041261851788,
+            "max": 0.00902092456817627,
+            "lam_vec_mean": 0.8574739694595337,
+            "lam_vec_min": 0.033387478440999985,
+            "lam_vec_max": 0.9913229942321777
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.02999233454465866,
+            "max": 0.09684687852859497
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.012784876860678196,
+            "max": 0.015958189964294434
+          }
+        },
+        "11": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.009924490004777908,
+            "max": 0.016839265823364258,
+            "lam_vec_mean": 0.8963883519172668,
+            "lam_vec_min": 0.005829377565532923,
+            "lam_vec_max": 1.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.04521673545241356,
+            "max": 0.10922873020172119
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.009788389317691326,
+            "max": 0.014468371868133545
+          }
+        },
+        "12": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.007426629774272442,
+            "max": 0.00964587926864624,
+            "lam_vec_mean": 0.7650883197784424,
+            "lam_vec_min": 0.0031434206757694483,
+            "lam_vec_max": 0.990419328212738
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.02753477171063423,
+            "max": 0.12014204263687134
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.025235489010810852,
+            "max": 0.0382729172706604
+          }
+        },
+        "13": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.007400748319923878,
+            "max": 0.012504100799560547,
+            "lam_vec_mean": 0.788872241973877,
+            "lam_vec_min": 0.0011527013266459107,
+            "lam_vec_max": 1.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.0371658131480217,
+            "max": 0.12783503532409668
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.02095211297273636,
+            "max": 0.04215705394744873
+          }
+        },
+        "14": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.010929676704108715,
+            "max": 0.020720243453979492,
+            "lam_vec_mean": 0.7893228530883789,
+            "lam_vec_min": 0.0048115248791873455,
+            "lam_vec_max": 0.9918606281280518
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.04707157239317894,
+            "max": 0.13644856214523315
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.023830490186810493,
+            "max": 0.04143303632736206
+          }
+        },
+        "15": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.011188820004463196,
+            "max": 0.019527018070220947,
+            "lam_vec_mean": 0.7812370657920837,
+            "lam_vec_min": 0.0029173619113862514,
+            "lam_vec_max": 0.9910709261894226
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.04473308473825455,
+            "max": 0.11925464868545532
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.028440043330192566,
+            "max": 0.04317528009414673
+          }
+        },
+        "16": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.00977732241153717,
+            "max": 0.011631011962890625,
+            "lam_vec_mean": 0.8514206409454346,
+            "lam_vec_min": 0.00959801860153675,
+            "lam_vec_max": 0.9890184998512268
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.036854833364486694,
+            "max": 0.1182590126991272
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.024336135014891624,
+            "max": 0.040022313594818115
+          }
+        },
+        "17": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.007219372317194939,
+            "max": 0.020645737648010254,
+            "lam_vec_mean": 0.8145579695701599,
+            "lam_vec_min": 0.0042440276592969894,
+            "lam_vec_max": 1.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.04269692301750183,
+            "max": 0.10989958047866821
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.025805823504924774,
+            "max": 0.040399909019470215
+          }
+        },
+        "18": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.005338605027645826,
+            "max": 0.015426933765411377,
+            "lam_vec_mean": 0.646744966506958,
+            "lam_vec_min": 0.00010704167652875185,
+            "lam_vec_max": 0.9943920969963074
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.055411867797374725,
+            "max": 0.12208425998687744
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.036109425127506256,
+            "max": 0.04473137855529785
+          }
+        },
+        "19": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.004910369403660297,
+            "max": 0.010732650756835938,
+            "lam_vec_mean": 0.9132185578346252,
+            "lam_vec_min": 0.07100698351860046,
+            "lam_vec_max": 1.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.052010856568813324,
+            "max": 0.10939300060272217
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.026299744844436646,
+            "max": 0.034902870655059814
+          }
+        },
+        "20": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.0032656004186719656,
+            "max": 0.0033991336822509766,
+            "lam_vec_mean": 0.9740425944328308,
+            "lam_vec_min": 0.6579034924507141,
+            "lam_vec_max": 1.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.0453222319483757,
+            "max": 0.0704275369644165
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.014178775250911713,
+            "max": 0.017960786819458008
+          }
+        },
+        "21": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.0014128175098448992,
+            "max": 0.01813197135925293,
+            "lam_vec_mean": 0.9913781881332397,
+            "lam_vec_min": 0.9055988192558289,
+            "lam_vec_max": 1.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.0737181231379509,
+            "max": 0.10687345266342163
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.019264403730630875,
+            "max": 0.024197041988372803
+          }
+        },
+        "22": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.001854550326243043,
+            "max": 0.003977000713348389,
+            "lam_vec_mean": 0.486763596534729,
+            "lam_vec_min": 0.0004577485960908234,
+            "lam_vec_max": 0.9921547770500183
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.0554158091545105,
+            "max": 0.08875119686126709
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.02927275188267231,
+            "max": 0.04155933856964111
+          }
+        },
+        "23": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.003325818106532097,
+            "max": 0.006678640842437744,
+            "lam_vec_mean": 0.8825075626373291,
+            "lam_vec_min": 0.3181478679180145,
+            "lam_vec_max": 1.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.03193119913339615,
+            "max": 0.05023467540740967
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.01612592674791813,
+            "max": 0.018861889839172363
+          }
+        }
+      },
+      "decay_gate_mean_distance_from_registered_scalar": 0.007077253848062052,
+      "write_gate_mean_distance_from_1": 0.036107921221021876,
+      "read_gate_mean_distance_from_1": 0.016379693852892768,
+      "n_layers": 96
+    }
+  },
+  "read_mask_sweep_step180": {
+    "note": "C4 diagnostic: one layer's mixer output (== its store read, projected) zeroed for the eval pass, one layer at a time, at the step-180 restored checkpoint; plus the all-layers cell (the storeless floor). Ablation effects, not marginals.",
+    "base_nll": 1.4748810018811906,
+    "masked_nll_per_layer": {
+      "0": 1.6339808702468872,
+      "1": 1.5300501414707728,
+      "2": 1.5325834580830164,
+      "3": 1.5010077953338623,
+      "4": 1.5040904794420515,
+      "5": 1.4908593893051147,
+      "6": 1.4915061337607247,
+      "7": 1.4802932398659843,
+      "8": 1.4821737323488509,
+      "9": 1.48194762638637,
+      "10": 1.4781497887202673,
+      "11": 1.4906854799815588,
+      "12": 1.4788648571286882,
+      "13": 1.476907593863351,
+      "14": 1.4762146472930908,
+      "15": 1.4763658727918352,
+      "16": 1.477399570601327,
+      "17": 1.4812764099666051,
+      "18": 1.4763182231358118,
+      "19": 1.4784509454454695,
+      "20": 1.482638614518302,
+      "21": 1.4879345212663924,
+      "22": 1.477737409727914,
+      "23": 1.487308178629194
+    },
+    "all_layers_masked_nll": 2.814854485648019,
+    "delta_per_layer": {
+      "0": 0.15909986836569656,
+      "1": 0.05516913958958214,
+      "2": 0.05770245620182579,
+      "3": 0.02612679345267166,
+      "4": 0.029209477560860897,
+      "5": 0.0159783874239241,
+      "6": 0.016625131879534072,
+      "7": 0.005412237984793622,
+      "8": 0.007292730467660213,
+      "9": 0.007066624505179364,
+      "10": 0.0032687868390766095,
+      "11": 0.015804478100368113,
+      "12": 0.003983855247497559,
+      "13": 0.002026591982160264,
+      "14": 0.001333645411900175,
+      "15": 0.0014848709106445312,
+      "16": 0.0025185687201363383,
+      "17": 0.0063954080854145,
+      "18": 0.0014372212546212015,
+      "19": 0.0035699435642788657,
+      "20": 0.0077576126371112775,
+      "21": 0.013053519385201717,
+      "22": 0.0028564078467232523,
+      "23": 0.01242717674800331
+    },
+    "all_layers_delta": 1.3399734837668285
+  },
+  "read_mask_sweep_post_cooldown": {
+    "note": "C4 diagnostic: one layer's mixer output (== its store read, projected) zeroed for the eval pass, one layer at a time, at the step-180 restored checkpoint; plus the all-layers cell (the storeless floor). Ablation effects, not marginals.",
+    "base_nll": 1.4235332352774483,
+    "masked_nll_per_layer": {
+      "0": 1.5913050004414149,
+      "1": 1.4847527231488908,
+      "2": 1.492538469178336,
+      "3": 1.4490650040762765,
+      "4": 1.4608848094940186,
+      "5": 1.4436017615454537,
+      "6": 1.4417318105697632,
+      "7": 1.4329302992139543,
+      "8": 1.4409705911363875,
+      "9": 1.4362660646438599,
+      "10": 1.4327165058680944,
+      "11": 1.4489268575395857,
+      "12": 1.4296562841960363,
+      "13": 1.4259261744362968,
+      "14": 1.4257275717599052,
+      "15": 1.4256823403494698,
+      "16": 1.425503202847072,
+      "17": 1.4256168093000139,
+      "18": 1.4229449204036169,
+      "19": 1.4220514467784338,
+      "20": 1.4204680068152291,
+      "21": 1.4229323012488229,
+      "22": 1.4221161263329642,
+      "23": 1.4240655388150896
+    },
+    "all_layers_masked_nll": 2.789743253162929,
+    "delta_per_layer": {
+      "0": 0.16777176516396652,
+      "1": 0.06121948787144249,
+      "2": 0.06900523390088775,
+      "3": 0.025531768798828125,
+      "4": 0.037351574216570205,
+      "5": 0.02006852626800537,
+      "6": 0.018198575292314834,
+      "7": 0.009397063936505967,
+      "8": 0.01743735585893913,
+      "9": 0.012732829366411513,
+      "10": 0.009183270590646053,
+      "11": 0.025393622262137372,
+      "12": 0.006123048918587948,
+      "13": 0.0023929391588484172,
+      "14": 0.0021943364824568157,
+      "15": 0.0021491050720214844,
+      "16": 0.001969967569623643,
+      "17": 0.0020835740225655375,
+      "18": -0.0005883148738314858,
+      "19": -0.0014817884990145913,
+      "20": -0.0030652284622192383,
+      "21": -0.0006009340286254883,
+      "22": -0.0014171089444841023,
+      "23": 0.0005323035376412211
+    },
+    "all_layers_delta": 1.3662100178854806
+  },
+  "routing_receipt": {
+    "muon_tensors": 170,
+    "muon_params": 149925888,
+    "adamw_tensors": 313,
+    "adamw_params": 8712960,
+    "gate_tensors_on_adamw": 216,
+    "frozen": false,
+    "cross_check": "the un-converted twin's banked_gates_adamw split reproduced exactly (name-for-name); the AdamW side gains exactly the arm's gate tensors (asserted in-process; the frozen control gains NOTHING)"
+  },
+  "peak_allocated_gb": 27.87,
+  "config_sha256": "7906d9d7ef942c2aba7f5b0207736b19d1deea5d54f05fadbf5fa2c7bd50033c",
+  "config": {
+    "probe": "k11b_channel_gates (gate C)",
+    "arm": "p3",
+    "seed": 3401,
+    "frozen": false,
+    "channels": {
+      "decay": true,
+      "write": true,
+      "read": true
+    },
+    "arm_note": "+ PER-CHANNEL READ GATES (the g_proj analog), combined: r_vec = 1 + m_o*sigmoid(g_proj(x)) per channel, reads *= r_vec before the out projection",
+    "corrected_scoring": {
+      "primary": "post-cooldown eval: a linear cooldown of 24 steps (13.3% of the 180-step constant-LR budget) appended after the banked matched-exposure landing, same stream/data order, LR factor (25 - k)/24 for cooldown step k (1.0 -> 1/24, never zero), both hybrid groups scaling equally; the corrected score is the post-cooldown calibration eval",
+      "secondary": "EMA iterate at step 180 (no extra data): decay 0.99, initialized at the init weights, updated after every constant-phase optimizer step, NOT updated during the cooldown; RANKING-ONLY -- its absolute number is biased toward mid-run weights (stated, not smoothed)",
+      "cooldown_steps": 24,
+      "cooldown_fraction": 0.1333,
+      "cooldown_form": "linear",
+      "ema_decay": 0.99,
+      "exposure_note": "the cooldown steps see ~2.7M more targets (~13%), identical across arms -- a stated protocol EXTENSION; the step-180 constant-LR eval is retained so every banked row stays comparable",
+      "citations": {
+        "river_valley": "Wen et al., ICLR 2025, arXiv:2410.05192 -- constant-LR loss carries an LR-dependent oscillation penalty that decay/averaging removes",
+        "cooldown": "Haegele et al., NeurIPS 2024, arXiv:2405.18392 -- constant-LR + short cooldown matches cosine at full scale",
+        "averaging": "Defazio et al., arXiv:2405.15682 -- iterate averaging as the schedule-free fix for the same penalty",
+        "moonlight": "Liu et al. (Moonshot AI), arXiv:2502.16982 -- with the update RMS matched to AdamW's (~0.2; AdamW typical 0.2-0.4), Muon directly reuses the LR and weight decay tuned for AdamW, i.e. ~1x the AdamW-tuned LR, WITH weight decay",
+        "horizon": "Bjorck et al., ICLR 2025 -- the optimal LR shrinks with token horizon; probe-tuned LRs transfer only downscaled"
+      }
+    },
+    "exposure_targets": 20000000,
+    "model_build": "velocity_ladder._build_k10 verbatim (the tuned winner's config, the banked bake-off build) + convert_model_to_channel_gates (the arm's per-channel channels at the mimetic-neutral birth, P5)",
+    "optimizer": {
+      "optimizer": "bakeoff_optimizers.HybridMuonX45 (imported verbatim)",
+      "peak_lr": 0.0013370856630148514,
+      "lr_multiplier": 4,
+      "adamw_tuned_lr": 0.00033427141575371284,
+      "lr_convention": "4x the machine's own tuned AdamW LR -- the banked winner lineage (the speedrun point the constant-LR probe selected)",
+      "betas": [
+        0.9,
+        0.9392004369596886
+      ],
+      "weight_decay": 0.17422187309224696,
+      "warmup_steps": 45,
+      "microbatch": 8,
+      "grad_clip": 1.0
+    },
+    "routing": "banked_gates_adamw + the k11b per-channel gate projections on AdamW",
+    "routing_receipt": {
+      "muon_tensors": 170,
+      "muon_params": 149925888,
+      "adamw_tensors": 313,
+      "adamw_params": 8712960,
+      "gate_tensors_on_adamw": 216,
+      "frozen": false,
+      "cross_check": "the un-converted twin's banked_gates_adamw split reproduced exactly (name-for-name); the AdamW side gains exactly the arm's gate tensors (asserted in-process; the frozen control gains NOTHING)"
+    },
+    "routing_inventory": {
+      "muon": [
+        "embed.weight",
+        "head.weight",
+        "blocks.0.mixer.value.weight",
+        "blocks.0.mixer.out.weight",
+        "blocks.0.mixer.key.weight",
+        "blocks.0.mixer.query_key.weight",
+        "blocks.0.mlp.w1.weight",
+        "blocks.0.mlp.w2.weight",
+        "blocks.0.mlp.w3.weight",
+        "blocks.1.mixer.value.weight",
+        "blocks.1.mixer.out.weight",
+        "blocks.1.mixer.key.weight",
+        "blocks.1.mixer.query_key.weight",
+        "blocks.1.mlp.w1.weight",
+        "blocks.1.mlp.w2.weight",
+        "blocks.1.mlp.w3.weight",
+        "blocks.2.mixer.value.weight",
+        "blocks.2.mixer.out.weight",
+        "blocks.2.mixer.key.weight",
+        "blocks.2.mixer.query_key.weight",
+        "blocks.2.mlp.w1.weight",
+        "blocks.2.mlp.w2.weight",
+        "blocks.2.mlp.w3.weight",
+        "blocks.3.mixer.value.weight",
+        "blocks.3.mixer.out.weight",
+        "blocks.3.mixer.key.weight",
+        "blocks.3.mixer.query_key.weight",
+        "blocks.3.mlp.w1.weight",
+        "blocks.3.mlp.w2.weight",
+        "blocks.3.mlp.w3.weight",
+        "blocks.4.mixer.value.weight",
+        "blocks.4.mixer.out.weight",
+        "blocks.4.mixer.key.weight",
+        "blocks.4.mixer.query_key.weight",
+        "blocks.4.mlp.w1.weight",
+        "blocks.4.mlp.w2.weight",
+        "blocks.4.mlp.w3.weight",
+        "blocks.5.mixer.value.weight",
+        "blocks.5.mixer.out.weight",
+        "blocks.5.mixer.key.weight",
+        "blocks.5.mixer.query_key.weight",
+        "blocks.5.mlp.w1.weight",
+        "blocks.5.mlp.w2.weight",
+        "blocks.5.mlp.w3.weight",
+        "blocks.6.mixer.value.weight",
+        "blocks.6.mixer.out.weight",
+        "blocks.6.mixer.key.weight",
+        "blocks.6.mixer.query_key.weight",
+        "blocks.6.mlp.w1.weight",
+        "blocks.6.mlp.w2.weight",
+        "blocks.6.mlp.w3.weight",
+        "blocks.7.mixer.value.weight",
+        "blocks.7.mixer.out.weight",
+        "blocks.7.mixer.key.weight",
+        "blocks.7.mixer.query_key.weight",
+        "blocks.7.mlp.w1.weight",
+        "blocks.7.mlp.w2.weight",
+        "blocks.7.mlp.w3.weight",
+        "blocks.8.mixer.value.weight",
+        "blocks.8.mixer.out.weight",
+        "blocks.8.mixer.key.weight",
+        "blocks.8.mixer.query_key.weight",
+        "blocks.8.mlp.w1.weight",
+        "blocks.8.mlp.w2.weight",
+        "blocks.8.mlp.w3.weight",
+        "blocks.9.mixer.value.weight",
+        "blocks.9.mixer.out.weight",
+        "blocks.9.mixer.key.weight",
+        "blocks.9.mixer.query_key.weight",
+        "blocks.9.mlp.w1.weight",
+        "blocks.9.mlp.w2.weight",
+        "blocks.9.mlp.w3.weight",
+        "blocks.10.mixer.value.weight",
+        "blocks.10.mixer.out.weight",
+        "blocks.10.mixer.key.weight",
+        "blocks.10.mixer.query_key.weight",
+        "blocks.10.mlp.w1.weight",
+        "blocks.10.mlp.w2.weight",
+        "blocks.10.mlp.w3.weight",
+        "blocks.11.mixer.value.weight",
+        "blocks.11.mixer.out.weight",
+        "blocks.11.mixer.key.weight",
+        "blocks.11.mixer.query_key.weight",
+        "blocks.11.mlp.w1.weight",
+        "blocks.11.mlp.w2.weight",
+        "blocks.11.mlp.w3.weight",
+        "blocks.12.mixer.value.weight",
+        "blocks.12.mixer.out.weight",
+        "blocks.12.mixer.key.weight",
+        "blocks.12.mixer.query_key.weight",
+        "blocks.12.mlp.w1.weight",
+        "blocks.12.mlp.w2.weight",
+        "blocks.12.mlp.w3.weight",
+        "blocks.13.mixer.value.weight",
+        "blocks.13.mixer.out.weight",
+        "blocks.13.mixer.key.weight",
+        "blocks.13.mixer.query_key.weight",
+        "blocks.13.mlp.w1.weight",
+        "blocks.13.mlp.w2.weight",
+        "blocks.13.mlp.w3.weight",
+        "blocks.14.mixer.value.weight",
+        "blocks.14.mixer.out.weight",
+        "blocks.14.mixer.key.weight",
+        "blocks.14.mixer.query_key.weight",
+        "blocks.14.mlp.w1.weight",
+        "blocks.14.mlp.w2.weight",
+        "blocks.14.mlp.w3.weight",
+        "blocks.15.mixer.value.weight",
+        "blocks.15.mixer.out.weight",
+        "blocks.15.mixer.key.weight",
+        "blocks.15.mixer.query_key.weight",
+        "blocks.15.mlp.w1.weight",
+        "blocks.15.mlp.w2.weight",
+        "blocks.15.mlp.w3.weight",
+        "blocks.16.mixer.value.weight",
+        "blocks.16.mixer.out.weight",
+        "blocks.16.mixer.key.weight",
+        "blocks.16.mixer.query_key.weight",
+        "blocks.16.mlp.w1.weight",
+        "blocks.16.mlp.w2.weight",
+        "blocks.16.mlp.w3.weight",
+        "blocks.17.mixer.value.weight",
+        "blocks.17.mixer.out.weight",
+        "blocks.17.mixer.key.weight",
+        "blocks.17.mixer.query_key.weight",
+        "blocks.17.mlp.w1.weight",
+        "blocks.17.mlp.w2.weight",
+        "blocks.17.mlp.w3.weight",
+        "blocks.18.mixer.value.weight",
+        "blocks.18.mixer.out.weight",
+        "blocks.18.mixer.key.weight",
+        "blocks.18.mixer.query_key.weight",
+        "blocks.18.mlp.w1.weight",
+        "blocks.18.mlp.w2.weight",
+        "blocks.18.mlp.w3.weight",
+        "blocks.19.mixer.value.weight",
+        "blocks.19.mixer.out.weight",
+        "blocks.19.mixer.key.weight",
+        "blocks.19.mixer.query_key.weight",
+        "blocks.19.mlp.w1.weight",
+        "blocks.19.mlp.w2.weight",
+        "blocks.19.mlp.w3.weight",
+        "blocks.20.mixer.value.weight",
+        "blocks.20.mixer.out.weight",
+        "blocks.20.mixer.key.weight",
+        "blocks.20.mixer.query_key.weight",
+        "blocks.20.mlp.w1.weight",
+        "blocks.20.mlp.w2.weight",
+        "blocks.20.mlp.w3.weight",
+        "blocks.21.mixer.value.weight",
+        "blocks.21.mixer.out.weight",
+        "blocks.21.mixer.key.weight",
+        "blocks.21.mixer.query_key.weight",
+        "blocks.21.mlp.w1.weight",
+        "blocks.21.mlp.w2.weight",
+        "blocks.21.mlp.w3.weight",
+        "blocks.22.mixer.value.weight",
+        "blocks.22.mixer.out.weight",
+        "blocks.22.mixer.key.weight",
+        "blocks.22.mixer.query_key.weight",
+        "blocks.22.mlp.w1.weight",
+        "blocks.22.mlp.w2.weight",
+        "blocks.22.mlp.w3.weight",
+        "blocks.23.mixer.value.weight",
+        "blocks.23.mixer.out.weight",
+        "blocks.23.mixer.key.weight",
+        "blocks.23.mixer.query_key.weight",
+        "blocks.23.mlp.w1.weight",
+        "blocks.23.mlp.w2.weight",
+        "blocks.23.mlp.w3.weight"
+      ],
+      "adamw": [
+        "norm.weight",
+        "blocks.0.norm1.weight",
+        "blocks.0.mixer.decay_scalar",
+        "blocks.0.mixer.write_scalar",
+        "blocks.0.mixer.read_scalar",
+        "blocks.0.mixer.decay.weight",
+        "blocks.0.mixer.decay.bias",
+        "blocks.0.mixer.f_proj.0.weight",
+        "blocks.0.mixer.f_proj.1.weight",
+        "blocks.0.mixer.b_proj.weight",
+        "blocks.0.mixer.g_proj.0.weight",
+        "blocks.0.mixer.g_proj.1.weight",
+        "blocks.0.mixer.g_proj.1.bias",
+        "blocks.0.norm2.weight",
+        "blocks.1.norm1.weight",
+        "blocks.1.mixer.decay_scalar",
+        "blocks.1.mixer.write_scalar",
+        "blocks.1.mixer.read_scalar",
+        "blocks.1.mixer.decay.weight",
+        "blocks.1.mixer.decay.bias",
+        "blocks.1.mixer.f_proj.0.weight",
+        "blocks.1.mixer.f_proj.1.weight",
+        "blocks.1.mixer.b_proj.weight",
+        "blocks.1.mixer.g_proj.0.weight",
+        "blocks.1.mixer.g_proj.1.weight",
+        "blocks.1.mixer.g_proj.1.bias",
+        "blocks.1.norm2.weight",
+        "blocks.2.norm1.weight",
+        "blocks.2.mixer.decay_scalar",
+        "blocks.2.mixer.write_scalar",
+        "blocks.2.mixer.read_scalar",
+        "blocks.2.mixer.decay.weight",
+        "blocks.2.mixer.decay.bias",
+        "blocks.2.mixer.f_proj.0.weight",
+        "blocks.2.mixer.f_proj.1.weight",
+        "blocks.2.mixer.b_proj.weight",
+        "blocks.2.mixer.g_proj.0.weight",
+        "blocks.2.mixer.g_proj.1.weight",
+        "blocks.2.mixer.g_proj.1.bias",
+        "blocks.2.norm2.weight",
+        "blocks.3.norm1.weight",
+        "blocks.3.mixer.decay_scalar",
+        "blocks.3.mixer.write_scalar",
+        "blocks.3.mixer.read_scalar",
+        "blocks.3.mixer.decay.weight",
+        "blocks.3.mixer.decay.bias",
+        "blocks.3.mixer.f_proj.0.weight",
+        "blocks.3.mixer.f_proj.1.weight",
+        "blocks.3.mixer.b_proj.weight",
+        "blocks.3.mixer.g_proj.0.weight",
+        "blocks.3.mixer.g_proj.1.weight",
+        "blocks.3.mixer.g_proj.1.bias",
+        "blocks.3.norm2.weight",
+        "blocks.4.norm1.weight",
+        "blocks.4.mixer.decay_scalar",
+        "blocks.4.mixer.write_scalar",
+        "blocks.4.mixer.read_scalar",
+        "blocks.4.mixer.decay.weight",
+        "blocks.4.mixer.decay.bias",
+        "blocks.4.mixer.f_proj.0.weight",
+        "blocks.4.mixer.f_proj.1.weight",
+        "blocks.4.mixer.b_proj.weight",
+        "blocks.4.mixer.g_proj.0.weight",
+        "blocks.4.mixer.g_proj.1.weight",
+        "blocks.4.mixer.g_proj.1.bias",
+        "blocks.4.norm2.weight",
+        "blocks.5.norm1.weight",
+        "blocks.5.mixer.decay_scalar",
+        "blocks.5.mixer.write_scalar",
+        "blocks.5.mixer.read_scalar",
+        "blocks.5.mixer.decay.weight",
+        "blocks.5.mixer.decay.bias",
+        "blocks.5.mixer.f_proj.0.weight",
+        "blocks.5.mixer.f_proj.1.weight",
+        "blocks.5.mixer.b_proj.weight",
+        "blocks.5.mixer.g_proj.0.weight",
+        "blocks.5.mixer.g_proj.1.weight",
+        "blocks.5.mixer.g_proj.1.bias",
+        "blocks.5.norm2.weight",
+        "blocks.6.norm1.weight",
+        "blocks.6.mixer.decay_scalar",
+        "blocks.6.mixer.write_scalar",
+        "blocks.6.mixer.read_scalar",
+        "blocks.6.mixer.decay.weight",
+        "blocks.6.mixer.decay.bias",
+        "blocks.6.mixer.f_proj.0.weight",
+        "blocks.6.mixer.f_proj.1.weight",
+        "blocks.6.mixer.b_proj.weight",
+        "blocks.6.mixer.g_proj.0.weight",
+        "blocks.6.mixer.g_proj.1.weight",
+        "blocks.6.mixer.g_proj.1.bias",
+        "blocks.6.norm2.weight",
+        "blocks.7.norm1.weight",
+        "blocks.7.mixer.decay_scalar",
+        "blocks.7.mixer.write_scalar",
+        "blocks.7.mixer.read_scalar",
+        "blocks.7.mixer.decay.weight",
+        "blocks.7.mixer.decay.bias",
+        "blocks.7.mixer.f_proj.0.weight",
+        "blocks.7.mixer.f_proj.1.weight",
+        "blocks.7.mixer.b_proj.weight",
+        "blocks.7.mixer.g_proj.0.weight",
+        "blocks.7.mixer.g_proj.1.weight",
+        "blocks.7.mixer.g_proj.1.bias",
+        "blocks.7.norm2.weight",
+        "blocks.8.norm1.weight",
+        "blocks.8.mixer.decay_scalar",
+        "blocks.8.mixer.write_scalar",
+        "blocks.8.mixer.read_scalar",
+        "blocks.8.mixer.decay.weight",
+        "blocks.8.mixer.decay.bias",
+        "blocks.8.mixer.f_proj.0.weight",
+        "blocks.8.mixer.f_proj.1.weight",
+        "blocks.8.mixer.b_proj.weight",
+        "blocks.8.mixer.g_proj.0.weight",
+        "blocks.8.mixer.g_proj.1.weight",
+        "blocks.8.mixer.g_proj.1.bias",
+        "blocks.8.norm2.weight",
+        "blocks.9.norm1.weight",
+        "blocks.9.mixer.decay_scalar",
+        "blocks.9.mixer.write_scalar",
+        "blocks.9.mixer.read_scalar",
+        "blocks.9.mixer.decay.weight",
+        "blocks.9.mixer.decay.bias",
+        "blocks.9.mixer.f_proj.0.weight",
+        "blocks.9.mixer.f_proj.1.weight",
+        "blocks.9.mixer.b_proj.weight",
+        "blocks.9.mixer.g_proj.0.weight",
+        "blocks.9.mixer.g_proj.1.weight",
+        "blocks.9.mixer.g_proj.1.bias",
+        "blocks.9.norm2.weight",
+        "blocks.10.norm1.weight",
+        "blocks.10.mixer.decay_scalar",
+        "blocks.10.mixer.write_scalar",
+        "blocks.10.mixer.read_scalar",
+        "blocks.10.mixer.decay.weight",
+        "blocks.10.mixer.decay.bias",
+        "blocks.10.mixer.f_proj.0.weight",
+        "blocks.10.mixer.f_proj.1.weight",
+        "blocks.10.mixer.b_proj.weight",
+        "blocks.10.mixer.g_proj.0.weight",
+        "blocks.10.mixer.g_proj.1.weight",
+        "blocks.10.mixer.g_proj.1.bias",
+        "blocks.10.norm2.weight",
+        "blocks.11.norm1.weight",
+        "blocks.11.mixer.decay_scalar",
+        "blocks.11.mixer.write_scalar",
+        "blocks.11.mixer.read_scalar",
+        "blocks.11.mixer.decay.weight",
+        "blocks.11.mixer.decay.bias",
+        "blocks.11.mixer.f_proj.0.weight",
+        "blocks.11.mixer.f_proj.1.weight",
+        "blocks.11.mixer.b_proj.weight",
+        "blocks.11.mixer.g_proj.0.weight",
+        "blocks.11.mixer.g_proj.1.weight",
+        "blocks.11.mixer.g_proj.1.bias",
+        "blocks.11.norm2.weight",
+        "blocks.12.norm1.weight",
+        "blocks.12.mixer.decay_scalar",
+        "blocks.12.mixer.write_scalar",
+        "blocks.12.mixer.read_scalar",
+        "blocks.12.mixer.decay.weight",
+        "blocks.12.mixer.decay.bias",
+        "blocks.12.mixer.f_proj.0.weight",
+        "blocks.12.mixer.f_proj.1.weight",
+        "blocks.12.mixer.b_proj.weight",
+        "blocks.12.mixer.g_proj.0.weight",
+        "blocks.12.mixer.g_proj.1.weight",
+        "blocks.12.mixer.g_proj.1.bias",
+        "blocks.12.norm2.weight",
+        "blocks.13.norm1.weight",
+        "blocks.13.mixer.decay_scalar",
+        "blocks.13.mixer.write_scalar",
+        "blocks.13.mixer.read_scalar",
+        "blocks.13.mixer.decay.weight",
+        "blocks.13.mixer.decay.bias",
+        "blocks.13.mixer.f_proj.0.weight",
+        "blocks.13.mixer.f_proj.1.weight",
+        "blocks.13.mixer.b_proj.weight",
+        "blocks.13.mixer.g_proj.0.weight",
+        "blocks.13.mixer.g_proj.1.weight",
+        "blocks.13.mixer.g_proj.1.bias",
+        "blocks.13.norm2.weight",
+        "blocks.14.norm1.weight",
+        "blocks.14.mixer.decay_scalar",
+        "blocks.14.mixer.write_scalar",
+        "blocks.14.mixer.read_scalar",
+        "blocks.14.mixer.decay.weight",
+        "blocks.14.mixer.decay.bias",
+        "blocks.14.mixer.f_proj.0.weight",
+        "blocks.14.mixer.f_proj.1.weight",
+        "blocks.14.mixer.b_proj.weight",
+        "blocks.14.mixer.g_proj.0.weight",
+        "blocks.14.mixer.g_proj.1.weight",
+        "blocks.14.mixer.g_proj.1.bias",
+        "blocks.14.norm2.weight",
+        "blocks.15.norm1.weight",
+        "blocks.15.mixer.decay_scalar",
+        "blocks.15.mixer.write_scalar",
+        "blocks.15.mixer.read_scalar",
+        "blocks.15.mixer.decay.weight",
+        "blocks.15.mixer.decay.bias",
+        "blocks.15.mixer.f_proj.0.weight",
+        "blocks.15.mixer.f_proj.1.weight",
+        "blocks.15.mixer.b_proj.weight",
+        "blocks.15.mixer.g_proj.0.weight",
+        "blocks.15.mixer.g_proj.1.weight",
+        "blocks.15.mixer.g_proj.1.bias",
+        "blocks.15.norm2.weight",
+        "blocks.16.norm1.weight",
+        "blocks.16.mixer.decay_scalar",
+        "blocks.16.mixer.write_scalar",
+        "blocks.16.mixer.read_scalar",
+        "blocks.16.mixer.decay.weight",
+        "blocks.16.mixer.decay.bias",
+        "blocks.16.mixer.f_proj.0.weight",
+        "blocks.16.mixer.f_proj.1.weight",
+        "blocks.16.mixer.b_proj.weight",
+        "blocks.16.mixer.g_proj.0.weight",
+        "blocks.16.mixer.g_proj.1.weight",
+        "blocks.16.mixer.g_proj.1.bias",
+        "blocks.16.norm2.weight",
+        "blocks.17.norm1.weight",
+        "blocks.17.mixer.decay_scalar",
+        "blocks.17.mixer.write_scalar",
+        "blocks.17.mixer.read_scalar",
+        "blocks.17.mixer.decay.weight",
+        "blocks.17.mixer.decay.bias",
+        "blocks.17.mixer.f_proj.0.weight",
+        "blocks.17.mixer.f_proj.1.weight",
+        "blocks.17.mixer.b_proj.weight",
+        "blocks.17.mixer.g_proj.0.weight",
+        "blocks.17.mixer.g_proj.1.weight",
+        "blocks.17.mixer.g_proj.1.bias",
+        "blocks.17.norm2.weight",
+        "blocks.18.norm1.weight",
+        "blocks.18.mixer.decay_scalar",
+        "blocks.18.mixer.write_scalar",
+        "blocks.18.mixer.read_scalar",
+        "blocks.18.mixer.decay.weight",
+        "blocks.18.mixer.decay.bias",
+        "blocks.18.mixer.f_proj.0.weight",
+        "blocks.18.mixer.f_proj.1.weight",
+        "blocks.18.mixer.b_proj.weight",
+        "blocks.18.mixer.g_proj.0.weight",
+        "blocks.18.mixer.g_proj.1.weight",
+        "blocks.18.mixer.g_proj.1.bias",
+        "blocks.18.norm2.weight",
+        "blocks.19.norm1.weight",
+        "blocks.19.mixer.decay_scalar",
+        "blocks.19.mixer.write_scalar",
+        "blocks.19.mixer.read_scalar",
+        "blocks.19.mixer.decay.weight",
+        "blocks.19.mixer.decay.bias",
+        "blocks.19.mixer.f_proj.0.weight",
+        "blocks.19.mixer.f_proj.1.weight",
+        "blocks.19.mixer.b_proj.weight",
+        "blocks.19.mixer.g_proj.0.weight",
+        "blocks.19.mixer.g_proj.1.weight",
+        "blocks.19.mixer.g_proj.1.bias",
+        "blocks.19.norm2.weight",
+        "blocks.20.norm1.weight",
+        "blocks.20.mixer.decay_scalar",
+        "blocks.20.mixer.write_scalar",
+        "blocks.20.mixer.read_scalar",
+        "blocks.20.mixer.decay.weight",
+        "blocks.20.mixer.decay.bias",
+        "blocks.20.mixer.f_proj.0.weight",
+        "blocks.20.mixer.f_proj.1.weight",
+        "blocks.20.mixer.b_proj.weight",
+        "blocks.20.mixer.g_proj.0.weight",
+        "blocks.20.mixer.g_proj.1.weight",
+        "blocks.20.mixer.g_proj.1.bias",
+        "blocks.20.norm2.weight",
+        "blocks.21.norm1.weight",
+        "blocks.21.mixer.decay_scalar",
+        "blocks.21.mixer.write_scalar",
+        "blocks.21.mixer.read_scalar",
+        "blocks.21.mixer.decay.weight",
+        "blocks.21.mixer.decay.bias",
+        "blocks.21.mixer.f_proj.0.weight",
+        "blocks.21.mixer.f_proj.1.weight",
+        "blocks.21.mixer.b_proj.weight",
+        "blocks.21.mixer.g_proj.0.weight",
+        "blocks.21.mixer.g_proj.1.weight",
+        "blocks.21.mixer.g_proj.1.bias",
+        "blocks.21.norm2.weight",
+        "blocks.22.norm1.weight",
+        "blocks.22.mixer.decay_scalar",
+        "blocks.22.mixer.write_scalar",
+        "blocks.22.mixer.read_scalar",
+        "blocks.22.mixer.decay.weight",
+        "blocks.22.mixer.decay.bias",
+        "blocks.22.mixer.f_proj.0.weight",
+        "blocks.22.mixer.f_proj.1.weight",
+        "blocks.22.mixer.b_proj.weight",
+        "blocks.22.mixer.g_proj.0.weight",
+        "blocks.22.mixer.g_proj.1.weight",
+        "blocks.22.mixer.g_proj.1.bias",
+        "blocks.22.norm2.weight",
+        "blocks.23.norm1.weight",
+        "blocks.23.mixer.decay_scalar",
+        "blocks.23.mixer.write_scalar",
+        "blocks.23.mixer.read_scalar",
+        "blocks.23.mixer.decay.weight",
+        "blocks.23.mixer.decay.bias",
+        "blocks.23.mixer.f_proj.0.weight",
+        "blocks.23.mixer.f_proj.1.weight",
+        "blocks.23.mixer.b_proj.weight",
+        "blocks.23.mixer.g_proj.0.weight",
+        "blocks.23.mixer.g_proj.1.weight",
+        "blocks.23.mixer.g_proj.1.bias",
+        "blocks.23.norm2.weight"
+      ]
+    },
+    "parameters": {
+      "before": 149981808,
+      "added": 8657040,
+      "total": 158638848,
+      "registration_delta": 8657040,
+      "added_share": 0.05457,
+      "gdn2_gate_share_note": "GDN2's own gate matrices are 18.3% of its 149.9M; even arm p3 (+5.77%) is ~3x leaner -- the asymmetry is the finding"
+    },
+    "checkpoint_steps": [
+      1,
+      5,
+      10,
+      20,
+      40,
+      80,
+      120,
+      160,
+      180
+    ],
+    "stopping_rule": "matched-EXPOSURE: train until 20000000 targets seen (the banked probe exposure, constant LR), THEN the 24-step linear cooldown (the corrected-scoring extension, same stream); the step-180 constant-LR eval is retained for banked comparability",
+    "birth_rule": "P5: the arm is born as the banked winner (the per-channel decay bit-equal to the registered scalar on every channel, the gates at exact identity); the step-1 train loss must be BIT-IDENTICAL to the banked same-seed row's",
+    "frozen_rule": "live arm: the gates train",
+    "second_seed_rule": "seed 3402 runs on any arm whose primary score beats the seed-matched comparison by >= 0.01",
+    "anchors": {
+      "banked": {
+        "constant_lr": {
+          "seed3401": 1.4907409463609969,
+          "seed3402": 1.4899048124040877,
+          "note": "the banked winner config's own constant-LR step-180 rows (routing_symmetry_runs/muon4x_banked_seed{3401,3402})"
+        },
+        "post_cooldown": {
+          "seed3402": 1.4338248457227434,
+          "note": "the corrected post-cooldown banked best (protocol_correction_runs/winner_speedrun_rescored, seed 3402 -- the banked best row's own config re-scored)"
+        },
+        "ema180": {
+          "seed3402": 1.5408323151724679,
+          "note": "the secondary EMA-0.99 iterate at step 180, banked (ranking-only instrument)"
+        },
+        "gdn2": {
+          "constant_lr": 1.3950541530336653,
+          "post_cooldown": 1.3521734476089478,
+          "ema180": 1.3803383282252721,
+          "note": "the banked GDN2 best rows (the cross-machine context; the ~0.08 residual this stage dissects)"
+        }
+      },
+      "mechanism_anchors": {
+        "identity_rewrite_share": [
+          0.118,
+          0.122
+        ],
+        "read_entropy_nats": [
+          1.515,
+          1.6
+        ],
+        "effective_read_rows": [
+          4.55,
+          4.95
+        ],
+        "occupancy_mean_live_slots": [
+          33.5,
+          35.2
+        ],
+        "sweep_layers_ge_threshold": {
+          "k11_arms": [
+            5,
+            6
+          ],
+          "side_by_side_adamw": 7
+        },
+        "sweep_near_decorative": {
+          "k11_arms": [
+            16,
+            17
+          ],
+          "side_by_side_adamw": 17
+        },
+        "sweep_threshold": 0.02,
+        "sweep_near_band": 0.0125,
+        "sweep_total": 24,
+        "caveat": "the K11 lane's same-config seed-matched step-180 anchors (both seeds) -- the references any granularity effect would have to move; the side-by-side's AdamW-era sweep anchors are quoted alongside (the muon4x-era banked sweep was never run)"
+      },
+      "banked_mechanism": {
+        "seed3401_step180": {
+          "identity_rewrite_share": 0.12220044317888193,
+          "read_entropy_nats": 1.5150481063949617,
+          "occupancy_mean_live_slots": 33.49335734049479,
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.022992451985677082,
+            "correct": 0.9743779500325521,
+            "pop": 0.0,
+            "merge": 0.0026295979817708335
+          },
+          "constant_lr_nll": 1.4907409463609969
+        },
+        "seed3402_step180": {
+          "identity_rewrite_share": 0.11799608786375947,
+          "read_entropy_nats": 1.600236432712681,
+          "occupancy_mean_live_slots": 35.15362294514974,
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.023668924967447918,
+            "correct": 0.9737930297851562,
+            "pop": 0.0,
+            "merge": 0.0025380452473958335
+          },
+          "constant_lr_nll": 1.4899048124040877
+        },
+        "seed3402_post_cooldown": {
+          "identity_rewrite_share": 0.1179643202876504,
+          "read_entropy_nats": 1.538525497965773,
+          "occupancy_mean_live_slots": 32.76612091064453,
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.02294921875,
+            "correct": 0.9746373494466146,
+            "pop": 0.0,
+            "merge": 0.0024134318033854165
+          },
+          "post_cooldown_nll": 1.4338248457227434
+        }
+      },
+      "bands": {
+        "endpoint_variance": 0.075,
+        "winner_seed_delta": 0.011948040553501738,
+        "win_bar": 0.01,
+        "gap_closure_bar": 0.02
+      }
+    },
+    "bindings": {
+      "matrix_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_MATRIX_EMENDER.md",
+      "matrix_registration_sha256": "20a163c9a1eb7c79d73289d8d8a55763748b0fd0bf83252fb29a40d66374dec2",
+      "lattice_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_150M_LATTICE.md",
+      "lattice_registration_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c",
+      "k5b_whole_scan_receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k5b_whole_scan.json",
+      "k5b_whole_scan_sha256": "5f2c54ab299b47fc859cab780b645a02c2162991472490705f4a037ab2111dee",
+      "k5b_step_metric_receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k5b_step_metric.json",
+      "k5b_step_metric_sha256": "2668e0eeaf37a1ae150cce4787728277afa200b8864073f104cb1fe77bbccd1d",
+      "k5b_doc": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/K5B_WHOLE_SCAN.md",
+      "k5b_doc_sha256": "04cbb61554f80eb39b0b0089ebeaab7b932c0f05dbf73d2266c95d1f7329ebaf",
+      "recorded_cd_receipts": {
+        "gdn2_c128_rerun": "ac60726997076202f7dee8b708c19aa2914a1967ccc64283794f7139b52ea1b1",
+        "matrix_append_c128": "27c9793b5e2b309d1ce15751f1abb85b96e6b6a44d9a4284d82d566c9129b241",
+        "matrix_ops_c128": "7c38ebf34b8d54657ecebc4e945bd9f5aeaef8cef4465b58eb6e3ca8635c2794"
+      },
+      "recorded_150m_gdn2_result": "8cacac01f89c88061cc2e6bdfa8fcf8e2e2db6be9b97ebfc1bb8f752e0d94316",
+      "k11b_preregistration": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/PREREGISTRATION_CHANNEL_GATES.md",
+      "k11b_gates_receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k11b_gates.json"
+    },
+    "summary": {
+      "base_arm": "matrix",
+      "shape": {
+        "width": 576,
+        "depth": 24,
+        "hidden": 3352,
+        "heads": 2,
+        "value_dim": 128,
+        "rank": 128,
+        "rank_max": 128,
+        "vocab": 256
+      },
+      "parameters": {
+        "total": 149981808,
+        "trainable": 149981808,
+        "per_layer": 6236930,
+        "mixer": 443522,
+        "mlp": 5792256,
+        "norms": 1152,
+        "embedding": 147456,
+        "head": 147456,
+        "final_norm": 576,
+        "capacity": 150003984,
+        "capacity_relative": -0.00014783607347390593
+      },
+      "routing": {
+        "ops": true,
+        "tau_match": 0.45,
+        "tau_merge": 0.85,
+        "tau_pop": 0.1,
+        "tie_break": 1e-06,
+        "read_scale": 2.0,
+        "grow": false,
+        "grow_trigger": 0.5,
+        "grow_window": 4,
+        "grow_window_tokens": 512,
+        "grow_geometric": 2.0,
+        "grow_stride_floor": 64
+      },
+      "chunk_tokens": 128,
+      "compile_scan": true,
+      "compile_mode": "default",
+      "fused_whole_scan": false,
+      "scan_path": "k10_separated_keys (per-token, the key channel)",
+      "fused_scan": false,
+      "fused_backward": false,
+      "fused_routing": false,
+      "fused_routing_diff": false,
+      "optimizer_note": "the registered gdn2 nomination's optimizer settings (gates.py / profile_step_vs_gdn2.py)",
+      "key_dim": 16,
+      "key_context": 4,
+      "segment_tokens": 64,
+      "key_init": "mimetic at the fixed orthonormal family (QR, seed 3401 + head), free drift"
+    },
+    "identity": {
+      "stream": "flagship_beyond_100gb",
+      "source": "/mnt/nvme2n1/erikg/pile.txt",
+      "source_size": 1307910802540,
+      "manifest": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/documents.jsonl.gz",
+      "manifest_sha256": "48b9095eeccb023ff1cb2a4f6da899a8b3e4eb3b76b2804e730f1d6ad031c414",
+      "registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/registration.json",
+      "registration_sha256": "c36f84cfd1a59530a7991a4be6c1f68b424a79c5b7de169eabfc90d3cd31cc31",
+      "boundary_bytes": 100000000000,
+      "lattice_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_150M_LATTICE.md",
+      "lattice_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c"
+    },
+    "versions": {
+      "torch": "2.9.1+cu128",
+      "schedulefree": "1.4.1",
+      "hybrid_muon_sha256": "204c55252f3032b91a965d2511cddb5d9d2eef9f94e9bfd509ee86d2987384d6",
+      "bakeoff_optimizers_sha256": "dff190059d0ff94633c3b3e42ab89ef2ccde8517ebd512a4acff96143a949745"
+    },
+    "git": {
+      "commit": "76cace50e46f4cb0643ebead30a846816fda97a2",
+      "relevant_paths_dirty": "M experiments/expressivity_tasks/x45_matrix_emender/c3_runs/emender_growable_seed3401/training.jsonl\n M experiments/expressivity_tasks/x45_matrix_emender/k8_runs/grow.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/PREREGISTRATION_CHANNEL_GATES.md\n?? experiments/expressivity_tasks/x45_matrix_emender/c3_runs_arm_emender_growable.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m1_fused_d2_lr1e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m1_fused_d2_lr1e-03_seed3402.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m1_fused_d2_lr1e-03_seed3403.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m1_fused_d2_sweep.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m2_fused_d2_lr1e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m2_fused_d2_lr1e-03_seed3402.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m2_fused_d2_lr1e-03_seed3403.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m2_fused_d2_sweep.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m2_separated_d1_keydim.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c1_lr1e-03_seed3403.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c1_lr3e-04_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c1_lr3e-04_seed3402.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c1_lr3e-04_seed3403.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr1e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr1e-03_seed3402.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr1e-03_seed3403.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr3e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr3e-03_seed3402.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr3e-03_seed3403.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr3e-04_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr3e-04_seed3402.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr3e-04_seed3403.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_sweep.json",
+      "branch": "main"
+    }
+  },
+  "session": {
+    "host": "lambda01",
+    "card": "0",
+    "device": "NVIDIA RTX 6000 Ada Generation",
+    "card_gib": 47.38,
+    "torch": "2.9.1+cu128",
+    "triton": "3.5.1"
+  },
+  "trajectory": [
+    {
+      "step": 1,
+      "active_seconds": 12.721872999332845,
+      "bytes": 117712,
+      "loss": 5.785070835425993
+    },
+    {
+      "step": 2,
+      "active_seconds": 24.503019992262125,
+      "bytes": 248784,
+      "loss": 5.783159971237183
+    },
+    {
+      "step": 3,
+      "active_seconds": 36.2947090100497,
+      "bytes": 364722,
+      "loss": 5.738120764667196
+    },
+    {
+      "step": 4,
+      "active_seconds": 48.13907349295914,
+      "bytes": 461739,
+      "loss": 5.685682977119642
+    },
+    {
+      "step": 5,
+      "active_seconds": 60.021186500787735,
+      "bytes": 567019,
+      "loss": 5.616515798513468
+    },
+    {
+      "step": 25,
+      "active_seconds": 298.5176260387525,
+      "bytes": 2920934,
+      "loss": 3.6578005965225797
+    },
+    {
+      "step": 50,
+      "active_seconds": 598.8359315758571,
+      "bytes": 5640425,
+      "loss": 2.4746487883036834
+    },
+    {
+      "step": 75,
+      "active_seconds": 895.6897765705362,
+      "bytes": 8340023,
+      "loss": 1.8330691456794739
+    },
+    {
+      "step": 100,
+      "active_seconds": 1191.5037307506427,
+      "bytes": 11089562,
+      "loss": 1.9305874941130214
+    },
+    {
+      "step": 125,
+      "active_seconds": 1486.6756934011355,
+      "bytes": 13866716,
+      "loss": 1.8601130399455277
+    },
+    {
+      "step": 150,
+      "active_seconds": 1781.868378517218,
+      "bytes": 16597785,
+      "loss": 2.1315751880021105
+    },
+    {
+      "step": 175,
+      "active_seconds": 2078.122757616453,
+      "bytes": 19507355,
+      "loss": 1.9151858716998322
+    },
+    {
+      "step": 200,
+      "active_seconds": 2373.0930467974395,
+      "bytes": 22220910,
+      "loss": 2.5184187200924733
+    },
+    {
+      "step": 201,
+      "active_seconds": 2384.5994121860713,
+      "bytes": 22351982,
+      "loss": 3.1343380212783813
+    },
+    {
+      "step": 202,
+      "active_seconds": 2396.376776454039,
+      "bytes": 22483054,
+      "loss": 2.872211754322052
+    },
+    {
+      "step": 203,
+      "active_seconds": 2407.893341058865,
+      "bytes": 22614126,
+      "loss": 2.77597314119339
+    },
+    {
+      "step": 204,
+      "active_seconds": 2419.412878316827,
+      "bytes": 22745198,
+      "loss": 2.9176078736782074
+    }
+  ],
+  "predictions": {
+    "C1_nll": {
+      "constant_lr": {
+        "measured": 1.4748810018811906,
+        "anchor": 1.4907409463609969,
+        "seed_matched_banked_constant": 1.4907409463609969,
+        "improvement_vs_seed_matched": 0.01585994447980621,
+        "met_win_bar": true
+      },
+      "post_cooldown_primary": {
+        "measured": 1.4235332352774483,
+        "anchor": 1.4338248457227434,
+        "seed_matched": false,
+        "improvement": 0.01029161044529503,
+        "met_win_bar": true,
+        "met_gap_closure_bar": false,
+        "note": "the PRIMARY corrected score vs the corrected banked best; the win bar 0.01 decides the second seed, the gap-closure bar 0.02 decides reading (i); cross-seed (arm 3401 vs anchor 3402): read against the 0.075-nat endpoint band and the 0.0119 winner seed delta"
+      },
+      "ema180_secondary": {
+        "measured": 1.5065132890428816,
+        "anchor": 1.5408323151724679,
+        "ranking_only": true
+      },
+      "vs_gdn2_post_cooldown": 0.0713597876685006
+    },
+    "C2_identity": {
+      "measured": 0.12136938121627686,
+      "anchor_range": [
+        0.118,
+        0.122
+      ],
+      "caveat": "the K11 lane's same-config seed-matched step-180 anchors (both seeds) -- the references any granularity effect would have to move; the side-by-side's AdamW-era sweep anchors are quoted alongside (the muon4x-era banked sweep was never run)"
+    },
+    "C3_entropy": {
+      "measured": 1.5438229347009105,
+      "effective_read_rows": 4.6824564933776855,
+      "anchor_range": [
+        1.515,
+        1.6
+      ],
+      "anchor_effective_rows": [
+        4.55,
+        4.95
+      ]
+    },
+    "C4_occupancy": {
+      "measured": 33.80874379475912,
+      "anchor_range": [
+        33.5,
+        35.2
+      ]
+    },
+    "C5_decorative": {
+      "measured": {
+        "layers_ge_threshold": 5,
+        "near_decorative": 15,
+        "total": 24,
+        "base_nll": 1.4748810018811906
+      },
+      "anchor": {
+        "k11_arms": [
+          5,
+          6
+        ],
+        "side_by_side_adamw": 7
+      },
+      "caveat": "the K11 arms' own sweep rows (5-6/24 at >= 0.02, 16-17/24 near-decorative) and the side-by-side's AdamW-era anchor (7/17) -- the muon4x-era banked sweep was never run; the arm's sweep runs at BOTH the step-180 and post-cooldown states, quoted together"
+    },
+    "gate_telemetry": {
+      "note": "per-layer means over the probe windows: the born-identity drift -- the per-channel decay gate's distance from the REGISTERED SCALAR (how far the per-channel timescales opened), the write gate's distance from 1, the read gate's distance from 1 (born at exact identity per channel, P5)",
+      "per_layer": {
+        "0": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.003892055945470929,
+            "max": 0.008324384689331055,
+            "lam_vec_mean": 0.9827755689620972,
+            "lam_vec_min": 0.8450272679328918,
+            "lam_vec_max": 1.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.049901869148015976,
+            "max": 0.12467259168624878
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.006572950631380081,
+            "max": 0.012342393398284912
+          }
+        },
+        "1": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.009651546366512775,
+            "max": 0.021775126457214355,
+            "lam_vec_mean": 0.7296549081802368,
+            "lam_vec_min": 0.014867653138935566,
+            "lam_vec_max": 0.994251549243927
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.007126467302441597,
+            "max": 0.013391315937042236
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.0009312736801803112,
+            "max": 0.00099945068359375
+          }
+        },
+        "2": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.010344352573156357,
+            "max": 0.016990184783935547,
+            "lam_vec_mean": 0.7443959712982178,
+            "lam_vec_min": 0.002924711909145117,
+            "lam_vec_max": 0.9894933700561523
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.004960290621966124,
+            "max": 0.011940181255340576
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.0014357608743011951,
+            "max": 0.0018105506896972656
+          }
+        },
+        "3": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.00429521081969142,
+            "max": 0.006867110729217529,
+            "lam_vec_mean": 0.7776381969451904,
+            "lam_vec_min": 0.010910587385296822,
+            "lam_vec_max": 0.9959462881088257
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.008182267658412457,
+            "max": 0.020862817764282227
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.004246024414896965,
+            "max": 0.00456392765045166
+          }
+        },
+        "4": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.011348229832947254,
+            "max": 0.02961021661758423,
+            "lam_vec_mean": 0.545268714427948,
+            "lam_vec_min": 0.007027935702353716,
+            "lam_vec_max": 0.9883751273155212
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.012930448167026043,
+            "max": 0.049356698989868164
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.010340753011405468,
+            "max": 0.01394343376159668
+          }
+        },
+        "5": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.007121876813471317,
+            "max": 0.023052453994750977,
+            "lam_vec_mean": 0.6779547929763794,
+            "lam_vec_min": 0.006529281847178936,
+            "lam_vec_max": 0.9994168281555176
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.0068187471479177475,
+            "max": 0.03276342153549194
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.005899894051253796,
+            "max": 0.010851263999938965
+          }
+        },
+        "6": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.008365255780518055,
+            "max": 0.023339927196502686,
+            "lam_vec_mean": 0.7053099870681763,
+            "lam_vec_min": 0.0031657377257943153,
+            "lam_vec_max": 0.9974508881568909
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.018234040588140488,
+            "max": 0.06692659854888916
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.01035199873149395,
+            "max": 0.012185871601104736
+          }
+        },
+        "7": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.012142345309257507,
+            "max": 0.023024439811706543,
+            "lam_vec_mean": 0.7751740217208862,
+            "lam_vec_min": 0.005098352674394846,
+            "lam_vec_max": 0.9916498064994812
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.021437810733914375,
+            "max": 0.07581716775894165
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.008993173018097878,
+            "max": 0.013867497444152832
+          }
+        },
+        "8": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.012670560739934444,
+            "max": 0.025865256786346436,
+            "lam_vec_mean": 0.7477757930755615,
+            "lam_vec_min": 0.003451406257227063,
+            "lam_vec_max": 0.9920673966407776
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.009597865864634514,
+            "max": 0.02686864137649536
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.005357289221137762,
+            "max": 0.00839078426361084
+          }
+        },
+        "9": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.0035352727863937616,
+            "max": 0.003999233245849609,
+            "lam_vec_mean": 0.8951400518417358,
+            "lam_vec_min": 0.025247842073440552,
+            "lam_vec_max": 1.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.024962972849607468,
+            "max": 0.09031492471694946
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.01421977486461401,
+            "max": 0.024472296237945557
+          }
+        },
+        "10": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.007299101911485195,
+            "max": 0.009386420249938965,
+            "lam_vec_mean": 0.8432576656341553,
+            "lam_vec_min": 0.027328938245773315,
+            "lam_vec_max": 0.9921780824661255
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.028220534324645996,
+            "max": 0.08984684944152832
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.01179154496639967,
+            "max": 0.014524579048156738
+          }
+        },
+        "11": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.011449630372226238,
+            "max": 0.016393840312957764,
+            "lam_vec_mean": 0.8926279544830322,
+            "lam_vec_min": 0.0048327818512916565,
+            "lam_vec_max": 1.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.04279882833361626,
+            "max": 0.10304766893386841
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.008392597548663616,
+            "max": 0.014149487018585205
+          }
+        },
+        "12": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.007665527984499931,
+            "max": 0.01126033067703247,
+            "lam_vec_mean": 0.7913474440574646,
+            "lam_vec_min": 0.0031488363165408373,
+            "lam_vec_max": 0.9921256899833679
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.027660749852657318,
+            "max": 0.11374372243881226
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.022689446806907654,
+            "max": 0.03623694181442261
+          }
+        },
+        "13": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.00805419310927391,
+            "max": 0.01366490125656128,
+            "lam_vec_mean": 0.7876172065734863,
+            "lam_vec_min": 0.0020167373586446047,
+            "lam_vec_max": 1.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.035439468920230865,
+            "max": 0.12009274959564209
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.01993558555841446,
+            "max": 0.03962218761444092
+          }
+        },
+        "14": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.010823672637343407,
+            "max": 0.020485281944274902,
+            "lam_vec_mean": 0.8148206472396851,
+            "lam_vec_min": 0.005799128673970699,
+            "lam_vec_max": 0.9928451776504517
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.0437687411904335,
+            "max": 0.12552130222320557
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.023319007828831673,
+            "max": 0.037649333477020264
+          }
+        },
+        "15": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.010856767185032368,
+            "max": 0.017666757106781006,
+            "lam_vec_mean": 0.7960728406906128,
+            "lam_vec_min": 0.003762293141335249,
+            "lam_vec_max": 0.9903348088264465
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.04186609014868736,
+            "max": 0.11071944236755371
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.026605680584907532,
+            "max": 0.04020535945892334
+          }
+        },
+        "16": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.008983233943581581,
+            "max": 0.010963737964630127,
+            "lam_vec_mean": 0.8566491603851318,
+            "lam_vec_min": 0.018979951739311218,
+            "lam_vec_max": 0.9903424978256226
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.034366264939308167,
+            "max": 0.11031174659729004
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.02288784459233284,
+            "max": 0.036715805530548096
+          }
+        },
+        "17": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.006632095202803612,
+            "max": 0.016795754432678223,
+            "lam_vec_mean": 0.8281068801879883,
+            "lam_vec_min": 0.006001002620905638,
+            "lam_vec_max": 0.9987757205963135
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.03900272771716118,
+            "max": 0.10287988185882568
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.024606268852949142,
+            "max": 0.03828895092010498
+          }
+        },
+        "18": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.005583884194493294,
+            "max": 0.013098061084747314,
+            "lam_vec_mean": 0.7070305943489075,
+            "lam_vec_min": 0.0003990615950897336,
+            "lam_vec_max": 0.9946911931037903
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.05007531866431236,
+            "max": 0.11482691764831543
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.034466203302145004,
+            "max": 0.04285740852355957
+          }
+        },
+        "19": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.0047730812802910805,
+            "max": 0.010521233081817627,
+            "lam_vec_mean": 0.9210872054100037,
+            "lam_vec_min": 0.09566249698400497,
+            "lam_vec_max": 0.9964722990989685
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.04565722495317459,
+            "max": 0.10102075338363647
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.02443101815879345,
+            "max": 0.032711684703826904
+          }
+        },
+        "20": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.0026313611306250095,
+            "max": 0.0035490989685058594,
+            "lam_vec_mean": 0.9802210330963135,
+            "lam_vec_min": 0.6546680927276611,
+            "lam_vec_max": 1.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.039629340171813965,
+            "max": 0.06531566381454468
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.01254343707114458,
+            "max": 0.015527129173278809
+          }
+        },
+        "21": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.001208282308652997,
+            "max": 0.01740056276321411,
+            "lam_vec_mean": 0.9908334016799927,
+            "lam_vec_min": 0.901900589466095,
+            "lam_vec_max": 1.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.06897473335266113,
+            "max": 0.1031380295753479
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.01847534067928791,
+            "max": 0.022605836391448975
+          }
+        },
+        "22": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.0008002063259482384,
+            "max": 0.001624763011932373,
+            "lam_vec_mean": 0.5420743227005005,
+            "lam_vec_min": 0.0009991740807890892,
+            "lam_vec_max": 0.9944689869880676
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.05086430534720421,
+            "max": 0.08293145895004272
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.02697164937853813,
+            "max": 0.03823220729827881
+          }
+        },
+        "23": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.0038155680522322655,
+            "max": 0.007810413837432861,
+            "lam_vec_mean": 0.8831669092178345,
+            "lam_vec_min": 0.40691477060317993,
+            "lam_vec_max": 1.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.03210924565792084,
+            "max": 0.05200541019439697
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.01583688333630562,
+            "max": 0.018733203411102295
+          }
+        }
+      },
+      "decay_gate_mean_distance_from_registered_scalar": 0.0068834020421491005,
+      "write_gate_mean_distance_from_1": 0.03298722424369771,
+      "read_gate_mean_distance_from_1": 0.015054225048515946,
+      "n_layers": 96
+    },
+    "the_question": {
+      "reading": "a win below the 0.02 gap-closure bar: reported as measured, the reading held for the assemble",
+      "refutation": {
+        "clause": "if the per-channel arms land at parity -- no mechanism number moves and the primary score does not beat the seed-matched banked rows beyond the band -- then GATE GRANULARITY does not own the residual at probe scale, and the honest reading is (ii): the residual is the dense superposition itself. That is reported as the TERMINAL reading, not excused -- with the probe-scale caveat stated and the named follow-ups held open"
+      }
+    }
+  }
+}
