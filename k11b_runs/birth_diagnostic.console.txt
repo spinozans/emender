@@ -1,0 +1,221 @@
+gpu_lease: granted GPUs: 0 (pid 3131381)
+diag leased card: 0
+{
+ "r1_scan_level_production_regime": {
+  "fixture": {
+   "batch": 8,
+   "tokens": 2048,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "key_dim": 16,
+   "segment_tokens": 64,
+   "payload_dtype": "bf16 (autocast)",
+   "keys_dtype": "bf16",
+   "decay_dtype": "fp32 (production; gate A used bf16)",
+   "gates": "the (1,1,1,1) bf16 dummy the p1 arm passes",
+   "warps": 8,
+   "policy": {
+    "ops": true,
+    "tau_match": 0.45,
+    "tau_merge": 0.85,
+    "tau_pop": 0.1,
+    "tie_break": 1e-06,
+    "read_scale": 2.7870458737509636,
+    "grow": false,
+    "grow_trigger": 0.5,
+    "grow_window": 4,
+    "grow_window_tokens": 512,
+    "grow_geometric": 2.0,
+    "grow_stride_floor": 64
+   }
+  },
+  "channels": {
+   "reads": {
+    "bit_identical": true,
+    "differing": 0,
+    "max_abs_delta": 0.0
+   },
+   "state": {
+    "bit_identical": true,
+    "differing": 0,
+    "max_abs_delta": 0.0
+   },
+   "live": {
+    "bit_identical": true,
+    "differing": 0,
+    "max_abs_delta": null
+   },
+   "keys": {
+    "bit_identical": true,
+    "differing": 0,
+    "max_abs_delta": 0.0
+   }
+  },
+  "verdict": "bit-identical at the production scan regime"
+ },
+ "r2_model_level_step1": {
+  "n_targets": 117712,
+  "microbatches": 8,
+  "unconverted_step1_loss": 5.785070835425993,
+  "unconverted_vs_banked": {
+   "banked": 5.785070835425993,
+   "delta": 0.0,
+   "bit_identical": true
+  },
+  "converted_step1_loss": 5.785136661889908,
+  "converted_vs_falsifier": {
+   "falsifier": 5.785136661889908,
+   "delta": 0.0,
+   "bit_identical": true
+  },
+  "per_microbatch_k10": [
+   5.8012003898620605,
+   5.7819743156433105,
+   5.751809120178223,
+   5.76844596862793,
+   5.7907538414001465,
+   5.772055625915527,
+   5.811271667480469,
+   5.804966926574707
+  ],
+  "per_microbatch_k11b": [
+   5.801884651184082,
+   5.781970024108887,
+   5.7519683837890625,
+   5.7675933837890625,
+   5.790639877319336,
+   5.772735595703125,
+   5.811269760131836,
+   5.804964065551758
+  ],
+  "verdict": "the unconverted build reproduces the banked row and the converted one reproduces the falsifier's -- the break is IN the k11b conversion's forward at birth"
+ },
+ "r3_layer_localization": {
+  "note": "per-BLOCK outputs (post-block, hidden states) on microbatch 0, the k10 pass captured BEFORE the in-place conversion",
+  "first_differing_layer": 4,
+  "per_layer": {
+   "0": {
+    "bit_identical": true,
+    "differing": 0,
+    "max_abs_delta": 0.0
+   },
+   "1": {
+    "bit_identical": true,
+    "differing": 0,
+    "max_abs_delta": 0.0
+   },
+   "2": {
+    "bit_identical": true,
+    "differing": 0,
+    "max_abs_delta": 0.0
+   },
+   "3": {
+    "bit_identical": true,
+    "differing": 0,
+    "max_abs_delta": 0.0
+   },
+   "4": {
+    "bit_identical": false,
+    "differing": 571,
+    "max_abs_delta": 0.0087890625
+   },
+   "5": {
+    "bit_identical": false,
+    "differing": 12905,
+    "max_abs_delta": 0.03155517578125
+   },
+   "6": {
+    "bit_identical": false,
+    "differing": 93788,
+    "max_abs_delta": 0.0346682071685791
+   },
+   "7": {
+    "bit_identical": false,
+    "differing": 1160432,
+    "max_abs_delta": 1.4139325618743896
+   },
+   "8": {
+    "bit_identical": false,
+    "differing": 1166512,
+    "max_abs_delta": 1.95654296875
+   },
+   "9": {
+    "bit_identical": false,
+    "differing": 1167036,
+    "max_abs_delta": 2.980712890625
+   },
+   "10": {
+    "bit_identical": false,
+    "differing": 1167218,
+    "max_abs_delta": 3.2950439453125
+   },
+   "11": {
+    "bit_identical": false,
+    "differing": 1167444,
+    "max_abs_delta": 3.4447021484375
+   },
+   "12": {
+    "bit_identical": false,
+    "differing": 1167785,
+    "max_abs_delta": 3.457092046737671
+   },
+   "13": {
+    "bit_identical": false,
+    "differing": 1169298,
+    "max_abs_delta": 4.204285621643066
+   },
+   "14": {
+    "bit_identical": false,
+    "differing": 1212765,
+    "max_abs_delta": 4.41424560546875
+   },
+   "15": {
+    "bit_identical": false,
+    "differing": 1320389,
+    "max_abs_delta": 5.01715087890625
+   },
+   "16": {
+    "bit_identical": false,
+    "differing": 1602192,
+    "max_abs_delta": 5.26568603515625
+   },
+   "17": {
+    "bit_identical": false,
+    "differing": 2020288,
+    "max_abs_delta": 5.327911376953125
+   },
+   "18": {
+    "bit_identical": false,
+    "differing": 2271228,
+    "max_abs_delta": 5.72222900390625
+   },
+   "19": {
+    "bit_identical": false,
+    "differing": 2346840,
+    "max_abs_delta": 6.056648254394531
+   },
+   "20": {
+    "bit_identical": false,
+    "differing": 2468852,
+    "max_abs_delta": 6.5015869140625
+   },
+   "21": {
+    "bit_identical": false,
+    "differing": 2520590,
+    "max_abs_delta": 7.279442310333252
+   },
+   "22": {
+    "bit_identical": false,
+    "differing": 2534041,
+    "max_abs_delta": 7.5921783447265625
+   },
+   "23": {
+    "bit_identical": false,
+    "differing": 2539420,
+    "max_abs_delta": 7.7992095947265625
+   }
+  }
+ }
+}
+DIAG EXITCODE 0

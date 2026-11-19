@@ -1,0 +1,23 @@
+gpu_lease: granted GPUs: 0 (pid 3059814)
+leased card: 0
+{"arm": "p1", "card": "0", "seed": 3401, "frozen": true, "parameters": 152537760, "muon": 170, "adamw": 97, "peak_lr": 0.0013370856630148514}
+  p1_seed3401 step 25 279s 2.9MB loss 3.6529
+  p1_seed3401 step 50 558s 5.6MB loss 2.4965
+  p1_seed3401 step 75 835s 8.3MB loss 1.8491
+  p1_seed3401 step 100 1110s 11.1MB loss 1.9523
+  p1_seed3401 step 125 1383s 13.9MB loss 1.8694
+  p1_seed3401 step 150 1658s 16.6MB loss 2.1434
+  p1_seed3401 step 175 1934s 19.5MB loss 1.9536
+  p1_seed3401 cooldown 20/24 2210s 22.2MB loss 2.5772
+  p1_seed3401 cooldown 24/24 2252s 22.7MB loss 2.9453
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k11b_probe_channel_gates.py", line 1174, in <module>
+    main()
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k11b_probe_channel_gates.py", line 1168, in main
+    run_arm(args)
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k11b_probe_channel_gates.py", line 822, in run_arm
+    raise ValueError(
+ValueError: step-1 train loss 5.785136661889908 != the banked same-seed row's 5.785070835425993 (the birth is not mimetic-neutral -- an engine-level parity break)
+committed: X45 K11B per-channel gates: the p1 arm landed (frozen-gates falsifier control, seed 3401) -- GDN2's gate granularity (per-channel, per-token, input-dependent DECAY/write/read) through the recorded-schedule channels at the matched-exposure probe under the corrected cooldown-primary scoring vs the banked winner config, the step-1 loss asserted bit-identical to the banked same-seed row (the 0-flip-at-birth receipt at probe scale), the mechanism instrument (identity share via the per-channel trajectory replay, read entropy/effective rows, occupancy, op mix) plus the born-identity gate telemetry at both the step-180 and post-cooldown states, the read-mask sweep at both states, and the pre-stated two-way question evaluated (gap-closure bar 0.02, win bar 0.01 for the second seed; constant-LR banked 1.4899/1.4907, corrected post-cooldown 1.4338, GDN2 1.3522, all quoted)

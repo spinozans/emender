@@ -1,0 +1,514 @@
+{
+ "probe": "k11b_birth_diagnostic",
+ "banked_step1": 5.785070835425993,
+ "falsifier_step1": 5.785136661889908,
+ "r1_scan_level_production_regime": {
+  "fixture": {
+   "batch": 8,
+   "tokens": 2048,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "key_dim": 16,
+   "segment_tokens": 64,
+   "payload_dtype": "bf16 (autocast)",
+   "keys_dtype": "bf16",
+   "decay_dtype": "fp32 (production; gate A used bf16)",
+   "gates": "the (1,1,1,1) bf16 dummy the p1 arm passes",
+   "warps": 8,
+   "policy": {
+    "ops": true,
+    "tau_match": 0.45,
+    "tau_merge": 0.85,
+    "tau_pop": 0.1,
+    "tie_break": 1e-06,
+    "read_scale": 2.7870458737509636,
+    "grow": false,
+    "grow_trigger": 0.5,
+    "grow_window": 4,
+    "grow_window_tokens": 512,
+    "grow_geometric": 2.0,
+    "grow_stride_floor": 64
+   }
+  },
+  "channels": {
+   "reads": {
+    "bit_identical": true,
+    "differing": 0,
+    "max_abs_delta": 0.0
+   },
+   "state": {
+    "bit_identical": true,
+    "differing": 0,
+    "max_abs_delta": 0.0
+   },
+   "live": {
+    "bit_identical": true,
+    "differing": 0,
+    "max_abs_delta": null
+   },
+   "keys": {
+    "bit_identical": true,
+    "differing": 0,
+    "max_abs_delta": 0.0
+   }
+  },
+  "verdict": "bit-identical at the production scan regime"
+ },
+ "r2_model_level_step1": {
+  "n_targets": 117712,
+  "microbatches": 8,
+  "unconverted_step1_loss": 5.785070835425993,
+  "unconverted_vs_banked": {
+   "banked": 5.785070835425993,
+   "delta": 0.0,
+   "bit_identical": true
+  },
+  "converted_step1_loss": 5.785136661889908,
+  "converted_vs_falsifier": {
+   "falsifier": 5.785136661889908,
+   "delta": 0.0,
+   "bit_identical": true
+  },
+  "per_microbatch_k10": [
+   5.8012003898620605,
+   5.7819743156433105,
+   5.751809120178223,
+   5.76844596862793,
+   5.7907538414001465,
+   5.772055625915527,
+   5.811271667480469,
+   5.804966926574707
+  ],
+  "per_microbatch_k11b": [
+   5.801884651184082,
+   5.781970024108887,
+   5.7519683837890625,
+   5.7675933837890625,
+   5.790639877319336,
+   5.772735595703125,
+   5.811269760131836,
+   5.804964065551758
+  ],
+  "verdict": "the unconverted build reproduces the banked row and the converted one reproduces the falsifier's -- the break is IN the k11b conversion's forward at birth"
+ },
+ "r3_layer_localization": {
+  "note": "per-BLOCK outputs (post-block, hidden states) on microbatch 0, the k10 pass captured BEFORE the in-place conversion",
+  "first_differing_layer": 4,
+  "per_layer": {
+   "0": {
+    "bit_identical": true,
+    "differing": 0,
+    "max_abs_delta": 0.0
+   },
+   "1": {
+    "bit_identical": true,
+    "differing": 0,
+    "max_abs_delta": 0.0
+   },
+   "2": {
+    "bit_identical": true,
+    "differing": 0,
+    "max_abs_delta": 0.0
+   },
+   "3": {
+    "bit_identical": true,
+    "differing": 0,
+    "max_abs_delta": 0.0
+   },
+   "4": {
+    "bit_identical": false,
+    "differing": 571,
+    "max_abs_delta": 0.0087890625
+   },
+   "5": {
+    "bit_identical": false,
+    "differing": 12905,
+    "max_abs_delta": 0.03155517578125
+   },
+   "6": {
+    "bit_identical": false,
+    "differing": 93788,
+    "max_abs_delta": 0.0346682071685791
+   },
+   "7": {
+    "bit_identical": false,
+    "differing": 1160432,
+    "max_abs_delta": 1.4139325618743896
+   },
+   "8": {
+    "bit_identical": false,
+    "differing": 1166512,
+    "max_abs_delta": 1.95654296875
+   },
+   "9": {
+    "bit_identical": false,
+    "differing": 1167036,
+    "max_abs_delta": 2.980712890625
+   },
+   "10": {
+    "bit_identical": false,
+    "differing": 1167218,
+    "max_abs_delta": 3.2950439453125
+   },
+   "11": {
+    "bit_identical": false,
+    "differing": 1167444,
+    "max_abs_delta": 3.4447021484375
+   },
+   "12": {
+    "bit_identical": false,
+    "differing": 1167785,
+    "max_abs_delta": 3.457092046737671
+   },
+   "13": {
+    "bit_identical": false,
+    "differing": 1169298,
+    "max_abs_delta": 4.204285621643066
+   },
+   "14": {
+    "bit_identical": false,
+    "differing": 1212765,
+    "max_abs_delta": 4.41424560546875
+   },
+   "15": {
+    "bit_identical": false,
+    "differing": 1320389,
+    "max_abs_delta": 5.01715087890625
+   },
+   "16": {
+    "bit_identical": false,
+    "differing": 1602192,
+    "max_abs_delta": 5.26568603515625
+   },
+   "17": {
+    "bit_identical": false,
+    "differing": 2020288,
+    "max_abs_delta": 5.327911376953125
+   },
+   "18": {
+    "bit_identical": false,
+    "differing": 2271228,
+    "max_abs_delta": 5.72222900390625
+   },
+   "19": {
+    "bit_identical": false,
+    "differing": 2346840,
+    "max_abs_delta": 6.056648254394531
+   },
+   "20": {
+    "bit_identical": false,
+    "differing": 2468852,
+    "max_abs_delta": 6.5015869140625
+   },
+   "21": {
+    "bit_identical": false,
+    "differing": 2520590,
+    "max_abs_delta": 7.279442310333252
+   },
+   "22": {
+    "bit_identical": false,
+    "differing": 2534041,
+    "max_abs_delta": 7.5921783447265625
+   },
+   "23": {
+    "bit_identical": false,
+    "differing": 2539420,
+    "max_abs_delta": 7.7992095947265625
+   }
+  }
+ },
+ "r4_production_data_scan_comparison": {
+  "note": "the REAL production layer-0 tensors (microbatch 0, captured pre-conversion) fed to BOTH kernels with BOTH decay forms computed UNDER AUTOCAST (the production regime); plus the birth lam_vec-vs-decay value check on the same data",
+  "x0_dtype": "torch.float32",
+  "lam_vec_vs_decay": {
+   "values_equal": true,
+   "lam_vec_dtype": "torch.float32",
+   "decay_dtype": "torch.bfloat16",
+   "values_equal_note": "lam_vec is the autocast channel_decay output; decay is the K10 mix's own autocast expression -- the two production carriers"
+  },
+  "channels": {
+   "reads": {
+    "bit_identical": true,
+    "differing": 0,
+    "max_abs_delta": 0.0
+   },
+   "state": {
+    "bit_identical": true,
+    "differing": 0,
+    "max_abs_delta": 0.0
+   },
+   "live": {
+    "bit_identical": true,
+    "differing": 0,
+    "max_abs_delta": null
+   },
+   "keys": {
+    "bit_identical": true,
+    "differing": 0,
+    "max_abs_delta": 0.0
+   },
+   "weights": {
+    "bit_identical": true,
+    "differing": 0,
+    "max_abs_delta": 0.0
+   },
+   "schedule": {
+    "flips": {
+     "slot": 0,
+     "erase": 0,
+     "op": 0,
+     "live_after": 0
+    },
+    "any_flip": false
+   }
+  }
+ },
+ "r5_first_diff_layer_dissection": {
+  "first_differing_layer": 4,
+  "layers": {
+   "0": {
+    "layer": 0,
+    "x_dtype": "torch.float32",
+    "payload_dtype": "torch.bfloat16",
+    "decay_dtype": "torch.bfloat16",
+    "lam_vec_dtype": "torch.float32",
+    "lam_inc_dtype": "torch.bfloat16",
+    "lam_vec_values_equal_decay": true,
+    "lam_vec_max_value_delta": 0.0,
+    "op_histogram": {
+     "none": 32768,
+     "append": 461,
+     "correct": 32307,
+     "pop": 0,
+     "merge": 0
+    },
+    "channels": {
+     "reads": {
+      "bit_identical": true,
+      "differing": 0,
+      "max_abs_delta": 0.0
+     },
+     "state": {
+      "bit_identical": true,
+      "differing": 0,
+      "max_abs_delta": 0.0
+     },
+     "live": {
+      "bit_identical": true,
+      "differing": 0,
+      "max_abs_delta": null
+     },
+     "keys": {
+      "bit_identical": true,
+      "differing": 0,
+      "max_abs_delta": 0.0
+     },
+     "weights": {
+      "bit_identical": true,
+      "differing": 0,
+      "max_abs_delta": 0.0
+     },
+     "schedule": {
+      "flips": {
+       "slot": 0,
+       "erase": 0,
+       "op": 0,
+       "live_after": 0
+      },
+      "any_flip": false
+     }
+    },
+    "clamp_bound_carrier_corner": {
+     "note": "lam_inc positions where the bf16 sigmoid output is exactly 1.0 clamp to 1.0 in the incumbent's BF16 carrier (bf16(1-1e-6) == 1.0) but to fp32(1-1e-6) = 0.999999 in channel_decay's FP32-promoted carrier -- the birth forms differ by ~1.013e-6 at exactly those positions",
+     "logits_dtype": "torch.bfloat16",
+     "differing_lam_positions": 0,
+     "total_positions": 32768,
+     "differing_lam_inc_values": [],
+     "differing_decay_values": [],
+     "differing_lam_vec_values": [],
+     "expected_delta": 1.0132789611816406e-06,
+     "pure_tensor_semantics": {
+      "bf16_clamp_of_one": 1.0,
+      "fp32_clamp_of_one": 0.9999989867210388,
+      "bf16_bound_in_fp32": 1.0
+     }
+    }
+   },
+   "4": {
+    "layer": 4,
+    "x_dtype": "torch.float32",
+    "payload_dtype": "torch.bfloat16",
+    "decay_dtype": "torch.bfloat16",
+    "lam_vec_dtype": "torch.float32",
+    "lam_inc_dtype": "torch.bfloat16",
+    "lam_vec_values_equal_decay": false,
+    "lam_vec_max_value_delta": 1.0132789611816406e-06,
+    "op_histogram": {
+     "none": 32759,
+     "append": 372,
+     "correct": 32387,
+     "pop": 0,
+     "merge": 18
+    },
+    "channels": {
+     "reads": {
+      "bit_identical": false,
+      "differing": 11044,
+      "max_abs_delta": 9.059906005859375e-06
+     },
+     "state": {
+      "bit_identical": true,
+      "differing": 0,
+      "max_abs_delta": 0.0
+     },
+     "live": {
+      "bit_identical": true,
+      "differing": 0,
+      "max_abs_delta": null
+     },
+     "keys": {
+      "bit_identical": true,
+      "differing": 0,
+      "max_abs_delta": 0.0
+     },
+     "weights": {
+      "bit_identical": false,
+      "differing": 444,
+      "max_abs_delta": 2.86102294921875e-06
+     },
+     "schedule": {
+      "flips": {
+       "slot": 0,
+       "erase": 0,
+       "op": 0,
+       "live_after": 0
+      },
+      "any_flip": false
+     }
+    },
+    "first_differing_read": {
+     "index": [
+      0,
+      4,
+      1,
+      0
+     ],
+     "count": 11044,
+     "k10_value": -2.7809505462646484,
+     "k11b_value": -2.780944347381592,
+     "token_ops": {
+      "k10": [
+       1,
+       0
+      ],
+      "k11b": [
+       1,
+       0
+      ]
+     },
+     "token_slots": {
+      "k10": [
+       3,
+       1
+      ],
+      "k11b": [
+       3,
+       1
+      ]
+     },
+     "tokens_with_any_read_diff": 220
+    },
+    "clamp_bound_carrier_corner": {
+     "note": "lam_inc positions where the bf16 sigmoid output is exactly 1.0 clamp to 1.0 in the incumbent's BF16 carrier (bf16(1-1e-6) == 1.0) but to fp32(1-1e-6) = 0.999999 in channel_decay's FP32-promoted carrier -- the birth forms differ by ~1.013e-6 at exactly those positions",
+     "logits_dtype": "torch.bfloat16",
+     "differing_lam_positions": 1,
+     "total_positions": 32768,
+     "differing_lam_inc_values": [
+      1.0
+     ],
+     "differing_decay_values": [
+      1.0
+     ],
+     "differing_lam_vec_values": [
+      0.9999989867210388
+     ],
+     "expected_delta": 1.0132789611816406e-06,
+     "pure_tensor_semantics": {
+      "bf16_clamp_of_one": 1.0,
+      "fp32_clamp_of_one": 0.9999989867210388,
+      "bf16_bound_in_fp32": 1.0
+     }
+    }
+   },
+   "5": {
+    "layer": 5,
+    "x_dtype": "torch.float32",
+    "payload_dtype": "torch.bfloat16",
+    "decay_dtype": "torch.bfloat16",
+    "lam_vec_dtype": "torch.float32",
+    "lam_inc_dtype": "torch.bfloat16",
+    "lam_vec_values_equal_decay": true,
+    "lam_vec_max_value_delta": 0.0,
+    "op_histogram": {
+     "none": 32755,
+     "append": 379,
+     "correct": 32376,
+     "pop": 0,
+     "merge": 26
+    },
+    "channels": {
+     "reads": {
+      "bit_identical": true,
+      "differing": 0,
+      "max_abs_delta": 0.0
+     },
+     "state": {
+      "bit_identical": true,
+      "differing": 0,
+      "max_abs_delta": 0.0
+     },
+     "live": {
+      "bit_identical": true,
+      "differing": 0,
+      "max_abs_delta": null
+     },
+     "keys": {
+      "bit_identical": true,
+      "differing": 0,
+      "max_abs_delta": 0.0
+     },
+     "weights": {
+      "bit_identical": true,
+      "differing": 0,
+      "max_abs_delta": 0.0
+     },
+     "schedule": {
+      "flips": {
+       "slot": 0,
+       "erase": 0,
+       "op": 0,
+       "live_after": 0
+      },
+      "any_flip": false
+     }
+    },
+    "clamp_bound_carrier_corner": {
+     "note": "lam_inc positions where the bf16 sigmoid output is exactly 1.0 clamp to 1.0 in the incumbent's BF16 carrier (bf16(1-1e-6) == 1.0) but to fp32(1-1e-6) = 0.999999 in channel_decay's FP32-promoted carrier -- the birth forms differ by ~1.013e-6 at exactly those positions",
+     "logits_dtype": "torch.bfloat16",
+     "differing_lam_positions": 0,
+     "total_positions": 32768,
+     "differing_lam_inc_values": [],
+     "differing_decay_values": [],
+     "differing_lam_vec_values": [],
+     "expected_delta": 1.0132789611816406e-06,
+     "pure_tensor_semantics": {
+      "bf16_clamp_of_one": 1.0,
+      "fp32_clamp_of_one": 0.9999989867210388,
+      "bf16_bound_in_fp32": 1.0
+     }
+    }
+   }
+  }
+ }
+}
