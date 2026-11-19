@@ -149,7 +149,42 @@ refutation is reported as a refutation, never excused.
 4. **The n ladder and the headline N=320** (past both fixed ceilings with
    margin; 640 for the matched-state pressure cell): sign off or amend
    before the arms run.
-5. **Unexpected ceiling behavior** (post-sign-off, standing): any machine
-   pinning well ABOVE or BELOW its derived ceiling + band, any trigger
-   that fails to fire on the constructed stream, any growth event
-   pathology — escalated with receipts, never tuned live.
+5. **Unexpected ceiling behavior** (standing, already exercised once
+   pre-lock): any machine pinning well ABOVE its derived ceiling + band
+   (a refutation), any trigger that fails to fire on the constructed
+   stream, any growth event pathology -- escalated with receipts, never
+   tuned live.  The pre-lock calibration already located one NOT-TIGHT
+   bound honestly (ours-fixed pins at 0.2226 below its 0.4047 ceiling:
+   item 8) -- reported, not excused; the bound stays an upper bound.
+6. **The bootstrap protocol (NEW, receipted -- a ruling required before the
+   arms run).** The construction has a razor-edge cold-start saddle
+   (disclosed in the RESULT doc §0.5): the escape time at n=64 is
+   chaotically numerics-sensitive (eager ~700 steps; the K6-kernel path and
+   fused-AdamW variants dwell past 1200 at identical init/data/optimizer,
+   gradient parity 1e-6 relative).  A **uniform n-ladder curriculum
+   warm-start** (implemented as `--curriculum`, e.g. 16,32,64,128,256 at
+   250-300 steps per stage, applied IDENTICALLY to every arm, optimizer
+   state carried in) collapses it: 0.9647 at n=64 in 19 s of wall.  The
+   ruling: (a) the ladder protocol (recommended; receipted), or (b) longer
+   cold cells at the honest dwell cost (the n=320 dwell is expected in the
+   thousands of steps, chaotically variable), or (c) both (the ladder for
+   the measured cells, one cold-start cell per machine as the saddle
+   receipt).
+7. **The P-2 escape bar (proposed amendment, pending the ruling).** The
+   first calibration data (RESULT §0.5): ours-growable at n=320 reaches
+   0.582 at a 300-step cell (still climbing) vs its fixed twin's 0.2226
+   -- 2.6x, far beyond the band, with the lag gradient flat
+   ([0.59, 0.58, 0.58, 0.58] vs the fixed [0.34, 0.25, 0.18, 0.12]: no
+   recency penalty, no eviction -- the escape mechanism receipted
+   directly).  Proposed: P-2's escape criterion reads "beats its fixed
+   twin by more than the band, growth events receipted, and the lag
+   gradient flat"; the >= 0.90 level is reported as the budgeted sweep's
+   measured outcome, not the escape bar.  The operator may keep the
+   0.90 bar (the sweep then budgets for it).
+8. **The ours ceiling's tightness (disclosed, not a refutation).** The
+   first data point pins ours-fixed at 0.2226, BELOW the derived 0.4047:
+   slot churn and read dilution bind earlier than the slot count (the
+   receipts: ~222 APPENDs + ~95 POPs per window at the pair writes; the
+   recency gradient; the dead stratum at chance).  The slot-count ceiling
+   stays a valid UPPER bound (the refutation clause fires only above it);
+   the pin's mechanism receipts are first-class columns.

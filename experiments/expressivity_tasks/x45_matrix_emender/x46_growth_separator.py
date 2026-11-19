@@ -133,7 +133,7 @@ from torch import nn
 import torch.nn.functional as F
 
 from .algebra import APPEND, CORRECT, NONE, POP
-from .granularity_separator import parse_floats
+from .granularity_separator import parse_floats, parse_ints
 from .model import MatrixShape, MatrixBlock
 from .schedule import RoutingPolicy
 from .scan import repeat_write_rate
@@ -376,24 +376,61 @@ class X46StoreModel(nn.Module):
     probe scale, with the probe-position loss of the separator convention.
     Built then converted by the committed ``convert_model_to_growing`` (the
     K8 machinery verbatim): ``grow=False`` is ours-fixed (K6 semantics at
-    rank 128), ``grow=True`` is ours-growable (the registered trigger)."""
+    rank 128), ``grow=True`` is ours-growable (the registered trigger).
+
+    The FACTORIZED encoding (the pre-sign-off amendment, disclosed in the
+    DESIGN doc's evidence section): a pair token's embedding is
+    ``key_table(k) + value_table(v)`` -- a fixed function of the token, like
+    the separator's flat pair table, but composed so the binding's key
+    component is IN the payload by construction (the depth-1 writability
+    requirement keeps its letter) and the probe KEY token shares the same
+    key row.  The flat 82,690-row pair table is embedding-starved at probe
+    budget (the n=64 calibration cell stalled at ln(128): ~5 gradient
+    touches per pair token at 400 steps -- the receipt
+    ``x46_calibration_ours-fixed_n64.json``); the factorized table gives
+    every key and value identity thousands of touches.  The head is the
+    value classifier (Linear(width, n_values)): the task is "which
+    value", chance 1/128 exactly; full-vocab CE over 82k pair tokens is
+    probe-scale pathology, not signal."""
 
     def __init__(self, shape: MatrixShape, policy: RoutingPolicy, rank_max: int):
         super().__init__()
         self.shape, self.policy = shape, policy
-        self.embed = nn.Embedding(shape.vocab, shape.width)
+        self.bos_pad = nn.Embedding(2, shape.width)
+        self.key_table = nn.Embedding(N_KEYS, shape.width)
+        self.value_table = nn.Embedding(N_VALUES, shape.width)
         self.blocks = nn.ModuleList(
             MatrixBlock(shape, policy, chunk_tokens=1) for _ in range(shape.depth))
         self.norm = nn.RMSNorm(shape.width, eps=1e-5)
-        self.head = nn.Linear(shape.width, shape.vocab, bias=False)
+        self.head = nn.Linear(shape.width, N_VALUES, bias=False)
         self.probe_positions: tuple[int, ...] = ()
 
     def bind_layout(self, n: int):
         _, self.probe_positions = matrix_layout(n)
         return self
 
+    def embed_ids(self, ids: torch.Tensor) -> torch.Tensor:
+        """The factorized embedding: BOS/PAD rows, key rows, value rows, and
+        pair tokens composed from their key and value rows."""
+        x = self.bos_pad.weight.new_zeros(ids.shape + (self.shape.width,))
+        pad_or_bos = ids < KEY_BASE
+        keys = ((ids >= KEY_BASE) & (ids < VAL_BASE))
+        values = ((ids >= VAL_BASE) & (ids < PAIR_BASE))
+        pairs = ids >= PAIR_BASE
+        if pad_or_bos.any():
+            x[pad_or_bos] = self.bos_pad(ids[pad_or_bos])
+        if keys.any():
+            x[keys] = self.key_table(ids[keys] - KEY_BASE)
+        if values.any():
+            x[values] = self.value_table(ids[values] - VAL_BASE)
+        if pairs.any():
+            pair_ids = ids[pairs] - PAIR_BASE
+            x[pairs] = (self.key_table(pair_ids // N_VALUES)
+                        + self.value_table(pair_ids % N_VALUES))
+        return x
+
     def features(self, ids: torch.Tensor) -> torch.Tensor:
-        x = self.embed(ids)
+        x = self.embed_ids(ids)
         for block in self.blocks:
             x = block(x)
         return self.norm(x)
@@ -406,7 +443,7 @@ class X46StoreModel(nn.Module):
         logits = self.forward(ids)
         probe = logits[:, list(self.probe_positions)]
         return F.cross_entropy(probe.reshape(-1, probe.shape[-1]),
-                               targets.reshape(-1))
+                               (targets - VAL_BASE).reshape(-1))
 
 
 def build_matrix_arm(grow: bool, seed: int, rank_cap: int | None = None):
@@ -435,18 +472,18 @@ def build_matrix_arm(grow: bool, seed: int, rank_cap: int | None = None):
 @torch.no_grad()
 def matrix_probe_accuracy(model: X46StoreModel, eval_set: dict,
                           batch: int = 64) -> dict:
-    """Value-restricted argmax at the probe positions + the lag strata."""
+    """Value-classifier argmax at the probe positions + the lag strata (the
+    task is "which value": 128 classes, chance 1/128)."""
     data = eval_set["matrix"]
     ids, targets = data["ids"], data["targets"]
     model.eval()
     picks = []
     for start in range(0, ids.shape[0], batch):
         logits = model.forward(ids[start:start + batch])
-        probe = logits[:, list(data["probe_positions"]),
-                       VAL_BASE:VAL_BASE + N_VALUES]
-        picks.append(probe.argmax(-1) + VAL_BASE)
+        probe = logits[:, list(data["probe_positions"])]   # (b, J, n_values)
+        picks.append(probe.argmax(-1))
     picks = torch.cat(picks)
-    correct = picks == targets
+    correct = picks == (targets - VAL_BASE)
     quartiles = []
     width = max(1, correct.shape[1] // 4)
     for lo in range(0, correct.shape[1], width):
@@ -475,7 +512,7 @@ def matrix_channels(model: X46StoreModel, eval_set: dict, windows: int = 128):
     n = len(pair_positions)
     model.eval()
     per_layer = []
-    x = model.embed(ids)
+    x = model.embed_ids(ids)
     for layer, block in enumerate(model.blocks):
         mixer = block.mixer
         h = block.norm1(x)
@@ -492,8 +529,7 @@ def matrix_channels(model: X46StoreModel, eval_set: dict, windows: int = 128):
         pair_op = torch.zeros(batch, n, dtype=torch.int64, device=ids.device)
         probe_live = torch.zeros(batch, n, dtype=torch.bool, device=ids.device)
         probe_mass = torch.zeros(batch, n, device=ids.device)
-        spans = result.collected
-        for span in spans:
+        for span in result.collected:
             t0 = span["t0"]
             schedule = span["schedule"]
             for i, position in enumerate(pair_positions):
@@ -511,12 +547,10 @@ def matrix_channels(model: X46StoreModel, eval_set: dict, windows: int = 128):
                         1, slot_j[:, j:j + 1]).squeeze(1)
                     probe_mass[:, j] = weights.gather(
                         1, slot_j[:, j:j + 1]).squeeze(1)
-        picks = None
         logits = model.forward(ids)
-        probe = logits[:, list(probe_positions),
-                       VAL_BASE:VAL_BASE + N_VALUES]
-        picks = probe.argmax(-1) + VAL_BASE
-        correct = picks == targets
+        probe = logits[:, list(probe_positions)]       # (b, J, n_values)
+        picks = probe.argmax(-1)
+        correct = picks == (targets - VAL_BASE)
         stored = pair_op.ne(NONE)
         live = probe_live & stored
         per_layer.append(dict(
@@ -966,21 +1000,57 @@ def selftest(out_path: str | None = None) -> dict:
 
 # ------------------------------------------------------------ the arms' loop
 
+def _process_events(machine, sink, growth_events, optimizer, model, step,
+                    opt_names):
+    """The C3 event discipline for the GDN2 growth arm (the committed
+    machinery imported verbatim): merge the pre-event spans' gradients into
+    the grown core's shared slices, rebuild the optimizer with state
+    carried by name, receipt the events.  No-op for the ours arms (rank
+    growth is in-scan, zero-parameter)."""
+    from .gdn2_growth_c3 import merge_event_grads, rebuild_optimizer
+    if sink is None or not sink["events"]:
+        return optimizer, opt_names
+    merge_event_grads(sink["events"])
+    optimizer, opt_names = rebuild_optimizer(optimizer, model,
+                                             sink["events"], opt_names)
+    for event in sink["events"]:
+        growth_events.append(dict(
+            step=step, layer=event.layer_idx, boundary=event.boundary,
+            heads=event.heads_old, new_heads=event.heads_new,
+            fire_pr=event.fire_pr))
+    sink["events"] = []
+    return optimizer, opt_names
+
+
 def train_arm(machine: str, n: int, lr: float, seed: int, steps: int,
               batch: int, device: str, eval_count: int = 512,
               cooldown_frac: float = 0.1, tau: float | None = None,
-              rank_cap: int | None = None, depth: int = 2) -> dict:
+              rank_cap: int | None = None, depth: int = 2,
+              curriculum: tuple[int, ...] = (),
+              curriculum_steps: int = 300) -> dict:
     """One (machine, n, lr, seed) cell: matched exposure (steps x batch x n
     probe targets on every arm), constant LR then a linear cooldown over the
     last ``cooldown_frac`` (the corrected-protocol doctrine adapted to the
     accuracy probe), the honest clock, growth events processed per step (the
     GDN2 arm: the C3 event discipline -- grad merge, optimizer surgery, the
     committed machinery imported verbatim).  PRIMARY = the final
-    value-restricted probe accuracy on the fixed eval set."""
-    from .gdn2_growth_c3 import merge_event_grads, rebuild_optimizer
+    value-restricted probe accuracy on the fixed eval set.
+
+    ``curriculum`` (the pre-lock protocol option, applied IDENTICALLY to
+    every arm): an n-ladder warm-start before the measured phase.  The
+    construction has a razor-edge COLD-START saddle (the read must sharpen
+    before any learning signal; the escape time is chaotically numerics-
+    sensitive -- receipted: the eager path escapes at ~700 steps at n=64,
+    the K6-kernel path and fused-AdamW variants dwell past 1200 at the SAME
+    init/data/optimizer, with gradient parity at 1e-6 relative, so the
+    dwell is not a gradient defect).  The warm ladder collapses it (the
+    same growing-path model that flatlined for 1200 cold steps reaches
+    0.9647 at n=64 within 600 steps after 300+300 at n=16/32).  The
+    curriculum is part of the protocol, not a machine difference: every
+    arm gets the same ladder, the same stage steps, the same optimizer
+    state carried in."""
     torch.set_num_threads(4)
     started = time.monotonic()
-    eval_set = make_eval_set(n, eval_count, device)
     growth_events: list[dict] = []
     pool = None
     sink = None
@@ -1005,14 +1075,42 @@ def train_arm(machine: str, n: int, lr: float, seed: int, steps: int,
         raise ValueError(f"unknown machine {machine!r}")
     model = model.to(device).train()
     params = [p for p in model.parameters() if p.requires_grad]
+    # NON-FUSED AdamW, receipted: at probe scale the task has a bootstrap
+    # saddle (the read must sharpen before any signal), and the fused
+    # optimizer's numerics sit ON the saddle -- an A/B calibration at
+    # n=64/batch 32/lr 3e-3 (seed 3401): fused flat at ln(128) for 1000+
+    # steps, non-fused escaping at ~700 and reaching 0.80 by 1000.  Probe
+    # scale does not need fused; the receipted choice is non-fused.
     optimizer = torch.optim.AdamW(params, lr=lr, betas=(0.9, 0.95),
-                                 weight_decay=0.01, fused=(device == "cuda"))
+                                 weight_decay=0.01, fused=False)
     opt_names = {id(p): name for name, p in model.named_parameters()}
     rng = torch.Generator().manual_seed(seed)
     constant_steps = max(1, int(steps * (1.0 - cooldown_frac)))
     warmup = max(1, constant_steps // 10)
     curve = []
+    curriculum_log = []
     try:
+        for stage_n in curriculum:
+            if stage_n >= n:
+                continue                      # the ladder stays below the target
+            model.bind_layout(stage_n)
+            stage_loss = None
+            for step in range(1, curriculum_steps + 1):
+                batch_data = _to_device(
+                    make_batch(sample_window(rng, batch, stage_n)), device)
+                loss = model.loss(batch_data)
+                optimizer.zero_grad(set_to_none=True)
+                loss.backward()
+                optimizer, opt_names = _process_events(
+                    machine, sink, growth_events, optimizer, model, step,
+                    opt_names)
+                torch.nn.utils.clip_grad_norm_(params, 1.0)
+                optimizer.step()
+                stage_loss = float(loss.detach())
+            curriculum_log.append(dict(n=stage_n, steps=curriculum_steps,
+                                       final_loss=stage_loss))
+        model.bind_layout(n)
+        eval_set = make_eval_set(n, eval_count, device)
         for step in range(1, steps + 1):
             if device == "cuda":
                 torch.cuda.synchronize()
@@ -1028,21 +1126,9 @@ def train_arm(machine: str, n: int, lr: float, seed: int, steps: int,
                                     device)
             loss = model.loss(batch_data)
             loss.backward()
-            if sink is not None and sink["events"]:
-                # the C3 event discipline: the pre-event spans' gradients
-                # merge into the grown core's shared slices, the optimizer
-                # is rebuilt with state carried by name (committed
-                # machinery, imported verbatim)
-                merge_event_grads(sink["events"])
-                optimizer, opt_names = rebuild_optimizer(
-                    optimizer, model, sink["events"], opt_names)
-                params = [p for p in model.parameters() if p.requires_grad]
-                for event in sink["events"]:
-                    growth_events.append(dict(
-                        step=step, layer=event.layer_idx,
-                        boundary=event.boundary, heads=event.heads_old,
-                        new_heads=event.heads_new, fire_pr=event.fire_pr))
-                sink["events"] = []
+            optimizer, opt_names = _process_events(
+                machine, sink, growth_events, optimizer, model, step,
+                opt_names)
             torch.nn.utils.clip_grad_norm_(params, 1.0)
             optimizer.step()
             if device == "cuda":
@@ -1080,6 +1166,7 @@ def train_arm(machine: str, n: int, lr: float, seed: int, steps: int,
         device=device, walls_s=round(walls, 1), torch=torch.__version__,
         exposure_probe_targets=steps * batch * n,
         metrics=metrics, curve=curve, growth_events=growth_events,
+        curriculum=curriculum_log,
         last_scan_growth_events=scan_events,
         final_rank=final_rank, final_heads=heads,
         ceiling=ceiling_record(
@@ -1096,11 +1183,14 @@ def run_arm(args) -> dict:
     if not args.smoke:
         require_operator_signoff()
     card = require_lease()
+    curriculum = tuple(parse_ints(args.curriculum)) if args.curriculum else ()
     receipt = train_arm(args.machine, args.n, args.lr, args.seed, args.steps,
                         args.batch, "cuda", eval_count=args.eval_windows,
-                        tau=args.tau, rank_cap=args.rank_cap, depth=args.depth)
+                        tau=args.tau, rank_cap=args.rank_cap, depth=args.depth,
+                        curriculum=curriculum,
+                        curriculum_steps=args.curriculum_steps)
     receipt["card"] = card
-    name = (f"x46_smoke_{args.machine}_n{args.n}.json" if args.smoke else
+    name = (f"x46_shakedown_{args.machine}_n{args.n}.json" if args.smoke else
             f"x46_arm_{args.machine}_n{args.n}_lr{args.lr:.0e}"
             f"_seed{args.seed}.json")
     out = Path(args.out) / name if args.out else RECEIPTS / name
@@ -1118,13 +1208,16 @@ def run_sweep(args) -> dict:
     require_lease()
     machines = (args.machines.split(",") if args.machines else
                 ["ours-fixed", "ours-growable", "gdn2-fixed", "gdn2-growth"])
+    curriculum = tuple(parse_ints(args.curriculum)) if args.curriculum else ()
     cells = []
     for machine in machines:
         for lr in parse_floats(args.lrs):
             receipt = train_arm(machine, args.n, lr, args.seed, args.steps,
                                 args.batch, "cuda",
                                 eval_count=args.eval_windows, tau=args.tau,
-                                rank_cap=args.rank_cap, depth=args.depth)
+                                rank_cap=args.rank_cap, depth=args.depth,
+                                curriculum=curriculum,
+                                curriculum_steps=args.curriculum_steps)
             name = (f"x46_arm_{machine}_n{args.n}_lr{lr:.0e}"
                     f"_seed{args.seed}.json")
             (RECEIPTS / name).write_text(json.dumps(receipt, indent=1))
@@ -1180,19 +1273,48 @@ def run_assemble(args) -> dict:
 
 
 def run_calibrate(args) -> dict:
-    """The gdn2 tau calibration on the constructed stream (pre-registration
-    evidence, the C3 calibrated-below-registered discipline): train the FIXED
-    arm at the headline n, then measure the trained machine's per-layer
-    per-boundary smoothed-PR ceiling on eval windows (the kernel's own
-    per-chunk state trajectory, the imported spectra sidecar, exact LAPACK).
-    tau_cal = the trained fixed machine's own exhibited ceiling; the growth
-    arm fires exactly when a boundary is MORE saturated than anything the
-    fixed machine exhibits."""
+    """The pre-registration calibration cells (allowed and DISCLOSED before
+    sign-off, the key-separation §6 precedent -- no prediction is
+    conditioned on them, and they are reported in the RESULT doc's
+    evidence section):
+
+    * ``--machine gdn2``: the tau calibration on the constructed stream (the
+           C3 calibrated-below-registered discipline): train the FIXED arm at
+      the headline n, then measure the trained machine's per-layer
+      per-boundary smoothed-PR ceiling on eval windows (the kernel's own
+      per-chunk state trajectory, the imported spectra sidecar, exact
+      LAPACK).  tau_cal = the trained fixed machine's own exhibited
+      ceiling; the growth arm fires exactly when a boundary is MORE
+      saturated than anything the fixed machine exhibits.
+    * ``--machine ours-fixed | ours-growable``: the learnability calibration
+      cell at the given n and budget -- the P-0/P-2 precondition evidence
+      (can the machine learn the construction at all, and does the growable
+      cross the fixed ceiling's line at this budget)."""
     from . import x45_spectra_sidecar as SPECTRA
     from .gdn2_growth_smoke import _chunk_call, _kernel_inputs
     from .gdn2_growth_c3 import pr_from_trajectory, smoothed_series
     require_lease()
     n = args.n
+    if args.machine != "gdn2":
+        curriculum = tuple(parse_ints(args.curriculum)) if args.curriculum else ()
+        receipt = train_arm(args.machine, n, args.lr, args.seed, args.steps,
+                            args.batch, "cuda", eval_count=args.eval_windows,
+                            tau=args.tau, depth=args.depth,
+                            curriculum=curriculum,
+                            curriculum_steps=args.curriculum_steps)
+        receipt["experiment"] = ("x46 learnability calibration cell "
+                                 "(pre-registration evidence, disclosed)")
+        out = (Path(args.out) if args.out else
+               RECEIPTS / f"x46_calibration_{args.machine}_n{n}.json")
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(receipt, indent=1))
+        print(json.dumps(dict(machine=args.machine, n=n,
+                              value_acc=receipt["metrics"]["value_acc"],
+                              ceiling=receipt["ceiling"]["ceiling"],
+                              final_rank=receipt["final_rank"],
+                              growth_events=len(receipt["growth_events"])),
+                         indent=1), flush=True)
+        return receipt
     model, summary = build_gdn2_arm(False, args.seed, depth=args.depth)
     model.bind_layout(n)
     device = "cuda"
@@ -1318,6 +1440,10 @@ def main():
     sm.add_argument("--depth", type=int, default=2)
     sm.add_argument("--out", default=None)
     cal = sub.add_parser("calibrate")
+    cal.add_argument("--machine", default="gdn2",
+                     choices=("gdn2", "ours-fixed", "ours-growable"),
+                     help="gdn2: the tau measurement; the ours arms: "
+                          "learnability calibration cells")
     cal.add_argument("--n", type=int, default=320)
     cal.add_argument("--seed", type=int, default=3401)
     cal.add_argument("--lr", type=float, default=1e-3)
@@ -1326,6 +1452,11 @@ def main():
     cal.add_argument("--eval-windows", type=int, default=64)
     cal.add_argument("--probe-windows", type=int, default=8)
     cal.add_argument("--depth", type=int, default=2)
+    cal.add_argument("--tau", type=float, default=None)
+    cal.add_argument("--curriculum", default=None,
+                    help="comma n-ladder warm-start (e.g. 16,32,64,128,256); "
+                         "the pre-lock protocol option, identical on every arm")
+    cal.add_argument("--curriculum-steps", type=int, default=300)
     cal.add_argument("--out", default=None)
     arm = sub.add_parser("arm")
     arm.add_argument("--machine", required=True,
@@ -1343,6 +1474,8 @@ def main():
     arm.add_argument("--rank-cap", type=int, default=None)
     arm.add_argument("--depth", type=int, default=2)
     arm.add_argument("--smoke", action="store_true")
+    arm.add_argument("--curriculum", default=None)
+    arm.add_argument("--curriculum-steps", type=int, default=300)
     arm.add_argument("--out", default=None)
     swp = sub.add_parser("sweep")
     swp.add_argument("--machines", default=None)
@@ -1355,6 +1488,8 @@ def main():
     swp.add_argument("--tau", type=float, default=None)
     swp.add_argument("--rank-cap", type=int, default=None)
     swp.add_argument("--depth", type=int, default=2)
+    swp.add_argument("--curriculum", default=None)
+    swp.add_argument("--curriculum-steps", type=int, default=300)
     ass = sub.add_parser("assemble")
     ass.add_argument("--n", type=int, default=320)
     args = parser.parse_args()

@@ -1,0 +1,140 @@
+{
+ "machine": "ours-fixed",
+ "n": 64,
+ "lr": 0.001,
+ "seed": 3401,
+ "steps": 3,
+ "batch": 2,
+ "device": "cuda",
+ "walls_s": 4.3,
+ "torch": "2.9.1+cu128",
+ "exposure_probe_targets": 384,
+ "metrics": {
+  "value_acc": 0.0087890625,
+  "value_acc_by_lag_quartile": [
+   0.015625,
+   0.00390625,
+   0.01171875,
+   0.00390625
+  ],
+  "n_probes": 2048,
+  "chance": 0.0078125
+ },
+ "curve": [
+  {
+   "step": 1,
+   "loss": 11.519319534301758,
+   "value_acc": 0.0087890625
+  },
+  {
+   "step": 2,
+   "loss": 11.458353042602539,
+   "value_acc": 0.00927734375
+  },
+  {
+   "step": 3,
+   "loss": 11.552359580993652,
+   "value_acc": 0.0087890625
+  }
+ ],
+ "growth_events": [],
+ "last_scan_growth_events": [],
+ "final_rank": [
+  128,
+  128
+ ],
+ "final_heads": null,
+ "ceiling": {
+  "machine": "ours-fixed",
+  "n": 64,
+  "capacity": 128,
+  "ceiling": 1.0,
+  "ceiling_plus_band": 1.05,
+  "algebra": "slot-count: the store holds 128 rows; a full store never APPENDs (POP-or-drop), so <= 128 live bindings; aliased rows resolve at most one probe of a pair",
+  "band": 0.05,
+  "escape": "capacity >= n: no binding ceiling (the control regime)"
+ },
+ "summary": {
+  "machine": "ours-fixed",
+  "parameters": {
+   "total": 21415298,
+   "note": "rank is capacity, never parameters"
+  },
+  "rank": 128,
+  "rank_cap": 128,
+  "grow": false,
+  "policy": {
+   "ops": true,
+   "tau_match": 0.45,
+   "tau_merge": 0.85,
+   "tau_pop": 0.1,
+   "tie_break": 1e-06,
+   "read_scale": 2.0,
+   "grow": false,
+   "grow_trigger": 0.5,
+   "grow_window": 4,
+   "grow_window_tokens": 512,
+   "grow_geometric": 2.0,
+   "grow_stride_floor": 64
+  },
+  "shape": {
+   "width": 128,
+   "depth": 2,
+   "heads": 1,
+   "value_dim": 64,
+   "vocab": 82690
+  }
+ },
+ "channels": {
+  "note": "the probed binding's row: live-at-probe (the slot-count bound made countable) with the probe's read mass on it; growth events are the spans' recorded fires",
+  "per_layer": [
+   {
+    "layer": 0,
+    "final_rank": 128,
+    "growth_events": [],
+    "pair_op_counts": {
+     "append": 1982,
+     "correct": 66,
+     "pop": 0,
+     "none": 0
+    },
+    "stored_frac": 1.0,
+    "live_at_probe_frac": 0.99755859375,
+    "accuracy": {
+     "live": 0.008810572326183319,
+     "dead": 0.0
+    },
+    "mass_on_answer_row": {
+     "mean": 0.014052413403987885,
+     "mean_when_live": 0.014086803421378136
+    }
+   },
+   {
+    "layer": 1,
+    "final_rank": 128,
+    "growth_events": [],
+    "pair_op_counts": {
+     "append": 1908,
+     "correct": 140,
+     "pop": 0,
+     "none": 0
+    },
+    "stored_frac": 1.0,
+    "live_at_probe_frac": 0.99853515625,
+    "accuracy": {
+     "live": 0.008801955729722977,
+     "dead": 0.0
+    },
+    "mass_on_answer_row": {
+     "mean": 0.012835691682994366,
+     "mean_when_live": 0.012854520231485367
+    }
+   }
+  ]
+ },
+ "cooldown": {
+  "constant_steps": 2,
+  "cooldown_steps": 1
+ },
+ "card": "2"
+}

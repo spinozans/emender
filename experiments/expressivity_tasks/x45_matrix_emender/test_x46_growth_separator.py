@@ -172,9 +172,13 @@ def test_both_encodings_decode_the_same_stream():
     assert torch.equal(
         m["targets"] - X.VAL_BASE,
         b["targets"] - X.VAL_BYTE_BASE)
-    # window lengths: 3n+1 tokens vs 6n+1 bytes
+    # window lengths: 3n+1 tokens; the byte window padded to the registered
+    # 64-token statistic boundary (the committed growth wrapper's own
+    # segment arithmetic; the padding is never a target)
     assert m["ids"].shape[1] == 3 * 96 + 1
-    assert b["ids"].shape[1] == 6 * 96 + 1
+    assert b["ids"].shape[1] == X.byte_window_length(96)
+    assert b["ids"].shape[1] % 64 == 0
+    assert b["ids"].shape[1] >= 6 * 96 + 1
 
 
 def test_byte_alphabet_is_disjoint_and_causal():

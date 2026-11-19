@@ -43,6 +43,56 @@ edited after sign-off.
 | ours-growable (grown 512) | — | escape | 0.8016 |
 | gdn2-growth (grown H=4 = 512) | — | escape | 0.8016 |
 
+## 0.5. PRE-REGISTRATION CALIBRATION EVIDENCE (disclosed before sign-off; the key-separation §6 precedent -- no headline cell has run, and the predictions above are amended only through §8's ruling process)
+
+All cells below are single-cell calibrations at one LR (3e-3), seed 3401,
+batch 32, disclosed as such; the pre-registered measurement is the
+post-sign-off sweep.
+
+* **The cold-start saddle (a protocol finding, receipted end-to-end).**
+  The construction has a razor-edge bootstrap saddle: the read must
+  sharpen before any learning signal exists. At n=64 the escape time is
+  chaotically numerics-sensitive: the EAGER path escapes at ~700 steps
+  (0.80 by 1000), while the K6-kernel path and fused-AdamW variants dwell
+  past 1200 steps at the SAME init, data and optimizer -- with gradient
+  parity between the two paths receipted at 1e-6 relative (the dwell is
+  not a gradient defect; the banked floor gates are the honest envelope).
+  Consequence receipted in the runner: **non-fused AdamW** everywhere.
+* **The uniform n-ladder curriculum collapses the saddle** (the pre-lock
+  protocol option): the same growing-path model that flatlined for 1200
+  cold steps reaches **0.9647 at n=64** within 600 steps after 300+300 at
+  n=16/32 (19 s of GPU wall). The ladder is applied IDENTICALLY to every
+  arm and is part of the protocol, not a machine difference. The
+  `--curriculum` flag is implemented, receipted per cell.
+* **The n=64 control (P-0 evidence): learnable below every ceiling** --
+  0.9647 via the ladder (ours-fixed, K8 path, non-fused).
+* **ours-fixed at n=320 (the headline pin, first data): 0.2226**, flat
+  across 300 target steps, with the recency gradient the eviction churn
+  predicts: accuracy by lag quartile **[0.34, 0.25, 0.18, 0.12]**, the
+  dead stratum at chance (0.018), ~222 APPENDs + ~95 POPs per window at
+  the pair writes (the slot turns over ~1.7x).  The machine pins BELOW
+  the derived slot-count ceiling 0.4047: the ceiling is VALID but NOT
+  TIGHT -- slot churn and read dilution bind earlier than the slot count
+  (the honest automata-bound arithmetic: the receipts locate the pin,
+  the bound stays an upper bound; no refutation -- the clause fires only
+  above).
+* **ours-growable at n=320 (the escape, first data): 0.582** at the same
+  budget and ladder -- **2.6x its fixed twin**, far beyond the 0.05 band,
+  grown 128→256→512 (layer 0) within the first window (the registered
+  trigger firing mechanically, as machine-checked), and the lag gradient
+  VANISHES: accuracy by lag quartile **[0.59, 0.58, 0.58, 0.58]** -- no
+  recency penalty, no eviction: the escape mechanism receipted directly.
+  0.582 is budget-limited (still climbing at the cell's end); whether it
+  reaches P-2's >= 0.90 bar is exactly what the post-sign-off sweep
+  measures.
+* **The GDN2 arms' smoke (machinery only)**: all four arms run; the
+  committed growth wrapper fires on the constructed stream at the
+  provisional tau=20 (both layers 2→4→8 in the first window, fire-PR
+  31-40 -- FAR above the natural-text regime's trained ~8: the
+  constructed stream binds GDN2's state, the regime C3 could not reach).
+  The gdn2 learnability and tau calibration cells are the FIRST
+  post-sign-off protocol step (`calibrate`).
+
 ## 1. RESULTS — pending the operator sign-off and the headline arms
 
 To be appended per part as it lands: the N=64 learnability control (P-0),

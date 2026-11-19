@@ -1,0 +1,104 @@
+{
+ "machine": "gdn2-growth",
+ "n": 320,
+ "lr": 0.001,
+ "seed": 3401,
+ "steps": 2,
+ "batch": 2,
+ "device": "cuda",
+ "walls_s": 49.2,
+ "torch": "2.9.1+cu128",
+ "exposure_probe_targets": 1280,
+ "metrics": {
+  "value_acc": 0.006640625186264515,
+  "value_acc_by_lag_quartile": [
+   0.004687500186264515,
+   0.007031250279396772,
+   0.007031250279396772,
+   0.0078125
+  ],
+  "n_probes": 5120,
+  "chance": 0.0078125
+ },
+ "curve": [
+  {
+   "step": 1,
+   "loss": 5.725014686584473,
+   "value_acc": 0.0062500000931322575
+  },
+  {
+   "step": 2,
+   "loss": 5.598221778869629,
+   "value_acc": 0.006640625186264515
+  }
+ ],
+ "growth_events": [
+  {
+   "step": 1,
+   "layer": 0,
+   "boundary": 64,
+   "heads": 2,
+   "new_heads": 4,
+   "fire_pr": 39.217262268066406
+  },
+  {
+   "step": 1,
+   "layer": 0,
+   "boundary": 128,
+   "heads": 4,
+   "new_heads": 8,
+   "fire_pr": 40.53995895385742
+  },
+  {
+   "step": 1,
+   "layer": 1,
+   "boundary": 64,
+   "heads": 2,
+   "new_heads": 4,
+   "fire_pr": 31.020727157592773
+  },
+  {
+   "step": 1,
+   "layer": 1,
+   "boundary": 128,
+   "heads": 4,
+   "new_heads": 8,
+   "fire_pr": 32.36311340332031
+  }
+ ],
+ "last_scan_growth_events": [],
+ "final_rank": null,
+ "final_heads": 8,
+ "ceiling": {
+  "machine": "gdn2-growth",
+  "n": 320,
+  "capacity": 1024,
+  "ceiling": 1.0,
+  "ceiling_plus_band": 1.05,
+  "algebra": "key-space: per-head d_k=128 (exact retrieval needs orthogonal keys: <= 128/head); the Welch rms bound 0.0686 at N=320 forces crosstalk/signal 1.22 per head (> 1 past N~2d); the pre-stated effective capacity is H*d_k = 1024 (heads 8) with the refutation clause",
+  "band": 0.05,
+  "escape": "capacity >= n: no binding ceiling (the control regime)"
+ },
+ "summary": {
+  "machine": "gdn2-growth",
+  "heads": 2,
+  "head_dim": 128,
+  "depth": 2,
+  "dim": 576,
+  "capacity": 256,
+  "grow": true,
+  "head_cap": 8,
+  "tau": 20.0,
+  "n_wrapped": 2,
+  "parameters": {
+   "total": 9252548,
+   "note": "growth adds parameters (GDN2's keys are learned) -- the delta is a first-class column"
+  }
+ },
+ "channels": null,
+ "cooldown": {
+  "constant_steps": 1,
+  "cooldown_steps": 1
+ },
+ "card": "2"
+}

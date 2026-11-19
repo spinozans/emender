@@ -1,0 +1,73 @@
+{
+ "machine": "gdn2-fixed",
+ "n": 64,
+ "lr": 0.001,
+ "seed": 3401,
+ "steps": 3,
+ "batch": 2,
+ "device": "cuda",
+ "walls_s": 29.4,
+ "torch": "2.9.1+cu128",
+ "exposure_probe_targets": 384,
+ "metrics": {
+  "value_acc": 0.0048828125,
+  "value_acc_by_lag_quartile": [
+   0.005859375,
+   0.0078125,
+   0.001953125,
+   0.00390625
+  ],
+  "n_probes": 2048,
+  "chance": 0.0078125
+ },
+ "curve": [
+  {
+   "step": 1,
+   "loss": 5.670646667480469,
+   "value_acc": 0.0087890625
+  },
+  {
+   "step": 2,
+   "loss": 5.671831130981445,
+   "value_acc": 0.00732421875
+  },
+  {
+   "step": 3,
+   "loss": 5.618953227996826,
+   "value_acc": 0.0048828125
+  }
+ ],
+ "growth_events": [],
+ "last_scan_growth_events": [],
+ "final_rank": null,
+ "final_heads": 2,
+ "ceiling": {
+  "machine": "gdn2-fixed",
+  "n": 64,
+  "capacity": 256,
+  "ceiling": 1.0,
+  "ceiling_plus_band": 1.05,
+  "algebra": "key-space: per-head d_k=128 (exact retrieval needs orthogonal keys: <= 128/head); the Welch rms bound 0.0000 at N=64 forces crosstalk/signal 0.00 per head (> 1 past N~2d); the pre-stated effective capacity is H*d_k = 256 (heads 2) with the refutation clause",
+  "band": 0.05,
+  "escape": "capacity >= n: no binding ceiling (the control regime)"
+ },
+ "summary": {
+  "machine": "gdn2-fixed",
+  "heads": 2,
+  "head_dim": 128,
+  "depth": 2,
+  "dim": 576,
+  "capacity": 256,
+  "grow": false,
+  "parameters": {
+   "total": 9252548,
+   "note": "the fixed arm"
+  }
+ },
+ "channels": null,
+ "cooldown": {
+  "constant_steps": 2,
+  "cooldown_steps": 1
+ },
+ "card": "2"
+}

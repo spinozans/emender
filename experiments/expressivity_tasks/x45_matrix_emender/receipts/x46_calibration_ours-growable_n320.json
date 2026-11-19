@@ -1,0 +1,305 @@
+{
+ "machine": "ours-growable",
+ "n": 320,
+ "lr": 0.003,
+ "seed": 3401,
+ "steps": 300,
+ "batch": 32,
+ "device": "cuda",
+ "walls_s": 120.5,
+ "torch": "2.9.1+cu128",
+ "exposure_probe_targets": 3072000,
+ "metrics": {
+  "value_acc": 0.5819458365440369,
+  "value_acc_by_lag_quartile": [
+   0.5928711295127869,
+   0.575976550579071,
+   0.579638659954071,
+   0.579296886920929
+  ],
+  "n_probes": 81920,
+  "chance": 0.0078125
+ },
+ "curve": [
+  {
+   "step": 50,
+   "loss": 2.136760950088501,
+   "value_acc": 0.573474109172821
+  },
+  {
+   "step": 100,
+   "loss": 2.1092424392700195,
+   "value_acc": 0.576098620891571
+  },
+  {
+   "step": 150,
+   "loss": 2.1066994667053223,
+   "value_acc": 0.5781616568565369
+  },
+  {
+   "step": 200,
+   "loss": 2.1130146980285645,
+   "value_acc": 0.5768066644668579
+  },
+  {
+   "step": 250,
+   "loss": 2.0691158771514893,
+   "value_acc": 0.5813232660293579
+  },
+  {
+   "step": 300,
+   "loss": 2.068499803543091,
+   "value_acc": 0.5819458365440369
+  }
+ ],
+ "growth_events": [],
+ "curriculum": [
+  {
+   "n": 16,
+   "steps": 250,
+   "final_loss": 0.5566374659538269
+  },
+  {
+   "n": 32,
+   "steps": 250,
+   "final_loss": 0.5859636068344116
+  },
+  {
+   "n": 64,
+   "steps": 250,
+   "final_loss": 0.4304197430610657
+  },
+  {
+   "n": 128,
+   "steps": 250,
+   "final_loss": 0.6080002784729004
+  },
+  {
+   "n": 256,
+   "steps": 250,
+   "final_loss": 2.515855312347412
+  }
+ ],
+ "last_scan_growth_events": [
+  {
+   "boundary": 256,
+   "rank_before": 128,
+   "rank_after": 256,
+   "smoothed_rate": 1.0,
+   "window_rates": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  {
+   "boundary": 512,
+   "rank_before": 256,
+   "rank_after": 512,
+   "smoothed_rate": 1.0,
+   "window_rates": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  {
+   "boundary": 256,
+   "rank_before": 128,
+   "rank_after": 256,
+   "smoothed_rate": 1.0,
+   "window_rates": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  {
+   "boundary": 512,
+   "rank_before": 256,
+   "rank_after": 512,
+   "smoothed_rate": 1.0,
+   "window_rates": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  {
+   "boundary": 768,
+   "rank_before": 512,
+   "rank_after": 1024,
+   "smoothed_rate": 0.75390625,
+   "window_rates": [
+    0.015625,
+    1.0,
+    1.0,
+    1.0
+   ]
+  }
+ ],
+ "final_rank": [
+  512,
+  1024
+ ],
+ "final_heads": null,
+ "ceiling": {
+  "machine": "ours-growable",
+  "n": 320,
+  "capacity": 512,
+  "ceiling": 1.0,
+  "ceiling_plus_band": 1.05,
+  "algebra": "slot-count: the store holds 512 rows; a post-fill binding enters only by destroying a live row (every post-fill APPEND paid by a POP), so <= 512 live bindings; aliased rows resolve at most one probe of a pair",
+  "band": 0.05,
+  "escape": "capacity >= n: no binding ceiling (the control regime)"
+ },
+ "summary": {
+  "machine": "ours-growable",
+  "parameters": {
+   "total": 361602,
+   "note": "rank is capacity, never parameters"
+  },
+  "rank": 128,
+  "rank_cap": 2048,
+  "grow": true,
+  "policy": {
+   "ops": true,
+   "tau_match": 0.45,
+   "tau_merge": 0.85,
+   "tau_pop": 0.1,
+   "tie_break": 1e-06,
+   "read_scale": 2.0,
+   "grow": true,
+   "grow_trigger": 0.5,
+   "grow_window": 4,
+   "grow_window_tokens": 512,
+   "grow_geometric": 2.0,
+   "grow_stride_floor": 64
+  },
+  "shape": {
+   "width": 128,
+   "depth": 2,
+   "heads": 1,
+   "value_dim": 64,
+   "vocab": 82690
+  }
+ },
+ "channels": {
+  "note": "the probed binding's row: live-at-probe (the slot-count bound made countable) with the probe's read mass on it; growth events are the spans' recorded fires",
+  "per_layer": [
+   {
+    "layer": 0,
+    "final_rank": 512,
+    "growth_events": [
+     {
+      "boundary": 256,
+      "rank_before": 128,
+      "rank_after": 256,
+      "smoothed_rate": 1.0,
+      "window_rates": [
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ]
+     },
+     {
+      "boundary": 512,
+      "rank_before": 256,
+      "rank_after": 512,
+      "smoothed_rate": 1.0,
+      "window_rates": [
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    ],
+    "pair_op_counts": {
+     "append": 32558,
+     "correct": 291,
+     "pop": 8111,
+     "none": 0
+    },
+    "stored_frac": 1.0,
+    "live_at_probe_frac": 0.999951183795929,
+    "accuracy": {
+     "live": 0.5816934108734131,
+     "dead": 0.0
+    },
+    "mass_on_answer_row": {
+     "mean": 0.39303869009017944,
+     "mean_when_live": 0.3930578827857971
+    }
+   },
+   {
+    "layer": 1,
+    "final_rank": 1024,
+    "growth_events": [
+     {
+      "boundary": 256,
+      "rank_before": 128,
+      "rank_after": 256,
+      "smoothed_rate": 1.0,
+      "window_rates": [
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ]
+     },
+     {
+      "boundary": 512,
+      "rank_before": 256,
+      "rank_after": 512,
+      "smoothed_rate": 1.0,
+      "window_rates": [
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ]
+     },
+     {
+      "boundary": 768,
+      "rank_before": 512,
+      "rank_after": 1024,
+      "smoothed_rate": 0.75390625,
+      "window_rates": [
+       0.015625,
+       1.0,
+       1.0,
+       1.0
+      ]
+     }
+    ],
+    "pair_op_counts": {
+     "append": 147,
+     "correct": 40810,
+     "pop": 0,
+     "none": 0
+    },
+    "stored_frac": 1.0,
+    "live_at_probe_frac": 0.999340832233429,
+    "accuracy": {
+     "live": 0.5816333889961243,
+     "dead": 0.6296296119689941
+    },
+    "mass_on_answer_row": {
+     "mean": 4.462325572967529,
+     "mean_when_live": 4.465269088745117
+    }
+   }
+  ]
+ },
+ "cooldown": {
+  "constant_steps": 270,
+  "cooldown_steps": 30
+ },
+ "experiment": "x46 learnability calibration cell (pre-registration evidence, disclosed)"
+}

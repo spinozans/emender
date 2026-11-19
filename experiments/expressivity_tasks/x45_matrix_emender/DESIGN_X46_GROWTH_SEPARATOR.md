@@ -63,10 +63,18 @@ input interfaces; the construction is defined once at the symbolic level
   `PAIR(k, v)` — the granularity separator's writability requirement. At
   the first store layer the payload is a fixed function of the token, so a
   binding presented as separate key and value tokens is unrepresentable at
-  depth 1 (the value's write carries no key). Vocabulary: 640 key tokens,
-  128 value tokens, 81,920 pair tokens (82,690 total). A probe is the bare
-  KEY token; the answer is the next-token target at the probe position.
-  Window length `3n+1`.
+  depth 1 (the value's write carries no key).  A pair token's EMBEDDING is
+  FACTORIZED — `key_table(k) + value_table(v)` — a fixed function of the
+  token like the separator's flat pair table, but composed so the key
+  component is in the payload by construction and the probe's bare KEY
+  token shares the same key row (the flat 82,690-row pair table is
+  embedding-starved at probe budget — the pre-sign-off calibration cell
+  stalled at ln(128), ~5 gradient touches per pair token at 400 steps; the
+  factorized table gives every key and value identity thousands of
+  touches — the amendment is disclosed in the RESULT doc §0.5).  The head
+  is the value classifier (Linear(width, 128)): the task is "which
+  value", chance 1/128 exactly.  A probe is the bare KEY token; the answer
+  is the next-token target at the probe position.  Window length `3n+1`.
 * **BYTE ENCODING** (the GDN2 arms): a binding is the 3-byte pattern
   `(key_hi, key_lo, value)`; a probe is `(key_hi, key_lo)` and the target is
   the value byte, predicted by the byte LM from the key_lo position (its
@@ -141,6 +149,16 @@ bindings and the rest at the accidental floor:
 ```
 C_ours(N) = min(1, R/N) + (1 − min(1, R/N)) / 128
 ```
+
+**Tightness, honestly (the pre-lock calibration's first data point).** The
+slot-count ceiling is a valid UPPER bound; the receipts locate the actual
+pin, and the first calibration cell pins ours-fixed at 0.2226 at n=320 —
+BELOW the 0.4047 bound: slot churn (a POP-freed slot is re-APPENDed before
+the evicted binding's probe: ~222 APPENDs + ~95 POPs per window at the pair
+writes) and softmax read dilution bind EARLIER than the slot count.  The
+bound is not refuted (the clause fires only above); the pin's mechanism
+receipts — the recency gradient [0.34, 0.25, 0.18, 0.12] by lag quartile,
+the dead stratum at chance — are first-class columns of every cell.
 
 **Scope, honestly (the key-separation precedent).** The bound is exact on
 the linear read/routing channels at depth 1. At depth 2 a key-conditioned
