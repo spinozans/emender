@@ -1,0 +1,149 @@
+{
+ "experiment": "x46_growth_separator selftest",
+ "slot_lemma": {
+  "live_rows": 8,
+  "live_rows_le_rank": true,
+  "first_rank_all_append": true,
+  "appends_after_full": 8,
+  "pops_after_full": 8,
+  "every_post_fill_append_paid_by_a_pop": true,
+  "overflow_ops": {
+   "pop": 8,
+   "none": 0,
+   "correct": 0
+  },
+  "distinct_directions_present": 8,
+  "distinct_directions_le_rank": true,
+  "passed": true
+ },
+ "aliasing_swap_lemma": {
+  "trials": 200,
+  "blend": {
+   "a": 0.8,
+   "b": 0.4
+  },
+  "read_outputs_same_direction": true,
+  "gap_signs": {
+   "positive": 106,
+   "negative": 94,
+   "zero": 0
+  },
+  "heads_answering_both_probes": 0,
+  "passed": true
+ },
+ "gdn2_key_space": {
+  "n": 320,
+  "d": 128,
+  "welch_bound": 0.06857254813237416,
+  "realized_rms_coherence": 0.08819251507520676,
+  "welch_holds": true,
+  "orthonormal_exact_error": 0.0,
+  "orthonormal_exact": true,
+  "crosstalk_to_signal_mean": 1.5738096237182617,
+  "crosstalk_exceeds_signal": true,
+  "crosstalk_at_welch_floor": 1.224744871391589,
+  "passed": true
+ },
+ "growth_trigger_on_overflow": {
+  "rank": 64,
+  "n_writes": 200,
+  "boundary_rates": [
+   [
+    64,
+    0.0
+   ],
+   [
+    128,
+    1.0
+   ]
+  ],
+  "fire_boundary": 128,
+  "smoothed_rate_at_fire": 0.5,
+  "grow_trigger": 0.5,
+  "growth_target": 128,
+  "fired": true,
+  "passed": true
+ },
+ "construction": {
+  "matrix_shape": [
+   8,
+   193
+  ],
+  "byte_shape": [
+   8,
+   385
+  ],
+  "keys_distinct": true,
+  "targets_match_bindings": true,
+  "probes_after_writes": true,
+  "byte_alphabet_disjoint": true,
+  "eval_set_deterministic": true,
+  "passed": true
+ },
+ "ceilings_ours": {
+  "n64": {
+   "machine": "ours-fixed",
+   "n": 64,
+   "capacity": 128,
+   "ceiling": 1.0,
+   "ceiling_plus_band": 1.05,
+   "algebra": "slot-count: the store holds 128 rows; a full store never APPENDs (POP-or-drop), so <= 128 live bindings; aliased rows resolve at most one probe of a pair",
+   "band": 0.05,
+   "escape": "capacity >= n: no binding ceiling (the control regime)"
+  },
+  "n320": {
+   "machine": "ours-fixed",
+   "n": 320,
+   "capacity": 128,
+   "ceiling": 0.40468750000000003,
+   "ceiling_plus_band": 0.4546875,
+   "algebra": "slot-count: the store holds 128 rows; a full store never APPENDs (POP-or-drop), so <= 128 live bindings; aliased rows resolve at most one probe of a pair",
+   "band": 0.05,
+   "escape": null
+  },
+  "n640": {
+   "machine": "ours-fixed",
+   "n": 640,
+   "capacity": 128,
+   "ceiling": 0.20625000000000002,
+   "ceiling_plus_band": 0.25625000000000003,
+   "algebra": "slot-count: the store holds 128 rows; a full store never APPENDs (POP-or-drop), so <= 128 live bindings; aliased rows resolve at most one probe of a pair",
+   "band": 0.05,
+   "escape": null
+  }
+ },
+ "ceilings_gdn2": {
+  "n64": {
+   "machine": "gdn2-fixed",
+   "n": 64,
+   "capacity": 256,
+   "ceiling": 1.0,
+   "ceiling_plus_band": 1.05,
+   "algebra": "key-space: per-head d_k=128 (exact retrieval needs orthogonal keys: <= 128/head); the Welch rms bound 0.0000 at N=64 forces crosstalk/signal 0.00 per head (> 1 past N~2d); the pre-stated effective capacity is H*d_k = 256 (heads 2) with the refutation clause",
+   "band": 0.05,
+   "escape": "capacity >= n: no binding ceiling (the control regime)"
+  },
+  "n320": {
+   "machine": "gdn2-fixed",
+   "n": 320,
+   "capacity": 256,
+   "ceiling": 0.8015625000000001,
+   "ceiling_plus_band": 0.8515625000000001,
+   "algebra": "key-space: per-head d_k=128 (exact retrieval needs orthogonal keys: <= 128/head); the Welch rms bound 0.0686 at N=320 forces crosstalk/signal 1.22 per head (> 1 past N~2d); the pre-stated effective capacity is H*d_k = 256 (heads 2) with the refutation clause",
+   "band": 0.05,
+   "escape": null
+  },
+  "n640": {
+   "machine": "gdn2-fixed",
+   "n": 640,
+   "capacity": 256,
+   "ceiling": 0.40468750000000003,
+   "ceiling_plus_band": 0.4546875,
+   "algebra": "key-space: per-head d_k=128 (exact retrieval needs orthogonal keys: <= 128/head); the Welch rms bound 0.0791 at N=640 forces crosstalk/signal 2.00 per head (> 1 past N~2d); the pre-stated effective capacity is H*d_k = 256 (heads 2) with the refutation clause",
+   "band": 0.05,
+   "escape": null
+  }
+ },
+ "torch": "2.9.1+cu128",
+ "passed": true
+}
