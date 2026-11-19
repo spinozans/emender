@@ -205,3 +205,209 @@
  }
 }
 EXITCODE 0
+{
+ "gate_a": {
+  "fixture": {
+   "batch": 8,
+   "tokens": 2048,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "key_dim": 16,
+   "dtype": "bf16 inputs, fp32 defined-order math",
+   "segment_tokens": 64,
+   "lanes": 2,
+   "distinct_directions": 512,
+   "decay_channel": "per-channel vector (0.85-1.0 spread)"
+  },
+  "channels": {
+   "gated=True": {
+    "gated": true,
+    "bit_equal_channels": true,
+    "mismatched": [],
+    "read": {
+     "floor_fp32_vs_fp64": 1.9073486328125e-06,
+     "deviation": 9.5367431640625e-07,
+     "within_noise_factor": true
+    }
+   },
+   "gated=False": {
+    "gated": false,
+    "bit_equal_channels": true,
+    "mismatched": [],
+    "read": {
+     "floor_fp32_vs_fp64": 3.814697265625e-06,
+     "deviation": 1.9073486328125e-06,
+     "within_noise_factor": true
+    }
+   }
+  },
+  "total": {
+   "lanes_compared": 16908288,
+   "decision_flips": 0
+  },
+  "op_histogram": {
+   "none": 32768,
+   "append": 1645,
+   "correct": 31123,
+   "pop": 0,
+   "merge": 0
+  },
+  "birth_parity": {
+   "differing_elements": {
+    "slot": 0,
+    "erase": 0,
+    "op": 0,
+    "live_after": 0,
+    "payload": 0,
+    "reads": 0,
+    "state": 0,
+    "live": 0,
+    "live_pre": 0,
+    "weights": 0,
+    "keys": 0
+   },
+   "bit_identical": true
+  },
+  "forward_kernel_resources": {
+   "num_warps": 8,
+   "registers": 255,
+   "spills": 6
+  }
+ },
+ "gate_e": {
+  "note": "the K12-flagged multi-lane MERGE corner is NOT copied: the k11b oracle (a new file) guards the MERGE-source close PER LANE, the kernel's own semantics; no committed engine is touched",
+  "k11_committed_corner_reproduced": {
+   "differing": {
+    "state": 1,
+    "live": 1,
+    "keys": 1,
+    "schedule": 7
+   },
+   "verdict": "the K11 oracle diverges from its own kernel at the non-merging lane's live second row (K11_GATES.md 2's receipt, reproduced on this fixture)"
+  },
+  "k11b_oracle_vs_kernel": {
+   "differing": {
+    "state": 0,
+    "live": 0,
+    "keys": 0,
+    "schedule": 0,
+    "payload": 0
+   },
+   "bit_identical": true
+  },
+  "fixture_merge_histogram": {
+   "none": 15,
+   "append": 0,
+   "correct": 15,
+   "pop": 0,
+   "merge": 2
+  }
+ },
+ "gate_b": {
+  "oracle_gradcheck_fp64": {
+   "passed": true,
+   "hist": {
+    "none": 192,
+    "append": 12,
+    "correct": 180,
+    "pop": 0,
+    "merge": 0
+   },
+   "branches": "APPEND admission, CORRECT blend, the PER-CHANNEL decay vector, the PER-CHANNEL gates, keys, state"
+  },
+  "gradient_floors": {
+   "dpayload": {
+    "floor_fp32_vs_fp64": 1.9073486328125e-06,
+    "kernel_deviation": 1.9073486328125e-06,
+    "within_noise_factor": true
+   },
+   "dwrite_keys": {
+    "floor_fp32_vs_fp64": 1.430511474609375e-06,
+    "kernel_deviation": 2.1457672119140625e-06,
+    "within_noise_factor": true
+   },
+   "dquery_keys": {
+    "floor_fp32_vs_fp64": 3.814697265625e-06,
+    "kernel_deviation": 3.814697265625e-06,
+    "within_noise_factor": true
+   },
+   "ddecay": {
+    "floor_fp32_vs_fp64": 4.76837158203125e-06,
+    "kernel_deviation": 3.814697265625e-06,
+    "within_noise_factor": true
+   },
+   "dgates": {
+    "floor_fp32_vs_fp64": 7.62939453125e-06,
+    "kernel_deviation": 4.76837158203125e-06,
+    "within_noise_factor": true
+   },
+   "dstate": {
+    "floor_fp32_vs_fp64": 3.814697265625e-06,
+    "kernel_deviation": 3.814697265625e-06,
+    "within_noise_factor": true
+   },
+   "dkeys": {
+    "floor_fp32_vs_fp64": 0.0,
+    "kernel_deviation": 0.0,
+    "within_noise_factor": true
+   }
+  },
+  "replay_bit_exact": true,
+  "two_step_wake_up": {
+   "scalars": {
+    "decay_scalar": {
+     "step0_grad_norm": 3091.255126953125
+    },
+    "write_scalar": {
+     "step0_grad_norm": 1183.2623291015625
+    },
+    "read_scalar": {
+     "step0_grad_norm": 596.777099609375
+    },
+    "f_proj": {
+     "step0_grad_norm": 0.0
+    },
+    "b_proj": {
+     "step0_grad_norm": 0.0
+    },
+    "g_proj": {
+     "step0_grad_norm": 0.0
+    }
+   },
+   "note": "the zero-born per-head scalars receive gradient at step 0 (through sigmoid(0) = 0.5); the projections' step-0 gradient is EXACTLY zero while m == 0 (the K11 two-step wake-up pattern) -- receipted so the step-0 zero is not read as a dead channel",
+   "birth_decay_bit_equal_to_registered_scalar": true
+  }
+ },
+ "gate_d": {
+  "fixture": {
+   "batch": 8,
+   "tokens": 2048,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "key_dim": 16,
+   "segment_tokens": 64
+  },
+  "forward_ms_per_scan": {
+   "k11b": 23.1,
+   "k11": 21.57,
+   "k10": 18.13
+  },
+  "backward_ms_per_scan": {
+   "k11b": 18.29,
+   "k11": 18.17,
+   "k10": 17.3
+  },
+  "forward_overhead": {
+   "vs_k10": 1.274,
+   "vs_k11": 1.071
+  },
+  "backward_overhead": {
+   "vs_k10": 1.057,
+   "vs_k11": 1.006
+  },
+  "forward_throughput_tok_per_s": 709318,
+  "per_channel_cost_note": "the per-channel form adds per token: one (VP,) DECAY vector load and one (VP,) gate load (vs K11's two scalars), the per-channel CORRECT blend (elementwise in the value dim), and in the backward one (BV,) dlam and one (BV,) dgate store per (lane, block, token) instead of the per-block scalar partials; measured against K10's AND K11's own launches on the same fixture and box, not estimated"
+ }
+}

@@ -177,13 +177,13 @@
   "two_step_wake_up": {
    "scalars": {
     "decay_scalar": {
-     "step0_grad_norm": 2995.9013671875
+     "step0_grad_norm": 3091.255126953125
     },
     "write_scalar": {
-     "step0_grad_norm": 1646.814208984375
+     "step0_grad_norm": 1183.2623291015625
     },
     "read_scalar": {
-     "step0_grad_norm": 827.4200439453125
+     "step0_grad_norm": 596.777099609375
     },
     "f_proj": {
      "step0_grad_norm": 0.0
@@ -210,24 +210,24 @@
    "segment_tokens": 64
   },
   "forward_ms_per_scan": {
-   "k11b": 23.32,
-   "k11": 21.59,
+   "k11b": 23.1,
+   "k11": 21.57,
    "k10": 18.13
   },
   "backward_ms_per_scan": {
-   "k11b": 18.26,
-   "k11": 18.07,
-   "k10": 17.34
+   "k11b": 18.29,
+   "k11": 18.17,
+   "k10": 17.3
   },
   "forward_overhead": {
-   "vs_k10": 1.286,
-   "vs_k11": 1.08
+   "vs_k10": 1.274,
+   "vs_k11": 1.071
   },
   "backward_overhead": {
-   "vs_k10": 1.053,
-   "vs_k11": 1.01
+   "vs_k10": 1.057,
+   "vs_k11": 1.006
   },
-  "forward_throughput_tok_per_s": 702668,
+  "forward_throughput_tok_per_s": 709318,
   "per_channel_cost_note": "the per-channel form adds per token: one (VP,) DECAY vector load and one (VP,) gate load (vs K11's two scalars), the per-channel CORRECT blend (elementwise in the value dim), and in the backward one (BV,) dlam and one (BV,) dgate store per (lane, block, token) instead of the per-block scalar partials; measured against K10's AND K11's own launches on the same fixture and box, not estimated"
  }
 }
