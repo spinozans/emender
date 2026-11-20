@@ -1,0 +1,74 @@
+gpu_lease: granted GPUs: 1 (pid 847039)
+leased card: 1
+{"arm": "adamw", "card": "1", "seed": 3401, "family": "adamw", "peak_lr": 0.00033427141575371284, "parameters": 158638848}
+  adamw_seed3401 step 25 264s 2.9MB loss 3.4525
+  adamw_seed3401 step 50 528s 5.6MB loss 2.4789
+  adamw_seed3401 step 75 792s 8.3MB loss 2.0211
+  adamw_seed3401 step 100 1056s 11.1MB loss 2.1973
+  adamw_seed3401 step 125 1319s 13.9MB loss 2.0026
+  adamw_seed3401 step 150 1582s 16.6MB loss 2.2991
+  adamw_seed3401 step 175 1845s 19.5MB loss 2.2324
+  adamw_seed3401 cooldown 20/24 2108s 22.2MB loss 2.5937
+  adamw_seed3401 cooldown 24/24 2150s 22.7MB loss 2.9129
+  step-1 train loss 5.782775391046648 (the K13 additive arm's own row's is 5.782775391046648 -- asserted bit-identical; the inherited 4x composition row's is 5.782775391046648)
+  constant step 1: eval 5.7281
+  constant step 5: eval 5.0615
+  constant step 10: eval 4.2445
+  constant step 20: eval 3.1433
+  constant step 40: eval 2.4424
+  constant step 80: eval 1.9669
+  constant step 120: eval 1.7350
+  constant step 160: eval 1.5995
+  constant step 180: eval 1.6918
+  EMA at step 180: eval 1.7417
+  post-cooldown final (step 204): eval 1.5747
+  read-mask layer 0: nll 1.8304 (base 1.6918)
+  read-mask layer 1: nll 1.7324 (base 1.6918)
+  read-mask layer 2: nll 1.7359 (base 1.6918)
+  read-mask layer 3: nll 1.7244 (base 1.6918)
+  read-mask layer 4: nll 1.7083 (base 1.6918)
+  read-mask layer 5: nll 1.7073 (base 1.6918)
+  read-mask layer 6: nll 1.7085 (base 1.6918)
+  read-mask layer 7: nll 1.6977 (base 1.6918)
+  read-mask layer 8: nll 1.7075 (base 1.6918)
+  read-mask layer 9: nll 1.7053 (base 1.6918)
+  read-mask layer 10: nll 1.6987 (base 1.6918)
+  read-mask layer 11: nll 1.6927 (base 1.6918)
+  read-mask layer 12: nll 1.6968 (base 1.6918)
+  read-mask layer 13: nll 1.7002 (base 1.6918)
+  read-mask layer 14: nll 1.7006 (base 1.6918)
+  read-mask layer 15: nll 1.6951 (base 1.6918)
+  read-mask layer 16: nll 1.6962 (base 1.6918)
+  read-mask layer 17: nll 1.6969 (base 1.6918)
+  read-mask layer 18: nll 1.6933 (base 1.6918)
+  read-mask layer 19: nll 1.6941 (base 1.6918)
+  read-mask layer 20: nll 1.6919 (base 1.6918)
+  read-mask layer 21: nll 1.6939 (base 1.6918)
+  read-mask layer 22: nll 1.6957 (base 1.6918)
+  read-mask layer 23: nll 1.6960 (base 1.6918)
+  read-mask layer 0: nll 1.6991 (base 1.5747)
+  read-mask layer 1: nll 1.6231 (base 1.5747)
+  read-mask layer 2: nll 1.6180 (base 1.5747)
+  read-mask layer 3: nll 1.6052 (base 1.5747)
+  read-mask layer 4: nll 1.5901 (base 1.5747)
+  read-mask layer 5: nll 1.5896 (base 1.5747)
+  read-mask layer 6: nll 1.5893 (base 1.5747)
+  read-mask layer 7: nll 1.5842 (base 1.5747)
+  read-mask layer 8: nll 1.5870 (base 1.5747)
+  read-mask layer 9: nll 1.5859 (base 1.5747)
+  read-mask layer 10: nll 1.5831 (base 1.5747)
+  read-mask layer 11: nll 1.5797 (base 1.5747)
+  read-mask layer 12: nll 1.5791 (base 1.5747)
+  read-mask layer 13: nll 1.5840 (base 1.5747)
+  read-mask layer 14: nll 1.5787 (base 1.5747)
+  read-mask layer 15: nll 1.5829 (base 1.5747)
+  read-mask layer 16: nll 1.5803 (base 1.5747)
+  read-mask layer 17: nll 1.5796 (base 1.5747)
+  read-mask layer 18: nll 1.5785 (base 1.5747)
+  read-mask layer 19: nll 1.5770 (base 1.5747)
+  read-mask layer 20: nll 1.5766 (base 1.5747)
+  read-mask layer 21: nll 1.5748 (base 1.5747)
+  read-mask layer 22: nll 1.5755 (base 1.5747)
+  read-mask layer 23: nll 1.5774 (base 1.5747)
+{"arm": "adamw", "seed": 3401, "status": "completed", "exposure_steps": 180, "final_eval_nll_constant_lr": 1.691845144544329, "final_eval_nll_post_cooldown": 1.5747267518724715, "ema_eval_nll": 1.7416706085205078}
+committed: X45 K16 THE CONFIG BRACKET: the adamw arm landed (seed 3401) -- the composed machine (per-token + separated keys + the K13 additive read + the K11B p3 gate stack; the program's best absolute rows 1.3811/1.3832 post-cooldown, +0.029/+0.031 remaining vs GDN2's 1.3522) bracketed on the config axis it has NEVER been tuned on: the LR bracket {2x, 3x, 6x} of the tuned AdamW base (3.3427e-4) around the inherited hybrid-Muon 4x point (tuned for the SOFTMAX-read machine, cited at both seeds, never re-run) plus the optimizer-family check (plain AdamW at its own tuned 1x point) -- the K15 adjudication's mandatory follow-up (the ruling's named follow-up 1), the symmetric-claim rule's config-symmetry duty before any final gap quote, at the exact probe protocol (matched exposure 20,022,866 targets, seed 3401, the registered flagship stream, the document-disjoint calibration eval) under the corrected cooldown-primary scoring, the machine byte for byte the K15 composition (the step-1 nearest-kin parity vs the K13 additive arm's own same-seed row asserted), the mechanism instrument (the |w|-mass effective rows + the collapse detector + the gate telemetry) and the decorative-store sweep at both the step-180 and post-cooldown states

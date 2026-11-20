@@ -1,0 +1,194 @@
+{
+  "probe": "k16_config_bracket assemble",
+  "corrected_scoring": {
+    "primary": "post-cooldown eval: a linear cooldown of 24 steps (13.3% of the 180-step constant-LR budget) appended after the banked matched-exposure landing, same stream/data order, LR factor (25 - k)/24 for cooldown step k (1.0 -> 1/24, never zero), both hybrid groups scaling equally; the corrected score is the post-cooldown calibration eval",
+    "secondary": "EMA iterate at step 180 (no extra data): decay 0.99, initialized at the init weights, updated after every constant-phase optimizer step, NOT updated during the cooldown; RANKING-ONLY -- its absolute number is biased toward mid-run weights (stated, not smoothed)",
+    "cooldown_steps": 24,
+    "cooldown_fraction": 0.1333,
+    "cooldown_form": "linear",
+    "ema_decay": 0.99,
+    "exposure_note": "the cooldown steps see ~2.7M more targets (~13%), identical across arms -- a stated protocol EXTENSION; the step-180 constant-LR eval is retained so every banked row stays comparable",
+    "citations": {
+      "river_valley": "Wen et al., ICLR 2025, arXiv:2410.05192 -- constant-LR loss carries an LR-dependent oscillation penalty that decay/averaging removes",
+      "cooldown": "Haegele et al., NeurIPS 2024, arXiv:2405.18392 -- constant-LR + short cooldown matches cosine at full scale",
+      "averaging": "Defazio et al., arXiv:2405.15682 -- iterate averaging as the schedule-free fix for the same penalty",
+      "moonlight": "Liu et al. (Moonshot AI), arXiv:2502.16982 -- with the update RMS matched to AdamW's (~0.2; AdamW typical 0.2-0.4), Muon directly reuses the LR and weight decay tuned for AdamW, i.e. ~1x the AdamW-tuned LR, WITH weight decay",
+      "horizon": "Bjorck et al., ICLR 2025 -- the optimal LR shrinks with token horizon; probe-tuned LRs transfer only downscaled"
+    }
+  },
+  "score_form": "the K15 composed machine (the K13 additive read under the K11B p3 per-channel gate stack) at the bracket's LR/optimizer points -- the machine is NOT the lane's variable, the optimizer config is",
+  "arms": {
+    "muon4x": {
+      "family": "hybrid-muon",
+      "lr_multiplier": 4,
+      "cited": true,
+      "note": "the K15 composition arm's own landed rows (the inherited point, both seeds banked) -- cited, never re-run",
+      "seeds": {
+        "3401": {
+          "post_cooldown": 1.3811104467936925,
+          "constant_lr": 1.433674931526184,
+          "ema_180": 1.424389226096017,
+          "step1_train_loss": 5.782775391046648
+        },
+        "3402": {
+          "post_cooldown": 1.383232252938407,
+          "constant_lr": 1.4341776371002197,
+          "ema_180": 1.4385861498968942,
+          "step1_train_loss": 5.720172563202926
+        }
+      }
+    },
+    "adamw": {
+      "family": "adamw",
+      "lr_multiplier": 1,
+      "cited": false,
+      "note": "the composed machine under PLAIN AdamW at its own tuned point (1x the tuned base, fused, the bake-off's own adamw arm's convention) -- the optimizer-family check: the read-form change may have moved the optimizer ranking",
+      "seeds": {
+        "3401": {
+          "post_cooldown": 1.5747267518724715,
+          "constant_lr": 1.691845144544329,
+          "ema_180": 1.7416706085205078,
+          "step1_train_loss": 5.782775391046648,
+          "step1_parity": true,
+          "train_seconds_constant": 1897.9,
+          "effective_rows": 14.466521263122559,
+          "top_row_share": 0.1812163947595678,
+          "occupancy": 23.410181681315105,
+          "identity_share": 0.1221328389781139,
+          "gate_drifts": {
+            "decay_gate_mean_distance_from_registered_scalar": 0.008475244118017145,
+            "write_gate_mean_distance_from_1": 0.006490315912136187,
+            "read_gate_mean_distance_from_1": 0.004033299842073272
+          },
+          "muon_update_rms": null
+        }
+      }
+    },
+    "muon2x": {
+      "family": "hybrid-muon",
+      "lr_multiplier": 2,
+      "cited": false,
+      "note": "the composed machine + hybrid Muon at 2x the tuned AdamW base -- the bracket's near side",
+      "seeds": {
+        "3401": {
+          "post_cooldown": 1.435511759349278,
+          "constant_lr": 1.493667483329773,
+          "ema_180": 1.6000386817114693,
+          "step1_train_loss": 5.782775391046648,
+          "step1_parity": true,
+          "train_seconds_constant": 1964.1,
+          "effective_rows": 17.95745849609375,
+          "top_row_share": 0.1288932102391588,
+          "occupancy": 26.501874287923176,
+          "identity_share": 0.12441453204012269,
+          "gate_drifts": {
+            "decay_gate_mean_distance_from_registered_scalar": 0.007982420583478719,
+            "write_gate_mean_distance_from_1": 0.017417664450476877,
+            "read_gate_mean_distance_from_1": 0.00655102730767491
+          },
+          "muon_update_rms": 0.18179467058425505
+        }
+      }
+    },
+    "muon3x": {
+      "family": "hybrid-muon",
+      "lr_multiplier": 3,
+      "cited": false,
+      "note": "the composed machine + hybrid Muon at 3x -- the inherited bracket point both machines' brackets started from",
+      "seeds": {
+        "3401": {
+          "post_cooldown": 1.40336046900068,
+          "constant_lr": 1.4483819689069475,
+          "ema_180": 1.4840977021626063,
+          "step1_train_loss": 5.782775391046648,
+          "step1_parity": true,
+          "train_seconds_constant": 1961.0,
+          "effective_rows": 18.032697677612305,
+          "top_row_share": 0.13248984065550465,
+          "occupancy": 27.55689748128255,
+          "identity_share": 0.12484494937175301,
+          "gate_drifts": {
+            "decay_gate_mean_distance_from_registered_scalar": 0.010305382461713938,
+            "write_gate_mean_distance_from_1": 0.018219213823613245,
+            "read_gate_mean_distance_from_1": 0.006911686155945063
+          },
+          "muon_update_rms": 0.18249801843178742
+        }
+      }
+    },
+    "muon6x": {
+      "family": "hybrid-muon",
+      "lr_multiplier": 6,
+      "cited": false,
+      "note": "the composed machine + hybrid Muon at 6x -- the far side past the inherited 4x point",
+      "seeds": {
+        "3401": {
+          "post_cooldown": 1.3862965617861067,
+          "constant_lr": 1.4488633530480521,
+          "ema_180": 1.3841685397284371,
+          "step1_train_loss": 5.782775391046648,
+          "step1_parity": true,
+          "train_seconds_constant": 1942.2,
+          "effective_rows": 13.00544261932373,
+          "top_row_share": 0.21568654154628597,
+          "occupancy": 23.40948486328125,
+          "identity_share": 0.11837303808753706,
+          "gate_drifts": {
+            "decay_gate_mean_distance_from_registered_scalar": 0.011987401656369912,
+            "write_gate_mean_distance_from_1": 0.0386135194645855,
+            "read_gate_mean_distance_from_1": 0.02221496375083613
+          },
+          "muon_update_rms": 0.18308666248624167
+        }
+      }
+    }
+  },
+  "best_cell_at_seed_3401": "muon4x",
+  "second_seed_adjudication": {
+    "best_cell_at_seed_3401": "muon4x",
+    "best_post_cooldown_at_seed_3401": 1.3811104467936925,
+    "rule": {
+      "rule": "the best cell of the bracket -- the lowest post-cooldown row at seed 3401 across muon2x / muon3x / muon4x (cited) / muon6x / adamw -- is the composed machine's search-symmetric best cell and owes its second seed (3402), UNLESS it is the 4x cell (the K15 composition arm already landed at both seeds; the pair is complete and no new run is owed)",
+      "bracket_seed": 3401,
+      "second_seed": 3402,
+      "cited_cell": "muon4x (the K15 composition arm's own rows at both seeds)",
+      "escalation": "any bracket cell whose post-cooldown row lands at or below GDN2's 1.3521734476089478 is reported with BOTH scorings and BOTH seeds before any claim -- and escalated, not adjudicated here"
+    },
+    "second_seed_owed": false,
+    "second_seed_already_banked": true,
+    "second_seed_already_run": true,
+    "note": "the 4x cell's pair is complete (the K15 arm landed at both seeds); any other best cell owes seed 3402"
+  },
+  "optimizer_family_inversion": false,
+  "escalation_flags": [],
+  "search_symmetric_ours_best": {
+    "cell": "muon4x",
+    "seed": 3401,
+    "post_cooldown": 1.3811104467936925,
+    "constant_lr": 1.433674931526184,
+    "ema_180": 1.424389226096017
+  },
+  "gap_quote_vs_gdn2": {
+    "ours_best_post_cooldown": 1.3811104467936925,
+    "cell": "muon4x",
+    "seed": 3401,
+    "gdn2_post_cooldown": 1.3521734476089478,
+    "remaining_gap": 0.028936999184744794,
+    "fraction_of_corrected_gap_closed": 0.6456031390373013,
+    "bands": {
+      "endpoint_variance": 0.075,
+      "winner_seed_delta": 0.011948040553501738
+    },
+    "caveat": "the endpoint-variance band (0.075) and the winner's seed delta (0.0119) are quoted with every margin; the composed-machine-vs-GDN2 row is a cross-machine context row at the same probe protocol, not a controlled comparison; the final gap-quote phrasing is the supervisor's to adjudicate (the K13 clause-conflict precedent)",
+    "config_yield_vs_inherited_4x": {
+      "same_seed_improvement": 0.0,
+      "note": "how much of the remaining ~0.03 the bracket's config axis owned (the same-seed read vs the inherited 4x row); if the inherited point was already optimal this is 0 and the config-symmetry duty is discharged by receipt"
+    }
+  },
+  "notes": {
+    "scoring": "PRIMARY: post-cooldown (24-step linear); SECONDARY: EMA-0.99 at step 180 (ranking-only); constant-180 retained for banked comparability",
+    "bands": "every margin is read against BOTH the 0.075-nat endpoint-variance band and the winner's 0.0119 seed delta",
+    "pre_state": "NO directional prediction was pre-stated on the bracket's outcome; the config-symmetry duty is discharged by receipt either way (the inherited point optimal is a receipt, not a null result)",
+    "escalation": "the final gap-quote phrasing and any quality-conclusion inversion are escalated to the supervisor (the K13 clause-conflict precedent governs adjudication)"
+  }
+}
