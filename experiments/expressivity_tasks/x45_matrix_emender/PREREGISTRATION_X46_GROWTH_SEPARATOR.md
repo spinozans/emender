@@ -1,6 +1,6 @@
 # PREREGISTRATION X46 — THE GROWTH SEPARATOR ON GAS (the constructed task family)
 
-**Status: DRAFT — PENDING OPERATOR SIGN-OFF.** The task construction and
+**Status: OPERATOR-SIGNED (2026-11-19).** The task construction and
 the derived ceilings are committed (`ff9098b5`, machine-checked:
 `test_x46_growth_separator.py`, `receipts/x46_selftest.json`) BEFORE this
 registration; the arm runner is FAIL-CLOSED until this file carries the
