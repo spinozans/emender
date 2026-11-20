@@ -447,9 +447,9 @@ def train_arm(args) -> dict:
     if args.label not in ARMS:
         raise ValueError(f"unregistered arm label: {args.label}")
     arm = ARMS[args.label]
-    if args.seed != arm["seed"]:
-        raise ValueError(f"the {args.label} arm's seed is {arm['seed']}, "
-                         f"got {args.seed}")
+    # the arm label names its seed (the registration's arms are
+    # seed-labelled); the --seed flag is informational only
+    args.seed = arm["seed"]
 
     # ---- the machine: the banked K10-keys build order VERBATIM, then the
     # routing conversion (the ONLY difference; its module creation is
