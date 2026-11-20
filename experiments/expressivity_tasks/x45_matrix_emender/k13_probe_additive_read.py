@@ -1132,7 +1132,7 @@ def assemble(args) -> dict:
         delta = a3402["post_cooldown"] - BANKED["post_cooldown"]["seed3402"]
         gap = (BANKED["post_cooldown"]["seed3402"]
                - BANKED["gdn2"]["post_cooldown"])
-        closed = min(0.0, -delta) if delta < 0 else 0.0
+        closed = max(0.0, -delta)
         if delta <= -REGISTRATION_ANCHORS["mr2_close_bar"]:
             verdict = ("CLOSES >= 0.02: the C5 attribution refines to THE "
                        "READ FORM (competitive softmax dilution); the "

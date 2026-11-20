@@ -1,0 +1,171 @@
+{
+  "probe": "k13_additive_read assemble",
+  "corrected_scoring": {
+    "primary": "post-cooldown eval: a linear cooldown of 24 steps (13.3% of the 180-step constant-LR budget) appended after the banked matched-exposure landing, same stream/data order, LR factor (25 - k)/24 for cooldown step k (1.0 -> 1/24, never zero), both hybrid groups scaling equally; the corrected score is the post-cooldown calibration eval",
+    "secondary": "EMA iterate at step 180 (no extra data): decay 0.99, initialized at the init weights, updated after every constant-phase optimizer step, NOT updated during the cooldown; RANKING-ONLY -- its absolute number is biased toward mid-run weights (stated, not smoothed)",
+    "cooldown_steps": 24,
+    "cooldown_fraction": 0.1333,
+    "cooldown_form": "linear",
+    "ema_decay": 0.99,
+    "exposure_note": "the cooldown steps see ~2.7M more targets (~13%), identical across arms -- a stated protocol EXTENSION; the step-180 constant-LR eval is retained so every banked row stays comparable",
+    "citations": {
+      "river_valley": "Wen et al., ICLR 2025, arXiv:2410.05192 -- constant-LR loss carries an LR-dependent oscillation penalty that decay/averaging removes",
+      "cooldown": "Haegele et al., NeurIPS 2024, arXiv:2405.18392 -- constant-LR + short cooldown matches cosine at full scale",
+      "averaging": "Defazio et al., arXiv:2405.15682 -- iterate averaging as the schedule-free fix for the same penalty",
+      "moonlight": "Liu et al. (Moonshot AI), arXiv:2502.16982 -- with the update RMS matched to AdamW's (~0.2; AdamW typical 0.2-0.4), Muon directly reuses the LR and weight decay tuned for AdamW, i.e. ~1x the AdamW-tuned LR, WITH weight decay",
+      "horizon": "Bjorck et al., ICLR 2025 -- the optimal LR shrinks with token horizon; probe-tuned LRs transfer only downscaled"
+    }
+  },
+  "score_form": "R13-1/R13-2: the banked score channel verbatim, raw and live-gated; softmax and ||S_j|| gone; the k11b g_proj gate zero-born",
+  "anchors": {
+    "banked": {
+      "constant_lr": {
+        "seed3401": 1.4907409463609969,
+        "seed3402": 1.4899048124040877,
+        "note": "the banked winner config's own constant-LR step-180 rows (routing_symmetry_runs/muon4x_banked_seed{3401,3402})"
+      },
+      "post_cooldown": {
+        "seed3402": 1.4338248457227434,
+        "note": "the corrected post-cooldown banked best (protocol_correction_runs/winner_speedrun_rescored, seed 3402 -- the banked best row's own config re-scored)"
+      },
+      "ema180": {
+        "seed3402": 1.5408323151724679,
+        "note": "the secondary EMA-0.99 iterate at step 180, banked (ranking-only instrument)"
+      },
+      "gdn2": {
+        "constant_lr": 1.3950541530336653,
+        "post_cooldown": 1.3521734476089478,
+        "ema180": 1.3803383282252721,
+        "note": "the banked GDN2 best rows (the cross-machine context; the ~0.08 residual this stage dissects)"
+      }
+    },
+    "registration": {
+      "mr1_factor_bar": 2.0,
+      "mr2_close_bar": 0.02,
+      "sweep_layers_ge_threshold": 7,
+      "sweep_threshold": 0.02,
+      "sweep_near_band": 0.0125,
+      "sweep_total": 24,
+      "effective_rows_side_by_side": 5.6,
+      "bands": {
+        "endpoint_variance": 0.075,
+        "winner_seed_delta": 0.011948040553501738
+      }
+    },
+    "banked_mechanism": {
+      "seed3401_step180": {
+        "identity_rewrite_share": 0.12220044317888193,
+        "read_entropy_nats": 1.5150481063949617,
+        "occupancy_mean_live_slots": 33.49335734049479,
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.022992451985677082,
+          "correct": 0.9743779500325521,
+          "pop": 0.0,
+          "merge": 0.0026295979817708335
+        },
+        "constant_lr_nll": 1.4907409463609969
+      },
+      "seed3402_step180": {
+        "identity_rewrite_share": 0.11799608786375947,
+        "read_entropy_nats": 1.600236432712681,
+        "occupancy_mean_live_slots": 35.15362294514974,
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.023668924967447918,
+          "correct": 0.9737930297851562,
+          "pop": 0.0,
+          "merge": 0.0025380452473958335
+        },
+        "constant_lr_nll": 1.4899048124040877
+      },
+      "seed3402_post_cooldown": {
+        "identity_rewrite_share": 0.1179643202876504,
+        "read_entropy_nats": 1.538525497965773,
+        "occupancy_mean_live_slots": 32.76612091064453,
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02294921875,
+          "correct": 0.9746373494466146,
+          "pop": 0.0,
+          "merge": 0.0024134318033854165
+        },
+        "post_cooldown_nll": 1.4338248457227434
+      }
+    }
+  },
+  "arms": {
+    "additive_seed3401": {
+      "arm": "additive",
+      "seed": 3401,
+      "status": "completed",
+      "constant_lr": 1.439220769064767,
+      "post_cooldown": 1.3928245476314,
+      "ema_180": 1.4283077546528407,
+      "cooldown_drop": 0.04639622143336686,
+      "step1_train_loss": 5.782775391046648,
+      "birth_decisions_bit_identical": true,
+      "birth_read_rms_additive_over_banked": [
+        1.8101776838302612,
+        1.8611286878585815
+      ],
+      "identity_share": 0.12543127376869717,
+      "effective_rows": 16.424976348876953,
+      "top_row_share": 0.15604202003087658,
+      "occupancy": 26.213897705078125,
+      "train_seconds_constant": 1707.5,
+      "parameters": 152543904
+    },
+    "additive_seed3402": {
+      "arm": "additive",
+      "seed": 3402,
+      "status": "completed",
+      "constant_lr": 1.435692889349801,
+      "post_cooldown": 1.384450146130153,
+      "ema_180": 1.437227657863072,
+      "cooldown_drop": 0.05124274321964806,
+      "step1_train_loss": 5.720172563202926,
+      "birth_decisions_bit_identical": true,
+      "birth_read_rms_additive_over_banked": [
+        1.9295713901519775,
+        1.8186562061309814
+      ],
+      "identity_share": 0.11708593048541875,
+      "effective_rows": 16.68810272216797,
+      "top_row_share": 0.15366868533289912,
+      "occupancy": 26.533884684244793,
+      "train_seconds_constant": 1719.1,
+      "parameters": 152543904
+    }
+  },
+  "M_R1": {
+    "factors_vs_seed_matched_banked": {
+      "3401": 3.610170560945735,
+      "3402": 3.368473320101208
+    },
+    "bar_factor": 2.0,
+    "met_at_both_seeds": true,
+    "refuted_by_collapse": false,
+    "verdict": "MET -- the competitive->additive signature: the instrument moved toward the live-row count"
+  },
+  "notes": {
+    "scoring": "PRIMARY: post-cooldown (24-step linear); SECONDARY: EMA-0.99 at step 180 (ranking-only); constant-180 retained for banked comparability",
+    "seeds": "BOTH seeds primary (no birth parity possible); the corrected anchor exists at 3402, so M-R2's primary reading is the 3402 post-cooldown row with the 3401 constant/EMA rows as cross-checks",
+    "refutation_clause": "if NO mechanism number moves AND the NLL does not improve beyond parity, the read-form lever does not own the residual and that is reported as refuted, not excused"
+  },
+  "M_R2": {
+    "post_cooldown_primary_seed3402": 1.384450146130153,
+    "corrected_anchor": 1.4338248457227434,
+    "delta": -0.04937469959259033,
+    "gap_reference": 0.08165139811379563,
+    "fraction_of_gap_closed": 0.6047012143475851,
+    "close_bar": 0.02,
+    "band": 0.075,
+    "seed3401_rows": {
+      "constant_lr": 1.439220769064767,
+      "post_cooldown": 1.3928245476314,
+      "ema_180": 1.4283077546528407
+    },
+    "verdict": "CLOSES >= 0.02: the C5 attribution refines to THE READ FORM (competitive softmax dilution); the terminal reading is amended and the read form joins the leaner registration"
+  }
+}
