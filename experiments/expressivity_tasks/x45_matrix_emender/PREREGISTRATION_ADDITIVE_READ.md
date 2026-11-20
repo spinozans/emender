@@ -342,3 +342,53 @@ additive_seed3401.console.txt 2>&1 < /dev/null &
 /home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.\
 x45_matrix_emender.k13_probe_additive_read assemble
 ```
+
+---
+
+## 7. Post-result amendment (2026-11-24, supervisor-ruled; appended AFTER
+both arms landed — the pre-stated text above is unaltered)
+
+Both arms landed and the assemble is committed
+(`receipts/k13_additive_read_summary.json`;
+`RESULT_ADDITIVE_READ.md` quotes the receipts).  The pre-stated predictions
+evaluated:
+
+* **M-R1 MET at both seeds**: |w|-mass effective rows 16.42 / 16.69 =
+  3.61x / 3.37x the seed-matched banked anchors (bar 2x); the collapse
+  detector at 0.156 / 0.154 top-row share — **no collapse**; the refutation
+  clause does not fire.
+* **M-R2's close clause MET at both seeds** (post-cooldown 1.3928 / 1.3845
+  vs the corrected anchor 1.4338 — clearing the pre-stated 1.4138 bar;
+  60.5% of the 0.0816 corrected gap closed at the primary row), with the
+  clause conflict escalated as the task pre-authorized and ruled by the
+  supervisor: **clause A (the specific pre-stated win bar) governs the
+  experiment's verdict; the 0.075 endpoint-variance band governs the
+  machine-ranking claim's phrasing, not this experiment's adjudication**
+  ("applying the band mechanically ... would be band-worship, not
+  discipline").  **The C5 attribution REFINES to THE READ FORM (competitive
+  softmax dilution); the terminal reading amends** from "the dense
+  superposition itself owns ~0.07" to "the read law owned ~0.04–0.05
+  (closed, seed-coherent, mechanism-receipted); the residual is
+  ~0.03–0.04, with the write form and the management form as the leading
+  remaining candidates — K14 in flight tests the latter".  **The read form
+  joins this leaner registration.**  The band caveat stands verbatim in the
+  result document: the single-protocol primary delta alone would not bank;
+  a board-scale or second-protocol confirmation banks the machine-level
+  ranking claim.
+* **M-R3 reported as measured** (no bar): identity share unchanged within
+  noise (0.125/0.117 vs banked 0.1222/0.1180), the op mix banked-like, the
+  g_proj gate opened 0.011/0.013 off its born identity, the occupancy
+  DIPPED to 26.2/26.5 vs the banked 33.5–35.2, and the decorative-store
+  sweep CONCENTRATED load-bearing reads (4–5 of 24 at the 0.02 threshold,
+  vs the anchor 7) — the "may make more stores load-bearing" direction is
+  NOT confirmed; the concentration direction is the receipt.
+
+The engine, its gates and the suite are green
+(`K13_ADDITIVE_READ.md`, `receipts/k13_gates.json`); the arms trained ~10%
+FASTER than the banked rows (1707/1719 s vs 1904/1906 — the softmax's
+exp/max/denominator dropped).  The named next arm (named, NOT run): the
+composition — the additive read + the learned router, and whether the p3
+gate stack composes with the additive read — once the in-flight K14 arms
+(which run on the banked softmax read) land.  This DRAFT remains pending
+the operator's sign-off; the amended terminal reading it carries is quoted
+from the supervisor's ruling of 2026-11-24.
