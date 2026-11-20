@@ -1,0 +1,41 @@
+{
+ "experiment": "x46 gdn2 tau calibration (pre-registration evidence)",
+ "n": 320,
+ "seed": 3401,
+ "steps": 300,
+ "lr": 0.001,
+ "machine": "gdn2-fixed",
+ "heads": 2,
+ "head_dim": 128,
+ "per_layer_smoothed_pr_max": {
+  "0": 22.970279693603516,
+  "1": 1.3470492362976074
+ },
+ "tau_cal": 22.970279693603516,
+ "tau_rule": "the trained fixed machine's own per-layer smoothed-PR ceiling on THIS constructed stream (the C3 calibrated-below-registered discipline): the growth arm fires exactly when a boundary is MORE saturated than anything the fixed machine exhibits",
+ "registered_tau_sat": 96.0,
+ "summary": {
+  "machine": "gdn2-fixed",
+  "heads": 2,
+  "head_dim": 128,
+  "depth": 2,
+  "dim": 576,
+  "capacity": 256,
+  "grow": false,
+  "parameters": {
+   "total": 9252548,
+   "note": "the fixed arm"
+  }
+ },
+ "spectra": {
+  "uptime_s": 5216062,
+  "loadavg_1": 9.06,
+  "loadavg_5": 8.91,
+  "loadavg_15": 9.4,
+  "running": 5,
+  "total": 6028,
+  "nproc": 256,
+  "note": "sampled before pool enable and mid-run; 32 hard-capped single-thread workers on the box; the GPU-driven main process keeps OMP_NUM_THREADS=4"
+ },
+ "torch": "2.9.1+cu128"
+}
