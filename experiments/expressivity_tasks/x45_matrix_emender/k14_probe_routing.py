@@ -487,8 +487,10 @@ def train_arm(args) -> dict:
             if not torch.equal(w0, torch.zeros_like(w0)) \
                     or not torch.equal(b0, torch.zeros_like(b0)):
                 raise ValueError("the router must be born at EXACT zeros")
-            if bool(w0.requires_grad) != bool(arm["trainable"]) \
-                    or bool(b0.requires_grad) != bool(arm["trainable"]):
+            if bool(block.mixer.router.weight.requires_grad) \
+                    != bool(arm["trainable"]) \
+                    or bool(block.mixer.router.bias.requires_grad) \
+                    != bool(arm["trainable"]):
                 raise ValueError(f"the router's requires_grad must be "
                                  f"{arm['trainable']}")
         from experiments.expressivity_tasks.x45_matrix_emender. \
