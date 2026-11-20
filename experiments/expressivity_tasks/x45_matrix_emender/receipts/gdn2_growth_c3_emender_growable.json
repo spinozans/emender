@@ -1,0 +1,5814 @@
+{
+  "probe": "gdn2_growth_c3",
+  "arm": "emender_growable",
+  "seed": 3401,
+  "context": 8192,
+  "tau_sat": 19.205211639404297,
+  "machine": "emender",
+  "parameters": {
+    "total": 149981808,
+    "delta_vs_registered": 0
+  },
+  "state_columns": {
+    "per_layer_state": "slots x value_dim, rank cap 2048"
+  },
+  "exposure_bytes": 22822912,
+  "exposure_steps": 199,
+  "constant_steps": 175,
+  "scores": {
+    "constant_curve": [
+      {
+        "kind": "constant",
+        "step": 1,
+        "bytes": 114688,
+        "train_loss": 5.703935691288539,
+        "eval_nll": 5.553734838962555,
+        "eval_windows": 24,
+        "eval_targets": 196608
+      },
+      {
+        "kind": "constant",
+        "step": 5,
+        "bytes": 573440,
+        "train_loss": 4.684475694383893,
+        "eval_nll": 4.3948309024175005,
+        "eval_windows": 24,
+        "eval_targets": 196608
+      },
+      {
+        "kind": "constant",
+        "step": 10,
+        "bytes": 1146880,
+        "train_loss": 2.9690610000065396,
+        "eval_nll": 3.674443860848745,
+        "eval_windows": 24,
+        "eval_targets": 196608
+      },
+      {
+        "kind": "constant",
+        "step": 20,
+        "bytes": 2293760,
+        "train_loss": 3.5800576210021973,
+        "eval_nll": 3.1784303784370422,
+        "eval_windows": 24,
+        "eval_targets": 196608
+      },
+      {
+        "kind": "constant",
+        "step": 40,
+        "bytes": 4587520,
+        "train_loss": 2.939822741917201,
+        "eval_nll": 2.759354144334793,
+        "eval_windows": 24,
+        "eval_targets": 196608
+      },
+      {
+        "kind": "constant",
+        "step": 80,
+        "bytes": 9175040,
+        "train_loss": 2.484383651188442,
+        "eval_nll": 2.5887217074632645,
+        "eval_windows": 24,
+        "eval_targets": 196608
+      },
+      {
+        "kind": "constant",
+        "step": 120,
+        "bytes": 13762560,
+        "train_loss": 2.4049334185464044,
+        "eval_nll": 2.5854230423768363,
+        "eval_windows": 24,
+        "eval_targets": 196608
+      },
+      {
+        "kind": "constant",
+        "step": 160,
+        "bytes": 18350080,
+        "train_loss": 3.091542141778129,
+        "eval_nll": 2.503828749060631,
+        "eval_windows": 24,
+        "eval_targets": 196608
+      },
+      {
+        "kind": "constant",
+        "step": 175,
+        "bytes": 20070400,
+        "train_loss": 2.4334399700164795,
+        "eval_nll": 2.412299414475759,
+        "eval_windows": 24,
+        "eval_targets": 196608
+      }
+    ],
+    "primary": {
+      "kind": "post-cooldown (PRIMARY)",
+      "step": 199,
+      "eval_nll": 2.3378484894831977,
+      "eval_windows": 24,
+      "eval_targets": 196608
+    },
+    "secondary": {
+      "kind": "EMA iterate at the constant-phase end (SECONDARY, ranking-only)",
+      "step": 175,
+      "eval_nll": 2.4739446292320886,
+      "eval_windows": 24,
+      "eval_targets": 196608
+    },
+    "skipped_evals": []
+  },
+  "walls": {
+    "train_seconds": 127711.8
+  },
+  "spectra_pool": {
+    "workers": 32,
+    "chunk": 16384,
+    "n_requests": 0,
+    "n_matrices": 0,
+    "seconds": 0.0,
+    "ms_per_matrix": 0.0,
+    "load_at_enable": {
+      "uptime_s": 5097826,
+      "loadavg_1": 45.62,
+      "loadavg_5": 51.87,
+      "loadavg_15": 51.78,
+      "running": 33,
+      "total": 7397,
+      "nproc": 256,
+      "note": "sampled before pool enable and mid-run; 32 hard-capped single-thread workers on the box; the GPU-driven main process keeps OMP_NUM_THREADS=4"
+    },
+    "load_now": {
+      "uptime_s": 5246166,
+      "loadavg_1": 13.44,
+      "loadavg_5": 13.16,
+      "loadavg_15": 12.2,
+      "running": 7,
+      "total": 6248,
+      "nproc": 256,
+      "note": "sampled before pool enable and mid-run; 32 hard-capped single-thread workers on the box; the GPU-driven main process keeps OMP_NUM_THREADS=4"
+    }
+  },
+  "growth_telemetry": null,
+  "emender_native_diagnostics": null,
+  "saturation_diagnostics": {
+    "constant-final": {
+      "windows": 4,
+      "context": 8192,
+      "regime": "eval, bf16 autocast, the growing collect walk the arm trains on",
+      "op_rate_per_token_lane0": {
+        "none": 0.0,
+        "append": 0.053876241048177086,
+        "correct": 0.9454689025878906,
+        "pop": 0.0,
+        "merge": 0.0006548563639322916
+      },
+      "op_histogram_all_lanes": {
+        "none": 1571834,
+        "append": 84740,
+        "correct": 1487094,
+        "pop": 0,
+        "merge": 2060
+      },
+      "occupancy": {
+        "mean_live_slots": 243.37896919250488,
+        "rank_cap": 2048
+      },
+      "read_weight_entropy": {
+        "mean": -1.180000665861138
+      },
+      "growth": {
+        "events_per_probe": 16.0,
+        "per_layer": {
+          "0": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.646484375,
+              "window_rates": [
+                0.015625,
+                0.921875,
+                0.859375,
+                0.7890625
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.619140625,
+              "window_rates": [
+                0.0,
+                0.8359375,
+                0.703125,
+                0.9375
+              ]
+            }
+          ],
+          "1": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.556640625,
+              "window_rates": [
+                0.015625,
+                0.828125,
+                0.765625,
+                0.6171875
+              ]
+            },
+            {
+              "boundary": 1088,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.583984375,
+              "window_rates": [
+                0.53125,
+                0.46875,
+                0.7734375,
+                0.5625
+              ]
+            }
+          ],
+          "2": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.525390625,
+              "window_rates": [
+                0.015625,
+                0.765625,
+                0.703125,
+                0.6171875
+              ]
+            },
+            {
+              "boundary": 1088,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.625,
+              "window_rates": [
+                0.609375,
+                0.5859375,
+                0.6484375,
+                0.65625
+              ]
+            }
+          ],
+          "3": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.62890625,
+              "window_rates": [
+                0.015625,
+                0.8671875,
+                0.859375,
+                0.7734375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.630859375,
+              "window_rates": [
+                0.0,
+                0.84375,
+                0.78125,
+                0.8984375
+              ]
+            }
+          ],
+          "4": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.52734375,
+              "window_rates": [
+                0.015625,
+                0.7890625,
+                0.65625,
+                0.6484375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.5546875,
+              "window_rates": [
+                0.0,
+                0.765625,
+                0.59375,
+                0.859375
+              ]
+            }
+          ],
+          "5": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.62109375,
+              "window_rates": [
+                0.015625,
+                0.8046875,
+                0.8671875,
+                0.796875
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.646484375,
+              "window_rates": [
+                0.0,
+                0.8828125,
+                0.7734375,
+                0.9296875
+              ]
+            }
+          ],
+          "6": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.6640625,
+              "window_rates": [
+                0.015625,
+                0.9609375,
+                0.8359375,
+                0.84375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.681640625,
+              "window_rates": [
+                0.0,
+                0.90625,
+                0.859375,
+                0.9609375
+              ]
+            }
+          ],
+          "7": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.65625,
+              "window_rates": [
+                0.015625,
+                0.8984375,
+                0.8984375,
+                0.8125
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.65625,
+              "window_rates": [
+                0.0,
+                0.875,
+                0.8125,
+                0.9375
+              ]
+            }
+          ],
+          "8": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.681640625,
+              "window_rates": [
+                0.015625,
+                0.9375,
+                0.9140625,
+                0.859375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.6484375,
+              "window_rates": [
+                0.0,
+                0.875,
+                0.7734375,
+                0.9453125
+              ]
+            }
+          ],
+          "9": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.705078125,
+              "window_rates": [
+                0.015625,
+                0.9765625,
+                0.9375,
+                0.890625
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.638671875,
+              "window_rates": [
+                0.0,
+                0.9375,
+                0.6953125,
+                0.921875
+              ]
+            }
+          ],
+          "10": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.611328125,
+              "window_rates": [
+                0.015625,
+                0.9609375,
+                0.875,
+                0.59375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.59765625,
+              "window_rates": [
+                0.0,
+                0.9140625,
+                0.5625,
+                0.9140625
+              ]
+            }
+          ],
+          "11": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.6875,
+              "window_rates": [
+                0.015625,
+                0.9609375,
+                0.90625,
+                0.8671875
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.69921875,
+              "window_rates": [
+                0.0,
+                0.921875,
+                0.8828125,
+                0.9921875
+              ]
+            }
+          ],
+          "12": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.615234375,
+              "window_rates": [
+                0.015625,
+                0.90625,
+                0.7578125,
+                0.78125
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.63671875,
+              "window_rates": [
+                0.0,
+                0.875,
+                0.6796875,
+                0.9921875
+              ]
+            }
+          ],
+          "13": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.69140625,
+              "window_rates": [
+                0.015625,
+                0.984375,
+                0.875,
+                0.890625
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.60546875,
+              "window_rates": [
+                0.0,
+                0.7890625,
+                0.796875,
+                0.8359375
+              ]
+            }
+          ],
+          "14": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.712890625,
+              "window_rates": [
+                0.015625,
+                0.9609375,
+                0.9375,
+                0.9375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.71484375,
+              "window_rates": [
+                0.0,
+                0.8984375,
+                0.9609375,
+                1.0
+              ]
+            }
+          ],
+          "15": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.705078125,
+              "window_rates": [
+                0.015625,
+                1.0,
+                0.9765625,
+                0.828125
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.69140625,
+              "window_rates": [
+                0.0,
+                0.90625,
+                0.859375,
+                1.0
+              ]
+            }
+          ],
+          "16": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.697265625,
+              "window_rates": [
+                0.015625,
+                0.890625,
+                0.984375,
+                0.8984375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.6875,
+              "window_rates": [
+                0.0,
+                0.9921875,
+                0.8125,
+                0.9453125
+              ]
+            }
+          ],
+          "17": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.62890625,
+              "window_rates": [
+                0.015625,
+                0.8046875,
+                0.890625,
+                0.8046875
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.552734375,
+              "window_rates": [
+                0.0,
+                0.6015625,
+                0.84375,
+                0.765625
+              ]
+            }
+          ],
+          "18": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.6875,
+              "window_rates": [
+                0.015625,
+                0.921875,
+                0.9296875,
+                0.8828125
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.6328125,
+              "window_rates": [
+                0.0,
+                0.8671875,
+                0.703125,
+                0.9609375
+              ]
+            }
+          ],
+          "19": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.6328125,
+              "window_rates": [
+                0.015625,
+                0.8125,
+                0.8671875,
+                0.8359375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.62109375,
+              "window_rates": [
+                0.0,
+                0.7109375,
+                0.8046875,
+                0.96875
+              ]
+            }
+          ],
+          "20": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.64453125,
+              "window_rates": [
+                0.015625,
+                0.796875,
+                0.8359375,
+                0.9296875
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.615234375,
+              "window_rates": [
+                0.0,
+                0.6640625,
+                0.8984375,
+                0.8984375
+              ]
+            }
+          ],
+          "21": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.51953125,
+              "window_rates": [
+                0.015625,
+                0.828125,
+                0.6640625,
+                0.5703125
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.583984375,
+              "window_rates": [
+                0.0,
+                0.4921875,
+                0.96875,
+                0.875
+              ]
+            }
+          ],
+          "22": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 832,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.671875,
+              "window_rates": [
+                0.6796875,
+                0.71875,
+                0.5703125,
+                0.71875
+              ]
+            },
+            {
+              "boundary": 1088,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.603515625,
+              "window_rates": [
+                0.0,
+                0.8125,
+                0.71875,
+                0.8828125
+              ]
+            }
+          ],
+          "23": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 832,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.564453125,
+              "window_rates": [
+                0.671875,
+                0.609375,
+                0.3828125,
+                0.59375
+              ]
+            },
+            {
+              "boundary": 1280,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.50390625,
+              "window_rates": [
+                0.828125,
+                0.09375,
+                0.453125,
+                0.640625
+              ]
+            }
+          ]
+        }
+      },
+      "per_layer": {
+        "0": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.1099090576171875,
+            "correct": 0.8900909423828125,
+            "pop": 0.0,
+            "merge": 0.0
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.646484375,
+              "window_rates": [
+                0.015625,
+                0.921875,
+                0.859375,
+                0.7890625
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.619140625,
+              "window_rates": [
+                0.0,
+                0.8359375,
+                0.703125,
+                0.9375
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 461.92962646484375,
+          "read_weight_entropy_nats": -1.9217518082382246
+        },
+        "1": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.142333984375,
+            "correct": 0.857666015625,
+            "pop": 0.0,
+            "merge": 0.0
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.556640625,
+              "window_rates": [
+                0.015625,
+                0.828125,
+                0.765625,
+                0.6171875
+              ]
+            },
+            {
+              "boundary": 1088,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.583984375,
+              "window_rates": [
+                0.53125,
+                0.46875,
+                0.7734375,
+                0.5625
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 646.7184600830078,
+          "read_weight_entropy_nats": -1.2826731270478184
+        },
+        "2": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.1526031494140625,
+            "correct": 0.8473968505859375,
+            "pop": 0.0,
+            "merge": 0.0
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.525390625,
+              "window_rates": [
+                0.015625,
+                0.765625,
+                0.703125,
+                0.6171875
+              ]
+            },
+            {
+              "boundary": 1088,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.625,
+              "window_rates": [
+                0.609375,
+                0.5859375,
+                0.6484375,
+                0.65625
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 688.9728393554688,
+          "read_weight_entropy_nats": -1.2484667081417233
+        },
+        "3": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.0992584228515625,
+            "correct": 0.9006805419921875,
+            "pop": 0.0,
+            "merge": 6.103515625e-05
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.62890625,
+              "window_rates": [
+                0.015625,
+                0.8671875,
+                0.859375,
+                0.7734375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.630859375,
+              "window_rates": [
+                0.0,
+                0.84375,
+                0.78125,
+                0.8984375
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 450.5618438720703,
+          "read_weight_entropy_nats": -1.4816173365549528
+        },
+        "4": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.142974853515625,
+            "correct": 0.857025146484375,
+            "pop": 0.0,
+            "merge": 0.0
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.52734375,
+              "window_rates": [
+                0.015625,
+                0.7890625,
+                0.65625,
+                0.6484375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.5546875,
+              "window_rates": [
+                0.0,
+                0.765625,
+                0.59375,
+                0.859375
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 621.5330505371094,
+          "read_weight_entropy_nats": -1.0908210295895024
+        },
+        "5": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.05242919921875,
+            "correct": 0.94744873046875,
+            "pop": 0.0,
+            "merge": 0.0001220703125
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.62109375,
+              "window_rates": [
+                0.015625,
+                0.8046875,
+                0.8671875,
+                0.796875
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.646484375,
+              "window_rates": [
+                0.0,
+                0.8828125,
+                0.7734375,
+                0.9296875
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 248.47731018066406,
+          "read_weight_entropy_nats": -2.167322445113702
+        },
+        "6": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.054046630859375,
+            "correct": 0.945953369140625,
+            "pop": 0.0,
+            "merge": 0.0
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.6640625,
+              "window_rates": [
+                0.015625,
+                0.9609375,
+                0.8359375,
+                0.84375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.681640625,
+              "window_rates": [
+                0.0,
+                0.90625,
+                0.859375,
+                0.9609375
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 242.2332305908203,
+          "read_weight_entropy_nats": -1.5567410766183347
+        },
+        "7": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.064056396484375,
+            "correct": 0.9359283447265625,
+            "pop": 0.0,
+            "merge": 1.52587890625e-05
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.65625,
+              "window_rates": [
+                0.015625,
+                0.8984375,
+                0.8984375,
+                0.8125
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.65625,
+              "window_rates": [
+                0.0,
+                0.875,
+                0.8125,
+                0.9375
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 291.3778533935547,
+          "read_weight_entropy_nats": -1.5544727061086194
+        },
+        "8": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.0451812744140625,
+            "correct": 0.954803466796875,
+            "pop": 0.0,
+            "merge": 1.52587890625e-05
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.681640625,
+              "window_rates": [
+                0.015625,
+                0.9375,
+                0.9140625,
+                0.859375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.6484375,
+              "window_rates": [
+                0.0,
+                0.875,
+                0.7734375,
+                0.9453125
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 208.03858947753906,
+          "read_weight_entropy_nats": -1.4783034757181717
+        },
+        "9": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.0314178466796875,
+            "correct": 0.96856689453125,
+            "pop": 0.0,
+            "merge": 1.52587890625e-05
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.705078125,
+              "window_rates": [
+                0.015625,
+                0.9765625,
+                0.9375,
+                0.890625
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.638671875,
+              "window_rates": [
+                0.0,
+                0.9375,
+                0.6953125,
+                0.921875
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 159.0319366455078,
+          "read_weight_entropy_nats": -1.5225548436245542
+        },
+        "10": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.056427001953125,
+            "correct": 0.943572998046875,
+            "pop": 0.0,
+            "merge": 0.0
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.611328125,
+              "window_rates": [
+                0.015625,
+                0.9609375,
+                0.875,
+                0.59375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.59765625,
+              "window_rates": [
+                0.0,
+                0.9140625,
+                0.5625,
+                0.9140625
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 252.85464477539062,
+          "read_weight_entropy_nats": -0.9242574860944575
+        },
+        "11": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.0135650634765625,
+            "correct": 0.9863739013671875,
+            "pop": 0.0,
+            "merge": 6.103515625e-05
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.6875,
+              "window_rates": [
+                0.015625,
+                0.9609375,
+                0.90625,
+                0.8671875
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.69921875,
+              "window_rates": [
+                0.0,
+                0.921875,
+                0.8828125,
+                0.9921875
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 74.52525329589844,
+          "read_weight_entropy_nats": -1.8998252866090894
+        },
+        "12": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.0352630615234375,
+            "correct": 0.96466064453125,
+            "pop": 0.0,
+            "merge": 7.62939453125e-05
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.615234375,
+              "window_rates": [
+                0.015625,
+                0.90625,
+                0.7578125,
+                0.78125
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.63671875,
+              "window_rates": [
+                0.0,
+                0.875,
+                0.6796875,
+                0.9921875
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 161.8917999267578,
+          "read_weight_entropy_nats": -1.223453404833263
+        },
+        "13": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.03875732421875,
+            "correct": 0.9611663818359375,
+            "pop": 0.0,
+            "merge": 7.62939453125e-05
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.69140625,
+              "window_rates": [
+                0.015625,
+                0.984375,
+                0.875,
+                0.890625
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.60546875,
+              "window_rates": [
+                0.0,
+                0.7890625,
+                0.796875,
+                0.8359375
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 174.77859497070312,
+          "read_weight_entropy_nats": -0.7580649458347638
+        },
+        "14": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.0185394287109375,
+            "correct": 0.981231689453125,
+            "pop": 0.0,
+            "merge": 0.0002288818359375
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.712890625,
+              "window_rates": [
+                0.015625,
+                0.9609375,
+                0.9375,
+                0.9375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.71484375,
+              "window_rates": [
+                0.0,
+                0.8984375,
+                0.9609375,
+                1.0
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 89.49055480957031,
+          "read_weight_entropy_nats": -1.2392760951969304
+        },
+        "15": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.013702392578125,
+            "correct": 0.98541259765625,
+            "pop": 0.0,
+            "merge": 0.000885009765625
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.705078125,
+              "window_rates": [
+                0.015625,
+                1.0,
+                0.9765625,
+                0.828125
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.69140625,
+              "window_rates": [
+                0.0,
+                0.90625,
+                0.859375,
+                1.0
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 63.72297668457031,
+          "read_weight_entropy_nats": -1.4158668301507473
+        },
+        "16": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.01904296875,
+            "correct": 0.98040771484375,
+            "pop": 0.0,
+            "merge": 0.00054931640625
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.697265625,
+              "window_rates": [
+                0.015625,
+                0.890625,
+                0.984375,
+                0.8984375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.6875,
+              "window_rates": [
+                0.0,
+                0.9921875,
+                0.8125,
+                0.9453125
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 86.16616821289062,
+          "read_weight_entropy_nats": -1.0703430507605423
+        },
+        "17": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.0364532470703125,
+            "correct": 0.9633636474609375,
+            "pop": 0.0,
+            "merge": 0.00018310546875
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.62890625,
+              "window_rates": [
+                0.015625,
+                0.8046875,
+                0.890625,
+                0.8046875
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.552734375,
+              "window_rates": [
+                0.0,
+                0.6015625,
+                0.84375,
+                0.765625
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 172.16531372070312,
+          "read_weight_entropy_nats": -0.8587677296286989
+        },
+        "18": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.0218048095703125,
+            "correct": 0.9779205322265625,
+            "pop": 0.0,
+            "merge": 0.000274658203125
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.6875,
+              "window_rates": [
+                0.015625,
+                0.921875,
+                0.9296875,
+                0.8828125
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.6328125,
+              "window_rates": [
+                0.0,
+                0.8671875,
+                0.703125,
+                0.9609375
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 100.10456848144531,
+          "read_weight_entropy_nats": -1.3092684160730164
+        },
+        "19": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.0285186767578125,
+            "correct": 0.969818115234375,
+            "pop": 0.0,
+            "merge": 0.0016632080078125
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.6328125,
+              "window_rates": [
+                0.015625,
+                0.8125,
+                0.8671875,
+                0.8359375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.62109375,
+              "window_rates": [
+                0.0,
+                0.7109375,
+                0.8046875,
+                0.96875
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 127.92893981933594,
+          "read_weight_entropy_nats": -0.516586814254446
+        },
+        "20": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.020355224609375,
+            "correct": 0.9766387939453125,
+            "pop": 0.0,
+            "merge": 0.0030059814453125
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.64453125,
+              "window_rates": [
+                0.015625,
+                0.796875,
+                0.8359375,
+                0.9296875
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.615234375,
+              "window_rates": [
+                0.0,
+                0.6640625,
+                0.8984375,
+                0.8984375
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 85.09657287597656,
+          "read_weight_entropy_nats": -0.813749970832073
+        },
+        "21": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.0255889892578125,
+            "correct": 0.97314453125,
+            "pop": 0.0,
+            "merge": 0.0012664794921875
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.51953125,
+              "window_rates": [
+                0.015625,
+                0.828125,
+                0.6640625,
+                0.5703125
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.583984375,
+              "window_rates": [
+                0.0,
+                0.4921875,
+                0.96875,
+                0.875
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 119.6806640625,
+          "read_weight_entropy_nats": -0.45421569127038697
+        },
+        "22": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.0296783447265625,
+            "correct": 0.96856689453125,
+            "pop": 0.0,
+            "merge": 0.0017547607421875
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 832,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.671875,
+              "window_rates": [
+                0.6796875,
+                0.71875,
+                0.5703125,
+                0.71875
+              ]
+            },
+            {
+              "boundary": 1088,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.603515625,
+              "window_rates": [
+                0.0,
+                0.8125,
+                0.71875,
+                0.8828125
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 135.85113525390625,
+          "read_weight_entropy_nats": -0.3958042215448118
+        },
+        "23": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.0411224365234375,
+            "correct": 0.9534149169921875,
+            "pop": 0.0,
+            "merge": 0.005462646484375
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 832,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.564453125,
+              "window_rates": [
+                0.671875,
+                0.609375,
+                0.3828125,
+                0.59375
+              ]
+            },
+            {
+              "boundary": 1280,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.50390625,
+              "window_rates": [
+                0.828125,
+                0.09375,
+                0.453125,
+                0.640625
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 177.9633331298828,
+          "read_weight_entropy_nats": -0.13581148082848188
+        }
+      }
+    },
+    "post-cooldown": {
+      "windows": 4,
+      "context": 8192,
+      "regime": "eval, bf16 autocast, the growing collect walk the arm trains on",
+      "op_rate_per_token_lane0": {
+        "none": 0.0,
+        "append": 0.05554898579915365,
+        "correct": 0.9439500172932943,
+        "pop": 0.0,
+        "merge": 0.0005009969075520834
+      },
+      "op_histogram_all_lanes": {
+        "none": 1572076,
+        "append": 87371,
+        "correct": 1484705,
+        "pop": 0,
+        "merge": 1576
+      },
+      "occupancy": {
+        "mean_live_slots": 250.64363034566244,
+        "rank_cap": 2048
+      },
+      "read_weight_entropy": {
+        "mean": -1.1091053879026218
+      },
+      "growth": {
+        "events_per_probe": 16.0,
+        "per_layer": {
+          "0": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.638671875,
+              "window_rates": [
+                0.015625,
+                0.90625,
+                0.8515625,
+                0.78125
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.611328125,
+              "window_rates": [
+                0.0,
+                0.8359375,
+                0.703125,
+                0.90625
+              ]
+            }
+          ],
+          "1": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.56640625,
+              "window_rates": [
+                0.015625,
+                0.84375,
+                0.7578125,
+                0.6484375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.5,
+              "window_rates": [
+                0.0,
+                0.6484375,
+                0.5625,
+                0.7890625
+              ]
+            }
+          ],
+          "2": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.50390625,
+              "window_rates": [
+                0.015625,
+                0.8203125,
+                0.546875,
+                0.6328125
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.54296875,
+              "window_rates": [
+                0.0,
+                0.71875,
+                0.640625,
+                0.8125
+              ]
+            }
+          ],
+          "3": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.607421875,
+              "window_rates": [
+                0.015625,
+                0.8125,
+                0.8515625,
+                0.75
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.642578125,
+              "window_rates": [
+                0.0,
+                0.8828125,
+                0.7890625,
+                0.8984375
+              ]
+            }
+          ],
+          "4": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.52734375,
+              "window_rates": [
+                0.015625,
+                0.7890625,
+                0.609375,
+                0.6953125
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.544921875,
+              "window_rates": [
+                0.0,
+                0.65625,
+                0.625,
+                0.8984375
+              ]
+            }
+          ],
+          "5": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.603515625,
+              "window_rates": [
+                0.015625,
+                0.828125,
+                0.75,
+                0.8203125
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.654296875,
+              "window_rates": [
+                0.0,
+                0.8671875,
+                0.828125,
+                0.921875
+              ]
+            }
+          ],
+          "6": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.6875,
+              "window_rates": [
+                0.015625,
+                0.984375,
+                0.9140625,
+                0.8359375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.65234375,
+              "window_rates": [
+                0.0,
+                0.9296875,
+                0.7109375,
+                0.96875
+              ]
+            }
+          ],
+          "7": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.607421875,
+              "window_rates": [
+                0.015625,
+                0.8359375,
+                0.8515625,
+                0.7265625
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.6328125,
+              "window_rates": [
+                0.0,
+                0.7890625,
+                0.8359375,
+                0.90625
+              ]
+            }
+          ],
+          "8": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.66015625,
+              "window_rates": [
+                0.015625,
+                0.90625,
+                0.8828125,
+                0.8359375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.609375,
+              "window_rates": [
+                0.0,
+                0.71875,
+                0.765625,
+                0.953125
+              ]
+            }
+          ],
+          "9": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.66015625,
+              "window_rates": [
+                0.015625,
+                0.953125,
+                0.875,
+                0.796875
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.65625,
+              "window_rates": [
+                0.0,
+                0.8046875,
+                0.828125,
+                0.9921875
+              ]
+            }
+          ],
+          "10": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.67578125,
+              "window_rates": [
+                0.015625,
+                0.9921875,
+                0.9609375,
+                0.734375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.572265625,
+              "window_rates": [
+                0.0,
+                0.5703125,
+                0.8125,
+                0.90625
+              ]
+            }
+          ],
+          "11": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.681640625,
+              "window_rates": [
+                0.015625,
+                0.9921875,
+                0.8125,
+                0.90625
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.650390625,
+              "window_rates": [
+                0.0,
+                0.8046875,
+                0.796875,
+                1.0
+              ]
+            }
+          ],
+          "12": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.62109375,
+              "window_rates": [
+                0.015625,
+                0.8828125,
+                0.8671875,
+                0.71875
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.662109375,
+              "window_rates": [
+                0.0,
+                0.9453125,
+                0.7109375,
+                0.9921875
+              ]
+            }
+          ],
+          "13": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.67578125,
+              "window_rates": [
+                0.015625,
+                0.9609375,
+                0.828125,
+                0.8984375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.517578125,
+              "window_rates": [
+                0.0,
+                0.40625,
+                0.8515625,
+                0.8125
+              ]
+            }
+          ],
+          "14": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.6953125,
+              "window_rates": [
+                0.015625,
+                0.96875,
+                0.9453125,
+                0.8515625
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.671875,
+              "window_rates": [
+                0.0,
+                0.8125,
+                0.875,
+                1.0
+              ]
+            }
+          ],
+          "15": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.6953125,
+              "window_rates": [
+                0.015625,
+                0.9375,
+                0.9375,
+                0.890625
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.693359375,
+              "window_rates": [
+                0.0,
+                0.9921875,
+                0.8046875,
+                0.9765625
+              ]
+            }
+          ],
+          "16": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.705078125,
+              "window_rates": [
+                0.015625,
+                0.8984375,
+                0.96875,
+                0.9375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.6015625,
+              "window_rates": [
+                0.0,
+                0.6953125,
+                0.875,
+                0.8359375
+              ]
+            }
+          ],
+          "17": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.62109375,
+              "window_rates": [
+                0.015625,
+                0.8359375,
+                0.8515625,
+                0.78125
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.552734375,
+              "window_rates": [
+                0.0,
+                0.6484375,
+                0.6953125,
+                0.8671875
+              ]
+            }
+          ],
+          "18": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.720703125,
+              "window_rates": [
+                0.015625,
+                0.953125,
+                0.96875,
+                0.9453125
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.658203125,
+              "window_rates": [
+                0.0,
+                0.8203125,
+                0.875,
+                0.9375
+              ]
+            }
+          ],
+          "19": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.572265625,
+              "window_rates": [
+                0.015625,
+                0.90625,
+                0.640625,
+                0.7265625
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.5859375,
+              "window_rates": [
+                0.0,
+                0.6015625,
+                0.859375,
+                0.8828125
+              ]
+            }
+          ],
+          "20": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.568359375,
+              "window_rates": [
+                0.015625,
+                0.78125,
+                0.65625,
+                0.8203125
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.6640625,
+              "window_rates": [
+                0.0,
+                0.8828125,
+                0.875,
+                0.8984375
+              ]
+            }
+          ],
+          "21": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 832,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.544921875,
+              "window_rates": [
+                0.828125,
+                0.4140625,
+                0.5546875,
+                0.3828125
+              ]
+            },
+            {
+              "boundary": 1088,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.517578125,
+              "window_rates": [
+                0.0,
+                0.7890625,
+                0.6171875,
+                0.6640625
+              ]
+            }
+          ],
+          "22": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 832,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.646484375,
+              "window_rates": [
+                0.7265625,
+                0.484375,
+                0.65625,
+                0.71875
+              ]
+            },
+            {
+              "boundary": 1152,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.701171875,
+              "window_rates": [
+                0.625,
+                0.4921875,
+                0.859375,
+                0.828125
+              ]
+            }
+          ],
+          "23": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 832,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.59765625,
+              "window_rates": [
+                0.7421875,
+                0.484375,
+                0.6015625,
+                0.5625
+              ]
+            },
+            {
+              "boundary": 1280,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.529296875,
+              "window_rates": [
+                0.7890625,
+                0.1484375,
+                0.5625,
+                0.6171875
+              ]
+            }
+          ]
+        }
+      },
+      "per_layer": {
+        "0": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.11883544921875,
+            "correct": 0.88116455078125,
+            "pop": 0.0,
+            "merge": 0.0
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.638671875,
+              "window_rates": [
+                0.015625,
+                0.90625,
+                0.8515625,
+                0.78125
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.611328125,
+              "window_rates": [
+                0.0,
+                0.8359375,
+                0.703125,
+                0.90625
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 495.9928894042969,
+          "read_weight_entropy_nats": -1.8569638076798993
+        },
+        "1": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.1446685791015625,
+            "correct": 0.8553314208984375,
+            "pop": 0.0,
+            "merge": 0.0
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.56640625,
+              "window_rates": [
+                0.015625,
+                0.84375,
+                0.7578125,
+                0.6484375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.5,
+              "window_rates": [
+                0.0,
+                0.6484375,
+                0.5625,
+                0.7890625
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 657.4288177490234,
+          "read_weight_entropy_nats": -1.2278573896957397
+        },
+        "2": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.15142822265625,
+            "correct": 0.84857177734375,
+            "pop": 0.0,
+            "merge": 0.0
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.50390625,
+              "window_rates": [
+                0.015625,
+                0.8203125,
+                0.546875,
+                0.6328125
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.54296875,
+              "window_rates": [
+                0.0,
+                0.71875,
+                0.640625,
+                0.8125
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 679.8900909423828,
+          "read_weight_entropy_nats": -1.204244101765013
+        },
+        "3": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.093780517578125,
+            "correct": 0.90618896484375,
+            "pop": 0.0,
+            "merge": 3.0517578125e-05
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.607421875,
+              "window_rates": [
+                0.015625,
+                0.8125,
+                0.8515625,
+                0.75
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.642578125,
+              "window_rates": [
+                0.0,
+                0.8828125,
+                0.7890625,
+                0.8984375
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 423.65699768066406,
+          "read_weight_entropy_nats": -1.32631572415549
+        },
+        "4": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.1301727294921875,
+            "correct": 0.8698272705078125,
+            "pop": 0.0,
+            "merge": 0.0
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.52734375,
+              "window_rates": [
+                0.015625,
+                0.7890625,
+                0.609375,
+                0.6953125
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.544921875,
+              "window_rates": [
+                0.0,
+                0.65625,
+                0.625,
+                0.8984375
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 571.1980743408203,
+          "read_weight_entropy_nats": -1.0221855545230232
+        },
+        "5": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.04791259765625,
+            "correct": 0.9520263671875,
+            "pop": 0.0,
+            "merge": 6.103515625e-05
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.603515625,
+              "window_rates": [
+                0.015625,
+                0.828125,
+                0.75,
+                0.8203125
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.654296875,
+              "window_rates": [
+                0.0,
+                0.8671875,
+                0.828125,
+                0.921875
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 226.3677215576172,
+          "read_weight_entropy_nats": -2.0967107866436496
+        },
+        "6": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.051727294921875,
+            "correct": 0.948272705078125,
+            "pop": 0.0,
+            "merge": 0.0
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.6875,
+              "window_rates": [
+                0.015625,
+                0.984375,
+                0.9140625,
+                0.8359375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.65234375,
+              "window_rates": [
+                0.0,
+                0.9296875,
+                0.7109375,
+                0.96875
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 230.1875,
+          "read_weight_entropy_nats": -1.4599129866948277
+        },
+        "7": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.0670928955078125,
+            "correct": 0.9329071044921875,
+            "pop": 0.0,
+            "merge": 0.0
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.607421875,
+              "window_rates": [
+                0.015625,
+                0.8359375,
+                0.8515625,
+                0.7265625
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.6328125,
+              "window_rates": [
+                0.0,
+                0.7890625,
+                0.8359375,
+                0.90625
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 306.16514587402344,
+          "read_weight_entropy_nats": -1.459041100691678
+        },
+        "8": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.044189453125,
+            "correct": 0.9557952880859375,
+            "pop": 0.0,
+            "merge": 1.52587890625e-05
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.66015625,
+              "window_rates": [
+                0.015625,
+                0.90625,
+                0.8828125,
+                0.8359375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.609375,
+              "window_rates": [
+                0.0,
+                0.71875,
+                0.765625,
+                0.953125
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 201.4325408935547,
+          "read_weight_entropy_nats": -1.3372154138039034
+        },
+        "9": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.031524658203125,
+            "correct": 0.9684295654296875,
+            "pop": 0.0,
+            "merge": 4.57763671875e-05
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.66015625,
+              "window_rates": [
+                0.015625,
+                0.953125,
+                0.875,
+                0.796875
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.65625,
+              "window_rates": [
+                0.0,
+                0.8046875,
+                0.828125,
+                0.9921875
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 159.85655212402344,
+          "read_weight_entropy_nats": -1.4101566254270337
+        },
+        "10": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.055694580078125,
+            "correct": 0.944305419921875,
+            "pop": 0.0,
+            "merge": 0.0
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.67578125,
+              "window_rates": [
+                0.015625,
+                0.9921875,
+                0.9609375,
+                0.734375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.572265625,
+              "window_rates": [
+                0.0,
+                0.5703125,
+                0.8125,
+                0.90625
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 243.89181518554688,
+          "read_weight_entropy_nats": -0.8349812941562269
+        },
+        "11": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.0175018310546875,
+            "correct": 0.98236083984375,
+            "pop": 0.0,
+            "merge": 0.0001373291015625
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.681640625,
+              "window_rates": [
+                0.015625,
+                0.9921875,
+                0.8125,
+                0.90625
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.650390625,
+              "window_rates": [
+                0.0,
+                0.8046875,
+                0.796875,
+                1.0
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 92.61846923828125,
+          "read_weight_entropy_nats": -1.7270469122965713
+        },
+        "12": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.03643798828125,
+            "correct": 0.9635009765625,
+            "pop": 0.0,
+            "merge": 6.103515625e-05
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.62109375,
+              "window_rates": [
+                0.015625,
+                0.8828125,
+                0.8671875,
+                0.71875
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.662109375,
+              "window_rates": [
+                0.0,
+                0.9453125,
+                0.7109375,
+                0.9921875
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 169.34381103515625,
+          "read_weight_entropy_nats": -1.1520611568912453
+        },
+        "13": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.0408172607421875,
+            "correct": 0.9591064453125,
+            "pop": 0.0,
+            "merge": 7.62939453125e-05
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.67578125,
+              "window_rates": [
+                0.015625,
+                0.9609375,
+                0.828125,
+                0.8984375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.517578125,
+              "window_rates": [
+                0.0,
+                0.40625,
+                0.8515625,
+                0.8125
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 184.4220733642578,
+          "read_weight_entropy_nats": -0.730465362628233
+        },
+        "14": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.02203369140625,
+            "correct": 0.977752685546875,
+            "pop": 0.0,
+            "merge": 0.000213623046875
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.6953125,
+              "window_rates": [
+                0.015625,
+                0.96875,
+                0.9453125,
+                0.8515625
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.671875,
+              "window_rates": [
+                0.0,
+                0.8125,
+                0.875,
+                1.0
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 100.89503479003906,
+          "read_weight_entropy_nats": -1.1190567100430828
+        },
+        "15": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.0175628662109375,
+            "correct": 0.9820404052734375,
+            "pop": 0.0,
+            "merge": 0.000396728515625
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.6953125,
+              "window_rates": [
+                0.015625,
+                0.9375,
+                0.9375,
+                0.890625
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.693359375,
+              "window_rates": [
+                0.0,
+                0.9921875,
+                0.8046875,
+                0.9765625
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 84.4940185546875,
+          "read_weight_entropy_nats": -1.373172244226928
+        },
+        "16": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.0221405029296875,
+            "correct": 0.97723388671875,
+            "pop": 0.0,
+            "merge": 0.0006256103515625
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.705078125,
+              "window_rates": [
+                0.015625,
+                0.8984375,
+                0.96875,
+                0.9375
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.6015625,
+              "window_rates": [
+                0.0,
+                0.6953125,
+                0.875,
+                0.8359375
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 99.10963439941406,
+          "read_weight_entropy_nats": -1.0329339788038934
+        },
+        "17": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.0370635986328125,
+            "correct": 0.962677001953125,
+            "pop": 0.0,
+            "merge": 0.0002593994140625
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.62109375,
+              "window_rates": [
+                0.015625,
+                0.8359375,
+                0.8515625,
+                0.78125
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.552734375,
+              "window_rates": [
+                0.0,
+                0.6484375,
+                0.6953125,
+                0.8671875
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 169.34552001953125,
+          "read_weight_entropy_nats": -0.8212921737300187
+        },
+        "18": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.023040771484375,
+            "correct": 0.9766693115234375,
+            "pop": 0.0,
+            "merge": 0.0002899169921875
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.720703125,
+              "window_rates": [
+                0.015625,
+                0.953125,
+                0.96875,
+                0.9453125
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.658203125,
+              "window_rates": [
+                0.0,
+                0.8203125,
+                0.875,
+                0.9375
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 105.60507202148438,
+          "read_weight_entropy_nats": -1.166707654675202
+        },
+        "19": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.0335693359375,
+            "correct": 0.9645233154296875,
+            "pop": 0.0,
+            "merge": 0.0019073486328125
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.572265625,
+              "window_rates": [
+                0.015625,
+                0.90625,
+                0.640625,
+                0.7265625
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.5859375,
+              "window_rates": [
+                0.0,
+                0.6015625,
+                0.859375,
+                0.8828125
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 148.12059020996094,
+          "read_weight_entropy_nats": -0.4742731474619211
+        },
+        "20": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.0238189697265625,
+            "correct": 0.9743499755859375,
+            "pop": 0.0,
+            "merge": 0.0018310546875
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 768,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.568359375,
+              "window_rates": [
+                0.015625,
+                0.78125,
+                0.65625,
+                0.8203125
+              ]
+            },
+            {
+              "boundary": 1024,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.6640625,
+              "window_rates": [
+                0.0,
+                0.8828125,
+                0.875,
+                0.8984375
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 109.95252990722656,
+          "read_weight_entropy_nats": -0.830563929793803
+        },
+        "21": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.0349273681640625,
+            "correct": 0.9637603759765625,
+            "pop": 0.0,
+            "merge": 0.001312255859375
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 832,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.544921875,
+              "window_rates": [
+                0.828125,
+                0.4140625,
+                0.5546875,
+                0.3828125
+              ]
+            },
+            {
+              "boundary": 1088,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.517578125,
+              "window_rates": [
+                0.0,
+                0.7890625,
+                0.6171875,
+                0.6640625
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 160.6192626953125,
+          "read_weight_entropy_nats": -0.43997178597555625
+        },
+        "22": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.0330657958984375,
+            "correct": 0.9652252197265625,
+            "pop": 0.0,
+            "merge": 0.001708984375
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 832,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.646484375,
+              "window_rates": [
+                0.7265625,
+                0.484375,
+                0.65625,
+                0.71875
+              ]
+            },
+            {
+              "boundary": 1152,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.701171875,
+              "window_rates": [
+                0.625,
+                0.4921875,
+                0.859375,
+                0.828125
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 153.58514404296875,
+          "read_weight_entropy_nats": -0.38373393288259466
+        },
+        "23": {
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.054168701171875,
+            "correct": 0.942779541015625,
+            "pop": 0.0,
+            "merge": 0.0030517578125
+          },
+          "final_rank": 2048,
+          "growth_events": [
+            {
+              "boundary": 256,
+              "rank_before": 128,
+              "rank_after": 256,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 512,
+              "rank_before": 256,
+              "rank_after": 512,
+              "smoothed_rate": 1.0,
+              "window_rates": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "boundary": 832,
+              "rank_before": 512,
+              "rank_after": 1024,
+              "smoothed_rate": 0.59765625,
+              "window_rates": [
+                0.7421875,
+                0.484375,
+                0.6015625,
+                0.5625
+              ]
+            },
+            {
+              "boundary": 1280,
+              "rank_before": 1024,
+              "rank_after": 2048,
+              "smoothed_rate": 0.529296875,
+              "window_rates": [
+                0.7890625,
+                0.1484375,
+                0.5625,
+                0.6171875
+              ]
+            }
+          ],
+          "occupancy_mean_live_slots": 241.267822265625,
+          "read_weight_entropy_nats": -0.13166553501738776
+        }
+      }
+    }
+  },
+  "config_sha256": "9e99451188f8ffd38f3a840fb050fca5111e80c31922015797011a36bf50fbe8",
+  "config": {
+    "probe": "gdn2_growth_c3",
+    "arm": "emender_growable",
+    "seed": 3401,
+    "context": 8192,
+    "tau_sat": 19.205211639404297,
+    "exposure_targets": 20000000,
+    "windows_per_step": 14,
+    "microbatch": 2,
+    "cooldown_steps": 24,
+    "optimizer": {
+      "lr": 0.0005420185524740253,
+      "betas": [
+        0.9,
+        0.9392004369596886
+      ],
+      "weight_decay": 0.20059436743465126,
+      "warmup_steps": 69,
+      "microbatch": 8
+    },
+    "summary": {
+      "base_arm": "matrix",
+      "shape": {
+        "width": 576,
+        "depth": 24,
+        "hidden": 3352,
+        "heads": 2,
+        "value_dim": 128,
+        "rank": 128,
+        "rank_max": 128,
+        "vocab": 256
+      },
+      "parameters": {
+        "total": 149981808,
+        "trainable": 149981808,
+        "per_layer": 6236930,
+        "mixer": 443522,
+        "mlp": 5792256,
+        "norms": 1152,
+        "embedding": 147456,
+        "head": 147456,
+        "final_norm": 576,
+        "capacity": 150003984,
+        "capacity_relative": -0.00014783607347390593
+      },
+      "routing": {
+        "ops": true,
+        "tau_match": 0.45,
+        "tau_merge": 0.85,
+        "tau_pop": 0.1,
+        "tie_break": 1e-06,
+        "read_scale": 2.0,
+        "grow": false,
+        "grow_trigger": 0.5,
+        "grow_window": 4,
+        "grow_window_tokens": 512,
+        "grow_geometric": 2.0,
+        "grow_stride_floor": 64
+      },
+      "chunk_tokens": 128,
+      "compile_scan": true,
+      "compile_mode": "default",
+      "fused_whole_scan": false,
+      "scan_path": "k8_growth verbatim (start rank 128, the registered trigger, cap 2048)",
+      "fused_scan": false,
+      "fused_backward": false,
+      "fused_routing": false,
+      "fused_routing_diff": false,
+      "optimizer_note": "the registered gdn2 nomination's optimizer settings (gates.py / profile_step_vs_gdn2.py)"
+    },
+    "identity": {
+      "stream": "flagship_beyond_100gb",
+      "source": "/mnt/nvme2n1/erikg/pile.txt",
+      "source_size": 1307910802540,
+      "manifest": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/documents.jsonl.gz",
+      "manifest_sha256": "48b9095eeccb023ff1cb2a4f6da899a8b3e4eb3b76b2804e730f1d6ad031c414",
+      "registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/registration.json",
+      "registration_sha256": "c36f84cfd1a59530a7991a4be6c1f68b424a79c5b7de169eabfc90d3cd31cc31",
+      "boundary_bytes": 100000000000,
+      "lattice_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_150M_LATTICE.md",
+      "lattice_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c"
+    },
+    "smoke": false,
+    "smoke_tau": null,
+    "regime_lock": "experiments/expressivity_tasks/x45_matrix_emender/receipts/gdn2_growth_c3_regime.json",
+    "state_columns": {
+      "per_layer_state": "slots x value_dim, rank cap 2048"
+    },
+    "bindings": {
+      "registration": "experiments/expressivity_tasks/x45_matrix_emender/PREREGISTRATION_GDN2_GROWTH.md",
+      "registration_sha256": "31b64f08556a212e46600e9296550b6c2351f73b162c4e69a90e04d5f420c3da",
+      "growth_smoke_receipt": "experiments/expressivity_tasks/x45_matrix_emender/receipts/gdn2_growth_smoke.json",
+      "growth_smoke_sha256": "51a253b8db309579786af8acd0fb9278d346acc1dedc31c4d05566819cadc71f",
+      "spectra_sidecar_selftest": "experiments/expressivity_tasks/x45_matrix_emender/receipts/x45_spectra_sidecar_selftest.json",
+      "spectra_sidecar_selftest_sha256": "41215f3ea652c6d643557ccf262ce0c00fd9f6e02d46ce9bfbb13db8c0ea3089",
+      "lattice_read_only": true,
+      "gdn2_code_read_only": true,
+      "regime_lock_sha256": "23f7e0918e63d85f8cf9c56282e7ac055c391b3db68c8b47cc0497a0525b902a"
+    },
+    "git": {
+      "commit": "1727aae1a597385c7ea627c0939de169e97ea54c",
+      "relevant_paths_dirty": "M experiments/expressivity_tasks/x45_matrix_emender/k12_probe_placement.py\n D experiments/expressivity_tasks/x45_matrix_emender/k12_runs/placement_learned_seed3401/scores.jsonl\n M experiments/expressivity_tasks/x45_matrix_emender/k12_runs/placement_learned_seed3401/start.json\n M experiments/expressivity_tasks/x45_matrix_emender/k12_runs/placement_learned_seed3401/training.jsonl\n M experiments/expressivity_tasks/x45_matrix_emender/k8_runs/grow.console.txt\n M experiments/expressivity_tasks/x45_matrix_emender/x45_spectra_sidecar.py\n?? experiments/expressivity_tasks/x45_matrix_emender/c3_runs/gdn2_growth_seed3401/\n?? experiments/expressivity_tasks/x45_matrix_emender/c3_runs_arm_emender_growable.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/c3_runs_arm_gdn2_fixed.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/c3_runs_arm_gdn2_fixed_8.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/c3_runs_arm_gdn2_growth.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/c3_runs_calibrate.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/gdn2_growth_pop_arms.py\n?? experiments/expressivity_tasks/x45_matrix_emender/gdn2_growth_pop_runs/\n?? experiments/expressivity_tasks/x45_matrix_emender/k11_gate_receipt.py\n?? experiments/expressivity_tasks/x45_matrix_emender/k11_probe_learned_gates.py\n?? experiments/expressivity_tasks/x45_matrix_emender/k11_runs/\n?? experiments/expressivity_tasks/x45_matrix_emender/k12_runs/baseline_seed3401.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/k12_runs/baseline_seed3401.crashed_incomplete/\n?? experiments/expressivity_tasks/x45_matrix_emender/k12_runs/baseline_seed3401/\n?? experiments/expressivity_tasks/x45_matrix_emender/k12_runs/placement_learned_seed3401.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/k12_runs/placement_learned_seed3401.discarded_localitybug/\n?? experiments/expressivity_tasks/x45_matrix_emender/k12_runs/smoke/\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m1_fused_d2_lr1e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m1_fused_d2_lr1e-03_seed3402.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m1_fused_d2_lr1e-03_seed3403.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m1_fused_d2_sweep.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m2_fused_d2_lr1e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m2_fused_d2_lr1e-03_seed3402.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m2_fused_d2_lr1e-03_seed3403.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m2_fused_d2_sweep.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/keysep_m2_separated_d1_keydim.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c1_lr1e-03_seed3403.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c1_lr3e-04_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c1_lr3e-04_seed3402.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c1_lr3e-04_seed3403.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr1e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr1e-03_seed3402.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr1e-03_seed3403.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr3e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr3e-03_seed3402.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr3e-03_seed3403.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr3e-04_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr3e-04_seed3402.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_c8_lr3e-04_seed3403.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/separator_evict_sweep.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/smoke/k12_placement_learned_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/run_k11_learned_gates_leased.sh",
+      "branch": "main"
+    },
+    "stopping_rule": "matched-EXPOSURE: 20M targets (full-8192 windows), constant LR, then the 24-step linear cooldown"
+  },
+  "session": {
+    "host": "lambda01",
+    "card": "4",
+    "device": "NVIDIA RTX 6000 Ada Generation",
+    "card_gib": 47.38,
+    "torch": "2.9.1+cu128",
+    "triton": "3.5.1"
+  },
+  "trajectory": [
+    {
+      "step": 1,
+      "active_seconds": 637.3668665597215,
+      "bytes": 114688,
+      "loss": 5.703935691288539
+    },
+    {
+      "step": 2,
+      "active_seconds": 1276.4731238959357,
+      "bytes": 229376,
+      "loss": 5.501279490334647
+    },
+    {
+      "step": 3,
+      "active_seconds": 1916.8977563390508,
+      "bytes": 344064,
+      "loss": 5.1599499838692795
+    },
+    {
+      "step": 4,
+      "active_seconds": 2557.590083404444,
+      "bytes": 458752,
+      "loss": 4.954203401293074
+    },
+    {
+      "step": 5,
+      "active_seconds": 3196.7637167982757,
+      "bytes": 573440,
+      "loss": 4.684475694383893
+    },
+    {
+      "step": 25,
+      "active_seconds": 16015.261524463072,
+      "bytes": 2867200,
+      "loss": 2.958099365234375
+    },
+    {
+      "step": 50,
+      "active_seconds": 32033.311424006708,
+      "bytes": 5734400,
+      "loss": 2.9246697766440253
+    },
+    {
+      "step": 75,
+      "active_seconds": 48085.666391755454,
+      "bytes": 8601600,
+      "loss": 2.4554488658905034
+    },
+    {
+      "step": 100,
+      "active_seconds": 64105.63936561067,
+      "bytes": 11468800,
+      "loss": 2.5735033239637097
+    },
+    {
+      "step": 125,
+      "active_seconds": 80180.02838039957,
+      "bytes": 14336000,
+      "loss": 2.8329017843518938
+    },
+    {
+      "step": 150,
+      "active_seconds": 96251.4483109666,
+      "bytes": 17203200,
+      "loss": 2.2864089693341936
+    },
+    {
+      "step": 175,
+      "active_seconds": 112308.07223812863,
+      "bytes": 20070400,
+      "loss": 2.4334399700164795
+    },
+    {
+      "step": 195,
+      "active_seconds": 125145.35009910725,
+      "bytes": 22364160,
+      "loss": 2.5077801772526334
+    },
+    {
+      "step": 196,
+      "active_seconds": 125786.89252283052,
+      "bytes": 22478848,
+      "loss": 2.454207863126482
+    },
+    {
+      "step": 197,
+      "active_seconds": 126428.25679055788,
+      "bytes": 22593536,
+      "loss": 2.504966531481062
+    },
+    {
+      "step": 198,
+      "active_seconds": 127069.94530535955,
+      "bytes": 22708224,
+      "loss": 2.411815847669329
+    },
+    {
+      "step": 199,
+      "active_seconds": 127711.81482438091,
+      "bytes": 22822912,
+      "loss": 2.5461162499019077
+    }
+  ]
+}
