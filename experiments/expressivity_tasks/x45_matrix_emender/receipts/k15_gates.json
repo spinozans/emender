@@ -1,0 +1,344 @@
+{
+ "probe": "k15_composition_gates",
+ "registration": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/PREREGISTRATION_COMPOSITION.md",
+ "policy": {
+  "ops": true,
+  "tau_match": 0.45,
+  "tau_merge": 0.85,
+  "tau_pop": 0.1,
+  "tie_break": 1e-06,
+  "read_scale": 2.0,
+  "grow": false,
+  "grow_trigger": 0.5,
+  "grow_window": 4,
+  "grow_window_tokens": 512,
+  "grow_geometric": 2.0,
+  "grow_stride_floor": 64
+ },
+ "score_form": "the composed machine: K13's additive read (the banked score channel verbatim, raw and live-gated, softmax and strength dropped) under K11B p3's per-channel DECAY/write/read gate stack",
+ "gate_a": {
+  "fixture": {
+   "batch": 8,
+   "tokens": 2048,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "key_dim": 16,
+   "dtype": "bf16 inputs, fp32 defined-order math",
+   "segment_tokens": 64,
+   "distinct_directions": 512,
+   "note": "random per-channel gates in (0.05, 0.95), the per-channel decay a 0.85-1.0 spread, both GATED combinations"
+  },
+  "combinations": {
+   "gated_True": {
+    "channels": {
+     "schedule_slot": {
+      "lanes": 65536,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "schedule_erase": {
+      "lanes": 65536,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "schedule_op": {
+      "lanes": 65536,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "schedule_live_after": {
+      "lanes": 65536,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "weights": {
+      "lanes": 4194304,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "live_pre": {
+      "lanes": 4194304,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "state": {
+      "lanes": 262144,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "live": {
+      "lanes": 2048,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "keys": {
+      "lanes": 32768,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "payload": {
+      "lanes": 8388608,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "read": {
+      "floor_fp32_vs_fp64": 1.1920928955078125e-06,
+      "deviation": 1.1920928955078125e-06,
+      "ratio_vs_floor": 1.0,
+      "within_noise_factor": true
+     }
+    },
+    "total": {
+     "lanes": 17336320,
+     "flips": 0
+    },
+    "op_histogram": {
+     "none": 32768,
+     "append": 1645,
+     "correct": 31123,
+     "pop": 0,
+     "merge": 0
+    },
+    "walls": {
+     "kernel_forward_s": 0.418,
+     "eager_oracle_s": 5.9
+    }
+   },
+   "gated_False": {
+    "channels": {
+     "schedule_slot": {
+      "lanes": 65536,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "schedule_erase": {
+      "lanes": 65536,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "schedule_op": {
+      "lanes": 65536,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "schedule_live_after": {
+      "lanes": 65536,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "weights": {
+      "lanes": 4194304,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "live_pre": {
+      "lanes": 4194304,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "state": {
+      "lanes": 262144,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "live": {
+      "lanes": 2048,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "keys": {
+      "lanes": 32768,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "payload": {
+      "lanes": 8388608,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "read": {
+      "floor_fp32_vs_fp64": 1.430511474609375e-06,
+      "deviation": 1.430511474609375e-06,
+      "ratio_vs_floor": 1.0,
+      "within_noise_factor": true
+     }
+    },
+    "total": {
+     "lanes": 17336320,
+     "flips": 0
+    },
+    "op_histogram": {
+     "none": 32768,
+     "append": 1645,
+     "correct": 31123,
+     "pop": 0,
+     "merge": 0
+    },
+    "walls": {
+     "kernel_forward_s": 0.024,
+     "eager_oracle_s": 5.5
+    }
+   }
+  },
+  "total": {
+   "lanes": 34672640,
+   "flips": 0
+  },
+  "signed_weights": {
+   "negative_entries": 1341361,
+   "max_abs_on_live": 1.8675345182418823,
+   "gain_bound_holds": true,
+   "zero_on_dead": true,
+   "not_a_simplex": true,
+   "min_on_live": -1.8675345182418823,
+   "mean_on_live": -0.00018120495951734483
+  },
+  "key_collapse_watch": {
+   "span_key_std_min": 1.0022560358047485,
+   "span_key_std_mean": 1.0072667598724365,
+   "guard_floor": 0.05,
+   "within_guard": true
+  },
+  "forward_kernel_resources": {
+   "num_warps": 8,
+   "registers": 255,
+   "spills": 2
+  }
+ },
+ "gate_a2": {
+  "birth_bit_identity_to_additive_machine": {
+   "differing_elements": 0,
+   "lanes": 43061248,
+   "bit_identical": true,
+   "note": "at lam_vec == the registered scalar on every channel and g_vec == 1 per channel the K15 forward is bit-identical to K13's own committed kernel launch on EVERY channel (both GATED combinations) -- the composition is BORN as the additive machine; the -0.0 IEEE corner of the unity-gate CORRECT blend is the only legal escape and its count is asserted zero here"
+  },
+  "decisions_bit_identical_under_random_gates": {
+   "differing_elements": 0,
+   "lanes": 8978432,
+   "bit_identical": true,
+   "note": "no gate value, scalar or per-channel, feeds op selection: the discrete schedule is bit-identical to the K13 kernel's under random per-channel gates/decay"
+  },
+  "birth_magnitude": {
+   "per_head_read_output_rms": {
+    "composed": [
+     1.5053834915161133,
+     1.4988725185394287
+    ],
+    "banked": [
+     0.6083436012268066,
+     0.5956338047981262
+    ]
+   },
+   "composed_over_banked_per_head": [
+    2.474561232304088,
+    2.5164329265150265
+   ],
+   "note": "R13-5 carried over: the composed read at birth is ~O(live-rows)x the banked softmax read's magnitude (no simplex normalisation); the per-channel decay gates cannot change it at birth (they are born at the registered scalar)"
+  },
+  "dilution_instrument": {
+   "w_mass_effective_rows_composed": 62.75758743286133,
+   "w_mass_effective_rows_banked": 30.24874496459961,
+   "note": "R13-4: e^H of the |w|-mass distribution over live rows -- the instrument the arms' mechanism receipts read"
+  }
+ },
+ "gate_b": {
+  "oracle_gradcheck_fp64": {
+   "ok": true,
+   "branches": {
+    "none": 192,
+    "append": 12,
+    "correct": 180,
+    "pop": 0,
+    "merge": 0
+   },
+   "note": "THROUGH THE COMPOSED PATH: the raw-score weights are attached (no softmax jacobian anywhere) under the per-channel DECAY vector and write gate; the checked branches include the read's direct term into the state, the score path into the query keys and the key table, the gated lanes and the per-channel DECAY"
+  },
+  "floors_and_deviations": [
+   {
+    "output": "dpayload",
+    "floor": 1.430511474609375e-06,
+    "deviation": 0.0,
+    "ratio_vs_floor": 0.0,
+    "within_noise_factor": true
+   },
+   {
+    "output": "dwrite_keys",
+    "floor": 2.86102294921875e-06,
+    "deviation": 3.814697265625e-06,
+    "ratio_vs_floor": 1.3333333333333333,
+    "within_noise_factor": true
+   },
+   {
+    "output": "dquery_keys",
+    "floor": 1.9073486328125e-06,
+    "deviation": 2.86102294921875e-06,
+    "ratio_vs_floor": 1.5,
+    "within_noise_factor": true
+   },
+   {
+    "output": "ddecay",
+    "floor": 3.814697265625e-06,
+    "deviation": 1.9073486328125e-06,
+    "ratio_vs_floor": 0.5,
+    "within_noise_factor": true
+   },
+   {
+    "output": "dgates",
+    "floor": 2.86102294921875e-06,
+    "deviation": 9.5367431640625e-07,
+    "ratio_vs_floor": 0.3333333333333333,
+    "within_noise_factor": true
+   },
+   {
+    "output": "dstate",
+    "floor": 9.5367431640625e-07,
+    "deviation": 0.0,
+    "ratio_vs_floor": 0.0,
+    "within_noise_factor": true
+   },
+   {
+    "output": "dkeys",
+    "floor": 0.0,
+    "deviation": 0.0,
+    "ratio_vs_floor": 0.0,
+    "within_noise_factor": true
+   }
+  ],
+  "segment_recompute_bit_equal": true,
+  "strength_path": {
+   "note": "the value walk's strength term is gone with the softmax (K13's receipt, carried over): the additive prep writes an EXACT-ZERO dstrength channel and K11B's committed value walk consumes it verbatim (IEEE add of 0.0 is exact) -- receipted in the suite on a fixture with wildly different row norms"
+  },
+  "noise_factor": 8.0
+ },
+ "gate_d": {
+  "fixture": {
+   "batch": 8,
+   "tokens": 2048,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "key_dim": 16,
+   "segment_tokens": 64
+  },
+  "walls": {
+   "k15": {
+    "forward_ms_per_scan": 21.25,
+    "backward_ms_per_scan": 17.13
+   },
+   "k13": {
+    "forward_ms_per_scan": 15.4,
+    "backward_ms_per_scan": 15.92
+   },
+   "k11b": {
+    "forward_ms_per_scan": 22.44,
+    "backward_ms_per_scan": 18.4
+   }
+  },
+  "forward_ms_per_scan": 21.25,
+  "backward_ms_per_scan": 17.13,
+  "forward_throughput_tok_per_s": 771012,
+  "cost_note": "the composition carries BOTH engines' costs: the additive read's dropped softmax (K13's cheaper-than-banked form) and the per-channel vector loads (K11B's gate-D overhead) -- the same-session K13/K11B launches are the honest references, not citations",
+  "available": true
+ }
+}

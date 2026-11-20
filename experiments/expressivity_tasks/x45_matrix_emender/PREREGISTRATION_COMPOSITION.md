@@ -342,3 +342,68 @@ composition_seed3401.console.txt 2>&1 < /dev/null &
 /home/erikg/emender/.venv/bin/python -m experiments.expressivity_tasks.\
 x45_matrix_emender.k15_probe_composition assemble
 ```
+
+---
+
+## 7. Post-result amendment (2026-11-24, supervisor-ruled; appended AFTER
+both arms landed — the pre-stated text above is unaltered)
+
+Both arms landed and the assemble is committed
+(`receipts/k15_composition_summary.json`; `RESULT_COMPOSITION.md` quotes
+the receipts).  The pre-stated predictions evaluated:
+
+* **The birth receipts HELD at probe scale, both seeds**: the composition
+  is BORN AS THE ADDITIVE MACHINE bit for bit — 0 flips in 516,734,976
+  lanes vs the K13 additive kernel's own committed launch on the first
+  train batch, all 24 layers' gates born at the registered scalar
+  equivalents through the production `channel_decay` expression, and the
+  **step-1 train loss BIT-IDENTICAL to the K13 additive arm's own
+  same-seed row at BOTH seeds** (5.782775391046648 / 5.720172563202926)
+  — the nearest-kin parity, asserted and held.  No banked step-1 parity
+  was asserted (the machine-variant disclosure).
+* **The clauses SPLIT across seeds and adjudicate to C-2 under the
+  pre-stated conservative mixed-seed rule** (the supervisor's ruling of
+  2026-11-24, APPROVED as proposed): the composition's post-cooldown rows
+  are **1.3811104467936925 (3401) / 1.383232252938407 (3402)** vs its OWN
+  additive baseline 1.3928245476314 / 1.384450146130153 — improvements
+  **+0.0117 / +0.0012**.  C-1 (compose: ≥ +0.01 at BOTH seeds) cleared at
+  3401 but did NOT replicate at 3402 (+0.0012, deep inside the winner's
+  own seed delta 0.0119); C-3 (interference) did not fire — the
+  composition is better than its own baseline at both seeds.  **The
+  verdict: the levers do NOT compose at the pre-registered bar; the gates'
+  +0.010 was READ-FORM-DEPENDENT** — under the additive read it shrinks to
+  seed noise.  The interaction reading (the ruling's own words): the
+  channel gates and the read law draw from the same well (both loosen the
+  read/write interface's rigidity), so they partially substitute rather
+  than add — "a real interaction receipt, not a failure to measure".
+* **The headline (the honest rematch)**: the composition is the program's
+  best absolute machine at both seeds — **+0.0289 / +0.0311 remaining vs
+  GDN2's 1.3522**, **64.6% / 62.0%** of the 0.0816-nat corrected gap
+  closed.  Per the ruling: the best-machine claim is carried by the
+  ADDITIVE READ's two-seed receipted gain (the load-bearing result), with
+  the gates INCLUDED at parity-grade evidence (better absolute rows at
+  both seeds, no interference, the single-seed +0.012 at 3401 reported as
+  measured, not banked as composing).
+* **M-1 (mechanism, no bar) — the interesting instrument's answer**: the
+  gates did NOT change the additive read's |w|-mass distribution
+  (effective rows 16.83 / 15.07 vs the additive machine's own
+  16.42 / 16.69; the collapse detector quiet at 0.155 / 0.175), while all
+  three gate channels WOKE under the additive read (drifts: decay
+  0.0107/0.0109, write 0.0233/0.0280, read 0.0113/0.0116 — at or above
+  their K11B softmax-arm scales) — the mechanism moved where the gates
+  act and did not move where the read acts.
+* **The named follow-ups (the ruling's list, neither run in this lane)**:
+  (a) an LR/optimizer bracket ON THE COMPOSED MACHINE (it has never been
+  tuned — it inherits the banked softmax machine's 4×-Muon point; the
+  symmetric-claim rule requires our best-vs-best to be search-symmetric);
+  (b) the write form (event writes vs dense superposition) named as the
+  LAST structural candidate owner of whatever remains after (a).
+
+The engine, its gates and the suites are green (`K15_COMPOSITION.md`,
+`receipts/k15_gates.json`: 0 flips in 34,672,640 lanes vs the composed
+oracle at the registered shape, the born-as-the-additive-machine receipt
+0/43,061,248 vs K13's kernel, the fp64 gradcheck through the composed path
+green, seven gradients ≤ 1.5× the floors; the lane's suite 25/25, the
+committed K10/K13/K11B suites 59/59 with the module loaded).  This DRAFT
+remains pending the operator's sign-off; the adjudicated verdict it now
+carries is quoted from the supervisor's ruling of 2026-11-24.

@@ -1,0 +1,164 @@
+{
+  "probe": "k15_composition assemble",
+  "corrected_scoring": {
+    "primary": "post-cooldown eval: a linear cooldown of 24 steps (13.3% of the 180-step constant-LR budget) appended after the banked matched-exposure landing, same stream/data order, LR factor (25 - k)/24 for cooldown step k (1.0 -> 1/24, never zero), both hybrid groups scaling equally; the corrected score is the post-cooldown calibration eval",
+    "secondary": "EMA iterate at step 180 (no extra data): decay 0.99, initialized at the init weights, updated after every constant-phase optimizer step, NOT updated during the cooldown; RANKING-ONLY -- its absolute number is biased toward mid-run weights (stated, not smoothed)",
+    "cooldown_steps": 24,
+    "cooldown_fraction": 0.1333,
+    "cooldown_form": "linear",
+    "ema_decay": 0.99,
+    "exposure_note": "the cooldown steps see ~2.7M more targets (~13%), identical across arms -- a stated protocol EXTENSION; the step-180 constant-LR eval is retained so every banked row stays comparable",
+    "citations": {
+      "river_valley": "Wen et al., ICLR 2025, arXiv:2410.05192 -- constant-LR loss carries an LR-dependent oscillation penalty that decay/averaging removes",
+      "cooldown": "Haegele et al., NeurIPS 2024, arXiv:2405.18392 -- constant-LR + short cooldown matches cosine at full scale",
+      "averaging": "Defazio et al., arXiv:2405.15682 -- iterate averaging as the schedule-free fix for the same penalty",
+      "moonlight": "Liu et al. (Moonshot AI), arXiv:2502.16982 -- with the update RMS matched to AdamW's (~0.2; AdamW typical 0.2-0.4), Muon directly reuses the LR and weight decay tuned for AdamW, i.e. ~1x the AdamW-tuned LR, WITH weight decay",
+      "horizon": "Bjorck et al., ICLR 2025 -- the optimal LR shrinks with token horizon; probe-tuned LRs transfer only downscaled"
+    }
+  },
+  "score_form": "K13's additive read under K11B p3's per-channel decay/write/read gate stack (the gates born at the registered scalar equivalents)",
+  "anchors": {
+    "banked": {
+      "constant_lr": {
+        "seed3401": 1.4907409463609969,
+        "seed3402": 1.4899048124040877,
+        "note": "the banked winner config's own constant-LR step-180 rows (routing_symmetry_runs/muon4x_banked_seed{3401,3402})"
+      },
+      "post_cooldown": {
+        "seed3402": 1.4338248457227434,
+        "note": "the corrected post-cooldown banked best (protocol_correction_runs/winner_speedrun_rescored, seed 3402 -- the banked best row's own config re-scored)"
+      },
+      "ema180": {
+        "seed3402": 1.5408323151724679,
+        "note": "the secondary EMA-0.99 iterate at step 180, banked (ranking-only instrument)"
+      },
+      "gdn2": {
+        "constant_lr": 1.3950541530336653,
+        "post_cooldown": 1.3521734476089478,
+        "ema180": 1.3803383282252721,
+        "note": "the banked GDN2 best rows (the gap reference -- the composition's post-cooldown row vs 1.3522 is the headline: the honest rematch)"
+      }
+    },
+    "k13_additive": {
+      "post_cooldown": {
+        "seed3401": 1.3928245476314,
+        "seed3402": 1.384450146130153
+      },
+      "constant_lr": {
+        "seed3401": 1.439220769064767,
+        "seed3402": 1.435692889349801
+      },
+      "ema_180": {
+        "seed3401": 1.4283077546528407,
+        "seed3402": 1.437227657863072
+      },
+      "step1_train_loss": {
+        "seed3401": 5.782775391046648,
+        "seed3402": 5.720172563202926
+      },
+      "mechanism": {
+        "effective_read_rows": {
+          "seed3401": 16.424976348876953,
+          "seed3402": 16.68810272216797
+        },
+        "top_row_w_mass_share": {
+          "seed3401": 0.15604202003087658,
+          "seed3402": 0.15366868533289912
+        },
+        "identity_rewrite_share": {
+          "seed3401": 0.12543127376869717,
+          "seed3402": 0.11708593053841874
+        },
+        "occupancy": {
+          "seed3401": 26.213897705078125,
+          "seed3402": 26.533884684244793
+        }
+      },
+      "note": "the K13 additive machine's own landed rows -- the composition must beat ITS OWN read-form baseline to count as composing"
+    },
+    "registration": {
+      "compose_bar": 0.01,
+      "k11b_p3_softmax_rows": {
+        "post_cooldown": {
+          "seed3401": 1.4235332352774483,
+          "seed3402": 1.4234301022128886
+        },
+        "note": "the K11B p3 rows ON THE SOFTMAX read (+0.0103/+0.0104 vs the banked anchor) -- the read-form-dependence question's own reference"
+      },
+      "bands": {
+        "endpoint_variance": 0.075,
+        "winner_seed_delta": 0.011948040553501738
+      }
+    }
+  },
+  "arms": {
+    "composition_seed3401": {
+      "arm": "composition",
+      "seed": 3401,
+      "status": "completed",
+      "constant_lr": 1.433674931526184,
+      "post_cooldown": 1.3811104467936925,
+      "ema_180": 1.424389226096017,
+      "cooldown_drop": 0.052564484732491534,
+      "step1_train_loss": 5.782775391046648,
+      "step1_k13_parity": true,
+      "additive_baseline_post_cooldown": 1.3928245476314,
+      "born_as_additive_machine": true,
+      "identity_share": 0.126627025427666,
+      "effective_rows": 16.82564353942871,
+      "top_row_share": 0.15532034520042232,
+      "occupancy": 27.198343912760418,
+      "gate_drifts": {
+        "decay_gate_mean_distance_from_registered_scalar": 0.010727396979442952,
+        "write_gate_mean_distance_from_1": 0.02329437085669876,
+        "read_gate_mean_distance_from_1": 0.011262211676997444
+      },
+      "train_seconds_constant": 1920.8,
+      "parameters": 158638848
+    },
+    "composition_seed3402": {
+      "arm": "composition",
+      "seed": 3402,
+      "status": "completed",
+      "constant_lr": 1.4341776371002197,
+      "post_cooldown": 1.383232252938407,
+      "ema_180": 1.4385861498968942,
+      "cooldown_drop": 0.05094538416181282,
+      "step1_train_loss": 5.720172563202926,
+      "step1_k13_parity": true,
+      "additive_baseline_post_cooldown": 1.384450146130153,
+      "born_as_additive_machine": true,
+      "identity_share": 0.12196014038801255,
+      "effective_rows": 15.073982238769531,
+      "top_row_share": 0.1754221100116898,
+      "occupancy": 25.119664510091145,
+      "gate_drifts": {
+        "decay_gate_mean_distance_from_registered_scalar": 0.010900992160410775,
+        "write_gate_mean_distance_from_1": 0.028010983684604678,
+        "read_gate_mean_distance_from_1": 0.011562877024213472
+      },
+      "train_seconds_constant": 1924.2,
+      "parameters": 158638848
+    }
+  },
+  "improvements_vs_additive_baseline": {
+    "3401": 0.01171410083770752,
+    "3402": 0.0012178931917461444
+  },
+  "compose_bar": 0.01,
+  "clause": "C-2 PARITY (read-form-dependence)",
+  "verdict": "the gates' +0.010 was READ-FORM-DEPENDENT: the softmax read needed the channel gates, the additive read does not -- the levers do NOT compose and that is the interaction finding, receipted with the mechanism instrument attached; the additive read alone remains the best machine",
+  "headline_rematch_vs_gdn2": {
+    "best_post_cooldown": 1.3811104467936925,
+    "seed": 3401,
+    "vs_gdn2": 0.028936999184744794,
+    "fraction_of_corrected_gap_closed": 0.6456031390373013,
+    "note": "the honest rematch row: the composed machine vs GDN2's post-cooldown 1.3522 (the remaining gap)"
+  },
+  "notes": {
+    "scoring": "PRIMARY: post-cooldown (24-step linear); SECONDARY: EMA-0.99 at step 180 (ranking-only); constant-180 retained for banked comparability",
+    "seeds": "BOTH seeds primary (the composition's own baseline exists at both seeds); the compose bar needs BOTH",
+    "adjudication": "the specific pre-stated clause governs the verdict (the K13 clause-conflict precedent); mixed seeds adjudicate to the CONSERVATIVE clause -- if the clauses disagree across seeds, the weaker reading governs and both rows are quoted next to each other",
+    "refutation_clause": "if the composition lands at parity or worse vs its own additive baseline, the levers do not compose and that is reported as the finding, not excused"
+  }
+}

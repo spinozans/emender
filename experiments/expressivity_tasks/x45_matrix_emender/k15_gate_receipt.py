@@ -93,12 +93,13 @@ def registered_fixture(seed: int = 77, batch: int = BATCH, tokens: int = TOKENS,
     return payload, write_keys, query_keys, decay
 
 
-def gate_fixture(seed: int, batch: int, dtype: torch.dtype):
+def gate_fixture(seed: int, batch: int, dtype: torch.dtype,
+                tokens: int = TOKENS):
     """The per-channel gate/decay fixture: random per-channel gates in
     (0.05, 0.95) and a per-channel decay spread (0.85-1.0) around the
     registered scalar."""
     payload, write_keys, query_keys, decay = registered_fixture(
-        seed=seed, batch=batch, dtype=dtype)
+        seed=seed, batch=batch, tokens=tokens, dtype=dtype)
     generator = torch.Generator().manual_seed(seed + 1)
     spread = (torch.rand(*payload.shape, generator=generator) * 0.15
               ).to(dtype=dtype).cuda()
@@ -376,7 +377,7 @@ def gate_b(receipt: dict) -> dict:
     # 2. the floors and the kernel path's seven gradients, on a gate-class
     #    shape.
     payload32, write_keys32, query_keys32, decay32, gates32 = gate_fixture(
-        23, 2, torch.float32)
+        23, 2, torch.float32, tokens=256)
     rank32, seg = 128, SEGMENT_TOKENS
     upstream = torch.randn(2, 256, HEADS, VALUE_DIM,
                            generator=torch.Generator().manual_seed(1234)).cuda()
