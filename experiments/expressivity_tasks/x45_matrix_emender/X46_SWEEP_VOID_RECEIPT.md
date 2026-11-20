@@ -1,0 +1,7 @@
+# X46 SWEEP VOID (supersession receipt, 2026-11-20)
+
+The sweep executed by the supervisor's chain (commits ffd748c-era through a599ba6f) is VOID as science: every arm ran with `curriculum: []` — COLD at fixed n on the production kernel path — in violation of the registration's §4.6 locked protocol (the UNIFORM CURRICULUM LADDER is PRIMARY, applied identically to every arm, optimizer state carried; the receipted saddle-collapse). The chain's bare `sweep --n N` invocations also used the runner's off-registration defaults (batch 16, steps 3000) instead of the committed budget (batch 32, 1500 target steps). The at-chance results (~0.0078 = 1/128 at every LR) are the documented razor-edge cold-start saddle, not separator evidence: the lane's own receipts state the kernel path dwells past 1200 steps cold even at n=64. The gdn2 tau calibration in the same chain is VOID for the same reason (its training loss sat flat at ln(128) — the "trained fixed machine" whose ceiling defines tau was never trained). The assemble adjudications built on these rows are VOID.
+
+OWNERSHIP: the supervisor launched the chain without the curriculum flags — the error is the supervisor's, not the lane's (the runner exposes --curriculum; the chain did not pass it). The re-run below executes the registered protocol verbatim.
+
+Superseded commits: 39d22161, 23857b1f, a599ba6f and their receipts (retained in git history per the supersession convention).
