@@ -1,0 +1,304 @@
+{
+  "probe": "k14_learned_routing",
+  "arms": [
+    "baseline_seed3401",
+    "baseline_seed3402",
+    "routing_frozen_seed3401",
+    "routing_frozen_seed3402",
+    "routing_learned_seed3401",
+    "routing_learned_seed3402"
+  ],
+  "corrected_scoring": {
+    "primary": "post-cooldown eval: a 24-step linear cooldown (13.3% of the 180-step budget, factor (25-k)/24, never zero) continues the same registered stream after the constant-phase matched-exposure landing, then the document-disjoint calibration eval",
+    "secondary": "EMA-0.99 iterate at step 180 (constant phase only), ranking-only",
+    "banked_comparability": "the constant-LR step-180 eval, retained",
+    "cooldown_steps": 24,
+    "ema_decay": 0.99
+  },
+  "bands": {
+    "mm1_material_tv": 0.02,
+    "mm1_material_flip_rate": 0.01,
+    "mm1_unchanged_tv": 0.005,
+    "mm1_unchanged_flip_rate": 0.001,
+    "mm2_pop_rate": 0.001,
+    "mm2_merge_rate": 0.01,
+    "mm3_identity_fall": 0.02,
+    "mm3_identity_unchanged": 0.005,
+    "mm4_lever_nats": 0.02,
+    "endpoint_variance_band": 0.075
+  },
+  "baseline_3401_reused": {
+    "post_cooldown": 1.6832871096474784,
+    "constant_180": 1.841756020273481,
+    "ema_180": 1.8054006099700928,
+    "receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k12_baseline_seed3401.json"
+  },
+  "gdn2_references": {
+    "gdn2_post_cooldown": 1.3522,
+    "our_speedrun_post_cooldown": 1.4338,
+    "best_vs_best_residual": 0.0816,
+    "source": "RESULT_PROTOCOL_CORRECTION.md / RESULT_LEARNED_GATES.md"
+  },
+  "audit_anchors": {
+    "correct_rate": 0.97939,
+    "merge_rate": 0.00313,
+    "pop_rate": 0.0,
+    "identity_share": 0.10321439792683149,
+    "source": "RESULT_OP_SET_AUDIT.md / receipts/k10_probe.json"
+  },
+  "scores": {
+    "baseline_seed3401": {
+      "constant_180": 1.841756020273481,
+      "post_cooldown": 1.6832871096474784,
+      "ema_180": 1.8054006099700928,
+      "walls": {
+        "constant": 1875.8,
+        "total": 2123.7
+      },
+      "bytes_per_s": 10674.219542228713,
+      "step1_bit_identical": true,
+      "frozen_trajectory": null
+    },
+    "baseline_seed3402": {
+      "constant_180": 1.8529864038739885,
+      "post_cooldown": 1.7282902342932565,
+      "ema_180": 1.8346592017582484,
+      "walls": {
+        "constant": 1866.0,
+        "total": 2111.9
+      },
+      "bytes_per_s": 10730.166878009393,
+      "step1_bit_identical": true,
+      "frozen_trajectory": null
+    },
+    "routing_frozen_seed3401": {
+      "constant_180": 1.841756020273481,
+      "post_cooldown": 1.6832871096474784,
+      "ema_180": 1.8054006099700928,
+      "walls": {
+        "constant": 1953.6,
+        "total": 2212.0
+      },
+      "bytes_per_s": 10249.420335301866,
+      "step1_bit_identical": true,
+      "frozen_trajectory": {
+        "note": "the frozen-router falsifier's per-step receipt against the seed-matched baseline's own log (the K11B 2.4-class bar, with full-trajectory bit-identity expected for this lane by construction)",
+        "rows_compared": 180,
+        "rows_bit_identical": true,
+        "exact_bit_equal_every_step": true,
+        "max_abs_delta": 0.0
+      }
+    },
+    "routing_frozen_seed3402": {
+      "constant_180": 1.8529864038739885,
+      "post_cooldown": 1.7282902342932565,
+      "ema_180": 1.8346592017582484,
+      "walls": {
+        "constant": 1957.3,
+        "total": 2216.2
+      },
+      "bytes_per_s": 10229.661199723803,
+      "step1_bit_identical": true,
+      "frozen_trajectory": {
+        "note": "the frozen-router falsifier's per-step receipt against the seed-matched baseline's own log (the K11B 2.4-class bar, with full-trajectory bit-identity expected for this lane by construction)",
+        "rows_compared": 204,
+        "rows_bit_identical": true,
+        "exact_bit_equal_every_step": true,
+        "max_abs_delta": 0.0
+      }
+    },
+    "routing_learned_seed3401": {
+      "constant_180": 2.1741412707737515,
+      "post_cooldown": 2.012382984161377,
+      "ema_180": 2.113128866468157,
+      "walls": {
+        "constant": 2024.5,
+        "total": 2295.0
+      },
+      "bytes_per_s": 9890.474817726143,
+      "step1_bit_identical": true,
+      "frozen_trajectory": null
+    },
+    "routing_learned_seed3402": {
+      "constant_180": 2.0803264720099315,
+      "post_cooldown": 1.9335742337363107,
+      "ema_180": 1.9871745279857091,
+      "walls": {
+        "constant": 2038.5,
+        "total": 2312.1
+      },
+      "bytes_per_s": 9822.41545174963,
+      "step1_bit_identical": true,
+      "frozen_trajectory": null
+    }
+  },
+  "predictions": {
+    "MM1_op_mix": {
+      "prediction": "the learned op mix shifts materially from the threshold mix (refuted-with-receipt if the router converges back to threshold behaviour)",
+      "bands": {
+        "mm1_material_tv": 0.02,
+        "mm1_material_flip_rate": 0.01,
+        "mm1_unchanged_tv": 0.005,
+        "mm1_unchanged_flip_rate": 0.001,
+        "mm2_pop_rate": 0.001,
+        "mm2_merge_rate": 0.01,
+        "mm3_identity_fall": 0.02,
+        "mm3_identity_unchanged": 0.005,
+        "mm4_lever_nats": 0.02,
+        "endpoint_variance_band": 0.075
+      },
+      "seeds": {
+        "seed3401": {
+          "op_mix_learned": {
+            "none": 0.5925496419270834,
+            "append": 0.020563761393229168,
+            "correct": 0.0773468017578125,
+            "pop": 0.091827392578125,
+            "merge": 0.21771240234375
+          },
+          "op_mix_baseline": {
+            "none": 0.0,
+            "append": 0.018956502278645832,
+            "correct": 0.9781875610351562,
+            "pop": 0.0,
+            "merge": 0.0028559366861979165
+          },
+          "tv_distance": 0.9008407592773438,
+          "flip_rate": 0.9300715128580729,
+          "status": "met"
+        },
+        "seed3402": {
+          "op_mix_learned": {
+            "none": 0.42906443277994794,
+            "append": 0.03333282470703125,
+            "correct": 0.06804911295572917,
+            "pop": 0.1555811564127604,
+            "merge": 0.31397247314453125
+          },
+          "op_mix_baseline": {
+            "none": 0.0,
+            "append": 0.018890380859375,
+            "correct": 0.9780375162760416,
+            "pop": 0.0,
+            "merge": 0.0030721028645833335
+          },
+          "tv_distance": 0.9099884033203125,
+          "flip_rate": 0.9241892496744791,
+          "status": "met"
+        }
+      }
+    },
+    "MM2_pop_merge_revival": {
+      "prediction": "POP/MERGE usage rises where the audit found them idle (POP 0.0, MERGE 0.00313)",
+      "bands": {
+        "mm1_material_tv": 0.02,
+        "mm1_material_flip_rate": 0.01,
+        "mm1_unchanged_tv": 0.005,
+        "mm1_unchanged_flip_rate": 0.001,
+        "mm2_pop_rate": 0.001,
+        "mm2_merge_rate": 0.01,
+        "mm3_identity_fall": 0.02,
+        "mm3_identity_unchanged": 0.005,
+        "mm4_lever_nats": 0.02,
+        "endpoint_variance_band": 0.075
+      },
+      "seeds": {
+        "seed3401": {
+          "pop_rate_per_token": 0.091827392578125,
+          "merge_rate_per_token": 0.21771240234375,
+          "banked_pop_rate": 0.0,
+          "banked_merge_rate": 0.00313,
+          "met": true,
+          "rescope": "A null is UNINTERPRETABLE as a learned-management verdict for those ops -- it receipts only that the write-content surrogate does not indirectly flip content-carrying tokens into them; the read-path POP/MERGE estimator is the named follow-up (the registration's 0.6, verbatim)"
+        },
+        "seed3402": {
+          "pop_rate_per_token": 0.1555811564127604,
+          "merge_rate_per_token": 0.31397247314453125,
+          "banked_pop_rate": 0.0,
+          "banked_merge_rate": 0.00313,
+          "met": true,
+          "rescope": "A null is UNINTERPRETABLE as a learned-management verdict for those ops -- it receipts only that the write-content surrogate does not indirectly flip content-carrying tokens into them; the read-path POP/MERGE estimator is the named follow-up (the registration's 0.6, verbatim)"
+        }
+      }
+    },
+    "MM3_identity_correct_share": {
+      "prediction": "the identity-CORRECT share falls (the audit's degeneration diagnosis is what a learned router should thin)",
+      "bands": {
+        "mm1_material_tv": 0.02,
+        "mm1_material_flip_rate": 0.01,
+        "mm1_unchanged_tv": 0.005,
+        "mm1_unchanged_flip_rate": 0.001,
+        "mm2_pop_rate": 0.001,
+        "mm2_merge_rate": 0.01,
+        "mm3_identity_fall": 0.02,
+        "mm3_identity_unchanged": 0.005,
+        "mm4_lever_nats": 0.02,
+        "endpoint_variance_band": 0.075
+      },
+      "seeds": {
+        "seed3401": {
+          "identity_learned": 0.23979088577628724,
+          "identity_baseline": 0.10971066376524481,
+          "fall": -0.1300802220110424,
+          "status": "refuted (the share rose)",
+          "banked_identity_share": 0.10321439792683149
+        },
+        "seed3402": {
+          "identity_learned": 0.07052096569250317,
+          "identity_baseline": 0.1139814862967393,
+          "fall": 0.043460520604236136,
+          "status": "met",
+          "banked_identity_share": 0.10321439792683149
+        }
+      }
+    },
+    "MM4_nll_question": {
+      "prediction": "no directional prediction; the three-way read is pre-stated (real lever / threshold-insensitive bookkeeping / the thresholds were optimal)",
+      "bands": {
+        "mm1_material_tv": 0.02,
+        "mm1_material_flip_rate": 0.01,
+        "mm1_unchanged_tv": 0.005,
+        "mm1_unchanged_flip_rate": 0.001,
+        "mm2_pop_rate": 0.001,
+        "mm2_merge_rate": 0.01,
+        "mm3_identity_fall": 0.02,
+        "mm3_identity_unchanged": 0.005,
+        "mm4_lever_nats": 0.02,
+        "endpoint_variance_band": 0.075
+      },
+      "seeds": {
+        "seed3401": {
+          "post_cooldown_learned": 2.012382984161377,
+          "post_cooldown_baseline": 1.6832871096474784,
+          "post_cooldown_frozen": 1.6832871096474784,
+          "delta_vs_baseline": -0.32909587451389855,
+          "endpoint_variance_band": 0.075,
+          "gdn2_reference": {
+            "gdn2_post_cooldown": 1.3522,
+            "our_speedrun_post_cooldown": 1.4338,
+            "best_vs_best_residual": 0.0816,
+            "source": "RESULT_PROTOCOL_CORRECTION.md / RESULT_LEARNED_GATES.md"
+          },
+          "reading": "the learned router HURTS: the write-content surrogate's bias is binding -- disclosed, with the context+margin module and the read-path POP/MERGE estimator as the named follow-ups"
+        },
+        "seed3402": {
+          "post_cooldown_learned": 1.9335742337363107,
+          "post_cooldown_baseline": 1.7282902342932565,
+          "post_cooldown_frozen": 1.7282902342932565,
+          "delta_vs_baseline": -0.2052839994430542,
+          "endpoint_variance_band": 0.075,
+          "gdn2_reference": {
+            "gdn2_post_cooldown": 1.3522,
+            "our_speedrun_post_cooldown": 1.4338,
+            "best_vs_best_residual": 0.0816,
+            "source": "RESULT_PROTOCOL_CORRECTION.md / RESULT_LEARNED_GATES.md"
+          },
+          "reading": "the learned router HURTS: the write-content surrogate's bias is binding -- disclosed, with the context+margin module and the read-path POP/MERGE estimator as the named follow-ups"
+        }
+      }
+    },
+    "refutation": {
+      "clause": "if the mechanism numbers do not move while NLL does (or vice versa) the dissociation is reported honestly; a null is a result.  The M-M2 rescope binds verbatim: a POP/MERGE null is uninterpretable as a learned-management verdict for those ops -- the write-content surrogate gives them no direct signal (the read-path POP/MERGE estimator is the named follow-up)"
+    }
+  }
+}
