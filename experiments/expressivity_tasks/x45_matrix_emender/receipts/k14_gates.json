@@ -1,0 +1,390 @@
+{
+ "probe": "k14_learned_routing",
+ "registration": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/PREREGISTRATION_LEARNED_MANAGEMENT.md",
+ "policy": {
+  "tau_match": 0.45,
+  "tau_merge": 0.85,
+  "tau_pop": 0.1,
+  "tie_break": 1e-06,
+  "read_scale": 2.0
+ },
+ "reserved_score": -1.0,
+ "registered_shape": {
+  "batch": 8,
+  "tokens": 2048,
+  "heads": 2,
+  "rank": 128,
+  "value_dim": 128,
+  "key_dim": 16,
+  "segment_tokens": 64
+ },
+ "noise_factor": 8.0,
+ "gate_a": {
+  "fixture": {
+   "batch": 8,
+   "tokens": 2048,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "key_dim": 16,
+   "dtype": "bf16 inputs, fp32 defined-order math",
+   "segment_tokens": 64,
+   "distinct_directions": 512
+  },
+  "birth_g0": {
+   "channels": {
+    "schedule_slot": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_erase": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_op": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_live_after": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "weights": {
+     "lanes": 4194304,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "live_pre": {
+     "lanes": 4194304,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "state": {
+     "lanes": 262144,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "live": {
+     "lanes": 2048,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "keys": {
+     "lanes": 32768,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "op_scores": {
+     "lanes": 163840,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "chain_op": {
+     "lanes": 32768,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "payload": {
+     "lanes": 8388608,
+     "flips": 0,
+     "bit_equal": true
+    }
+   },
+   "total": {
+    "lanes": 17532928,
+    "flips": 0
+   },
+   "read": {
+    "floor_fp32_vs_fp64": 0.0,
+    "deviation": 1.9073486328125e-06,
+    "ratio_vs_floor": 1.9073486328124998e+24,
+    "within_noise_factor": false
+   },
+   "routing": {
+    "tokens": 32768,
+    "ops_flipped_off_chain": 0,
+    "flip_rate": 0.0,
+    "op_histogram": {
+     "none": 32768,
+     "append": 1645,
+     "correct": 31123,
+     "pop": 0,
+     "merge": 0
+    }
+   },
+   "walls": {
+    "kernel_forward_s": 1.931,
+    "eager_oracle_s": 6.7
+   },
+   "forward_kernel_resources": {
+    "num_warps": 8,
+    "registers": 255,
+    "spills": 4
+   }
+  },
+  "birth_parity_vs_k10_launch": {
+   "note": "the k14 launch at g=+0.0 vs K10's own launch on every K10 channel: the branch-active margin encoding reproduces the threshold chain bit-exactly (P5; the chain's own op recorded token for token)",
+   "chain_op_matches_k10": true,
+   "channels": {
+    "schedule_slot": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_erase": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_op": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_live_after": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "weights": {
+     "lanes": 4194304,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "live_pre": {
+     "lanes": 4194304,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "state": {
+     "lanes": 262144,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "live": {
+     "lanes": 2048,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "keys": {
+     "lanes": 32768,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "reads": {
+     "lanes": 4194304,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "payload": {
+     "lanes": 8388608,
+     "flips": 0,
+     "bit_equal": true
+    }
+   },
+   "total": {
+    "lanes": 21530624,
+    "flips": 0
+   }
+  },
+  "birth_argmax_uniqueness": {
+   "note": "the supervisor-approved construction's core receipt: every active margin is >= 0 and every inactive op sits at the reserved -1.0, so the birth argmax is unique on every token -- no tie-break reliance",
+   "min_margin": 1.0000004768371582,
+   "all_unique": true,
+   "winner_min": 4.172325134277344e-07,
+   "runnerup_reserved_share": 1.0
+  },
+  "flipped_g0p9": {
+   "channels": {
+    "schedule_slot": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_erase": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_op": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_live_after": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "weights": {
+     "lanes": 4194304,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "live_pre": {
+     "lanes": 4194304,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "state": {
+     "lanes": 262144,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "live": {
+     "lanes": 2048,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "keys": {
+     "lanes": 32768,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "op_scores": {
+     "lanes": 163840,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "chain_op": {
+     "lanes": 32768,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "payload": {
+     "lanes": 8388608,
+     "flips": 0,
+     "bit_equal": true
+    }
+   },
+   "total": {
+    "lanes": 17532928,
+    "flips": 0
+   },
+   "read": {
+    "floor_fp32_vs_fp64": 0.0,
+    "deviation": 1.9073486328125e-06,
+    "ratio_vs_floor": 1.9073486328124998e+24,
+    "within_noise_factor": false
+   },
+   "routing": {
+    "tokens": 32768,
+    "ops_flipped_off_chain": 13546,
+    "flip_rate": 0.41339111328125,
+    "op_histogram": {
+     "none": 32831,
+     "append": 4748,
+     "correct": 17835,
+     "pop": 3352,
+     "merge": 6770
+    }
+   },
+   "walls": {
+    "kernel_forward_s": 0.024,
+    "eager_oracle_s": 7.1
+   },
+   "forward_kernel_resources": {
+    "num_warps": 8,
+    "registers": 255,
+    "spills": 4
+   }
+  }
+ },
+ "gate_b": {
+  "fixture": {
+   "batch": 2,
+   "tokens": 256,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "key_dim": 16,
+   "dtype": "fp32",
+   "segment_tokens": 64,
+   "router": "random scores ~ N(0, 0.5) (the flipped regime)"
+  },
+  "six_gradients": {
+   "dpayload": {
+    "floor_fp32_vs_fp64": 5.7220458984375e-06,
+    "deviation": 7.62939453125e-06,
+    "ratio_vs_floor": 1.3333333333333333,
+    "within_noise_factor": true,
+    "bit_equal": false
+   },
+   "dwrite_keys": {
+    "floor_fp32_vs_fp64": 4.947185516357422e-06,
+    "deviation": 4.76837158203125e-06,
+    "ratio_vs_floor": 0.963855421686747,
+    "within_noise_factor": true,
+    "bit_equal": false
+   },
+   "dquery_keys": {
+    "floor_fp32_vs_fp64": 3.814697265625e-06,
+    "deviation": 7.62939453125e-06,
+    "ratio_vs_floor": 2.0,
+    "within_noise_factor": true,
+    "bit_equal": false
+   },
+   "ddecay": {
+    "floor_fp32_vs_fp64": 6.103515625e-05,
+    "deviation": 3.24249267578125e-05,
+    "ratio_vs_floor": 0.53125,
+    "within_noise_factor": true,
+    "bit_equal": false
+   },
+   "dstate": {
+    "floor_fp32_vs_fp64": 7.62939453125e-06,
+    "deviation": 7.62939453125e-06,
+    "ratio_vs_floor": 1.0,
+    "within_noise_factor": true,
+    "bit_equal": false
+   },
+   "dkeys": {
+    "floor_fp32_vs_fp64": 0.0,
+    "deviation": 0.0,
+    "ratio_vs_floor": 0.0,
+    "within_noise_factor": true,
+    "bit_equal": true
+   }
+  },
+  "six_gradients_bit_equal_k10_body": {
+   "dpayload": true,
+   "dwrite_keys": true,
+   "dquery_keys": true,
+   "ddecay": true,
+   "dstate": true,
+   "dkeys": true
+  },
+  "zero_gradient_finding": {
+   "note": "the ORACLE path's structural gradient to the router scores is exactly zero under the recorded-schedule doctrine (the op choice is a backward constant) -- the finding; the kernel path's straight-through estimator is the admitted exception",
+   "oracle_drouter_is_none": true
+  },
+  "estimator": {
+   "note": "the admitted straight-through surrogate vs the fp64 autograd of its own DEFINED surrogate objective (c_t * p_{k*}, p = softmax over the five recorded scores); a defined estimator, not the true adjoint -- its bias is the registration's disclosure: c_t is zero on MERGE/POP/NONE tokens",
+   "max_abs_diff": 7.035213229755755e-06,
+   "nonzero": true,
+   "scale": 48.45203168545263
+  },
+  "op_histogram": {
+   "none": 1024,
+   "append": 264,
+   "correct": 645,
+   "pop": 37,
+   "merge": 78
+  }
+ },
+ "gate_d": {
+  "note": "the routing channel's honest price at the registered shape: the forward carries the five per-op scores and the argmax beside K10's own chain quantities; the backward is K10's own body plus the estimator's small torch reduction on the recorded scores (no replay)",
+  "forward_ms_per_scan": {
+   "k10": 19.0,
+   "k14": 19.0,
+   "ratio": 1.0
+  },
+  "backward_ms_per_scan": {
+   "k14": 15.0
+  }
+ }
+}
