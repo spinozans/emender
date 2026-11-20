@@ -1,0 +1,192 @@
+{
+  "probe": "k14_learned_routing",
+  "label": "routing_learned_seed3401",
+  "arm": "routing",
+  "routing": {
+    "module": "per-head Linear(ctx*width=2304 -> 5 op scores, bias) over the DETACHED causal context",
+    "birth": "born at EXACT zeros (+0.0 normalisation); the branch-active margin encoding reproduces the threshold chain bit-exactly",
+    "trainable": true,
+    "estimator": "the supervisor-approved straight-through softmax surrogate on the recorded per-op scores, c_t = <dpayload_t, p_t>, only the router learns; c_t is zero on MERGE/POP/NONE tokens (the disclosed rescope)",
+    "parameters": 553200
+  },
+  "seed": 3401,
+  "exposure_targets": 20000000,
+  "key_dim": 16,
+  "key_context": 4,
+  "segment_tokens": 64,
+  "optimizer": {
+    "lr": 0.0005420185524740253,
+    "betas": [
+      0.9,
+      0.9392004369596886
+    ],
+    "weight_decay": 0.20059436743465126,
+    "warmup_steps": 69,
+    "microbatch": 8
+  },
+  "microbatch": 8,
+  "context": 2048,
+  "corrected_scoring": {
+    "primary": "post-cooldown eval: a 24-step linear cooldown (13.3% of the 180-step budget, factor (25-k)/24, never zero) continues the same registered stream after the constant-phase matched-exposure landing, then the document-disjoint calibration eval",
+    "secondary": "EMA-0.99 iterate at step 180 (constant phase only), ranking-only",
+    "banked_comparability": "the constant-LR step-180 eval, retained",
+    "cooldown_steps": 24,
+    "ema_decay": 0.99
+  },
+  "bands": {
+    "mm1_material_tv": 0.02,
+    "mm1_material_flip_rate": 0.01,
+    "mm1_unchanged_tv": 0.005,
+    "mm1_unchanged_flip_rate": 0.001,
+    "mm2_pop_rate": 0.001,
+    "mm2_merge_rate": 0.01,
+    "mm3_identity_fall": 0.02,
+    "mm3_identity_unchanged": 0.005,
+    "mm4_lever_nats": 0.02,
+    "endpoint_variance_band": 0.075
+  },
+  "parameters": {
+    "total": 150535008,
+    "routing_delta": 553200
+  },
+  "windows_per_step": 64,
+  "summary": {
+    "base_arm": "matrix",
+    "shape": {
+      "width": 576,
+      "depth": 24,
+      "hidden": 3352,
+      "heads": 2,
+      "value_dim": 128,
+      "rank": 128,
+      "rank_max": 128,
+      "vocab": 256
+    },
+    "parameters": {
+      "total": 149981808,
+      "trainable": 149981808,
+      "per_layer": 6236930,
+      "mixer": 443522,
+      "mlp": 5792256,
+      "norms": 1152,
+      "embedding": 147456,
+      "head": 147456,
+      "final_norm": 576,
+      "capacity": 150003984,
+      "capacity_relative": -0.00014783607347390593
+    },
+    "routing": {
+      "ops": true,
+      "tau_match": 0.45,
+      "tau_merge": 0.85,
+      "tau_pop": 0.1,
+      "tie_break": 1e-06,
+      "read_scale": 2.0,
+      "grow": false,
+      "grow_trigger": 0.5,
+      "grow_window": 4,
+      "grow_window_tokens": 512,
+      "grow_geometric": 2.0,
+      "grow_stride_floor": 64
+    },
+    "chunk_tokens": null,
+    "compile_scan": true,
+    "compile_mode": "default",
+    "fused_whole_scan": false,
+    "scan_path": "k14_learned_routing (per-token, the key channel + the LEARNED op routing)",
+    "fused_scan": false,
+    "fused_backward": false,
+    "fused_routing": false,
+    "fused_routing_diff": false,
+    "optimizer_note": "the registered gdn2 nomination's optimizer settings (gates.py / profile_step_vs_gdn2.py)",
+    "segment_tokens": 64,
+    "key_dim": 16,
+    "key_context": 4,
+    "key_init": "mimetic at the fixed orthonormal family (QR, seed 3401 + head), free drift"
+  },
+  "identity": {
+    "stream": "flagship_beyond_100gb",
+    "source": "/mnt/nvme2n1/erikg/pile.txt",
+    "source_size": 1307910802540,
+    "manifest": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/documents.jsonl.gz",
+    "manifest_sha256": "48b9095eeccb023ff1cb2a4f6da899a8b3e4eb3b76b2804e730f1d6ad031c414",
+    "registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/registration.json",
+    "registration_sha256": "c36f84cfd1a59530a7991a4be6c1f68b424a79c5b7de169eabfc90d3cd31cc31",
+    "boundary_bytes": 100000000000,
+    "lattice_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_150M_LATTICE.md",
+    "lattice_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c"
+  },
+  "bindings": {
+    "matrix_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_MATRIX_EMENDER.md",
+    "matrix_registration_sha256": "20a163c9a1eb7c79d73289d8d8a55763748b0fd0bf83252fb29a40d66374dec2",
+    "lattice_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_150M_LATTICE.md",
+    "lattice_registration_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c",
+    "k5b_whole_scan_receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k5b_whole_scan.json",
+    "k5b_whole_scan_sha256": "5f2c54ab299b47fc859cab780b645a02c2162991472490705f4a037ab2111dee",
+    "k5b_step_metric_receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k5b_step_metric.json",
+    "k5b_step_metric_sha256": "2668e0eeaf37a1ae150cce4787728277afa200b8864073f104cb1fe77bbccd1d",
+    "k5b_doc": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/K5B_WHOLE_SCAN.md",
+    "k5b_doc_sha256": "04cbb61554f80eb39b0b0089ebeaab7b932c0f05dbf73d2266c95d1f7329ebaf",
+    "recorded_cd_receipts": {
+      "gdn2_c128_rerun": "ac60726997076202f7dee8b708c19aa2914a1967ccc64283794f7139b52ea1b1",
+      "matrix_append_c128": "27c9793b5e2b309d1ce15751f1abb85b96e6b6a44d9a4284d82d566c9129b241",
+      "matrix_ops_c128": "7c38ebf34b8d54657ecebc4e945bd9f5aeaef8cef4465b58eb6e3ca8635c2794"
+    },
+    "recorded_150m_gdn2_result": "8cacac01f89c88061cc2e6bdfa8fcf8e2e2db6be9b97ebfc1bb8f752e0d94316",
+    "k14_preregistration": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/PREREGISTRATION_LEARNED_MANAGEMENT.md",
+    "k14_preregistration_sha256": "9232327af8831f7f50df65f5ac9aade401f692cbaf1368cde1278ba86250ae2a",
+    "k10_preregistration": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/PREREGISTRATION_SEPARATED_KEYS.md",
+    "k14_gates_receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k14_gates.json",
+    "k14_gates_sha256": "7b4bffc0cb1036f0ad2b3d81d707e138ab3c9d7599d874ea32ceacecee536d56",
+    "banked_k10_row": {
+      "eval_nll_nats_per_byte": 1.841756020273481,
+      "exposure_bytes": 20022866,
+      "exposure_steps": 180,
+      "occupancy_mean_live_slots": 24.0287348429362,
+      "read_entropy_nats": 1.6541064706071544,
+      "correct_rate": 0.97939,
+      "append_rate": 0.01748,
+      "merge_rate": 0.00313,
+      "pop_rate": 0.0,
+      "identity_share": 0.10321439792683149,
+      "banked_log": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k10_runs/separated_keys_seed3401/training.jsonl"
+    },
+    "baseline_3401_reused": {
+      "post_cooldown": 1.6832871096474784,
+      "constant_180": 1.841756020273481,
+      "ema_180": 1.8054006099700928,
+      "receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k12_baseline_seed3401.json"
+    },
+    "gdn2_references": {
+      "gdn2_post_cooldown": 1.3522,
+      "our_speedrun_post_cooldown": 1.4338,
+      "best_vs_best_residual": 0.0816,
+      "source": "RESULT_PROTOCOL_CORRECTION.md / RESULT_LEARNED_GATES.md"
+    },
+    "audit_anchors": {
+      "correct_rate": 0.97939,
+      "merge_rate": 0.00313,
+      "pop_rate": 0.0,
+      "identity_share": 0.10321439792683149,
+      "source": "RESULT_OP_SET_AUDIT.md / receipts/k10_probe.json"
+    }
+  },
+  "git": {
+    "commit": "4b90b2c11c874b3cc665a55f37cd20c87e4c8880",
+    "relevant_paths_dirty": "M experiments/expressivity_tasks/x45_matrix_emender/c3_runs/emender_growable_seed3401/training.jsonl\n D experiments/expressivity_tasks/x45_matrix_emender/k14_runs/smoke/routing_learned_seed3401/scores.jsonl\n D experiments/expressivity_tasks/x45_matrix_emender/k14_runs/smoke/routing_learned_seed3401/start.json\n D experiments/expressivity_tasks/x45_matrix_emender/k14_runs/smoke/routing_learned_seed3401/training.jsonl\n M experiments/expressivity_tasks/x45_matrix_emender/k8_runs/grow.console.txt\n D experiments/expressivity_tasks/x45_matrix_emender/receipts/smoke/k10_probe.json\n D experiments/expressivity_tasks/x45_matrix_emender/receipts/smoke/k12_placement_learned_seed3401.json\n D experiments/expressivity_tasks/x45_matrix_emender/receipts/smoke/k14_routing_learned_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/PREREGISTRATION_CHANNEL_GATES.md\n?? experiments/expressivity_tasks/x45_matrix_emender/c3_runs_arm_emender_growable.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/k13_runs/additive_seed3401.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/k13_runs/additive_seed3401/\n?? experiments/expressivity_tasks/x45_matrix_emender/k13_runs/additive_seed3402.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/k13_runs/additive_seed3402/\n?? experiments/expressivity_tasks/x45_matrix_emender/k14_runs/routing_frozen_seed3401.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/k14_runs/routing_frozen_seed3401/\n?? experiments/expressivity_tasks/x45_matrix_emender/k14_runs/routing_learned_seed3401.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_gdn2-fixed_n320_lr1e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_gdn2-fixed_n320_lr1e-04_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_gdn2-fixed_n320_lr3e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_gdn2-fixed_n320_lr3e-04_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_gdn2-fixed_n64_lr1e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_gdn2-fixed_n64_lr1e-04_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_gdn2-fixed_n64_lr3e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_gdn2-fixed_n64_lr3e-04_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_gdn2-growth_n320_lr1e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_gdn2-growth_n320_lr1e-04_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_gdn2-growth_n320_lr3e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_gdn2-growth_n320_lr3e-04_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_gdn2-growth_n64_lr1e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_gdn2-growth_n64_lr1e-04_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_gdn2-growth_n64_lr3e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_gdn2-growth_n64_lr3e-04_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_ours-fixed_n320_lr1e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_ours-fixed_n320_lr1e-04_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_ours-fixed_n320_lr3e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_ours-fixed_n320_lr3e-04_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_ours-fixed_n640_lr1e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_ours-fixed_n640_lr3e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_ours-fixed_n64_lr1e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_ours-fixed_n64_lr1e-04_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_ours-fixed_n64_lr3e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_ours-fixed_n64_lr3e-04_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_ours-growable_n320_lr1e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_ours-growable_n320_lr1e-04_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_ours-growable_n320_lr3e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_ours-growable_n320_lr3e-04_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_ours-growable_n64_lr1e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_ours-growable_n64_lr1e-04_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_ours-growable_n64_lr3e-03_seed3401.json\n?? experiments/expressivity_tasks/x45_matrix_emender/receipts/x46_arm_ours-growable_n64_lr3e-04_seed3401.json",
+    "branch": "main"
+  },
+  "stopping_rule": "matched-EXPOSURE: train until 20000000 targets seen (the banked probe exposure, constant LR), THEN the 24-step linear cooldown (the corrected scoring's extension, the same stream)",
+  "config_sha256": "92063b37dd4f822ca9d3d7b9280934e731f5445aa9a360a63e81475ab0971f36",
+  "pid": 3869180,
+  "session": {
+    "host": "lambda01",
+    "card": "5",
+    "device": "NVIDIA RTX 6000 Ada Generation",
+    "card_gib": 47.38,
+    "torch": "2.9.1+cu128",
+    "triton": "3.5.1"
+  },
+  "started_ns": 1795159439281258629,
+  "trainable": 150535008
+}
