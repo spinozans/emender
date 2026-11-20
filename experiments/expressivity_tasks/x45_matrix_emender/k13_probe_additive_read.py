@@ -310,6 +310,7 @@ def birth_receipts(model, stream, seed: int, microbatch: int) -> dict:
     per_layer = []
     flips_total = lanes_total = 0
     rms_add, rms_bank = [], []
+    r_vec_checks = []
 
     def make_hook(layer_index, mixer):
         pol32 = (_round_f32(mixer.policy.tau_match),
@@ -319,13 +320,20 @@ def birth_receipts(model, stream, seed: int, microbatch: int) -> dict:
                  _round_f32(mixer.policy.read_scale))
 
         def hook(_module, args, _output):
-            xin = args[0]
+            xin = args[0]                      # the mixer's float input
             batch, tokens, _ = xin.shape
             with torch.no_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
                 payload, write_keys, query_keys, decay = _project_keyed(
                     mixer, xin)
                 payload, write_keys = payload.float(), write_keys.float()
                 query_keys, decay = query_keys.float(), decay.float()
+                # receipt 3: the gate is born at exact 1 on this batch, at
+                # the production expression under autocast
+                r_vec = 1.0 + mixer.read_scalar.view(1, 1, -1, 1) \
+                    * torch.sigmoid(mixer.g_proj(xin)).view(
+                        batch, tokens, mixer.heads, mixer.value_dim)
+                r_vec_checks.append(bool(
+                    torch.equal(r_vec, torch.ones_like(r_vec))))
                 state = torch.zeros(batch, mixer.heads, mixer.rank,
                                    mixer.value_dim, dtype=torch.float32,
                                    device=xin.device)
@@ -370,16 +378,6 @@ def birth_receipts(model, stream, seed: int, microbatch: int) -> dict:
             rms_bank.append(r_bank.pow(2).mean(dim=(0, 1, 3)).sqrt())
         return hook
 
-    # receipt 3: the gate is born at exact 1 on this batch (r_vec == 1)
-    r_vec_checks = []
-    with torch.no_grad():
-        for block in model.blocks:
-            mixer = block.mixer
-            r_vec = 1.0 + mixer.read_scalar.view(1, 1, -1, 1) \
-                * torch.sigmoid(mixer.g_proj(x))
-            r_vec_checks.append(bool(
-                torch.equal(r_vec, torch.ones_like(r_vec))))
-
     handles = [block.mixer.register_forward_hook(make_hook(i, block.mixer))
                for i, block in enumerate(model.blocks)]
     try:
@@ -412,7 +410,7 @@ def birth_receipts(model, stream, seed: int, microbatch: int) -> dict:
             note="R13-5: the honest ~O(live-rows)x magnitude consequence of "
                  "removing the simplex, stated not guessed; any early-loss "
                  "divergence is reported with this attached"),
-        gate_born_at_exact_1=all(r_vec_checks),
+        gate_born_at_exact_1=bool(r_vec_checks) and all(r_vec_checks),
         per_layer=per_layer[:1] + per_layer[-1:],   # the first and last layer
         mean_live_rows_birth=float(
             sum(p["mean_live_rows"] for p in per_layer) / len(per_layer)))
