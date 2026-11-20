@@ -1,6 +1,6 @@
 # RESULT_CONFIG_BRACKET.md — K16: THE CONFIG BRACKET ON THE COMPOSED MACHINE
 
-**Date:** 2026-11-25 · **Status: complete — the config-symmetry duty is DISCHARGED BY RECEIPT: the composed machine's inherited hybrid-Muon 4x point was already the bracket's optimum, the optimizer-family ranking survives the read-form change intact, and the best-vs-best row vs GDN2 is UNCHANGED (ours 1.3811/1.3832 vs GDN2's 1.3522, +0.0289/+0.0311 remaining). The remaining gap is NOT config-owned at probe scale; the final gap-quote phrasing is escalated per the lane's rules (§5).** ·
+**Date:** 2026-11-25 · **Status: complete, the ruling of 2026-11-25 incorporated (§5 APPROVED as proposed) — the config-symmetry duty is DISCHARGED BY RECEIPT ON BOTH SIDES: the composed machine's inherited hybrid-Muon 4x point was already the bracket's optimum (confirmed at BOTH seeds: 6x's second seed 1.3846 stays behind 4x's 1.3832 same-seed), the optimizer-family ranking survives the read-form change intact, and the best-vs-best row vs GDN2 is UNCHANGED (ours 1.3811/1.3832 vs GDN2's 1.3522, +0.0289/+0.0311 remaining — parity-within-band, §5). The remaining gap is NOT config-owned at probe scale; the gap quote is now search-symmetric in every axis the program knows how to search.** ·
 **Authorisation:** the supervisor's K15 ruling (2026-11-24), the named follow-up 1 — mandatory before any final gap claim: the composed machine (per-token + separated keys + the K13 additive read + the K11B p3 gate stack; the program's best absolute rows 1.3811/1.3832 post-cooldown) has NEVER been tuned — it inherits the banked winner's hybrid Muon 4x point, which was tuned for the SOFTMAX-read machine. The symmetric-claim rule requires our best-vs-best to be search-symmetric; this lane brackets the composed machine's LR axis {2x, 3x, 6x} around the inherited 4x point (cited at both seeds, never re-run) and runs the optimizer-family check (plain AdamW at its own tuned 1x point).
 
 ## 0. The verdict, stated first
@@ -8,17 +8,22 @@
 **The inherited 4x point stands.** The bracket's near side rises monotonically
 toward it (2x 1.4355 → 3x 1.4034 → 4x **1.3811**, both lower cells worse by
 0.054/0.022 — OUTSIDE the 0.0119 seed band), the far side turns up inside the
-band (6x **1.3863**, +0.0052 vs the 4x row — parity-within-band, and its
-|w|-mass concentrates: effective rows 13.0 vs 16.8, top-row share 0.216 vs
-0.155 — the higher LR pushes the read's mass toward concentration, the
-opposite of collapse but the wrong direction for quality), and the
+band (6x **1.3863**, +0.0052 vs the 4x row — parity-within-band, and
+CONFIRMED at the second seed the supervisor ordered before closing:
+6x@3402 **1.3846** vs the 4x row's own 1.3832, so the primary ordering
+holds at BOTH seeds (1.3811 < 1.3863 at 3401, 1.3832 < 1.3846 at 3402,
+the 6x seed pair's delta 0.0017) — and its |w|-mass concentrates at both
+seeds: effective rows 13.0/13.9 vs 16.8/15.1, top-row share 0.216/0.192
+vs 0.155/0.175, the higher LR pushing the read's mass toward
+concentration, the opposite of collapse but the wrong direction for
+quality). The
 optimizer-family check lands decisively on the incumbent family (plain AdamW
 at its own tuned point: **1.5747**, +0.194 vs the 4x row — the hybrid Muon's
 advantage on the composed machine is larger than the whole remaining gap, and
 the family ranking the bake-off established on the softmax machine carries
 over to the additive-read machine UNCHANGED). **The best cell of the bracket
-is the inherited 4x cell — the second-seed duty is DISCHARGED BY THE BANKED
-PAIR** (the K15 composition arm's own rows at both seeds: 1.3811 / 1.3832,
+is the inherited 4x cell — CONFIRMED BY THE SUPERVISOR-ORDERED 6x SECOND
+SEED, and the second-seed duty is DISCHARGED BY THE BANKED PAIR** (the K15 composition arm's own rows at both seeds: 1.3811 / 1.3832,
 seed delta 0.0021, the tightest pair any lane has measured on this machine);
 no new run is owed, and the search-symmetric ours-best is UNCHANGED.
 
@@ -45,18 +50,21 @@ band-discipline phrasing adjudicated in §5.
 | composed + Muon-6x (2.005628494522277e-3) | 1.4489 | **1.3863** | **1.3842** | +0.0052 |
 | composed + AdamW-1x (3.3427141575371284e-4, fused, the bake-off's own adamw convention) | 1.6918 | 1.5747 | 1.7417 | +0.1936 |
 | *(the 4x cell's second seed, banked: post-cooldown 1.3832 at 3402 — the pair's delta 0.0021)* | | | | |
+| *(the 6x cell's second seed, the supervisor-ordered close-out run: constant 1.4491, post-cooldown **1.3846** (+0.0013 vs the 4x same-seed row), EMA 1.3976 — the pair's delta 0.0017)* | | | | |
 
-**The honest instrument divergence, stated not hidden:** the SECONDARY
-EMA-0.99 read (ranking-only, biased toward mid-run weights) ranks 6x FIRST
-(1.3842 vs the 4x cell's 1.4244) while the PRIMARY post-cooldown read keeps
-4x ahead (1.3811 vs 1.3863). The pre-stated rule keys on the primary; the
-divergence is reported as measured — the 6x arm's EMA iterate is its best
-ranking instrument, its primary row is 0.0052 worse (inside the seed band),
-and its mechanism rows show WHY the two instruments disagree at 6x: the
-|w|-mass concentrates (effective rows 13.0, top-row share 0.216) and the
-write/decay gates drift ~3x their 4x-cell scales (write 0.0386 vs 0.0233,
-decay 0.0120 vs 0.0107) — a hotter, less stable endpoint, exactly the shape
-a within-band bracket top looks like.
+**The honest instrument divergence, stated not hidden — and closed by the
+second seed:** the SECONDARY EMA-0.99 read (ranking-only, biased toward
+mid-run weights) ranks 6x FIRST at both seeds (1.3842/1.3976 vs the 4x
+cell's 1.4244/1.4386) while the PRIMARY post-cooldown read keeps 4x ahead at
+both seeds (1.3811 vs 1.3863, 1.3832 vs 1.3846). The pre-stated rule keys on
+the primary; the supervisor's ruling ordered the 6x second seed as cheap
+insurance on the quotation-grade claim, and it CONFIRMS the primary ordering
+— the EMA divergence is receipted as a secondary-scoring curiosity only, and
+the mechanism rows show why the two instruments disagree at 6x: the |w|-mass
+concentrates at both seeds (effective rows 13.0/13.9, top-row share
+0.216/0.192) and the write/decay gates drift ~3x their 4x-cell scales (write
+0.0386/0.0410 vs 0.0233/0.0280, decay 0.0120 vs 0.0107) — a hotter, less
+stable endpoint, exactly the shape a within-band bracket top looks like.
 
 ## 1. The arms and the conventions (the prior bracket lanes', verbatim)
 
@@ -158,7 +166,13 @@ banked rows' 0.168–0.185; the K15 lane's own receipts do not carry the
 metric). The decorative-store sweep stays in the banked regime on
 every arm (4–7 layers at ≥ 0.02 dNLL, the K15 rows' own 4–5 class). The
 mechanism row to watch is 6x's: the |w|-mass concentrates and the gates
-drift hotter — reported as measured, no bar pre-stated.
+drift hotter — reported as measured, no bar pre-stated. **The
+supervisor-ordered 6x seed-3402 close-out row replicates every one of its
+seed-3401 reads**: post-cooldown 1.3846 (behind the 4x same-seed row
+1.3832), EMA 1.3976 (again first on the secondary instrument), effective
+rows 13.9, top-row share 0.192, write-gate drift 0.041, train 1930.7 s —
+the concentration mechanism is seed-stable, and so is the primary
+ordering.
 
 ## 4. The pre-stated rules, adjudicated as stated
 
@@ -166,10 +180,18 @@ drift hotter — reported as measured, no bar pre-stated.
   lowest post-cooldown row across muon2x/3x/6x/adamw and the cited 4x row is
   the 4x row itself (1.3811). The rule's 4x exemption fires: the K15
   composition arm already landed at both seeds (1.3811/1.3832, pair delta
-  0.0021), the pair is complete, and NO second-seed run is owed. The
+  0.0021), the pair is complete, and NO second-seed run was owed. The
   6x cell's +0.0052 deficit is inside the 0.0119 seed band —
   parity-within-band between cells, and the pre-stated rule keys on the
-  primary row, not the within-band ordering.
+  primary row, not the within-band ordering. **The supervisor's ruling of
+  2026-11-25 nevertheless ordered the 6x second seed before closing** (the
+  EMA-first divergence put the best-CELL claim marginally in question at
+  the far side, and one ~35-minute arm was cheap insurance on a
+  quotation-grade claim): it landed at **1.3846** post-cooldown — BEHIND
+  the 4x cell's own same-seed row 1.3832 — so the primary ordering is
+  CONFIRMED at both seeds and the best-row claim rests on the inherited
+  point, not on a within-band cell swap; the EMA divergence is receipted
+  as a secondary-scoring curiosity only (§0).
 * **THE BAND DISCIPLINE:** no bracket cell landed at or past GDN2's
   1.3522 post-cooldown row — the closest is the inherited point itself at
   +0.0289. No both-scorings-both-seeds contact report was triggered; no
@@ -183,7 +205,7 @@ drift hotter — reported as measured, no bar pre-stated.
   and the write-form attribution inherits the SAME residual, not a smaller
   one.**
 
-## 5. The final gap quote (PROPOSED — escalated for adjudication per the lane's rules; the K13 clause-conflict precedent governs)
+## 5. The final gap quote (ADJUDICATED — the supervisor's ruling of 2026-11-25: APPROVED as proposed, verbatim)
 
 **Search-symmetric on every config axis now — routing on both machines, LR
 point on both machines (ours including the composed machine's own bracket,
@@ -204,19 +226,40 @@ noise the band already prices in; distinguishing those two is beyond the
 probe's resolution and belongs to the board-scale comparison, not to this
 lane. No config alibi remains on either side.**
 
+**The discipline cuts both ways, or it is not a rule** (the ruling's own
+addition, incorporated): this is the SAME band rule that banked GDN2's
+0.0949 lead when it was OUTSIDE the band (the GDN2-LR-bracket lane) and
+now declines to bank a 0.03 deficit because it is INSIDE it. And the arc
+it closes: the 0.0816-nat corrected gap declared structural-and-terminal
+yesterday morning is, by two operator-directed levers — the additive read
+(K13) and the composed machine (K15) — with the attribution chain
+receipted at every step, now a parity-within-band row at best-vs-best.
+
 The caveats that stand on every margin: the composed-machine-vs-GDN2 row is
 a cross-machine context row at the same probe protocol, not a controlled
 comparison; the 0.075 endpoint-variance band and the 0.0119 seed band are
 quoted with every delta; probe scale only (no board-scale claim before the
 operator signs the composition's registration off).
 
-## 6. Residuals, stated
+## 6. The close, per the ruling: the quiet achievement of this bracket
 
-* **6x is single-seed** (the pre-stated rule sent the second seed to the
-  best cell, which was the already-paired 4x cell); its 6x-vs-4x read
-  (+0.0052) is inside the seed band and its EMA-first divergence is quoted
-  as measured in §0 — a 6x seed pair would be the operator's call if the
-  secondary instrument's hint is wanted pursued, not this lane's.
+**The config-symmetry duty is now DISCHARGED ON BOTH SIDES with receipts**
+(the ruling's own closing note, incorporated) — routing (both machines),
+LR point (both machines, ours including the composed machine's own
+bracket), optimizer family (checked on the composed machine, at both
+machine forms) — so whatever number the board-scale comparison eventually
+produces, no one can attribute any of it to an untuned surface: **the gap
+quote is now search-symmetric in every axis the program knows how to
+search.**
+
+## 7. Residuals, stated
+
+* **The 6x cell is now TWO-SEED** (the supervisor-ordered close-out run):
+  1.3863/1.3846 post-cooldown, pair delta 0.0017, both behind the 4x
+  cell's same-seed rows; its EMA-first divergence (the secondary
+  instrument ranks it first at both seeds) is receipted as a
+  secondary-scoring curiosity only — the primary ordering is confirmed
+  at both seeds.
 * **The 2x/3x/6x points bracket a FLAT top:** the composed machine's LR
   optimum saturates in the 4x–6x region (as both machines' own brackets
   did); 8x+ is untested (outside the approved bracket, exactly as 10x was
