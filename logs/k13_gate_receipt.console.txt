@@ -1,0 +1,190 @@
+gpu_lease: granted GPUs: 0 (pid 3794912)
+leased: 0
+{
+ "gate_a": {
+  "fixture": {
+   "batch": 8,
+   "tokens": 2048,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "key_dim": 16,
+   "dtype": "bf16 inputs, fp32 defined-order math",
+   "segment_tokens": 64,
+   "distinct_directions": 512
+  },
+  "channels": {
+   "schedule_slot": {
+    "lanes": 65536,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "schedule_erase": {
+    "lanes": 65536,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "schedule_op": {
+    "lanes": 65536,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "schedule_live_after": {
+    "lanes": 65536,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "weights": {
+    "lanes": 4194304,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "live_pre": {
+    "lanes": 4194304,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "state": {
+    "lanes": 262144,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "live": {
+    "lanes": 2048,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "keys": {
+    "lanes": 32768,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "payload": {
+    "lanes": 8388608,
+    "flips": 0,
+    "bit_equal": true
+   }
+  },
+  "total": {
+   "lanes": 17336320,
+   "flips": 0
+  },
+  "read": {
+   "floor_fp32_vs_fp64": 1.6689300537109375e-06,
+   "deviation": 1.9073486328125e-06,
+   "ratio_vs_floor": 1.1428571428571428,
+   "read_scale": 9.202467918395996,
+   "within_noise_factor": true
+  },
+  "signed_weights": {
+   "negative_entries": 1341361,
+   "max_abs_on_live": 1.8675345182418823,
+   "gain_bound_holds": true,
+   "zero_on_dead": true,
+   "not_a_simplex": true,
+   "min_on_live": -1.8675345182418823,
+   "mean_on_live": -0.00018120495951734483
+  },
+  "op_histogram": {
+   "none": 32768,
+   "append": 1645,
+   "correct": 31123,
+   "pop": 0,
+   "merge": 0
+  },
+  "key_collapse_watch": {
+   "span_key_std_min": 1.0022560358047485,
+   "span_key_std_mean": 1.0072667598724365,
+   "guard_floor": 0.05,
+   "within_guard": true
+  },
+  "walls": {
+   "kernel_forward_s": 0.474,
+   "eager_oracle_s": 5.0
+  },
+  "forward_kernel_resources": {
+   "num_warps": 8,
+   "registers": 255,
+   "spills": 2
+  }
+ },
+ "gate_a2": {
+  "decisions_bit_identical": {
+   "channels": {
+    "schedule_slot": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_erase": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_op": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_live_after": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "payload": {
+     "lanes": 8388608,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "live_pre": {
+     "lanes": 4194304,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "state": {
+     "lanes": 262144,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "live": {
+     "lanes": 2048,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "keys": {
+     "lanes": 32768,
+     "flips": 0,
+     "bit_equal": true
+    }
+   },
+   "total": {
+    "lanes": 13142016,
+    "flips": 0
+   },
+   "read_changed": true,
+   "weights_changed": true,
+   "note": "the read form cannot feed op selection: at fixed inputs the recorded schedule is bit-identical to the BANKED kernel's own launch, while the reads and weights differ as designed (a different function -- no birth parity, by registration)"
+  },
+  "birth_magnitude": {
+   "per_head_read_output_rms": {
+    "additive": [
+     1.5053834915161133,
+     1.4988725185394287
+    ],
+    "banked": [
+     0.6083436012268066,
+     0.5956338047981262
+    ]
+   },
+   "additive_over_banked_per_head": [
+    2.474561232304088,
+    2.5164329265150265
+   ],
+   "note": "R13-5: the additive read at birth is ~O(live-rows)x the banked softmax read's magnitude (no simplex normalisation); the first training steps adapt the downstream scale; any early-loss divergence is reported with this attached"
+  },
+  "dilution_instrument": {
+   "w_mass_effective_rows_additive": 62.75758743286133,
+   "w_mass_effective_rows_banked": 30.24874496459961,
+   "note": "R13-4: e^H of the |w|
+wrote experiments/expressivity_tasks/x45_matrix_emender/receipts/k13_gates.json
+exit: 0

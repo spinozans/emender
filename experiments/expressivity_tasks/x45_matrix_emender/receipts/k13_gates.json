@@ -1,0 +1,289 @@
+{
+ "probe": "k13_additive_read_gates",
+ "registration": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/PREREGISTRATION_ADDITIVE_READ.md",
+ "policy": {
+  "ops": true,
+  "tau_match": 0.45,
+  "tau_merge": 0.85,
+  "tau_pop": 0.1,
+  "tie_break": 1e-06,
+  "read_scale": 2.0,
+  "grow": false,
+  "grow_trigger": 0.5,
+  "grow_window": 4,
+  "grow_window_tokens": 512,
+  "grow_geometric": 2.0,
+  "grow_stride_floor": 64
+ },
+ "score_form": "the banked score channel VERBATIM (R13-1): w_j = read_scale*cos(q_key, K_j), live-gated, softmax removed, strength dropped (R13-2)",
+ "gate_a": {
+  "fixture": {
+   "batch": 8,
+   "tokens": 2048,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "key_dim": 16,
+   "dtype": "bf16 inputs, fp32 defined-order math",
+   "segment_tokens": 64,
+   "distinct_directions": 512
+  },
+  "channels": {
+   "schedule_slot": {
+    "lanes": 65536,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "schedule_erase": {
+    "lanes": 65536,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "schedule_op": {
+    "lanes": 65536,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "schedule_live_after": {
+    "lanes": 65536,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "weights": {
+    "lanes": 4194304,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "live_pre": {
+    "lanes": 4194304,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "state": {
+    "lanes": 262144,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "live": {
+    "lanes": 2048,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "keys": {
+    "lanes": 32768,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "payload": {
+    "lanes": 8388608,
+    "flips": 0,
+    "bit_equal": true
+   }
+  },
+  "total": {
+   "lanes": 17336320,
+   "flips": 0
+  },
+  "read": {
+   "floor_fp32_vs_fp64": 1.6689300537109375e-06,
+   "deviation": 1.9073486328125e-06,
+   "ratio_vs_floor": 1.1428571428571428,
+   "read_scale": 9.202467918395996,
+   "within_noise_factor": true
+  },
+  "signed_weights": {
+   "negative_entries": 1341361,
+   "max_abs_on_live": 1.8675345182418823,
+   "gain_bound_holds": true,
+   "zero_on_dead": true,
+   "not_a_simplex": true,
+   "min_on_live": -1.8675345182418823,
+   "mean_on_live": -0.00018120495951734483
+  },
+  "op_histogram": {
+   "none": 32768,
+   "append": 1645,
+   "correct": 31123,
+   "pop": 0,
+   "merge": 0
+  },
+  "key_collapse_watch": {
+   "span_key_std_min": 1.0022560358047485,
+   "span_key_std_mean": 1.0072667598724365,
+   "guard_floor": 0.05,
+   "within_guard": true
+  },
+  "walls": {
+   "kernel_forward_s": 0.474,
+   "eager_oracle_s": 5.0
+  },
+  "forward_kernel_resources": {
+   "num_warps": 8,
+   "registers": 255,
+   "spills": 2
+  }
+ },
+ "gate_a2": {
+  "decisions_bit_identical": {
+   "channels": {
+    "schedule_slot": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_erase": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_op": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "schedule_live_after": {
+     "lanes": 65536,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "payload": {
+     "lanes": 8388608,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "live_pre": {
+     "lanes": 4194304,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "state": {
+     "lanes": 262144,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "live": {
+     "lanes": 2048,
+     "flips": 0,
+     "bit_equal": true
+    },
+    "keys": {
+     "lanes": 32768,
+     "flips": 0,
+     "bit_equal": true
+    }
+   },
+   "total": {
+    "lanes": 13142016,
+    "flips": 0
+   },
+   "read_changed": true,
+   "weights_changed": true,
+   "note": "the read form cannot feed op selection: at fixed inputs the recorded schedule is bit-identical to the BANKED kernel's own launch, while the reads and weights differ as designed (a different function -- no birth parity, by registration)"
+  },
+  "birth_magnitude": {
+   "per_head_read_output_rms": {
+    "additive": [
+     1.5053834915161133,
+     1.4988725185394287
+    ],
+    "banked": [
+     0.6083436012268066,
+     0.5956338047981262
+    ]
+   },
+   "additive_over_banked_per_head": [
+    2.474561232304088,
+    2.5164329265150265
+   ],
+   "note": "R13-5: the additive read at birth is ~O(live-rows)x the banked softmax read's magnitude (no simplex normalisation); the first training steps adapt the downstream scale; any early-loss divergence is reported with this attached"
+  },
+  "dilution_instrument": {
+   "w_mass_effective_rows_additive": 62.75758743286133,
+   "w_mass_effective_rows_banked": 30.24874496459961,
+   "note": "R13-4: e^H of the |w|-mass distribution over live rows; the banked row uses the same |w|-mass form on its softmax weights (identical to its own entropy instrument there)"
+  }
+ },
+ "gate_b": {
+  "oracle_gradcheck_fp64": {
+   "ok": true,
+   "branches": {
+    "none": 192,
+    "append": 12,
+    "correct": 180,
+    "pop": 0,
+    "merge": 0
+   },
+   "note": "THROUGH THE ADDITIVE READ PATH: the raw-score weights are attached (no softmax jacobian anywhere), so the checked branches include the read's direct term into the state and the score path into the query keys and the key table"
+  },
+  "floors_and_deviations": [
+   {
+    "output": "dpayload",
+    "floor": 1.6689300537109375e-06,
+    "deviation": 0.0,
+    "ratio_vs_floor": 0.0,
+    "within_noise_factor": true
+   },
+   {
+    "output": "dwrite_keys",
+    "floor": 9.5367431640625e-06,
+    "deviation": 9.5367431640625e-06,
+    "ratio_vs_floor": 1.0,
+    "within_noise_factor": true
+   },
+   {
+    "output": "dquery_keys",
+    "floor": 5.7220458984375e-06,
+    "deviation": 4.76837158203125e-06,
+    "ratio_vs_floor": 0.8333333333333334,
+    "within_noise_factor": true
+   },
+   {
+    "output": "ddecay",
+    "floor": 3.0517578125e-05,
+    "deviation": 2.288818359375e-05,
+    "ratio_vs_floor": 0.75,
+    "within_noise_factor": true
+   },
+   {
+    "output": "dstate",
+    "floor": 1.6689300537109375e-06,
+    "deviation": 0.0,
+    "ratio_vs_floor": 0.0,
+    "within_noise_factor": true
+   },
+   {
+    "output": "dkeys",
+    "floor": 0.0,
+    "deviation": 0.0,
+    "ratio_vs_floor": 0.0,
+    "within_noise_factor": true
+   }
+  ],
+  "segment_recompute_bit_equal": true,
+  "strength_path": {
+   "note": "the value walk's strength term is gone with the softmax: the prep writes an EXACT-ZERO dstrength channel and K10's committed value walk consumes it verbatim (IEEE add of 0.0 is exact) -- receipted in the suite on a fixture with wildly different row norms"
+  },
+  "noise_factor": 8.0
+ },
+ "gate_d": {
+  "fixture": {
+   "batch": 8,
+   "tokens": 2048,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "key_dim": 16,
+   "segment_tokens": 64
+  },
+  "forward_ms_per_scan": 16.43,
+  "backward_ms_per_scan": 15.99,
+  "forward_throughput_tok_per_s": 997074,
+  "k10_banked": {
+   "forward_ms_per_scan": 19.7,
+   "backward_ms_per_scan": 17.2,
+   "note": "K10's own gate-D walls at this shape (K10_SEPARATED_KEYS.md)"
+  },
+  "read_form_cost_note": "the additive read drops the softmax's exp/max/denominator from the per-token walk and the softmax jacobian (the cross-axis dprobs/dsum folds and the dstrength channel's write) from the prep -- the expected sign is cheaper, and the measured numbers here are the receipt",
+  "available": true
+ }
+}
