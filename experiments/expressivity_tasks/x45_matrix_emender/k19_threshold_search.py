@@ -584,7 +584,7 @@ def search(args) -> dict:
                                 "same deterministic stream prefix: the "
                                 "search tunes the seed and the data draw "
                                 "as well as the thresholds"),
-            incumbent_anchor=None, incumbent_trajectory=trajectory, best=best,
+            incumbent_trajectory=trajectory, best=best,
             anchors=dict(composed_banked=composed_banked(),
                           gdn2_post_cooldown=GDN2_POST_COOLDOWN,
                           win_bar=WIN_BAR, bands=BANDS),
