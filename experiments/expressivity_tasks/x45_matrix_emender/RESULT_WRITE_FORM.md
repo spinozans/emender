@@ -5,11 +5,9 @@ transplant, tested on the machine that changed
 (DRAFT, committed before any probe measurement, 365ab3a5). **Receipts:** every
 number below is from `k17_runs/<arm>_seed3401/result.json`,
 `receipts/k17_write_form_summary.json` (the assemble) and
-`receipts/k17_gates.json` (the engine gates). **The adjudication is
-ESCALATED per the lane's rules** (§5): no directional prediction was
-pre-stated, the clauses resolved cleanly on the measured rows, and the
-final gap-quote phrasing is the supervisor's (the K13 clause-conflict
-precedent).
+`receipts/k17_gates.json` (the engine gates). **Verdict adjudicated under the
+supervisor's ruling of 2026-11-25: APPROVED as proposed, with the two-way
+ours-best phrasing incorporated verbatim (§5).**
 
 **The question:** does the dense gated write — G2's form, which HURT on the
 SOFTMAX machine (+0.007) — COMPOSE with the additive read on the composed
@@ -39,13 +37,24 @@ is 0.0021 — the tightest pair any lane has measured on this machine).
   inside the seed band). The pre-stated 0.01 win-bar rule owes NO second
   seed, and the conditional combined arm does NOT fire. **The single honest
   nuance: the dense arm's 1.377752116748265 is the program's BEST ABSOLUTE
-  ROW** (−0.0034 vs the composed machine's own 1.3811, +0.0256 remaining vs
-  GDN2's 1.3522, 68.8% of the 0.0816-nat corrected gap closed at this seed)
-  — reported as measured, NOT banked as composing (the pre-registered bar
-  was 0.01, and the prior G2 lesson was that this lever HURTS; here it does
-  NOT hurt — the G2-under-softmax result does NOT replicate under the
-  additive read (no W-3 interference) — but the single-seed margin is
-  one-third of the seed band).
+  ROW** (−0.0034 vs the composed machine's own 1.3811) — reported as
+  measured, NOT banked as composing (the pre-registered bar was 0.01, and
+  the prior G2 lesson was that this lever HURTS; here it does NOT hurt —
+  the G2-under-softmax result does NOT replicate under the additive read
+  (no W-3 interference) — but the single-seed margin is one-third of the
+  seed band).
+* **THE READ-FORM-DEPENDENCE FINDING (the lane's own interaction receipt,
+  stated as its own paragraph — the K15 substitution finding's sibling):**
+  the SAME write form that DAMAGED the softmax machine (+0.007, the
+  competitive read starving under an extra unnormalised writer) is
+  HARMLESS on the additive-read machine — marginally helpful at one seed
+  (+0.0034, inside the band), with no interference clause firing and the
+  falsifier at perfect bit-identity. The G2-hurts result is therefore
+  receipted as READ-FORM-DEPENDENT, not write-form-intrinsic: the read law
+  and the write law DO compose where the gates and the read law only
+  substituted — the interface change is real, even though the dense channel
+  itself carries too little mass at probe scale to move the NLL beyond
+  parity.
 * **The frozen-write falsifier control: PASSED, PERFECTLY.** The control's
   step-1 train loss is bit-identical to the composed machine's own row, AND
   — beyond the K11B §2.4 precedent's honest expectation (ULP-scale
@@ -114,35 +123,48 @@ is the dense arm's +0.0256 remaining), **no quality-conclusion inversion,
   wall cost +23 % on the forward block call (training walls 2088.6 s
   constant vs the composed arm's 1920.8).
 
-## 5. The adjudication (ESCALATED, per the lane's rules — the K13
-clause-conflict precedent governs)
+## 5. The adjudication (the supervisor's ruling of 2026-11-25: APPROVED as
+proposed, with the two-way ours-best phrasing incorporated verbatim)
 
-The measured rows for the supervisor's ruling: **the last named structural
-candidate is TESTED and does not own the composed machine's remaining gap
-at probe scale.** The dense gated write — G2's form reborn at the
-per-channel granularity on the additive interface — lands at
-parity-grade evidence (+0.0034 at 3401, one seed, inside the 0.0119 band;
-the program's best absolute row; NO interference, unlike G2 on the
-softmax machine), with the C5 instrument receipting the channel inert
-(0.82 % of payload mass). The read-gain bracket is null on the near side
-and harmful past the inherited point (4.0: −0.0223). The falsifier control
-is bit-identical to the composed machine's own landed row — the strongest
-plumbing receipt the lane structure has produced.
+**OURS-BEST, QUOTED TWO WAYS (the band makes them indistinguishable, and
+this document must not let the better-looking number silently become "the"
+number):**
 
-The gap quote the adjudication must phrase: **ours-best is now the dense
-arm's 1.377752116748265 at seed 3401 (single-seed, parity-grade), vs GDN2's
-1.3521734476089478 — +0.0256 remaining, sign-stable against every arm and
-every cell measured this lane, INSIDE the 0.075-nat endpoint-variance
-band.** The K16 ruling's own phrasing ("the gap's magnitude is owned at
-probe scale by the last named structural candidate — the WRITE FORM — OR
-by protocol-scale noise the band already prices in; distinguishing those
-two is beyond the probe's resolution") now has its second half receipted:
-the write form was tested and does not own it at probe scale. What remains
-is either protocol-scale noise (the band), or a lever the probe cannot see
-(the 180-step horizon on a channel that opens at 0.8 % of payload scale) —
-and the named-but-untested residuals are the horizon question and the
-cross-machine scale question, both of which belong to the board-scale
-comparison, not to another probe arm.
+* **(a) The BANKED two-seed best — the composed machine's own
+  1.3811104467936925 / 1.383232252938407 pair** (the citation-grade row:
+  two seeds, the falsifier-backed composition, the K15 arm's own landed
+  rows).
+* **(b) The BEST ABSOLUTE ROW — the dense arm's 1.377752116748265**,
+  SINGLE-SEED, parity-grade over its own baseline (+0.0034, inside the
+  0.0119 band, no second seed owed by the pre-stated rule).
+
+**The remaining-gap range across all of them: +0.0256 to +0.0311 vs GDN2's
+1.3521734476089478 — sign-stable against every arm and every cell measured
+this lane, INSIDE the 0.075-nat endpoint-variance band. THE BAND CANNOT
+RANK THEM.**
+
+The chain the ruling closes: **the write-form attribution chain is CLOSED
+END-TO-END at probe scale** — the read law (banked, two seeds: K13), the
+config axes (K16: routing/LR/family discharged on both sides, and this
+lane's read-gain axis: null on the near side, harmful past the inherited
+point), and now the write form (this lane: parity-grade, the channel inert
+at 0.8 % of payload mass, no interference, the falsifier perfect at
+full-trajectory bit-identity). The G2-hurts result is receipted as
+READ-FORM-DEPENDENT — the same write form that damaged the softmax machine
+is harmless (marginally helpful, single-seed) on the additive-read machine
+(§2's own paragraph).
+
+**The named residuals, both BOARD-SCALE, not further probe work:**
+
+1. **The HORIZON question** — a channel opening at 0.8 % of payload mass at
+   180 constant-LR steps may open further at longer exposure; the probe is
+   structurally blind to it, and this receipt is one more reason the
+   board-scale comparison is the only instrument that can see it.
+2. **The CROSS-MACHINE SCALE question** — +0.026 inside the band at probe
+   scale is unresolvable by any further probe arm, by construction.
+
+**Per the ruling: the probe-scale quality program is CLOSED — no more
+quality probe arms without an explicit operator directive.**
 
 ## 6. Commands
 
