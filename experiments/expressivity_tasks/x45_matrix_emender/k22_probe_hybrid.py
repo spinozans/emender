@@ -262,7 +262,9 @@ def hybrid_birth_receipts(model, stream, seed: int, microbatch: int) -> dict:
     from experiments.expressivity_tasks.x45_matrix_emender.\
         k13_probe_additive_read import _agg_walk
     from experiments.expressivity_tasks.x45_matrix_emender.k15_composition \
-        import _k15_forward_launch, _k15_walk_stats
+        import _k15_forward_launch
+    from experiments.expressivity_tasks.x45_matrix_emender.\
+        k15_probe_composition import _k15_walk_stats
     from experiments.expressivity_tasks.x45_matrix_emender.k18_short_conv \
         import short_conv1d_causal
     from experiments.expressivity_tasks.x45_matrix_emender.\
@@ -336,7 +338,7 @@ def hybrid_birth_receipts(model, stream, seed: int, microbatch: int) -> dict:
     ops_fill = bool(all(
         entry["op_rate_per_token"].get("append", 0.0)
         + entry["op_rate_per_token"].get("correct", 0.0) > 0.0
-        for _layer, entry in walk["layers"].items())) \
+        for _layer, entry in walk["per_layer"].items())) \
         if walk.get("per_layer") else False
     return dict(
         probe="k22_birth_receipts",
@@ -387,7 +389,9 @@ def k22_probe_diagnostics(model, stream, windows: int = PROBE_WINDOWS) -> dict:
     from experiments.expressivity_tasks.x45_matrix_emender.\
         k13_probe_additive_read import _agg_walk
     from experiments.expressivity_tasks.x45_matrix_emender.k15_composition \
-        import _k15_forward_launch, _k15_walk_stats
+        import _k15_forward_launch
+    from experiments.expressivity_tasks.x45_matrix_emender.\
+        k15_probe_composition import _k15_walk_stats
     from experiments.expressivity_tasks.x45_matrix_emender.k18_short_conv \
         import short_conv1d_causal
     from experiments.expressivity_tasks.x45_matrix_emender.\
@@ -1212,6 +1216,12 @@ def main():
     a.add_argument("--runs", default=str(RUNS))
     args = ap.parse_args()
     if args.cmd == "run_arm":
+        if args.smoke:
+            # the K19 discipline: the pipeline shakedown's OWN tiny
+            # exposure (a smoke is never a ladder row; the full run gates
+            # on the parity and falsifier bars)
+            args.bytes = 300_000
+            args.probe_windows = 2
         run_arm(args)
         return
     assemble(args)
