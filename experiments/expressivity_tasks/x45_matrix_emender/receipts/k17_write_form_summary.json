@@ -1,0 +1,317 @@
+{
+  "probe": "k17_probe_write_form assemble",
+  "corrected_scoring": {
+    "primary": "post-cooldown eval: a linear cooldown of 24 steps (13.3% of the 180-step constant-LR budget) appended after the banked matched-exposure landing, same stream/data order, LR factor (25 - k)/24 for cooldown step k (1.0 -> 1/24, never zero), both hybrid groups scaling equally; the corrected score is the post-cooldown calibration eval",
+    "secondary": "EMA iterate at step 180 (no extra data): decay 0.99, initialized at the init weights, updated after every constant-phase optimizer step, NOT updated during the cooldown; RANKING-ONLY -- its absolute number is biased toward mid-run weights (stated, not smoothed)",
+    "cooldown_steps": 24,
+    "cooldown_fraction": 0.1333,
+    "cooldown_form": "linear",
+    "ema_decay": 0.99,
+    "exposure_note": "the cooldown steps see ~2.7M more targets (~13%), identical across arms -- a stated protocol EXTENSION; the step-180 constant-LR eval is retained so every banked row stays comparable",
+    "citations": {
+      "river_valley": "Wen et al., ICLR 2025, arXiv:2410.05192 -- constant-LR loss carries an LR-dependent oscillation penalty that decay/averaging removes",
+      "cooldown": "Haegele et al., NeurIPS 2024, arXiv:2405.18392 -- constant-LR + short cooldown matches cosine at full scale",
+      "averaging": "Defazio et al., arXiv:2405.15682 -- iterate averaging as the schedule-free fix for the same penalty",
+      "moonlight": "Liu et al. (Moonshot AI), arXiv:2502.16982 -- with the update RMS matched to AdamW's (~0.2; AdamW typical 0.2-0.4), Muon directly reuses the LR and weight decay tuned for AdamW, i.e. ~1x the AdamW-tuned LR, WITH weight decay",
+      "horizon": "Bjorck et al., ICLR 2025 -- the optimal LR shrinks with token horizon; probe-tuned LRs transfer only downscaled"
+    }
+  },
+  "score_form": "the write-form levers on the COMMITTED composed machine: the dense gated write (the b_proj-delta form, born as the composed machine) and the read-gain bracket {1.0, 2.0, 4.0} (config arms; the inherited 2.787 cell cited from the K15 rows)",
+  "arms": {
+    "composed_inherited": {
+      "cited": true,
+      "read_scale": 2.7870458737509636,
+      "note": "the K15 composition arm's own landed rows at BOTH seeds (the inherited 4x point AND the inherited read gain 2.7870458737509636) -- cited, never re-run",
+      "seeds": {
+        "3401": {
+          "post_cooldown": 1.3811104467936925,
+          "constant_lr": 1.433674931526184,
+          "ema_180": 1.424389226096017,
+          "step1_train_loss": 5.782775391046648
+        },
+        "3402": {
+          "post_cooldown": 1.383232252938407,
+          "constant_lr": 1.4341776371002197,
+          "ema_180": 1.4385861498968942,
+          "step1_train_loss": 5.720172563202926
+        }
+      }
+    },
+    "dense": {
+      "kind": "dense",
+      "cited": false,
+      "note": "the composed machine + the DENSE GATED WRITE (the b_proj-delta form): every token deposits m_d*sigmoid(d_proj(x)) (.) p at its best-match LIVE row (P3), recorded as schedule lane 2, born at exact zero -- the machine is BORN AS THE COMPOSED MACHINE bit for bit",
+      "seeds": {
+        "3401": {
+          "post_cooldown": 1.377752116748265,
+          "constant_lr": 1.4345858097076416,
+          "ema_180": 1.4276997872761317,
+          "step1_train_loss": 5.782775391046648,
+          "step1_parity": true,
+          "train_seconds_constant": 2088.6,
+          "parameters": 162177840,
+          "effective_rows": 15.872057914733887,
+          "top_row_share": 0.16483542399304715,
+          "occupancy": 26.164627075195312,
+          "identity_share": 0.12400161920627754,
+          "gate_drifts": {
+            "decay_gate_mean_distance_from_registered_scalar": 0.010949983702933727,
+            "write_gate_mean_distance_from_1": 0.024463093708618544,
+            "read_gate_mean_distance_from_1": 0.01082186804463466
+          },
+          "dense_telemetry": {
+            "mean_abs_deposit": 0.0048299287561045885,
+            "deposit_over_payload_scale": 0.008225489767937688,
+            "fire_rate": 0.99951171875,
+            "dense_over_event_mass_ratio": 0.00830363516312597,
+            "max_scalar_drift": 0.048059675842523575
+          },
+          "falsifier_divergence": null,
+          "clauses": {
+            "same_seed_baseline_post_cooldown": 1.3811104467936925,
+            "improvement_vs_same_seed_baseline": 0.0033583300454276266,
+            "win_bar": 0.01,
+            "clause_at_this_seed": "W-2_at_this_seed (PARITY-grade: inside the seed band)",
+            "vs_gdn2_post_cooldown": 0.025578669139317167,
+            "gdn2_contact_flag": false,
+            "fraction_of_corrected_gap_closed": 0.686733237517026,
+            "pre_state": "NO directional prediction was pre-stated for either lever; every reading keys on the measured rows against the two bands, and any quality-conclusion inversion or GDN2 contact is escalated, not adjudicated here"
+          }
+        }
+      }
+    },
+    "dense_frozen": {
+      "kind": "dense",
+      "cited": false,
+      "note": "the FROZEN-WRITE FALSIFIER CONTROL (mandatory, the K11B R4 precedent): the dense channel's parameters frozen at birth (requires_grad=False, excluded from the optimizer; the routing then equals the composed machine's own split exactly) -- the bar: step-1 bit-identity to the composed machine's own row, and a landing at parity with the composed machine's same-seed banked row",
+      "seeds": {
+        "3401": {
+          "post_cooldown": 1.3811104467936925,
+          "constant_lr": 1.433674931526184,
+          "ema_180": 1.424389226096017,
+          "step1_train_loss": 5.782775391046648,
+          "step1_parity": true,
+          "train_seconds_constant": 2072.7,
+          "parameters": 162177840,
+          "effective_rows": 16.82564353942871,
+          "top_row_share": 0.15532034520042232,
+          "occupancy": 27.198343912760418,
+          "identity_share": 0.126627025427666,
+          "gate_drifts": {
+            "decay_gate_mean_distance_from_registered_scalar": 0.010727396979442952,
+            "write_gate_mean_distance_from_1": 0.02329437085669876,
+            "read_gate_mean_distance_from_1": 0.011262211676997444
+          },
+          "dense_telemetry": {
+            "mean_abs_deposit": 0.0,
+            "deposit_over_payload_scale": 0.0,
+            "fire_rate": 0.99951171875,
+            "dense_over_event_mass_ratio": 0.0,
+            "max_scalar_drift": 0.0
+          },
+          "falsifier_divergence": {
+            "steps_compared": 204,
+            "bit_identical_steps": 204,
+            "first_diverging_step": null,
+            "max_abs_loss_delta": 0.0,
+            "note": "the K11B 2.4 honest limitation, receipted: full-trajectory bit-identity is NOT achievable by construction (the dense lane's backward emits exact-zero payload-gradient contributions whose signs are reduction-order artifacts; the difference compounds chaotically through the optimizer steps even with the channel frozen)"
+          },
+          "clauses": {
+            "same_seed_baseline_post_cooldown": 1.3811104467936925,
+            "improvement_vs_same_seed_baseline": 0.0,
+            "win_bar": 0.01,
+            "clause_at_this_seed": "the FALSIFIER control (its own bar, see the rules receipt)",
+            "vs_gdn2_post_cooldown": 0.028936999184744794,
+            "gdn2_contact_flag": false,
+            "fraction_of_corrected_gap_closed": 0.6456031390373013,
+            "pre_state": "NO directional prediction was pre-stated for either lever; every reading keys on the measured rows against the two bands, and any quality-conclusion inversion or GDN2 contact is escalated, not adjudicated here"
+          }
+        }
+      }
+    },
+    "gain1x": {
+      "kind": "gain",
+      "cited": false,
+      "note": "the read-gain bracket's near side: read_scale 1.0",
+      "seeds": {
+        "3401": {
+          "post_cooldown": 1.3799265623092651,
+          "constant_lr": 1.4341617311750139,
+          "ema_180": 1.4112982409340995,
+          "step1_train_loss": 5.731607508579155,
+          "step1_parity": true,
+          "train_seconds_constant": 1922.9,
+          "parameters": 158638848,
+          "effective_rows": 15.443951606750488,
+          "top_row_share": 0.17347065980417722,
+          "occupancy": 26.42571512858073,
+          "identity_share": 0.1129021787957551,
+          "gate_drifts": {
+            "decay_gate_mean_distance_from_registered_scalar": 0.005423604771446359,
+            "write_gate_mean_distance_from_1": 0.031749775351878874,
+            "read_gate_mean_distance_from_1": 0.029224248020909727
+          },
+          "dense_telemetry": null,
+          "falsifier_divergence": null,
+          "clauses": {
+            "same_seed_baseline_post_cooldown": 1.3811104467936925,
+            "improvement_vs_same_seed_baseline": 0.001183884484427411,
+            "win_bar": 0.01,
+            "clause_at_this_seed": "G-1_null_at_this_seed (inside the seed band: the inherited point stands, receipted)",
+            "vs_gdn2_post_cooldown": 0.027753114700317383,
+            "gdn2_contact_flag": false,
+            "fraction_of_corrected_gap_closed": 0.6601023945525278,
+            "pre_state": "NO directional prediction was pre-stated for either lever; every reading keys on the measured rows against the two bands, and any quality-conclusion inversion or GDN2 contact is escalated, not adjudicated here"
+          }
+        }
+      }
+    },
+    "gain2x": {
+      "kind": "gain",
+      "cited": false,
+      "note": "the read-gain bracket's policy-default cell: read_scale 2.0",
+      "seeds": {
+        "3401": {
+          "post_cooldown": 1.384902102606637,
+          "constant_lr": 1.446018968309675,
+          "ema_180": 1.4168705940246582,
+          "step1_train_loss": 5.760932868356953,
+          "step1_parity": true,
+          "train_seconds_constant": 1918.4,
+          "parameters": 158638848,
+          "effective_rows": 17.568130493164062,
+          "top_row_share": 0.1399571508523444,
+          "occupancy": 27.80120340983073,
+          "identity_share": 0.12416667748763163,
+          "gate_drifts": {
+            "decay_gate_mean_distance_from_registered_scalar": 0.010651246154642044,
+            "write_gate_mean_distance_from_1": 0.021789369036317414,
+            "read_gate_mean_distance_from_1": 0.013862940521600345
+          },
+          "dense_telemetry": null,
+          "falsifier_divergence": null,
+          "clauses": {
+            "same_seed_baseline_post_cooldown": 1.3811104467936925,
+            "improvement_vs_same_seed_baseline": -0.0037916558129444944,
+            "win_bar": 0.01,
+            "clause_at_this_seed": "G-1_null_at_this_seed (inside the seed band: the inherited point stands, receipted)",
+            "vs_gdn2_post_cooldown": 0.03272865499768929,
+            "gdn2_contact_flag": false,
+            "fraction_of_corrected_gap_closed": 0.599166018540477,
+            "pre_state": "NO directional prediction was pre-stated for either lever; every reading keys on the measured rows against the two bands, and any quality-conclusion inversion or GDN2 contact is escalated, not adjudicated here"
+          }
+        }
+      }
+    },
+    "gain4x": {
+      "kind": "gain",
+      "cited": false,
+      "note": "the read-gain bracket's far side past the inherited 2.787 point: read_scale 4.0",
+      "seeds": {
+        "3401": {
+          "post_cooldown": 1.4033683368137904,
+          "constant_lr": 1.4406403814043318,
+          "ema_180": 1.4551541634968348,
+          "step1_train_loss": 5.792057565296574,
+          "step1_parity": true,
+          "train_seconds_constant": 1938.6,
+          "parameters": 158638848,
+          "effective_rows": 14.206398963928223,
+          "top_row_share": 0.17916716024476143,
+          "occupancy": 22.891278584798176,
+          "identity_share": 0.12011361959187056,
+          "gate_drifts": {
+            "decay_gate_mean_distance_from_registered_scalar": 0.010792148552961104,
+            "write_gate_mean_distance_from_1": 0.0295410246544634,
+            "read_gate_mean_distance_from_1": 0.011581946688238531
+          },
+          "dense_telemetry": null,
+          "falsifier_divergence": null,
+          "clauses": {
+            "same_seed_baseline_post_cooldown": 1.3811104467936925,
+            "improvement_vs_same_seed_baseline": -0.022257890020097815,
+            "win_bar": 0.01,
+            "clause_at_this_seed": "G-1_null_at_this_seed (inside the seed band: the inherited point stands, receipted)",
+            "vs_gdn2_post_cooldown": 0.05119488920484261,
+            "gdn2_contact_flag": false,
+            "fraction_of_corrected_gap_closed": 0.37300658179185736,
+            "pre_state": "NO directional prediction was pre-stated for either lever; every reading keys on the measured rows against the two bands, and any quality-conclusion inversion or GDN2 contact is escalated, not adjudicated here"
+          }
+        }
+      }
+    }
+  },
+  "adjudication": {
+    "dense": {
+      "seed3401_improvement": 0.0033583300454276266,
+      "seed3402_improvement": null,
+      "verdict": "seed-3401 only: no >= 0.01 signal at 3401"
+    },
+    "dense_frozen": {
+      "seed3401_improvement": 0.0,
+      "seed3402_improvement": null,
+      "verdict": "the falsifier control PASSES"
+    },
+    "gain1x": {
+      "seed3401_improvement": 0.001183884484427411,
+      "seed3402_improvement": null,
+      "verdict": "G-1 null at 3401: inside the seed band, the inherited point stands, receipted"
+    },
+    "gain2x": {
+      "seed3401_improvement": -0.0037916558129444944,
+      "seed3402_improvement": null,
+      "verdict": "G-1 null at 3401: inside the seed band, the inherited point stands, receipted"
+    },
+    "gain4x": {
+      "seed3401_improvement": -0.022257890020097815,
+      "seed3402_improvement": null,
+      "verdict": "G-1 null at 3401: inside the seed band, the inherited point stands, receipted"
+    }
+  },
+  "second_seeds_owed": [],
+  "combined_rule": {
+    "fires": false,
+    "rule": "the combined arm fires ONLY if either lever's seed-3401 row improves >= 0.01: dense + the best gain cell",
+    "note": "the combined arm does NOT fire (no lever showed >= 0.01 at seed 3401; the pre-stated rule)",
+    "combined_run": false
+  },
+  "falsifier_control": {
+    "step1_parity": true,
+    "same_seed_delta": 0.0,
+    "divergence": {
+      "steps_compared": 204,
+      "bit_identical_steps": 204,
+      "first_diverging_step": null,
+      "max_abs_loss_delta": 0.0,
+      "note": "the K11B 2.4 honest limitation, receipted: full-trajectory bit-identity is NOT achievable by construction (the dense lane's backward emits exact-zero payload-gradient contributions whose signs are reduction-order artifacts; the difference compounds chaotically through the optimizer steps even with the channel frozen)"
+    },
+    "note": "the frozen-write falsifier control: everything-except-dense-learning measured at the band's scale (the K11B 2.4 honest limitation receipted in the arm's own log)"
+  },
+  "escalation_flags": [],
+  "ours_best": {
+    "arm": "dense",
+    "seed": 3401,
+    "post_cooldown": 1.377752116748265,
+    "constant_lr": 1.4345858097076416,
+    "ema_180": 1.4276997872761317
+  },
+  "gap_quote_vs_gdn2": {
+    "ours_best_post_cooldown": 1.377752116748265,
+    "arm": "dense",
+    "seed": 3401,
+    "gdn2_post_cooldown": 1.3521734476089478,
+    "remaining_gap": 0.025578669139317167,
+    "fraction_of_corrected_gap_closed": 0.686733237517026,
+    "bands": {
+      "endpoint_variance": 0.075,
+      "winner_seed_delta": 0.011948040553501738
+    },
+    "caveat": "the endpoint-variance band (0.075) and the winner's seed delta (0.0119) are quoted with every margin; the composed-machine-vs-GDN2 row is a cross-machine context row at the same probe protocol, not a controlled comparison; the final gap-quote phrasing is the supervisor's to adjudicate (the K13 clause-conflict precedent)"
+  },
+  "notes": {
+    "scoring": "PRIMARY: post-cooldown (24-step linear); SECONDARY: EMA-0.99 at step 180 (ranking-only); constant-180 retained for banked comparability",
+    "bands": "every margin is read against BOTH the 0.075-nat endpoint-variance band and the winner's 0.0119 seed delta",
+    "pre_state": "NO directional prediction was pre-stated for either lever; the W-1/W-2/W-3/G-1 clauses, the combined-arm rule and the standing 0.01 win-bar second-seed rule are applied exactly as stated",
+    "escalation": "the final gap-quote phrasing, the falsifier's verdict on a failure, any quality-conclusion inversion and any GDN2 contact are escalated to the supervisor (the K13 clause-conflict precedent governs adjudication)"
+  }
+}
