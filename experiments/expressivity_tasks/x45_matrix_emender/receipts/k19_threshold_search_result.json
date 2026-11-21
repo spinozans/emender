@@ -1,0 +1,119 @@
+{
+  "probe": "k19_threshold_search",
+  "space": [
+    [
+      "tau_match",
+      "linear",
+      0.2,
+      0.8
+    ],
+    [
+      "tau_pop",
+      "linear",
+      -0.2,
+      0.4
+    ],
+    [
+      "read_scale",
+      "linear",
+      0.5,
+      4.0
+    ]
+  ],
+  "settings": {
+    "popsize": 8,
+    "generations_requested": 1,
+    "sigma0": 0.15,
+    "cma_seed": 20261125,
+    "probe_seed": 3401,
+    "probe_targets": 20000000,
+    "exposure_landing": 20022866,
+    "cma_version": "4.4.4",
+    "tau_merge_held": 0.85,
+    "tau_merge_note": "the original search's own choice (its receipted reason standing); including it would require inventing bounds the original never set",
+    "eval_convention": "one eval = one matched-exposure probe of the composed machine at seed 3401 under the corrected cooldown-primary scoring (the objective is the post-cooldown calibration NLL); the search tunes to its own budget -- its eval IS the registered probe protocol, so the winner's protocol-confirm is a determinism + full-receipt pass at the SAME protocol, not a horizon transfer; no board-scale claim is made",
+    "infeasible_corner_note": "the original's bounds admit tau_pop > tau_match corners, which crash the policy constructor and receipt as nll=inf (CMA-ES is rank-based; the crash is receipted, not hidden)",
+    "fixed_seed_note": "every evaluation uses seed 3401 and the same deterministic stream prefix: the search tunes the seed and the data draw as well as the thresholds"
+  },
+  "incumbent_trajectory": [
+    {
+      "eval_id": 0,
+      "label": "incumbent_anchor",
+      "nll": 1.3811104467936925,
+      "best_so_far": 1.3811104467936925,
+      "read_scale": 2.7870458737509636,
+      "tau_match": 0.45,
+      "tau_pop": 0.1
+    }
+  ],
+  "best": {
+    "nll": 1.3811104467936925,
+    "config": {
+      "lr": 0.00033427141575371284,
+      "weight_decay": 0.17422187309224696,
+      "warmup_steps": 45,
+      "read_scale": 2.7870458737509636,
+      "tau_match": 0.45,
+      "tau_pop": 0.1,
+      "tau_merge": 0.85
+    },
+    "eval_id": 0,
+    "label": "incumbent_anchor"
+  },
+  "anchors": {
+    "composed_banked": {
+      "post_cooldown": {
+        "3401": 1.3811104467936925,
+        "3402": 1.383232252938407
+      },
+      "constant_lr": {
+        "3401": 1.433674931526184,
+        "3402": 1.4341776371002197
+      },
+      "ema_180": {
+        "3401": 1.424389226096017,
+        "3402": 1.4385861498968942
+      },
+      "step1_train_loss": {
+        "3401": 5.782775391046648,
+        "3402": 5.720172563202926
+      },
+      "note": "the K15 composition arm's own landed rows (the inherited 4x point, tuned for the SOFTMAX-read machine): receipts/k15_composition_summary.json"
+    },
+    "gdn2_post_cooldown": 1.3521734476089478,
+    "win_bar": 0.01,
+    "bands": {
+      "endpoint_variance": 0.075,
+      "winner_seed_delta": 0.011948040553501738
+    }
+  },
+  "n_evaluations": 1,
+  "wall_s": 2204.6,
+  "incumbent_anchor": {
+    "label": "incumbent_anchor",
+    "status": "completed",
+    "nll": 1.3811104467936925,
+    "steps": 204,
+    "targets": 22745198,
+    "anchor_reproduced_banked_row": true,
+    "step1_k13_parity": true,
+    "eval_id": 0,
+    "params": {
+      "lr": 0.00033427141575371284,
+      "weight_decay": 0.17422187309224696,
+      "warmup_steps": 45,
+      "read_scale": 2.7870458737509636,
+      "tau_match": 0.45,
+      "tau_pop": 0.1,
+      "tau_merge": 0.85
+    },
+    "wall_s": 2204.5
+  },
+  "read_scale_trajectory": [
+    {
+      "eval_id": 0,
+      "read_scale": 2.7870458737509636,
+      "nll": 1.3811104467936925
+    }
+  ]
+}
