@@ -1,0 +1,321 @@
+{
+  "probe": "k19_threshold_search assemble",
+  "corrected_scoring": {
+    "primary": "post-cooldown eval: a linear cooldown of 24 steps (13.3% of the 180-step constant-LR budget) appended after the banked matched-exposure landing, same stream/data order, LR factor (25 - k)/24 for cooldown step k (1.0 -> 1/24, never zero), both hybrid groups scaling equally; the corrected score is the post-cooldown calibration eval",
+    "secondary": "EMA iterate at step 180 (no extra data): decay 0.99, initialized at the init weights, updated after every constant-phase optimizer step, NOT updated during the cooldown; RANKING-ONLY -- its absolute number is biased toward mid-run weights (stated, not smoothed)",
+    "cooldown_steps": 24,
+    "cooldown_fraction": 0.1333,
+    "cooldown_form": "linear",
+    "ema_decay": 0.99,
+    "exposure_note": "the cooldown steps see ~2.7M more targets (~13%), identical across arms -- a stated protocol EXTENSION; the step-180 constant-LR eval is retained so every banked row stays comparable",
+    "citations": {
+      "river_valley": "Wen et al., ICLR 2025, arXiv:2410.05192 -- constant-LR loss carries an LR-dependent oscillation penalty that decay/averaging removes",
+      "cooldown": "Haegele et al., NeurIPS 2024, arXiv:2405.18392 -- constant-LR + short cooldown matches cosine at full scale",
+      "averaging": "Defazio et al., arXiv:2405.15682 -- iterate averaging as the schedule-free fix for the same penalty",
+      "moonlight": "Liu et al. (Moonshot AI), arXiv:2502.16982 -- with the update RMS matched to AdamW's (~0.2; AdamW typical 0.2-0.4), Muon directly reuses the LR and weight decay tuned for AdamW, i.e. ~1x the AdamW-tuned LR, WITH weight decay",
+      "horizon": "Bjorck et al., ICLR 2025 -- the optimal LR shrinks with token horizon; probe-tuned LRs transfer only downscaled"
+    }
+  },
+  "parameterization": {
+    "dims": [
+      [
+        "tau_match",
+        "linear",
+        0.2,
+        0.8
+      ],
+      [
+        "tau_pop",
+        "linear",
+        -0.2,
+        0.4
+      ],
+      [
+        "read_scale",
+        "linear",
+        0.5,
+        4.0
+      ]
+    ],
+    "tau_merge_held": 0.85,
+    "note": "the original search's own dims and bounds, verbatim; x0 the composed machine's incumbent; sigma0 0.15; popsize 8; ONE generation; CMA-ES seed 20261125"
+  },
+  "search_internal": {
+    "best": {
+      "nll": 1.3811104467936925,
+      "config": {
+        "lr": 0.00033427141575371284,
+        "weight_decay": 0.17422187309224696,
+        "warmup_steps": 45,
+        "read_scale": 2.7870458737509636,
+        "tau_match": 0.45,
+        "tau_pop": 0.1,
+        "tau_merge": 0.85
+      },
+      "eval_id": 0,
+      "label": "incumbent_anchor"
+    },
+    "incumbent_trajectory": [
+      {
+        "eval_id": 0,
+        "label": "incumbent_anchor",
+        "nll": 1.3811104467936925,
+        "best_so_far": 1.3811104467936925,
+        "read_scale": 2.7870458737509636,
+        "tau_match": 0.45,
+        "tau_pop": 0.1
+      },
+      {
+        "eval_id": 1,
+        "label": "g1_0",
+        "nll": 1.3825189556394304,
+        "best_so_far": 1.3811104467936925,
+        "read_scale": 2.0380270935580658,
+        "tau_match": 0.33337693689723935,
+        "tau_pop": 0.1897066552392172
+      },
+      {
+        "eval_id": 2,
+        "label": "g1_1",
+        "nll": 1.394933717591422,
+        "best_so_far": 1.3811104467936925,
+        "read_scale": 3.287821499108928,
+        "tau_match": 0.3855078216794817,
+        "tau_pop": 0.16567818787614652
+      },
+      {
+        "eval_id": 3,
+        "label": "g1_2",
+        "nll": 1.3885233742850167,
+        "best_so_far": 1.3811104467936925,
+        "read_scale": 2.718021417143788,
+        "tau_match": 0.48957231165657744,
+        "tau_pop": 0.036504907066317566
+      },
+      {
+        "eval_id": 4,
+        "label": "g1_3",
+        "nll": 1.4010401112692696,
+        "best_so_far": 1.3811104467936925,
+        "read_scale": 2.938353132007538,
+        "tau_match": 0.4583207284657193,
+        "tau_pop": -0.057480498417948556
+      },
+      {
+        "eval_id": 5,
+        "label": "g1_4",
+        "nll": 1.3860350166048323,
+        "best_so_far": 1.3811104467936925,
+        "read_scale": 2.4559117266684405,
+        "tau_match": 0.35481207973377726,
+        "tau_pop": 0.1167929727647865
+      },
+      {
+        "eval_id": 6,
+        "label": "g1_5",
+        "nll": 1.3870552948543005,
+        "best_so_far": 1.3811104467936925,
+        "read_scale": 3.0741124611738178,
+        "tau_match": 0.3797973881106451,
+        "tau_pop": 0.17447560554223557
+      },
+      {
+        "eval_id": 7,
+        "label": "g1_6",
+        "nll": 1.3897779669080461,
+        "best_so_far": 1.3811104467936925,
+        "read_scale": 3.4749679813305603,
+        "tau_match": 0.45762811870485076,
+        "tau_pop": 0.19249753432943872
+      },
+      {
+        "eval_id": 8,
+        "label": "g1_7",
+        "nll": 1.3934331621442522,
+        "best_so_far": 1.3811104467936925,
+        "read_scale": 3.405611230115964,
+        "tau_match": 0.32501351898922287,
+        "tau_pop": 0.18121897631519046
+      }
+    ],
+    "read_scale_trajectory": [
+      {
+        "eval_id": 0,
+        "read_scale": 2.7870458737509636,
+        "nll": 1.3811104467936925
+      },
+      {
+        "eval_id": 1,
+        "read_scale": 2.0380270935580658,
+        "nll": 1.3825189556394304
+      },
+      {
+        "eval_id": 2,
+        "read_scale": 3.287821499108928,
+        "nll": 1.394933717591422
+      },
+      {
+        "eval_id": 3,
+        "read_scale": 2.718021417143788,
+        "nll": 1.3885233742850167
+      },
+      {
+        "eval_id": 4,
+        "read_scale": 2.938353132007538,
+        "nll": 1.4010401112692696
+      },
+      {
+        "eval_id": 5,
+        "read_scale": 2.4559117266684405,
+        "nll": 1.3860350166048323
+      },
+      {
+        "eval_id": 6,
+        "read_scale": 3.0741124611738178,
+        "nll": 1.3870552948543005
+      },
+      {
+        "eval_id": 7,
+        "read_scale": 3.4749679813305603,
+        "nll": 1.3897779669080461
+      },
+      {
+        "eval_id": 8,
+        "read_scale": 3.405611230115964,
+        "nll": 1.3934331621442522
+      }
+    ],
+    "n_evaluations": 9,
+    "scoreboard_rule": "the search-internal scoreboard is NEVER a ladder row (the standing rule): only the protocol-confirmed winner at seed 3401 banks anything"
+  },
+  "incumbent_anchor": {
+    "nll": 1.3811104467936925,
+    "note": "the incumbent's own row through the K19 probe (the harness receipt; reproduced the banked row bit for bit)"
+  },
+  "confirm_seed_3401": {
+    "label": "winner",
+    "seed": 3401,
+    "status": "completed",
+    "post_cooldown": 1.3811104467936925,
+    "constant_lr": 1.433674931526184,
+    "ema_180": 1.424389226096017,
+    "config": {
+      "lr": 0.00033427141575371284,
+      "weight_decay": 0.17422187309224696,
+      "warmup_steps": 45,
+      "read_scale": 2.7870458737509636,
+      "tau_match": 0.45,
+      "tau_pop": 0.1,
+      "tau_merge": 0.85
+    },
+    "searched_knobs": {
+      "tau_match": 0.45,
+      "tau_pop": 0.1,
+      "read_scale": 2.7870458737509636
+    },
+    "determinism_reproduced": true,
+    "win_receipt": {
+      "measured_post_cooldown": 1.3811104467936925,
+      "composed_banked_same_seed": 1.3811104467936925,
+      "win": 0.0,
+      "win_bar": 0.01,
+      "win_bar_met": false,
+      "vs_gdn2": 0.028936999184744794,
+      "gdn2_contact_flag": false,
+      "bands": {
+        "endpoint_variance": 0.075,
+        "winner_seed_delta": 0.011948040553501738
+      }
+    },
+    "effective_rows": 16.82564353942871,
+    "top_row_share": 0.15532034520042232,
+    "occupancy": 27.198343912760418,
+    "identity_share": 0.126627025427666,
+    "op_rate_per_token_lane0": {
+      "none": 0.0,
+      "append": 0.01800537109375,
+      "correct": 0.9798405965169271,
+      "pop": 0.0,
+      "merge": 0.0021540323893229165
+    },
+    "read_mask_sweep_layers_ge_threshold": 4
+  },
+  "confirm_seed_3402": null,
+  "win_bar": 0.01,
+  "clause_seed_3401": "PARITY at seed 3401: |win| = 0.000000 < 0.01 -- the thresholds were ROBUST across the interface change; the search-symmetry duty is discharged by receipt",
+  "win_seed_3401": 0.0,
+  "second_seed": null,
+  "mechanism": {
+    "winner_op_rate_per_token_lane0": {
+      "none": 0.0,
+      "append": 0.01800537109375,
+      "correct": 0.9798405965169271,
+      "pop": 0.0,
+      "merge": 0.0021540323893229165
+    },
+    "winner_identity_share": 0.126627025427666,
+    "winner_effective_rows": 16.82564353942871,
+    "winner_occupancy": 27.198343912760418,
+    "winner_top_row_share": 0.15532034520042232,
+    "winner_read_mask_sweep_layers_ge_threshold": 4,
+    "incumbent_same_instrument": {
+      "identity_rewrite_share": 0.126627025427666,
+      "effective_read_rows": 16.82564353942871,
+      "top_row_w_mass_share": 0.15532034520042232,
+      "occupancy": 27.198343912760418,
+      "note": "the K15 composition arm's own post-cooldown mechanism rows at seed 3401 (k15_runs/composition_seed3401/result.json), the incumbent's op mix under the same instrument",
+      "source": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k15_runs/composition_seed3401/result.json"
+    },
+    "op_mix_changed": false,
+    "note": "the pre-stated mechanism question: did the re-tuned thresholds CHANGE THE OP MIX? (the K14 receipts said the model REJECTS learned routing; this tests whether SEARCHED routing on the new interface does better)",
+    "incumbent_op_rate_per_token_lane0": {
+      "none": 0.0,
+      "append": 0.01800537109375,
+      "correct": 0.9798405965169271,
+      "pop": 0.0,
+      "merge": 0.0021540323893229165
+    },
+    "op_mix_delta_winner_minus_incumbent": {
+      "append": 0.0,
+      "correct": 0.0,
+      "merge": 0.0,
+      "none": 0.0,
+      "pop": 0.0
+    }
+  },
+  "anchors": {
+    "composed_banked": {
+      "post_cooldown": {
+        "3401": 1.3811104467936925,
+        "3402": 1.383232252938407
+      },
+      "constant_lr": {
+        "3401": 1.433674931526184,
+        "3402": 1.4341776371002197
+      },
+      "ema_180": {
+        "3401": 1.424389226096017,
+        "3402": 1.4385861498968942
+      },
+      "step1_train_loss": {
+        "3401": 5.782775391046648,
+        "3402": 5.720172563202926
+      },
+      "note": "the K15 composition arm's own landed rows (the inherited 4x point, tuned for the SOFTMAX-read machine): receipts/k15_composition_summary.json"
+    },
+    "gdn2_post_cooldown": 1.3521734476089478,
+    "banked_corrected_anchor": 1.4338248457227434,
+    "bands": {
+      "endpoint_variance": 0.075,
+      "winner_seed_delta": 0.011948040553501738
+    }
+  },
+  "escalation_flags": [],
+  "notes": {
+    "scoring": "PRIMARY: post-cooldown (24-step linear); SECONDARY: EMA-0.99 at step 180 (ranking-only); constant-180 retained for banked comparability",
+    "bands": "every margin is read against BOTH the 0.075-nat endpoint-variance band and the winner's 0.0119 seed delta",
+    "horizon": "the search tuned to its own budget -- its eval IS the registered probe protocol (180+24 steps at the matched exposure), the same horizon the composed anchors and the GDN2 row live at; no board-scale (2700 s) claim is made or implied",
+    "pre_state": "NO directional prediction was pre-stated; stale thresholds, robust thresholds and an incumbent win are ALL receipts (the search-symmetry duty is discharged either way)",
+    "banking": "the banking of any win and the final gap-quote phrasing are the supervisor's to adjudicate (the K13/K15 clause-conflict precedent); mixed seeds adjudicate to the CONSERVATIVE reading"
+  }
+}
