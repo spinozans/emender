@@ -32,7 +32,7 @@ X45=experiments/expressivity_tasks/x45_matrix_emender
 PY=/home/erikg/emender/.venv/bin/python
 RUNS=$X45/k17_runs
 mkdir -p "$RUNS"
-eval "$(GPU_LEASE_VISIBLE=0,1 scripts/gpu_lease.sh acquire 1 --wait)"
+eval "$(GPU_LEASE_VISIBLE=${GPU_LEASE_VISIBLE} scripts/gpu_lease.sh acquire 1 --wait)"
 echo "leased card: ${GPU_LEASE_HELD:-none}"
 trap 'GPU_LEASE_PID="$$" scripts/gpu_lease.sh release "$GPU_LEASE_HELD" >/dev/null 2>&1 || true' EXIT
 
