@@ -1,0 +1,356 @@
+{
+ "probe": "k17_write_form_gates",
+ "registration": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/PREREGISTRATION_K17_WRITE_FORM.md",
+ "policy": {
+  "ops": true,
+  "tau_match": 0.45,
+  "tau_merge": 0.85,
+  "tau_pop": 0.1,
+  "tie_break": 1e-06,
+  "read_scale": 2.0,
+  "grow": false,
+  "grow_trigger": 0.5,
+  "grow_window": 4,
+  "grow_window_tokens": 512,
+  "grow_geometric": 2.0,
+  "grow_stride_floor": 64
+ },
+ "score_form": "the write-form machine: the K15 composed machine (the K13 additive read under the K11B p3 per-channel gate stack) + the dense gated write (the b_proj-delta form: every token deposits m_d*sigmoid(d_proj(x)) (.) p at its best-match LIVE row, recorded as schedule lane 2, born at exact zero)",
+ "gate_a": {
+  "fixture": {
+   "batch": 8,
+   "tokens": 2048,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "key_dim": 16,
+   "lanes": 3,
+   "dtype": "bf16 inputs, fp32 defined-order math",
+   "segment_tokens": 64,
+   "distinct_directions": 512,
+   "dense_scale": 0.05,
+   "note": "random per-channel gates in (0.05, 0.95), the per-channel decay a 0.85-1.0 spread, random dense deposits at the G2 fixture scale, both GATED combinations"
+  },
+  "combinations": {
+   "gated_True": {
+    "channels": {
+     "schedule_slot": {
+      "lanes": 98304,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "schedule_erase": {
+      "lanes": 98304,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "schedule_op": {
+      "lanes": 98304,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "schedule_live_after": {
+      "lanes": 98304,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "weights": {
+      "lanes": 4194304,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "live_pre": {
+      "lanes": 4194304,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "state": {
+      "lanes": 262144,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "live": {
+      "lanes": 2048,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "keys": {
+      "lanes": 32768,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "payload": {
+      "lanes": 12582912,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "read": {
+      "floor_fp32_vs_fp64": 1.1920928955078125e-06,
+      "deviation": 1.1920928955078125e-06,
+      "ratio_vs_floor": 1.0,
+      "within_noise_factor": true
+     },
+     "dense_lane": {
+      "lanes": 32768,
+      "fired": 32752,
+      "fire_rate": 0.99951171875,
+      "recorded_payload_zero_where_not_fired": true,
+      "targets_live_at_decision_time": true
+     }
+    },
+    "total": {
+     "lanes": 21661696,
+     "flips": 0
+    },
+    "op_histogram": {
+     "none": 32784,
+     "append": 34397,
+     "correct": 31123,
+     "pop": 0,
+     "merge": 0
+    },
+    "walls": {
+     "kernel_forward_s": 1.984,
+     "eager_oracle_s": 5.7
+    }
+   },
+   "gated_False": {
+    "channels": {
+     "schedule_slot": {
+      "lanes": 98304,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "schedule_erase": {
+      "lanes": 98304,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "schedule_op": {
+      "lanes": 98304,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "schedule_live_after": {
+      "lanes": 98304,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "weights": {
+      "lanes": 4194304,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "live_pre": {
+      "lanes": 4194304,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "state": {
+      "lanes": 262144,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "live": {
+      "lanes": 2048,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "keys": {
+      "lanes": 32768,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "payload": {
+      "lanes": 12582912,
+      "flips": 0,
+      "bit_equal": true
+     },
+     "read": {
+      "floor_fp32_vs_fp64": 1.430511474609375e-06,
+      "deviation": 1.9073486328125e-06,
+      "ratio_vs_floor": 1.3333333333333333,
+      "within_noise_factor": true
+     },
+     "dense_lane": {
+      "lanes": 32768,
+      "fired": 32752,
+      "fire_rate": 0.99951171875,
+      "recorded_payload_zero_where_not_fired": true,
+      "targets_live_at_decision_time": true
+     }
+    },
+    "total": {
+     "lanes": 21661696,
+     "flips": 0
+    },
+    "op_histogram": {
+     "none": 32784,
+     "append": 34397,
+     "correct": 31123,
+     "pop": 0,
+     "merge": 0
+    },
+    "walls": {
+     "kernel_forward_s": 1.508,
+     "eager_oracle_s": 5.5
+    }
+   }
+  },
+  "total": {
+   "lanes": 43323392,
+   "flips": 0
+  },
+  "signed_weights": {
+   "negative_entries": 1341361,
+   "max_abs_on_live": 1.8675345182418823,
+   "gain_bound_holds": true,
+   "zero_on_dead": true,
+   "not_a_simplex": true,
+   "min_on_live": -1.8675345182418823,
+   "mean_on_live": -0.00018120495951734483
+  },
+  "key_collapse_watch": {
+   "span_key_std_min": 1.0022560358047485,
+   "span_key_std_mean": 1.0072667598724365,
+   "guard_floor": 0.05,
+   "within_guard": true
+  },
+  "forward_kernel_resources": {
+   "num_warps": 8,
+   "registers": 255,
+   "spills": 2
+  }
+ },
+ "gate_a2": {
+  "birth_bit_identity_to_composed_machine": {
+   "differing_elements": 0,
+   "lanes": 43061248,
+   "bit_identical": true,
+   "note": "at the zero birth (d_proj == 0, m_d == 0 -> dense == 0 exactly, the mixer's own per-element-signed expression 0*sigmoid(0)*p) the K17 forward is bit-identical to the K15 composed kernel's own committed launch on EVERY shared channel (lanes 0/1 of the 3-lane schedule; both GATED combinations) -- the machine is BORN AS THE COMPOSED MACHINE (and hence as the K13 additive machine: the K15 receipt's own chain); the -0.0 IEEE corner of the zero deposit is the only legal escape and its count is asserted zero here"
+  },
+  "decisions_bit_identical_under_random_deposits": {
+   "differing_elements": 0,
+   "lanes": 8683520,
+   "bit_identical": true,
+   "dense_target_flips": 0,
+   "note": "no deposit value and no gate value feeds op selection: the discrete schedule (lanes 0/1) AND the dense lane's recorded best-match target are bit-identical under random deposits and random per-channel gates/decay"
+  },
+  "write_channel_instrument": {
+   "fire_rate": 0.99951171875,
+   "dense_mean_abs": 0.03986361622810364,
+   "event_lane0_mean_abs": 0.4124429523944855,
+   "event_lane0_mean_abs_on_carrying_ops": -0.0002275787846883759,
+   "dense_over_event_mass_ratio": 0.09665243327617645,
+   "note": "the C5 instrument at the gate fixture: how much mass the dense channel carries vs the event writes at the G2 fixture scale (0.05) -- the arms' mechanism receipts read the TRAINED dense channel against this"
+  },
+  "dilution_instrument": {
+   "w_mass_effective_rows_at_zero_birth": 62.75758743286133,
+   "w_mass_effective_rows_active_deposits": 62.75758743286133,
+   "note": "e^H of the |w|-mass distribution over live rows at the zero birth (== the composed machine's own) vs under the active deposits -- the read's mass distribution is invariant at birth and moves only as the deposits move the rows' content"
+  }
+ },
+ "gate_b": {
+  "oracle_gradcheck_fp64": {
+   "ok": true,
+   "branches": {
+    "none": 100,
+    "append": 108,
+    "correct": 80,
+    "pop": 0,
+    "merge": 0
+   },
+   "note": "THROUGH THE DENSE-WRITE PATH: the dense lane's own deposit adjoint (ddense = dS[best], ds passes through) under the additive read's attached raw-score weights, the per-channel DECAY vector and the per-channel write gate"
+  },
+  "floors_and_deviations": [
+   {
+    "output": "dpayload",
+    "floor": 1.430511474609375e-06,
+    "deviation": 0.0,
+    "ratio_vs_floor": 0.0,
+    "within_noise_factor": true
+   },
+   {
+    "output": "ddense",
+    "floor": 1.9073486328125e-06,
+    "deviation": 0.0,
+    "ratio_vs_floor": 0.0,
+    "within_noise_factor": true
+   },
+   {
+    "output": "dwrite_keys",
+    "floor": 2.86102294921875e-06,
+    "deviation": 3.814697265625e-06,
+    "ratio_vs_floor": 1.3333333333333333,
+    "within_noise_factor": true
+   },
+   {
+    "output": "dquery_keys",
+    "floor": 2.384185791015625e-06,
+    "deviation": 2.384185791015625e-06,
+    "ratio_vs_floor": 1.0,
+    "within_noise_factor": true
+   },
+   {
+    "output": "ddecay",
+    "floor": 2.86102294921875e-06,
+    "deviation": 1.9073486328125e-06,
+    "ratio_vs_floor": 0.6666666666666666,
+    "within_noise_factor": true
+   },
+   {
+    "output": "dgates",
+    "floor": 2.86102294921875e-06,
+    "deviation": 9.5367431640625e-07,
+    "ratio_vs_floor": 0.3333333333333333,
+    "within_noise_factor": true
+   },
+   {
+    "output": "dstate",
+    "floor": 9.5367431640625e-07,
+    "deviation": 0.0,
+    "ratio_vs_floor": 0.0,
+    "within_noise_factor": true
+   },
+   {
+    "output": "dkeys",
+    "floor": 0.0,
+    "deviation": 0.0,
+    "ratio_vs_floor": 0.0,
+    "within_noise_factor": true
+   }
+  ],
+  "segment_recompute_bit_equal": true,
+  "dense_adjoint": {
+   "note": "the dense lane's adjoint is the full incoming adjoint at the best row (additive; ds passes through), and EXACTLY zero where the lane did not fire -- receipted in the suite"
+  },
+  "noise_factor": 8.0
+ },
+ "gate_d": {
+  "fixture": {
+   "batch": 8,
+   "tokens": 2048,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "key_dim": 16,
+   "lanes": 3,
+   "segment_tokens": 64
+  },
+  "walls": {
+   "k17": {
+    "forward_ms_per_scan": 24.1,
+    "backward_ms_per_scan": 18.03
+   },
+   "k15": {
+    "forward_ms_per_scan": 19.55,
+    "backward_ms_per_scan": 17.17
+   }
+  },
+  "forward_ms_per_scan": 24.1,
+  "backward_ms_per_scan": 18.03,
+  "forward_throughput_tok_per_s": 679834,
+  "cost_note": "the dense lane's honest cost vs the composed machine's own same-session launch: the deposit load, the lane-2 record stores and the guarded application (the K11 unconditional select) on the forward; the dense-lane adjoint step on the backward -- the K15 launch is the honest reference, not a citation",
+  "available": true
+ }
+}
