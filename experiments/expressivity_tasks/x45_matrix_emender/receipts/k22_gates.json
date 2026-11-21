@@ -1,0 +1,104 @@
+{
+ "probe": "k22_gate_receipt",
+ "seed": 3401,
+ "note": "the K22 hybrid's birth receipts at the seam: born as GDN2 bit for bit, the dtype discipline, the fp64 gradcheck through the slot-in-dense-stack boundary, the open signal and the inert birth, the honest wall",
+ "gate_a": {
+  "name": "A (born as GDN2, bit for bit)",
+  "loss_bit_identical": true,
+  "loss_pure": 5.9442596435546875,
+  "loss_hybrid": 5.9442596435546875,
+  "per_slot_layer": {
+   "6": {
+    "lanes": 10485760,
+    "flips": 0,
+    "sign_of_zero_corner_flips": 0,
+    "flips_outside_exact_zero": 0,
+    "value_equal": true
+   },
+   "12": {
+    "lanes": 10485760,
+    "flips": 0,
+    "sign_of_zero_corner_flips": 0,
+    "flips_outside_exact_zero": 0,
+    "value_equal": true
+   },
+   "18": {
+    "lanes": 10485760,
+    "flips": 0,
+    "sign_of_zero_corner_flips": 0,
+    "flips_outside_exact_zero": 0,
+    "value_equal": true
+   }
+  },
+  "all_value_equal": true,
+  "flips_outside_exact_zero": 0,
+  "sign_of_zero_corner_flips": 0,
+  "lanes": 31457280,
+  "note": "the wrapper's output vs the committed layer's own on the production microbatch: the slot contribution is exactly zero at birth, so the layer IS the committed GDN2 layer bit for bit; the only legal escape is the IEEE sign-of-zero corner (counted separately)"
+ },
+ "gate_a2": {
+  "name": "A2 (the seam's dtype discipline)",
+  "contribution_dtype_cast": "self.read_gate.to(out.dtype)",
+  "dense_output_dtype": "torch.bfloat16",
+  "wrapper_output_dtype": "torch.bfloat16",
+  "held_under_autocast": true,
+  "held_no_autocast": true,
+  "held_all": true,
+  "note": "the wrapper must not change the dense side's carrier dtype (the production regime's bf16 residual stream stays bf16 through the seam; the real-model receipt is gate A's bitwise loss identity)"
+ },
+ "gate_b": {
+  "name": "B (the fp64 gradcheck through the hybrid seam)",
+  "fp64_gradcheck_through_the_seam": {
+   "True": true,
+   "False": true
+  },
+  "kernel_seam_gradients_vs_floors": {
+   "ddense": {
+    "floor": 0.0,
+    "deviation": 0.0,
+    "within_noise": true
+   },
+   "dgate": {
+    "floor": 7.2479248046875e-05,
+    "deviation": 6.103515625e-05,
+    "within_noise": true
+   },
+   "dx": {
+    "floor": 7.748603820800781e-07,
+    "deviation": 5.960464477539062e-07,
+    "within_noise": true
+   }
+  }
+ },
+ "gate_c": {
+  "name": "C (the open signal and the inert birth)",
+  "gate_born_at_exact_zero": true,
+  "gate_gradient": -154.179443359375,
+  "open_signal_nonzero": true,
+  "slot_parameters_all_exactly_zero_grad": true,
+  "slot_max_abs_grad_at_birth": 0.0,
+  "store_fills": {
+   "op_histogram": {
+    "none": 1024,
+    "append": 230,
+    "correct": 794,
+    "pop": 0,
+    "merge": 0
+   },
+   "append_or_correct_fires": true
+  }
+ },
+ "gate_d": {
+  "name": "D (the slot branch's honest wall)",
+  "median_ms_per_window_group": 20.958,
+  "min_ms": 20.937,
+  "max_ms": 20.983,
+  "shape": {
+   "batch": 8,
+   "tokens": 2048,
+   "width": 640
+  },
+  "cited": "the K20 receipt: the committed composed mixer at width 576 costs 23.40 ms fwd per (layer, window-group); the K21 profile: 93.1% one Triton kernel; the hybrid pays this on 3 of 24 layers, TWICE per training step (the checkpointed block re-runs the forward in backward)"
+ },
+ "all_checks": true
+}

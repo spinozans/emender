@@ -174,26 +174,37 @@ def gate_a2_dtype_discipline(receipt: dict) -> dict:
     """Under the production autocast regime the wrapper's output dtype is
     the dense layer's own (the contribution cast to the dense output's
     carrier dtype): the residual stream's dtype is the committed
-    machine's own at birth and after."""
-    class _Dense(nn.Module):  # a stand-in dense layer with the core's dtype
+    machine's own at birth and after.  The invariant is RELATIVE (the
+    wrapper must not change whatever dtype the dense side emits): a bf16
+    input under the production autocast regime keeps the whole seam in
+    bf16, and without autocast the wrapper preserves the input's dtype."""
+    class _Dense(nn.Module):  # a stand-in dense layer: passes its input through
         def forward(self, x, h0=None, **kwargs):
             return x.clone(), None
 
     dense = _Dense()
     mixer = build_slot_mixer(width=64).cuda()
     wrapper = HybridSlotGDN2Layer(dense, mixer, 0).cuda()
-    x = torch.randn(2, 32, 64, device="cuda")
+    x32 = torch.randn(2, 32, 64, device="cuda")
+    xb16 = x32.to(torch.bfloat16)
     with torch.autocast("cuda", dtype=torch.bfloat16):
-        out, _cache = wrapper(x)
+        dense_out, _ = dense(xb16)
+        out, _cache = wrapper(xb16)
     gate = dict(name="A2 (the seam's dtype discipline)")
     gate["contribution_dtype_cast"] = "self.read_gate.to(out.dtype)"
+    gate["dense_output_dtype"] = str(dense_out.dtype)
     gate["wrapper_output_dtype"] = str(out.dtype)
-    gate["expected_under_autocast"] = "torch.bfloat16"
-    gate["held"] = bool(out.dtype == torch.bfloat16)
+    gate["held_under_autocast"] = bool(
+        out.dtype == dense_out.dtype == torch.bfloat16)
     with torch.no_grad():
-        out32, _ = wrapper(x)
-    gate["held_no_autocast"] = bool(out32.dtype == x.dtype)
-    gate["held_all"] = bool(gate["held"] and gate["held_no_autocast"])
+        out32, _ = wrapper(x32)
+    gate["held_no_autocast"] = bool(out32.dtype == x32.dtype)
+    gate["held_all"] = bool(gate["held_under_autocast"]
+                             and gate["held_no_autocast"])
+    gate["note"] = ("the wrapper must not change the dense side's carrier "
+                    "dtype (the production regime's bf16 residual stream "
+                    "stays bf16 through the seam; the real-model receipt is "
+                    "gate A's bitwise loss identity)")
     receipt["gate_a2"] = gate
     return gate
 
@@ -293,7 +304,11 @@ def gate_b_seam_gradcheck(receipt: dict) -> dict:
 
     def chain(scan_fn, dtype):
         dense_ = dense.clone().to(dtype).requires_grad_(True)
-        gate_ = gate_value.to(dtype).requires_grad_(True)
+        # a FRESH leaf per chain (a shared `.to()` fixture would go non-leaf
+        # on the second chain: `.to(float32)` returns the same tensor, so
+        # `requires_grad_` marks the fixture itself)
+        gate_ = torch.tensor(0.3, device=dense_.device,
+                             dtype=dtype).requires_grad_(True)
         x_ = x.clone().to(dtype).requires_grad_(True)
         state = torch.random.get_rng_state()
         torch.manual_seed(37)
