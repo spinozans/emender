@@ -1,0 +1,1156 @@
+{
+ "probe": "k20_hybrid_velocity",
+ "question": "which slot/dense interleave ratios are viable under the matched-TIME board protocol -- measured, not estimated",
+ "pre_state": "no directional prediction; the measurement IS the result",
+ "unit": "one (layer, window-group): batch 8 x 2048 tokens at each machine's own committed 150M width (ours 576, GDN2 640), bf16 autocast compute, fp32 params",
+ "seed": 3401,
+ "session": {
+  "host": "lambda01",
+  "card": "0",
+  "device": "NVIDIA RTX 6000 Ada Generation",
+  "card_gib": 47.38,
+  "torch": "2.9.1+cu128",
+  "triton": "3.5.1",
+  "versions": {
+   "torch": "2.9.1+cu128",
+   "schedulefree": "1.4.1",
+   "hybrid_muon_sha256": "204c55252f3032b91a965d2511cddb5d9d2eef9f94e9bfd509ee86d2987384d6",
+   "bakeoff_optimizers_sha256": "dff190059d0ff94633c3b3e42ab89ef2ccde8517ebd512a4acff96143a949745"
+  }
+ },
+ "git": {
+  "commit": "c4006b4dbb36f1fcb2361f3786b15d3984caf92e",
+  "branch": "main",
+  "relevant_paths_dirty": ""
+ },
+ "bindings": {
+  "k15_composition_sha256": "b7ade13ec44cfd927493fe96a0e9d3fbe0bb547cce0a84797fe43557556b903a",
+  "k18_short_conv_sha256": "82963fe89ba75e5583ada78960da9a422be9a1b5c213ee0456f2e2bbb4e68912",
+  "matched_arms_sha256": "9d37c32469f3701ac3e0bfbd1d4b5c253e7cbdd425e95a281df62d83f6f30830",
+  "velocity_ladder_sha256": "a78f37c2692b094f813c0b06adac6a47e063e94f8e72f0e127ea4ce0f0b52473",
+  "external_gdn2_sha256": "316ddf8658a55da4a4159f77881c92e9a067570da55d0aa2592b7b11c51aa3d8",
+  "k18_gates_receipt_sha256": "f4b248a14c94b32dc62c40b5722d5535ebf5ededa367d7b342e34697a8b9e81f",
+  "lattice_registration_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c"
+ },
+ "recorded": {
+  "composed_scan_forward_ms_per_window": 22.964699504276116,
+  "composed_scan_receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k18_gates.json",
+  "ours_probe_step180_active_seconds": 1932.6842099996284,
+  "ours_probe_run": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k18_runs/conv_seed3401/training.jsonl",
+  "gdn2_probe_step180_active_seconds": 584.4091627011076,
+  "gdn2_probe_run": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/velocity_runs/gdn2_probe_seed3401/training.jsonl",
+  "probe_exposure_bytes": 20022866,
+  "probe_steps": 180,
+  "note": "the banked honest walls at the matched-TARGET probe landing: the two machines trained the SAME 20,022,866 bytes in DIFFERENT wall-clocks (ours 1,932.7 s, GDN2 584.4 s) -- the probe protocol's own time-exposure asymmetry, stated per the K20 task"
+ },
+ "per_layer_ours": {
+  "machine": "ours: the committed K18 conv machine (the K15 composed mixer + the K18 identity-born short conv), the K18 arm build verbatim; mixers and MLPs imported, never modified",
+  "width_note": "the committed machines do NOT share a width: ours is 576 (the matrix lane's registered backbone), GDN2's committed 150M arm is 640 (part8_surface.gdn_config's own capacity solve) -- each mixer is timed at its own committed build's width, same batch/window regime; engines are never modified to force a match",
+  "parameters": 158663424,
+  "summary": {
+   "base_arm": "matrix",
+   "shape": {
+    "width": 576,
+    "depth": 24,
+    "hidden": 3352,
+    "heads": 2,
+    "value_dim": 128,
+    "rank": 128,
+    "rank_max": 128,
+    "vocab": 256
+   },
+   "parameters": {
+    "total": 149981808,
+    "trainable": 149981808,
+    "per_layer": 6236930,
+    "mixer": 443522,
+    "mlp": 5792256,
+    "norms": 1152,
+    "embedding": 147456,
+    "head": 147456,
+    "final_norm": 576,
+    "capacity": 150003984,
+    "capacity_relative": -0.00014783607347390593
+   },
+   "routing": {
+    "ops": true,
+    "tau_match": 0.45,
+    "tau_merge": 0.85,
+    "tau_pop": 0.1,
+    "tie_break": 1e-06,
+    "read_scale": 2.0,
+    "grow": false,
+    "grow_trigger": 0.5,
+    "grow_window": 4,
+    "grow_window_tokens": 512,
+    "grow_geometric": 2.0,
+    "grow_stride_floor": 64
+   },
+   "chunk_tokens": 128,
+   "compile_scan": true,
+   "compile_mode": "default",
+   "fused_whole_scan": false,
+   "scan_path": "k10_separated_keys (per-token, the key channel)",
+   "fused_scan": false,
+   "fused_backward": false,
+   "fused_routing": false,
+   "fused_routing_diff": false,
+   "optimizer_note": "the registered gdn2 nomination's optimizer settings (gates.py / profile_step_vs_gdn2.py)",
+   "key_dim": 16,
+   "key_context": 4,
+   "segment_tokens": 64,
+   "key_init": "mimetic at the fixed orthonormal family (QR, seed 3401 + head), free drift"
+  },
+  "build": "velocity_ladder._build_k10(TUNED_WINNER) + convert_model_to_composition + convert_model_to_short_conv(birth='identity')",
+  "optimizer_side_note": "per-layer probes carry no optimizer; the optimizer is arm 2's own term",
+  "capture": {
+   "batch_rows": 64,
+   "targets": 117712,
+   "width": 576,
+   "capture_loss": 5.784919738769531
+  },
+  "unit": "one (layer, window-group): batch 8 x 2048 tokens at each machine's own committed 150M width (ours 576, GDN2 640), bf16 autocast compute, fp32 params",
+  "warmup_iters": 25,
+  "measured_iters": 25,
+  "layers": {
+   "layer_0": {
+    "mixer": {
+     "forward": {
+      "iterations": 25,
+      "median_ms": 23.165,
+      "p25_ms": 23.16,
+      "p75_ms": 23.171,
+      "min_ms": 23.126,
+      "max_ms": 23.205,
+      "mean_ms": 23.165,
+      "std_over_median_pct": 0.06
+     },
+     "backward": {
+      "iterations": 25,
+      "median_ms": 24.4,
+      "p25_ms": 24.221,
+      "p75_ms": 24.466,
+      "min_ms": 24.027,
+      "max_ms": 24.854,
+      "mean_ms": 24.374,
+      "std_over_median_pct": 0.75
+     },
+     "reduction": "out.pow(2).sum()",
+     "dx_included": true
+    },
+    "mlp": {
+     "forward": {
+      "iterations": 25,
+      "median_ms": 2.004,
+      "p25_ms": 2.001,
+      "p75_ms": 2.007,
+      "min_ms": 1.998,
+      "max_ms": 2.018,
+      "mean_ms": 2.005,
+      "std_over_median_pct": 0.24
+     },
+     "backward": {
+      "iterations": 25,
+      "median_ms": 5.241,
+      "p25_ms": 4.928,
+      "p75_ms": 5.438,
+      "min_ms": 4.734,
+      "max_ms": 11.299,
+      "mean_ms": 5.415,
+      "std_over_median_pct": 23.4
+     },
+     "reduction": "out.pow(2).sum()",
+     "dx_included": true
+    }
+   },
+   "layer_6": {
+    "mixer": {
+     "forward": {
+      "iterations": 25,
+      "median_ms": 23.403,
+      "p25_ms": 23.391,
+      "p75_ms": 23.418,
+      "min_ms": 23.386,
+      "max_ms": 23.572,
+      "mean_ms": 23.412,
+      "std_over_median_pct": 0.15
+     },
+     "backward": {
+      "iterations": 25,
+      "median_ms": 24.505,
+      "p25_ms": 24.461,
+      "p75_ms": 24.581,
+      "min_ms": 24.119,
+      "max_ms": 25.024,
+      "mean_ms": 24.501,
+      "std_over_median_pct": 0.72
+     },
+     "reduction": "out.pow(2).sum()",
+     "dx_included": true
+    },
+    "mlp": {
+     "forward": {
+      "iterations": 25,
+      "median_ms": 2.129,
+      "p25_ms": 2.045,
+      "p75_ms": 2.135,
+      "min_ms": 1.994,
+      "max_ms": 2.172,
+      "mean_ms": 2.096,
+      "std_over_median_pct": 2.56
+     },
+     "backward": {
+      "iterations": 25,
+      "median_ms": 5.239,
+      "p25_ms": 5.206,
+      "p75_ms": 5.423,
+      "min_ms": 5.15,
+      "max_ms": 5.593,
+      "mean_ms": 5.307,
+      "std_over_median_pct": 2.66
+     },
+     "reduction": "out.pow(2).sum()",
+     "dx_included": true
+    }
+   },
+   "layer_12": {
+    "mixer": {
+     "forward": {
+      "iterations": 25,
+      "median_ms": 23.366,
+      "p25_ms": 23.361,
+      "p75_ms": 23.37,
+      "min_ms": 23.353,
+      "max_ms": 23.384,
+      "mean_ms": 23.366,
+      "std_over_median_pct": 0.03
+     },
+     "backward": {
+      "iterations": 25,
+      "median_ms": 24.617,
+      "p25_ms": 24.552,
+      "p75_ms": 24.642,
+      "min_ms": 24.409,
+      "max_ms": 24.858,
+      "mean_ms": 24.605,
+      "std_over_median_pct": 0.39
+     },
+     "reduction": "out.pow(2).sum()",
+     "dx_included": true
+    },
+    "mlp": {
+     "forward": {
+      "iterations": 25,
+      "median_ms": 2.137,
+      "p25_ms": 2.049,
+      "p75_ms": 2.182,
+      "min_ms": 2.034,
+      "max_ms": 2.199,
+      "mean_ms": 2.116,
+      "std_over_median_pct": 2.83
+     },
+     "backward": {
+      "iterations": 25,
+      "median_ms": 5.25,
+      "p25_ms": 5.229,
+      "p75_ms": 5.427,
+      "min_ms": 5.219,
+      "max_ms": 5.6,
+      "mean_ms": 5.331,
+      "std_over_median_pct": 2.54
+     },
+     "reduction": "out.pow(2).sum()",
+     "dx_included": true
+    }
+   },
+   "layer_18": {
+    "mixer": {
+     "forward": {
+      "iterations": 25,
+      "median_ms": 23.465,
+      "p25_ms": 23.457,
+      "p75_ms": 23.485,
+      "min_ms": 23.439,
+      "max_ms": 23.659,
+      "mean_ms": 23.476,
+      "std_over_median_pct": 0.18
+     },
+     "backward": {
+      "iterations": 25,
+      "median_ms": 24.554,
+      "p25_ms": 24.533,
+      "p75_ms": 24.581,
+      "min_ms": 24.464,
+      "max_ms": 24.774,
+      "mean_ms": 24.565,
+      "std_over_median_pct": 0.27
+     },
+     "reduction": "out.pow(2).sum()",
+     "dx_included": true
+    },
+    "mlp": {
+     "forward": {
+      "iterations": 25,
+      "median_ms": 2.055,
+      "p25_ms": 2.046,
+      "p75_ms": 2.141,
+      "min_ms": 2.0,
+      "max_ms": 2.189,
+      "mean_ms": 2.09,
+      "std_over_median_pct": 2.9
+     },
+     "backward": {
+      "iterations": 25,
+      "median_ms": 5.265,
+      "p25_ms": 5.232,
+      "p75_ms": 5.472,
+      "min_ms": 5.218,
+      "max_ms": 5.649,
+      "mean_ms": 5.34,
+      "std_over_median_pct": 2.78
+     },
+     "reduction": "out.pow(2).sum()",
+     "dx_included": true
+    }
+   },
+   "layer_23": {
+    "mixer": {
+     "forward": {
+      "iterations": 25,
+      "median_ms": 23.456,
+      "p25_ms": 23.438,
+      "p75_ms": 23.47,
+      "min_ms": 23.424,
+      "max_ms": 23.479,
+      "mean_ms": 23.455,
+      "std_over_median_pct": 0.07
+     },
+     "backward": {
+      "iterations": 25,
+      "median_ms": 24.568,
+      "p25_ms": 24.527,
+      "p75_ms": 24.587,
+      "min_ms": 24.338,
+      "max_ms": 24.671,
+      "mean_ms": 24.552,
+      "std_over_median_pct": 0.26
+     },
+     "reduction": "out.pow(2).sum()",
+     "dx_included": true
+    },
+    "mlp": {
+     "forward": {
+      "iterations": 25,
+      "median_ms": 2.018,
+      "p25_ms": 2.015,
+      "p75_ms": 2.021,
+      "min_ms": 2.012,
+      "max_ms": 2.024,
+      "mean_ms": 2.018,
+      "std_over_median_pct": 0.17
+     },
+     "backward": {
+      "iterations": 25,
+      "median_ms": 5.3,
+      "p25_ms": 5.275,
+      "p75_ms": 5.508,
+      "min_ms": 5.245,
+      "max_ms": 5.66,
+      "mean_ms": 5.372,
+      "std_over_median_pct": 2.48
+     },
+     "reduction": "out.pow(2).sum()",
+     "dx_included": true
+    }
+   }
+  }
+ },
+ "per_layer_gdn2": {
+  "machine": "gdn2: the registered lattice_gdn2 arm's own mixer (the external FLA GatedDeltaNet2 core, short conv included) + its committed SwiGLU MLP, the registered build verbatim (width 640, part8_surface.gdn_config's own solve)",
+  "parameters": 149855670,
+  "summary": {
+   "base_arm": "gdn2",
+   "parameters": {
+    "total": 149855670
+   },
+   "nomination": {
+    "arm": "gdn2",
+    "receipt": "/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/receipts/byte_velocity_nominations/gdn2.json",
+    "receipt_sha256": "5e7ab164973366817699a9df21eb1714c9203c49e44a65566c048842f2034813",
+    "generation": 7,
+    "candidate": 1,
+    "search_score": 1.3930157472689946
+   },
+   "policy": {
+    "lr": 0.0005420185524740253,
+    "microbatch": 8,
+    "beta2": 0.9392004369596886,
+    "weight_decay": 0.20059436743465126,
+    "warmup_steps": 69,
+    "init_scale": 1.3483482393728117,
+    "decay_rate_scale": 0.48706005128019486,
+    "dt_bias_shift": 1.7178302439489688,
+    "expansion": 2.0
+   }
+  },
+  "build": "matched_arms.build_gdn2 (the lattice_gdn2 nomination verbatim)",
+  "capture": {
+   "batch_rows": 64,
+   "targets": 117712,
+   "width": 640,
+   "capture_loss": 5.9442596435546875
+  },
+  "unit": "one (layer, window-group): batch 8 x 2048 tokens at each machine's own committed 150M width (ours 576, GDN2 640), bf16 autocast compute, fp32 params",
+  "warmup_iters": 25,
+  "measured_iters": 25,
+  "layers": {
+   "layer_0": {
+    "mixer": {
+     "forward": {
+      "iterations": 25,
+      "median_ms": 2.585,
+      "p25_ms": 2.559,
+      "p75_ms": 2.628,
+      "min_ms": 2.515,
+      "max_ms": 2.898,
+      "mean_ms": 2.602,
+      "std_over_median_pct": 2.9
+     },
+     "backward": {
+      "iterations": 25,
+      "median_ms": 4.545,
+      "p25_ms": 4.388,
+      "p75_ms": 4.823,
+      "min_ms": 4.225,
+      "max_ms": 5.001,
+      "mean_ms": 4.593,
+      "std_over_median_pct": 4.83
+     },
+     "reduction": "out.pow(2).sum()",
+     "dx_included": true
+    },
+    "mlp": {
+     "forward": {
+      "iterations": 25,
+      "median_ms": 1.277,
+      "p25_ms": 1.271,
+      "p75_ms": 1.281,
+      "min_ms": 1.217,
+      "max_ms": 1.286,
+      "mean_ms": 1.27,
+      "std_over_median_pct": 1.61
+     },
+     "backward": {
+      "iterations": 25,
+      "median_ms": 3.093,
+      "p25_ms": 3.043,
+      "p75_ms": 3.138,
+      "min_ms": 3.012,
+      "max_ms": 3.232,
+      "mean_ms": 3.095,
+      "std_over_median_pct": 1.84
+     },
+     "reduction": "out.pow(2).sum()",
+     "dx_included": true
+    }
+   },
+   "layer_6": {
+    "mixer": {
+     "forward": {
+      "iterations": 25,
+      "median_ms": 2.744,
+      "p25_ms": 2.652,
+      "p75_ms": 3.106,
+      "min_ms": 2.602,
+      "max_ms": 3.336,
+      "mean_ms": 2.871,
+      "std_over_median_pct": 8.69
+     },
+     "backward": {
+      "iterations": 25,
+      "median_ms": 4.968,
+      "p25_ms": 4.586,
+      "p75_ms": 5.212,
+      "min_ms": 4.264,
+      "max_ms": 5.824,
+      "mean_ms": 4.933,
+      "std_over_median_pct": 8.43
+     },
+     "reduction": "out.pow(2).sum()",
+     "dx_included": true
+    },
+    "mlp": {
+     "forward": {
+      "iterations": 25,
+      "median_ms": 1.294,
+      "p25_ms": 1.29,
+      "p75_ms": 1.304,
+      "min_ms": 1.213,
+      "max_ms": 1.321,
+      "mean_ms": 1.29,
+      "std_over_median_pct": 1.93
+     },
+     "backward": {
+      "iterations": 25,
+      "median_ms": 3.072,
+      "p25_ms": 3.027,
+      "p75_ms": 3.15,
+      "min_ms": 2.99,
+      "max_ms": 3.19,
+      "mean_ms": 3.084,
+      "std_over_median_pct": 2.04
+     },
+     "reduction": "out.pow(2).sum()",
+     "dx_included": true
+    }
+   },
+   "layer_12": {
+    "mixer": {
+     "forward": {
+      "iterations": 25,
+      "median_ms": 2.335,
+      "p25_ms": 2.328,
+      "p75_ms": 2.339,
+      "min_ms": 2.308,
+      "max_ms": 2.353,
+      "mean_ms": 2.335,
+      "std_over_median_pct": 0.41
+     },
+     "backward": {
+      "iterations": 25,
+      "median_ms": 4.252,
+      "p25_ms": 4.229,
+      "p75_ms": 4.332,
+      "min_ms": 4.172,
+      "max_ms": 4.725,
+      "mean_ms": 4.308,
+      "std_over_median_pct": 3.15
+     },
+     "reduction": "out.pow(2).sum()",
+     "dx_included": true
+    },
+    "mlp": {
+     "forward": {
+      "iterations": 25,
+      "median_ms": 1.302,
+      "p25_ms": 1.28,
+      "p75_ms": 1.317,
+      "min_ms": 1.276,
+      "max_ms": 1.321,
+      "mean_ms": 1.299,
+      "std_over_median_pct": 1.39
+     },
+     "backward": {
+      "iterations": 25,
+      "median_ms": 3.086,
+      "p25_ms": 3.062,
+      "p75_ms": 3.123,
+      "min_ms": 3.034,
+      "max_ms": 3.219,
+      "mean_ms": 3.101,
+      "std_over_median_pct": 1.7
+     },
+     "reduction": "out.pow(2).sum()",
+     "dx_included": true
+    }
+   },
+   "layer_18": {
+    "mixer": {
+     "forward": {
+      "iterations": 25,
+      "median_ms": 2.352,
+      "p25_ms": 2.349,
+      "p75_ms": 2.359,
+      "min_ms": 2.334,
+      "max_ms": 2.377,
+      "mean_ms": 2.353,
+      "std_over_median_pct": 0.37
+     },
+     "backward": {
+      "iterations": 25,
+      "median_ms": 4.237,
+      "p25_ms": 4.219,
+      "p75_ms": 4.348,
+      "min_ms": 4.198,
+      "max_ms": 4.898,
+      "mean_ms": 4.338,
+      "std_over_median_pct": 4.69
+     },
+     "reduction": "out.pow(2).sum()",
+     "dx_included": true
+    },
+    "mlp": {
+     "forward": {
+      "iterations": 25,
+      "median_ms": 1.299,
+      "p25_ms": 1.295,
+      "p75_ms": 1.313,
+      "min_ms": 1.212,
+      "max_ms": 1.329,
+      "mean_ms": 1.3,
+      "std_over_median_pct": 1.66
+     },
+     "backward": {
+      "iterations": 25,
+      "median_ms": 3.093,
+      "p25_ms": 3.054,
+      "p75_ms": 3.163,
+      "min_ms": 3.01,
+      "max_ms": 3.241,
+      "mean_ms": 3.11,
+      "std_over_median_pct": 2.14
+     },
+     "reduction": "out.pow(2).sum()",
+     "dx_included": true
+    }
+   },
+   "layer_23": {
+    "mixer": {
+     "forward": {
+      "iterations": 25,
+      "median_ms": 2.343,
+      "p25_ms": 2.333,
+      "p75_ms": 2.354,
+      "min_ms": 2.322,
+      "max_ms": 2.542,
+      "mean_ms": 2.352,
+      "std_over_median_pct": 1.75
+     },
+     "backward": {
+      "iterations": 25,
+      "median_ms": 4.239,
+      "p25_ms": 4.229,
+      "p75_ms": 4.27,
+      "min_ms": 4.201,
+      "max_ms": 4.463,
+      "mean_ms": 4.263,
+      "std_over_median_pct": 1.48
+     },
+     "reduction": "out.pow(2).sum()",
+     "dx_included": true
+    },
+    "mlp": {
+     "forward": {
+      "iterations": 25,
+      "median_ms": 1.303,
+      "p25_ms": 1.299,
+      "p75_ms": 1.311,
+      "min_ms": 1.24,
+      "max_ms": 1.328,
+      "mean_ms": 1.297,
+      "std_over_median_pct": 1.91
+     },
+     "backward": {
+      "iterations": 25,
+      "median_ms": 3.105,
+      "p25_ms": 3.073,
+      "p75_ms": 3.161,
+      "min_ms": 3.035,
+      "max_ms": 3.205,
+      "mean_ms": 3.114,
+      "std_over_median_pct": 1.69
+     },
+     "reduction": "out.pow(2).sum()",
+     "dx_included": true
+    }
+   }
+  }
+ },
+ "steps_ours": {
+  "machine": "ours: the committed K18 conv machine",
+  "parameters": 158663424,
+  "optimizer": "bakeoff_optimizers.HybridMuonX45 (the banked protocol's optimizer, the K18 arm's own split: matrices on Muon, the p3 gate tensors and the conv kernels on AdamW)",
+  "peak_lr": 0.0013370856630148514,
+  "warmup_steps": 45,
+  "microbatch": 8,
+  "windows_per_step": 64,
+  "warmup": 3,
+  "measured": 5,
+  "step_rows": [
+   {
+    "step": 1,
+    "wall_s": 10.782,
+    "opt_s": 0.227,
+    "targets": 117712,
+    "loss": 5.782775
+   },
+   {
+    "step": 2,
+    "wall_s": 10.545,
+    "opt_s": 0.174,
+    "targets": 131072,
+    "loss": 5.777757
+   },
+   {
+    "step": 3,
+    "wall_s": 10.581,
+    "opt_s": 0.169,
+    "targets": 115938,
+    "loss": 5.75276
+   },
+   {
+    "step": 4,
+    "wall_s": 10.646,
+    "opt_s": 0.168,
+    "targets": 97017,
+    "loss": 5.722565
+   },
+   {
+    "step": 5,
+    "wall_s": 10.624,
+    "opt_s": 0.169,
+    "targets": 105280,
+    "loss": 5.689922
+   },
+   {
+    "step": 6,
+    "wall_s": 10.708,
+    "opt_s": 0.169,
+    "targets": 102149,
+    "loss": 5.66701
+   },
+   {
+    "step": 7,
+    "wall_s": 10.615,
+    "opt_s": 0.169,
+    "targets": 128347,
+    "loss": 5.552164
+   },
+   {
+    "step": 8,
+    "wall_s": 10.584,
+    "opt_s": 0.169,
+    "targets": 131072,
+    "loss": 5.522865
+   }
+  ],
+  "step_wall_s": {
+   "iterations": 5,
+   "median_ms": 10624.0,
+   "p25_ms": 10599.5,
+   "p75_ms": 10677.0,
+   "min_ms": 10584.0,
+   "max_ms": 10708.0,
+   "mean_ms": 10635.4,
+   "std_over_median_pct": 0.39
+  },
+  "opt_s": {
+   "iterations": 5,
+   "median_ms": 169.0,
+   "p25_ms": 168.5,
+   "p75_ms": 169.0,
+   "min_ms": 168.0,
+   "max_ms": 169.0,
+   "mean_ms": 168.8,
+   "std_over_median_pct": 0.24
+  },
+  "targets_per_step": {
+   "iterations": 5,
+   "median_ms": 105280.0,
+   "p25_ms": 99583.0,
+   "p75_ms": 129709.5,
+   "min_ms": 97017.0,
+   "max_ms": 131072.0,
+   "mean_ms": 112773.0,
+   "std_over_median_pct": 13.4
+  },
+  "clock": "the committed probe loop's honest clock: sync -> stream read -> zero_grad -> lr -> every microbatch's fwd/bwd -> clip -> optimizer.step -> sync; EMA excluded (outside that clock in the committed loop)",
+  "recorded_reference": 10.737134499997936
+ },
+ "steps_gdn2": {
+  "machine": "gdn2: the registered lattice_gdn2 arm",
+  "parameters": 149855670,
+  "optimizer": "fused AdamW at the registered nomination's knobs (matched_arms.train's gdn2 branch verbatim)",
+  "microbatch": 8,
+  "warmup_steps": 69,
+  "windows_per_step": 64,
+  "warmup": 3,
+  "measured": 5,
+  "step_rows": [
+   {
+    "step": 1,
+    "wall_s": 3.112,
+    "opt_s": 0.036,
+    "targets": 117712,
+    "loss": 5.948033
+   },
+   {
+    "step": 2,
+    "wall_s": 3.178,
+    "opt_s": 0.016,
+    "targets": 131072,
+    "loss": 5.718732
+   },
+   {
+    "step": 3,
+    "wall_s": 3.126,
+    "opt_s": 0.013,
+    "targets": 115938,
+    "loss": 5.328174
+   },
+   {
+    "step": 4,
+    "wall_s": 3.078,
+    "opt_s": 0.015,
+    "targets": 97017,
+    "loss": 5.03981
+   },
+   {
+    "step": 5,
+    "wall_s": 3.119,
+    "opt_s": 0.016,
+    "targets": 105280,
+    "loss": 4.44023
+   },
+   {
+    "step": 6,
+    "wall_s": 3.116,
+    "opt_s": 0.014,
+    "targets": 102149,
+    "loss": 4.362364
+   },
+   {
+    "step": 7,
+    "wall_s": 3.19,
+    "opt_s": 0.016,
+    "targets": 128347,
+    "loss": 3.723046
+   },
+   {
+    "step": 8,
+    "wall_s": 3.225,
+    "opt_s": 0.015,
+    "targets": 131072,
+    "loss": 3.775881
+   }
+  ],
+  "step_wall_s": {
+   "iterations": 5,
+   "median_ms": 3119.0,
+   "p25_ms": 3097.0,
+   "p75_ms": 3207.5,
+   "min_ms": 3078.0,
+   "max_ms": 3225.0,
+   "mean_ms": 3145.6,
+   "std_over_median_pct": 1.72
+  },
+  "opt_s": {
+   "iterations": 5,
+   "median_ms": 15.0,
+   "p25_ms": 14.5,
+   "p75_ms": 16.0,
+   "min_ms": 14.0,
+   "max_ms": 16.0,
+   "mean_ms": 15.2,
+   "std_over_median_pct": 4.99
+  },
+  "targets_per_step": {
+   "iterations": 5,
+   "median_ms": 105280.0,
+   "p25_ms": 99583.0,
+   "p75_ms": 129709.5,
+   "min_ms": 97017.0,
+   "max_ms": 131072.0,
+   "mean_ms": 112773.0,
+   "std_over_median_pct": 13.4
+  },
+  "clock": "the committed loop's honest clock (matched_arms.train: sync -> stream read -> zero_grad -> lr -> fwd/bwd -> clip -> optimizer.step -> sync)",
+  "recorded_reference": 3.246717570561709
+ },
+ "projection": {
+  "unit": "one (layer, window-group): batch 8 x 2048 tokens at each machine's own committed 150M width (ours 576, GDN2 640), bf16 autocast compute, fp32 params",
+  "groups_per_step": 8,
+  "depth": 24,
+  "measured_step_costs": {
+   "pure_gdn2_s": 3.119,
+   "pure_ours_s": 10.624,
+   "gdn2_optimizer_s": 0.015,
+   "ours_optimizer_s": 0.169
+  },
+  "per_layer_medians": {
+   "ours": {
+    "mixer_forward_ms": 23.403,
+    "mixer_backward_ms": 24.554,
+    "mixer_fwd_bwd_ms": 47.983,
+    "mixer_fwd_bwd_spread_pct": 0.48,
+    "mlp_forward_ms": 2.055,
+    "mlp_backward_ms": 5.25,
+    "mlp_fwd_bwd_ms": 7.32,
+    "layers_measured": 5
+   },
+   "gdn2": {
+    "mixer_forward_ms": 2.352,
+    "mixer_backward_ms": 4.252,
+    "mixer_fwd_bwd_ms": 6.589,
+    "mixer_fwd_bwd_spread_pct": 8.57,
+    "mlp_forward_ms": 1.299,
+    "mlp_backward_ms": 3.093,
+    "mlp_fwd_bwd_ms": 4.388,
+    "layers_measured": 5
+   }
+  },
+  "per_layer_delta_ms": {
+   "mixer_fwd_bwd": 41.394,
+   "mixer_plus_mlp_fwd_bwd": 44.326
+  },
+  "projection_model": "T_hybrid(s) = T_pure_gdn2 + s x 8 x delta_per_layer [+ optimizer term when the hybrid runs the banked protocol's Muon instead of GDN2's registered AdamW] -- computed from measured per-(layer, window-group) costs; no hybrid was built or run",
+  "ratios": {
+   "3": {
+    "slot_layers": 3,
+    "dense_layers": 21,
+    "mixer_swap_gdn2_adamw": {
+     "step_s": 4.112,
+     "wall_ratio_vs_pure_gdn2": 1.319,
+     "exposure_pct_of_gdn2_in_2700s": 75.8,
+     "added_by_slots_s": 0.993,
+     "optimizer_term_s": 0.0,
+     "optimizer": "gdn2's registered AdamW"
+    },
+    "mixer_swap_banked_muon": {
+     "step_s": 4.266,
+     "wall_ratio_vs_pure_gdn2": 1.368,
+     "exposure_pct_of_gdn2_in_2700s": 73.1,
+     "added_by_slots_s": 0.993,
+     "optimizer_term_s": 0.154,
+     "optimizer": "the banked protocol's Muon (measured on our machine)"
+    },
+    "layer_swap_gdn2_adamw": {
+     "step_s": 4.183,
+     "wall_ratio_vs_pure_gdn2": 1.341,
+     "exposure_pct_of_gdn2_in_2700s": 74.6,
+     "added_by_slots_s": 1.064,
+     "optimizer_term_s": 0.0,
+     "optimizer": "gdn2's registered AdamW"
+    },
+    "layer_swap_banked_muon": {
+     "step_s": 4.337,
+     "wall_ratio_vs_pure_gdn2": 1.39,
+     "exposure_pct_of_gdn2_in_2700s": 71.9,
+     "added_by_slots_s": 1.064,
+     "optimizer_term_s": 0.154,
+     "optimizer": "the banked protocol's Muon (measured on our machine)"
+    }
+   },
+   "4": {
+    "slot_layers": 4,
+    "dense_layers": 20,
+    "mixer_swap_gdn2_adamw": {
+     "step_s": 4.444,
+     "wall_ratio_vs_pure_gdn2": 1.425,
+     "exposure_pct_of_gdn2_in_2700s": 70.2,
+     "added_by_slots_s": 1.325,
+     "optimizer_term_s": 0.0,
+     "optimizer": "gdn2's registered AdamW"
+    },
+    "mixer_swap_banked_muon": {
+     "step_s": 4.598,
+     "wall_ratio_vs_pure_gdn2": 1.474,
+     "exposure_pct_of_gdn2_in_2700s": 67.8,
+     "added_by_slots_s": 1.325,
+     "optimizer_term_s": 0.154,
+     "optimizer": "the banked protocol's Muon (measured on our machine)"
+    },
+    "layer_swap_gdn2_adamw": {
+     "step_s": 4.537,
+     "wall_ratio_vs_pure_gdn2": 1.455,
+     "exposure_pct_of_gdn2_in_2700s": 68.7,
+     "added_by_slots_s": 1.418,
+     "optimizer_term_s": 0.0,
+     "optimizer": "gdn2's registered AdamW"
+    },
+    "layer_swap_banked_muon": {
+     "step_s": 4.691,
+     "wall_ratio_vs_pure_gdn2": 1.504,
+     "exposure_pct_of_gdn2_in_2700s": 66.5,
+     "added_by_slots_s": 1.418,
+     "optimizer_term_s": 0.154,
+     "optimizer": "the banked protocol's Muon (measured on our machine)"
+    }
+   },
+   "6": {
+    "slot_layers": 6,
+    "dense_layers": 18,
+    "mixer_swap_gdn2_adamw": {
+     "step_s": 5.106,
+     "wall_ratio_vs_pure_gdn2": 1.637,
+     "exposure_pct_of_gdn2_in_2700s": 61.1,
+     "added_by_slots_s": 1.987,
+     "optimizer_term_s": 0.0,
+     "optimizer": "gdn2's registered AdamW"
+    },
+    "mixer_swap_banked_muon": {
+     "step_s": 5.26,
+     "wall_ratio_vs_pure_gdn2": 1.686,
+     "exposure_pct_of_gdn2_in_2700s": 59.3,
+     "added_by_slots_s": 1.987,
+     "optimizer_term_s": 0.154,
+     "optimizer": "the banked protocol's Muon (measured on our machine)"
+    },
+    "layer_swap_gdn2_adamw": {
+     "step_s": 5.247,
+     "wall_ratio_vs_pure_gdn2": 1.682,
+     "exposure_pct_of_gdn2_in_2700s": 59.4,
+     "added_by_slots_s": 2.128,
+     "optimizer_term_s": 0.0,
+     "optimizer": "gdn2's registered AdamW"
+    },
+    "layer_swap_banked_muon": {
+     "step_s": 5.401,
+     "wall_ratio_vs_pure_gdn2": 1.732,
+     "exposure_pct_of_gdn2_in_2700s": 57.8,
+     "added_by_slots_s": 2.128,
+     "optimizer_term_s": 0.154,
+     "optimizer": "the banked protocol's Muon (measured on our machine)"
+    }
+   },
+   "8": {
+    "slot_layers": 8,
+    "dense_layers": 16,
+    "mixer_swap_gdn2_adamw": {
+     "step_s": 5.768,
+     "wall_ratio_vs_pure_gdn2": 1.849,
+     "exposure_pct_of_gdn2_in_2700s": 54.1,
+     "added_by_slots_s": 2.649,
+     "optimizer_term_s": 0.0,
+     "optimizer": "gdn2's registered AdamW"
+    },
+    "mixer_swap_banked_muon": {
+     "step_s": 5.922,
+     "wall_ratio_vs_pure_gdn2": 1.899,
+     "exposure_pct_of_gdn2_in_2700s": 52.7,
+     "added_by_slots_s": 2.649,
+     "optimizer_term_s": 0.154,
+     "optimizer": "the banked protocol's Muon (measured on our machine)"
+    },
+    "layer_swap_gdn2_adamw": {
+     "step_s": 5.956,
+     "wall_ratio_vs_pure_gdn2": 1.91,
+     "exposure_pct_of_gdn2_in_2700s": 52.4,
+     "added_by_slots_s": 2.837,
+     "optimizer_term_s": 0.0,
+     "optimizer": "gdn2's registered AdamW"
+    },
+    "layer_swap_banked_muon": {
+     "step_s": 6.11,
+     "wall_ratio_vs_pure_gdn2": 1.959,
+     "exposure_pct_of_gdn2_in_2700s": 51.0,
+     "added_by_slots_s": 2.837,
+     "optimizer_term_s": 0.154,
+     "optimizer": "the banked protocol's Muon (measured on our machine)"
+    }
+   },
+   "24": {
+    "slot_layers": 24,
+    "dense_layers": 0,
+    "mixer_swap_gdn2_adamw": {
+     "step_s": 11.067,
+     "wall_ratio_vs_pure_gdn2": 3.548,
+     "exposure_pct_of_gdn2_in_2700s": 28.2,
+     "added_by_slots_s": 7.948,
+     "optimizer_term_s": 0.0,
+     "optimizer": "gdn2's registered AdamW"
+    },
+    "mixer_swap_banked_muon": {
+     "step_s": 11.221,
+     "wall_ratio_vs_pure_gdn2": 3.598,
+     "exposure_pct_of_gdn2_in_2700s": 27.8,
+     "added_by_slots_s": 7.948,
+     "optimizer_term_s": 0.154,
+     "optimizer": "the banked protocol's Muon (measured on our machine)"
+    },
+    "layer_swap_gdn2_adamw": {
+     "step_s": 11.63,
+     "wall_ratio_vs_pure_gdn2": 3.729,
+     "exposure_pct_of_gdn2_in_2700s": 26.8,
+     "added_by_slots_s": 8.511,
+     "optimizer_term_s": 0.0,
+     "optimizer": "gdn2's registered AdamW"
+    },
+    "layer_swap_banked_muon": {
+     "step_s": 11.784,
+     "wall_ratio_vs_pure_gdn2": 3.778,
+     "exposure_pct_of_gdn2_in_2700s": 26.5,
+     "added_by_slots_s": 8.511,
+     "optimizer_term_s": 0.154,
+     "optimizer": "the banked protocol's Muon (measured on our machine)"
+    }
+   }
+  },
+  "calibration": {
+   "note": "the projection model's own calibration: the 24-of-24 row reconstructs the pure-ours step from the measured pure-GDN2 step plus 24x8 per-(layer, window-group) swap deltas and the measured optimizer term -- compared against the measured pure-ours step.  The residual is the backbone/embedding/head difference and the measurement spread, stated not hidden (the two machines' backbones differ by the capacity-matching deconfound: ours carries the wider MLP on every layer, which the layer_swap delta includes and the mixer_swap delta does not).",
+   "measured_ours_step_s": 10.624,
+   "predicted_ours_step_s_layer_swap": 11.784,
+   "predicted_ours_step_s_mixer_swap": 11.221,
+   "recorded_banked_ours_step_s": 10.737,
+   "recorded_banked_gdn2_step_s": 3.247
+  },
+  "time_exposure_asymmetry": {
+   "probe_protocol": "matched-TARGETS (20,022,866 bytes): both banked rows trained the SAME bytes in DIFFERENT wall-clocks",
+   "ours_recorded_s": 1932.6842099996284,
+   "gdn2_recorded_s": 584.4091627011076,
+   "board_protocol": "matched-TIME (2700 s): the faster machine sees more bytes; the hybrid's exposure fraction is the step-cost ratio T_gdn2/T_hybrid"
+  }
+ },
+ "verdict": {
+  "rows": [
+   {
+    "ratio": "3-of-24 slot layers",
+    "mixer_swap": {
+     "step_s": 4.266,
+     "wall_ratio": 1.368,
+     "exposure_pct": 73.1
+    },
+    "layer_swap": {
+     "step_s": 4.337,
+     "wall_ratio": 1.39,
+     "exposure_pct": 71.9
+    },
+    "statement": "at 3-of-24 the projected hybrid step is 4.27 s (mixer swap) / 4.34 s (layer swap) against pure-GDN2's 3.12 s -- the hybrid sees 73% / 72% of GDN2's exposure in 2700 s"
+   },
+   {
+    "ratio": "4-of-24 slot layers",
+    "mixer_swap": {
+     "step_s": 4.598,
+     "wall_ratio": 1.474,
+     "exposure_pct": 67.8
+    },
+    "layer_swap": {
+     "step_s": 4.691,
+     "wall_ratio": 1.504,
+     "exposure_pct": 66.5
+    },
+    "statement": "at 4-of-24 the projected hybrid step is 4.60 s (mixer swap) / 4.69 s (layer swap) against pure-GDN2's 3.12 s -- the hybrid sees 68% / 66% of GDN2's exposure in 2700 s"
+   },
+   {
+    "ratio": "6-of-24 slot layers",
+    "mixer_swap": {
+     "step_s": 5.26,
+     "wall_ratio": 1.686,
+     "exposure_pct": 59.3
+    },
+    "layer_swap": {
+     "step_s": 5.401,
+     "wall_ratio": 1.732,
+     "exposure_pct": 57.8
+    },
+    "statement": "at 6-of-24 the projected hybrid step is 5.26 s (mixer swap) / 5.40 s (layer swap) against pure-GDN2's 3.12 s -- the hybrid sees 59% / 58% of GDN2's exposure in 2700 s"
+   },
+   {
+    "ratio": "8-of-24 slot layers",
+    "mixer_swap": {
+     "step_s": 5.922,
+     "wall_ratio": 1.899,
+     "exposure_pct": 52.7
+    },
+    "layer_swap": {
+     "step_s": 6.11,
+     "wall_ratio": 1.959,
+     "exposure_pct": 51.0
+    },
+    "statement": "at 8-of-24 the projected hybrid step is 5.92 s (mixer swap) / 6.11 s (layer swap) against pure-GDN2's 3.12 s -- the hybrid sees 53% / 51% of GDN2's exposure in 2700 s"
+   }
+  ],
+  "scale": "the task's own pre-state: ~1.25x wall-clock viable, ~2.1x board-fatal at parity quality; no new threshold is invented here",
+  "no_viable_ratio": false
+ }
+}
