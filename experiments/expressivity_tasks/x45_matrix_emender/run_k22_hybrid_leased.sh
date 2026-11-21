@@ -109,7 +109,7 @@ EOF
     fi
     status=0
     $PY -m experiments.expressivity_tasks.x45_matrix_emender.k22_probe_hybrid \
-      arm --arm "$ARM" --seed "$SEED" --output "$OUT" $EXTRA || status=$?
+      run_arm --arm "$ARM" --seed "$SEED" --output "$OUT" $EXTRA || status=$?
     if [ "$ARM" = "hybrid_frozen" ]; then
       ROLE="THE FALSIFIER: the whole slot branch frozen at the zero-read birth, asserted bit-identical to the banked GDN2 row's own 204-step trajectory (max per-step delta 0.0) and landing at the banked 1.3521734476089478 post-cooldown bit for bit -- the strongest plumbing receipt, the K18 perfect-receipt precedent the expectation to beat"
     else
