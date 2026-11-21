@@ -1,0 +1,361 @@
+{
+ "machine": "ours-growable",
+ "n": 640,
+ "lr": 0.001,
+ "seed": 3402,
+ "steps": 1500,
+ "batch": 32,
+ "device": "cuda",
+ "walls_s": 1454.4,
+ "torch": "2.9.1+cu128",
+ "exposure_probe_targets": 30720000,
+ "metrics": {
+  "value_acc": 0.0075775147415697575,
+  "value_acc_by_lag_quartile": [
+   0.007897949777543545,
+   0.007519531529396772,
+   0.007739257998764515,
+   0.007153320591896772
+  ],
+  "n_probes": 327680,
+  "chance": 0.0078125
+ },
+ "curve": [
+  {
+   "step": 250,
+   "loss": 4.85286808013916,
+   "value_acc": 0.007717895787209272
+  },
+  {
+   "step": 500,
+   "loss": 4.852891445159912,
+   "value_acc": 0.008038329891860485
+  },
+  {
+   "step": 750,
+   "loss": 4.852583408355713,
+   "value_acc": 0.0077972412109375
+  },
+  {
+   "step": 1000,
+   "loss": 4.85271692276001,
+   "value_acc": 0.007861328311264515
+  },
+  {
+   "step": 1250,
+   "loss": 4.852526664733887,
+   "value_acc": 0.008114623837172985
+  },
+  {
+   "step": 1500,
+   "loss": 4.852182865142822,
+   "value_acc": 0.0075775147415697575
+  }
+ ],
+ "growth_events": [],
+ "curriculum": [
+  {
+   "n": 64,
+   "steps": 300,
+   "final_loss": 4.860053539276123
+  },
+  {
+   "n": 320,
+   "steps": 300,
+   "final_loss": 4.854575157165527
+  }
+ ],
+ "last_scan_growth_events": [
+  {
+   "boundary": 256,
+   "rank_before": 128,
+   "rank_after": 256,
+   "smoothed_rate": 1.0,
+   "window_rates": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  {
+   "boundary": 512,
+   "rank_before": 256,
+   "rank_after": 512,
+   "smoothed_rate": 1.0,
+   "window_rates": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  {
+   "boundary": 832,
+   "rank_before": 512,
+   "rank_after": 1024,
+   "smoothed_rate": 0.647918701171875,
+   "window_rates": [
+    0.5775146484375,
+    0.6168212890625,
+    0.681640625,
+    0.7156982421875
+   ]
+  },
+  {
+   "boundary": 1152,
+   "rank_before": 1024,
+   "rank_after": 2048,
+   "smoothed_rate": 0.613037109375,
+   "window_rates": [
+    0.481201171875,
+    0.589599609375,
+    0.673095703125,
+    0.708251953125
+   ]
+  },
+  {
+   "boundary": 256,
+   "rank_before": 128,
+   "rank_after": 256,
+   "smoothed_rate": 1.0,
+   "window_rates": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  {
+   "boundary": 512,
+   "rank_before": 256,
+   "rank_after": 512,
+   "smoothed_rate": 1.0,
+   "window_rates": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  {
+   "boundary": 768,
+   "rank_before": 512,
+   "rank_after": 1024,
+   "smoothed_rate": 0.75042724609375,
+   "window_rates": [
+    0.015625,
+    0.9925537109375,
+    0.9959716796875,
+    0.99755859375
+   ]
+  },
+  {
+   "boundary": 1024,
+   "rank_before": 1024,
+   "rank_after": 2048,
+   "smoothed_rate": 0.7471923828125,
+   "window_rates": [
+    0.0,
+    0.9931640625,
+    0.998046875,
+    0.99755859375
+   ]
+  }
+ ],
+ "final_rank": [
+  2048,
+  2048
+ ],
+ "final_heads": null,
+ "ceiling": {
+  "machine": "ours-growable",
+  "n": 640,
+  "capacity": 2048,
+  "ceiling": 1.0,
+  "ceiling_plus_band": 1.05,
+  "algebra": "slot-count: the store holds 2048 rows; a post-fill binding enters only by destroying a live row (every post-fill APPEND paid by a POP), so <= 2048 live bindings; aliased rows resolve at most one probe of a pair",
+  "band": 0.05,
+  "escape": "capacity >= n: no binding ceiling (the control regime)"
+ },
+ "summary": {
+  "machine": "ours-growable",
+  "parameters": {
+   "total": 361602,
+   "note": "rank is capacity, never parameters"
+  },
+  "rank": 128,
+  "rank_cap": 2048,
+  "grow": true,
+  "policy": {
+   "ops": true,
+   "tau_match": 0.45,
+   "tau_merge": 0.85,
+   "tau_pop": 0.1,
+   "tie_break": 1e-06,
+   "read_scale": 2.0,
+   "grow": true,
+   "grow_trigger": 0.5,
+   "grow_window": 4,
+   "grow_window_tokens": 512,
+   "grow_geometric": 2.0,
+   "grow_stride_floor": 64
+  },
+  "shape": {
+   "width": 128,
+   "depth": 2,
+   "heads": 1,
+   "value_dim": 64,
+   "vocab": 82690
+  }
+ },
+ "channels": {
+  "note": "the probed binding's row: live-at-probe (the slot-count bound made countable) with the probe's read mass on it; growth events are the spans' recorded fires",
+  "per_layer": [
+   {
+    "layer": 0,
+    "final_rank": 2048,
+    "growth_events": [
+     {
+      "boundary": 256,
+      "rank_before": 128,
+      "rank_after": 256,
+      "smoothed_rate": 1.0,
+      "window_rates": [
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ]
+     },
+     {
+      "boundary": 512,
+      "rank_before": 256,
+      "rank_after": 512,
+      "smoothed_rate": 1.0,
+      "window_rates": [
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ]
+     },
+     {
+      "boundary": 832,
+      "rank_before": 512,
+      "rank_after": 1024,
+      "smoothed_rate": 0.647918701171875,
+      "window_rates": [
+       0.5775146484375,
+       0.6168212890625,
+       0.681640625,
+       0.7156982421875
+      ]
+     },
+     {
+      "boundary": 1152,
+      "rank_before": 1024,
+      "rank_after": 2048,
+      "smoothed_rate": 0.613037109375,
+      "window_rates": [
+       0.481201171875,
+       0.589599609375,
+       0.673095703125,
+       0.708251953125
+      ]
+     }
+    ],
+    "pair_op_counts": {
+     "append": 12640,
+     "correct": 69278,
+     "pop": 0,
+     "none": 0
+    },
+    "stored_frac": 1.0,
+    "live_at_probe_frac": 0.999987781047821,
+    "accuracy": {
+     "live": 0.0075440374203026295,
+     "dead": 0.0
+    },
+    "mass_on_answer_row": {
+     "mean": 0.019409704953432083,
+     "mean_when_live": 0.019409941509366035
+    }
+   },
+   {
+    "layer": 1,
+    "final_rank": 2048,
+    "growth_events": [
+     {
+      "boundary": 256,
+      "rank_before": 128,
+      "rank_after": 256,
+      "smoothed_rate": 1.0,
+      "window_rates": [
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ]
+     },
+     {
+      "boundary": 512,
+      "rank_before": 256,
+      "rank_after": 512,
+      "smoothed_rate": 1.0,
+      "window_rates": [
+       1.0,
+       1.0,
+       1.0,
+       1.0
+      ]
+     },
+     {
+      "boundary": 768,
+      "rank_before": 512,
+      "rank_after": 1024,
+      "smoothed_rate": 0.75042724609375,
+      "window_rates": [
+       0.015625,
+       0.9925537109375,
+       0.9959716796875,
+       0.99755859375
+      ]
+     },
+     {
+      "boundary": 1024,
+      "rank_before": 1024,
+      "rank_after": 2048,
+      "smoothed_rate": 0.7471923828125,
+      "window_rates": [
+       0.0,
+       0.9931640625,
+       0.998046875,
+       0.99755859375
+      ]
+     }
+    ],
+    "pair_op_counts": {
+     "append": 259,
+     "correct": 81661,
+     "pop": 0,
+     "none": 0
+    },
+    "stored_frac": 1.0,
+    "live_at_probe_frac": 1.0,
+    "accuracy": {
+     "live": 0.0075439452193677425,
+     "dead": null
+    },
+    "mass_on_answer_row": {
+     "mean": 33.96769332885742,
+     "mean_when_live": 33.96769332885742
+    }
+   }
+  ]
+ },
+ "cooldown": {
+  "constant_steps": 1350,
+  "cooldown_steps": 150
+ }
+}

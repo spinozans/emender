@@ -1,0 +1,99 @@
+{
+ "machine": "gdn2-fixed",
+ "n": 640,
+ "lr": 0.0003,
+ "seed": 3401,
+ "steps": 1500,
+ "batch": 32,
+ "device": "cuda",
+ "walls_s": 756.8,
+ "torch": "2.9.1+cu128",
+ "exposure_probe_targets": 30720000,
+ "metrics": {
+  "value_acc": 0.5307831168174744,
+  "value_acc_by_lag_quartile": [
+   0.622570812702179,
+   0.6153320670127869,
+   0.4880004823207855,
+   0.39722901582717896
+  ],
+  "n_probes": 327680,
+  "chance": 0.0078125
+ },
+ "curve": [
+  {
+   "step": 250,
+   "loss": 2.4105587005615234,
+   "value_acc": 0.31263428926467896
+  },
+  {
+   "step": 500,
+   "loss": 2.119757890701294,
+   "value_acc": 0.3529815673828125
+  },
+  {
+   "step": 750,
+   "loss": 2.005417823791504,
+   "value_acc": 0.375579833984375
+  },
+  {
+   "step": 1000,
+   "loss": 1.9286320209503174,
+   "value_acc": 0.4147491455078125
+  },
+  {
+   "step": 1250,
+   "loss": 1.7235034704208374,
+   "value_acc": 0.47726136445999146
+  },
+  {
+   "step": 1500,
+   "loss": 1.5434508323669434,
+   "value_acc": 0.5307831168174744
+  }
+ ],
+ "growth_events": [],
+ "curriculum": [
+  {
+   "n": 64,
+   "steps": 300,
+   "final_loss": 1.3556734323501587
+  },
+  {
+   "n": 320,
+   "steps": 300,
+   "final_loss": 1.9206050634384155
+  }
+ ],
+ "last_scan_growth_events": [],
+ "final_rank": null,
+ "final_heads": 2,
+ "ceiling": {
+  "machine": "gdn2-fixed",
+  "n": 640,
+  "capacity": 256,
+  "ceiling": 0.40468750000000003,
+  "ceiling_plus_band": 0.4546875,
+  "algebra": "key-space: per-head d_k=128 (exact retrieval needs orthogonal keys: <= 128/head); the Welch rms bound 0.0791 at N=640 forces crosstalk/signal 2.00 per head (> 1 past N~2d); the pre-stated effective capacity is H*d_k = 256 (heads 2) with the refutation clause",
+  "band": 0.05,
+  "escape": null
+ },
+ "summary": {
+  "machine": "gdn2-fixed",
+  "heads": 2,
+  "head_dim": 128,
+  "depth": 2,
+  "dim": 576,
+  "capacity": 256,
+  "grow": false,
+  "parameters": {
+   "total": 9252548,
+   "note": "the fixed arm"
+  }
+ },
+ "channels": null,
+ "cooldown": {
+  "constant_steps": 1350,
+  "cooldown_steps": 150
+ }
+}

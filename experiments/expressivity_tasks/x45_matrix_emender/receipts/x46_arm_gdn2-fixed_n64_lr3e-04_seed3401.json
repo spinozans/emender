@@ -1,0 +1,88 @@
+{
+ "machine": "gdn2-fixed",
+ "n": 64,
+ "lr": 0.0003,
+ "seed": 3401,
+ "steps": 1500,
+ "batch": 32,
+ "device": "cuda",
+ "walls_s": 75.8,
+ "torch": "2.9.1+cu128",
+ "exposure_probe_targets": 3072000,
+ "metrics": {
+  "value_acc": 0.95245361328125,
+  "value_acc_by_lag_quartile": [
+   0.972900390625,
+   0.9764404296875,
+   0.953125,
+   0.9073486328125
+  ],
+  "n_probes": 32768,
+  "chance": 0.0078125
+ },
+ "curve": [
+  {
+   "step": 250,
+   "loss": 4.551624298095703,
+   "value_acc": 0.065338134765625
+  },
+  {
+   "step": 500,
+   "loss": 0.6556473970413208,
+   "value_acc": 0.78863525390625
+  },
+  {
+   "step": 750,
+   "loss": 0.37275147438049316,
+   "value_acc": 0.87744140625
+  },
+  {
+   "step": 1000,
+   "loss": 0.27759894728660583,
+   "value_acc": 0.905792236328125
+  },
+  {
+   "step": 1250,
+   "loss": 0.23769840598106384,
+   "value_acc": 0.925567626953125
+  },
+  {
+   "step": 1500,
+   "loss": 0.14511972665786743,
+   "value_acc": 0.95245361328125
+  }
+ ],
+ "growth_events": [],
+ "curriculum": [],
+ "last_scan_growth_events": [],
+ "final_rank": null,
+ "final_heads": 2,
+ "ceiling": {
+  "machine": "gdn2-fixed",
+  "n": 64,
+  "capacity": 256,
+  "ceiling": 1.0,
+  "ceiling_plus_band": 1.05,
+  "algebra": "key-space: per-head d_k=128 (exact retrieval needs orthogonal keys: <= 128/head); the Welch rms bound 0.0000 at N=64 forces crosstalk/signal 0.00 per head (> 1 past N~2d); the pre-stated effective capacity is H*d_k = 256 (heads 2) with the refutation clause",
+  "band": 0.05,
+  "escape": "capacity >= n: no binding ceiling (the control regime)"
+ },
+ "summary": {
+  "machine": "gdn2-fixed",
+  "heads": 2,
+  "head_dim": 128,
+  "depth": 2,
+  "dim": 576,
+  "capacity": 256,
+  "grow": false,
+  "parameters": {
+   "total": 9252548,
+   "note": "the fixed arm"
+  }
+ },
+ "channels": null,
+ "cooldown": {
+  "constant_steps": 1350,
+  "cooldown_steps": 150
+ }
+}

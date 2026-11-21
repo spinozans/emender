@@ -1,0 +1,94 @@
+{
+ "machine": "gdn2-fixed",
+ "n": 320,
+ "lr": 0.0001,
+ "seed": 3401,
+ "steps": 1500,
+ "batch": 32,
+ "device": "cuda",
+ "walls_s": 354.8,
+ "torch": "2.9.1+cu128",
+ "exposure_probe_targets": 15360000,
+ "metrics": {
+  "value_acc": 0.8147644400596619,
+  "value_acc_by_lag_quartile": [
+   0.7567138671875,
+   0.793408215045929,
+   0.831957995891571,
+   0.8769775629043579
+  ],
+  "n_probes": 163840,
+  "chance": 0.0078125
+ },
+ "curve": [
+  {
+   "step": 250,
+   "loss": 4.801398277282715,
+   "value_acc": 0.01712646521627903
+  },
+  {
+   "step": 500,
+   "loss": 3.294713258743286,
+   "value_acc": 0.18479613959789276
+  },
+  {
+   "step": 750,
+   "loss": 1.7362041473388672,
+   "value_acc": 0.4691406190395355
+  },
+  {
+   "step": 1000,
+   "loss": 1.0318892002105713,
+   "value_acc": 0.703564465045929
+  },
+  {
+   "step": 1250,
+   "loss": 0.8644119501113892,
+   "value_acc": 0.72943115234375
+  },
+  {
+   "step": 1500,
+   "loss": 0.5709700584411621,
+   "value_acc": 0.8147644400596619
+  }
+ ],
+ "growth_events": [],
+ "curriculum": [
+  {
+   "n": 64,
+   "steps": 300,
+   "final_loss": 4.8491411209106445
+  }
+ ],
+ "last_scan_growth_events": [],
+ "final_rank": null,
+ "final_heads": 2,
+ "ceiling": {
+  "machine": "gdn2-fixed",
+  "n": 320,
+  "capacity": 256,
+  "ceiling": 0.8015625000000001,
+  "ceiling_plus_band": 0.8515625000000001,
+  "algebra": "key-space: per-head d_k=128 (exact retrieval needs orthogonal keys: <= 128/head); the Welch rms bound 0.0686 at N=320 forces crosstalk/signal 1.22 per head (> 1 past N~2d); the pre-stated effective capacity is H*d_k = 256 (heads 2) with the refutation clause",
+  "band": 0.05,
+  "escape": null
+ },
+ "summary": {
+  "machine": "gdn2-fixed",
+  "heads": 2,
+  "head_dim": 128,
+  "depth": 2,
+  "dim": 576,
+  "capacity": 256,
+  "grow": false,
+  "parameters": {
+   "total": 9252548,
+   "note": "the fixed arm"
+  }
+ },
+ "channels": null,
+ "cooldown": {
+  "constant_steps": 1350,
+  "cooldown_steps": 150
+ }
+}

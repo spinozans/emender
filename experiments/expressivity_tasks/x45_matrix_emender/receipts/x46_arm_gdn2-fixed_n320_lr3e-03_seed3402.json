@@ -1,0 +1,94 @@
+{
+ "machine": "gdn2-fixed",
+ "n": 320,
+ "lr": 0.003,
+ "seed": 3402,
+ "steps": 1500,
+ "batch": 32,
+ "device": "cuda",
+ "walls_s": 352.2,
+ "torch": "2.9.1+cu128",
+ "exposure_probe_targets": 15360000,
+ "metrics": {
+  "value_acc": 0.007958984933793545,
+  "value_acc_by_lag_quartile": [
+   0.008105468936264515,
+   0.007983398623764515,
+   0.007958984933793545,
+   0.0077880858443677425
+  ],
+  "n_probes": 163840,
+  "chance": 0.0078125
+ },
+ "curve": [
+  {
+   "step": 250,
+   "loss": 4.855659484863281,
+   "value_acc": 0.007922363467514515
+  },
+  {
+   "step": 500,
+   "loss": 4.853123664855957,
+   "value_acc": 0.0079345703125
+  },
+  {
+   "step": 750,
+   "loss": 4.8524169921875,
+   "value_acc": 0.007855224423110485
+  },
+  {
+   "step": 1000,
+   "loss": 4.852910995483398,
+   "value_acc": 0.0075927735306322575
+  },
+  {
+   "step": 1250,
+   "loss": 4.8526177406311035,
+   "value_acc": 0.008007812313735485
+  },
+  {
+   "step": 1500,
+   "loss": 4.851936340332031,
+   "value_acc": 0.007958984933793545
+  }
+ ],
+ "growth_events": [],
+ "curriculum": [
+  {
+   "n": 64,
+   "steps": 300,
+   "final_loss": 4.863110065460205
+  }
+ ],
+ "last_scan_growth_events": [],
+ "final_rank": null,
+ "final_heads": 2,
+ "ceiling": {
+  "machine": "gdn2-fixed",
+  "n": 320,
+  "capacity": 256,
+  "ceiling": 0.8015625000000001,
+  "ceiling_plus_band": 0.8515625000000001,
+  "algebra": "key-space: per-head d_k=128 (exact retrieval needs orthogonal keys: <= 128/head); the Welch rms bound 0.0686 at N=320 forces crosstalk/signal 1.22 per head (> 1 past N~2d); the pre-stated effective capacity is H*d_k = 256 (heads 2) with the refutation clause",
+  "band": 0.05,
+  "escape": null
+ },
+ "summary": {
+  "machine": "gdn2-fixed",
+  "heads": 2,
+  "head_dim": 128,
+  "depth": 2,
+  "dim": 576,
+  "capacity": 256,
+  "grow": false,
+  "parameters": {
+   "total": 9252548,
+   "note": "the fixed arm"
+  }
+ },
+ "channels": null,
+ "cooldown": {
+  "constant_steps": 1350,
+  "cooldown_steps": 150
+ }
+}

@@ -1,0 +1,166 @@
+{
+ "machine": "ours-fixed",
+ "n": 640,
+ "lr": 0.003,
+ "seed": 3402,
+ "steps": 1500,
+ "batch": 32,
+ "device": "cuda",
+ "walls_s": 131.4,
+ "torch": "2.9.1+cu128",
+ "exposure_probe_targets": 30720000,
+ "metrics": {
+  "value_acc": 0.007723999209702015,
+  "value_acc_by_lag_quartile": [
+   0.007189941592514515,
+   0.0078125,
+   0.007763672154396772,
+   0.008129882626235485
+  ],
+  "n_probes": 327680,
+  "chance": 0.0078125
+ },
+ "curve": [
+  {
+   "step": 250,
+   "loss": 4.852080345153809,
+   "value_acc": 0.007785034365952015
+  },
+  {
+   "step": 500,
+   "loss": 4.852024555206299,
+   "value_acc": 0.007855224423110485
+  },
+  {
+   "step": 750,
+   "loss": 4.852002143859863,
+   "value_acc": 0.0075531005859375
+  },
+  {
+   "step": 1000,
+   "loss": 4.852036952972412,
+   "value_acc": 0.00791015662252903
+  },
+  {
+   "step": 1250,
+   "loss": 4.85202169418335,
+   "value_acc": 0.007913208566606045
+  },
+  {
+   "step": 1500,
+   "loss": 4.852065563201904,
+   "value_acc": 0.007723999209702015
+  }
+ ],
+ "growth_events": [],
+ "curriculum": [
+  {
+   "n": 64,
+   "steps": 300,
+   "final_loss": 4.857316017150879
+  },
+  {
+   "n": 320,
+   "steps": 300,
+   "final_loss": 4.85343599319458
+  }
+ ],
+ "last_scan_growth_events": [],
+ "final_rank": [
+  128,
+  128
+ ],
+ "final_heads": null,
+ "ceiling": {
+  "machine": "ours-fixed",
+  "n": 640,
+  "capacity": 128,
+  "ceiling": 0.20625000000000002,
+  "ceiling_plus_band": 0.25625000000000003,
+  "algebra": "slot-count: the store holds 128 rows; a post-fill binding enters only by destroying a live row (every post-fill APPEND paid by a POP), so <= 128 live bindings; aliased rows resolve at most one probe of a pair",
+  "band": 0.05,
+  "escape": null
+ },
+ "summary": {
+  "machine": "ours-fixed",
+  "parameters": {
+   "total": 361602,
+   "note": "rank is capacity, never parameters"
+  },
+  "rank": 128,
+  "rank_cap": 128,
+  "grow": false,
+  "policy": {
+   "ops": true,
+   "tau_match": 0.45,
+   "tau_merge": 0.85,
+   "tau_pop": 0.1,
+   "tie_break": 1e-06,
+   "read_scale": 2.0,
+   "grow": false,
+   "grow_trigger": 0.5,
+   "grow_window": 4,
+   "grow_window_tokens": 512,
+   "grow_geometric": 2.0,
+   "grow_stride_floor": 64
+  },
+  "shape": {
+   "width": 128,
+   "depth": 2,
+   "heads": 1,
+   "value_dim": 64,
+   "vocab": 82690
+  }
+ },
+ "channels": {
+  "note": "the probed binding's row: live-at-probe (the slot-count bound made countable) with the probe's read mass on it; growth events are the spans' recorded fires",
+  "per_layer": [
+   {
+    "layer": 0,
+    "final_rank": 128,
+    "growth_events": [],
+    "pair_op_counts": {
+     "append": 10966,
+     "correct": 70936,
+     "pop": 0,
+     "none": 0
+    },
+    "stored_frac": 1.0,
+    "live_at_probe_frac": 0.996899425983429,
+    "accuracy": {
+     "live": 0.007493938785046339,
+     "dead": 0.003937007859349251
+    },
+    "mass_on_answer_row": {
+     "mean": 0.01496128924190998,
+     "mean_when_live": 0.015007822774350643
+    }
+   },
+   {
+    "layer": 1,
+    "final_rank": 128,
+    "growth_events": [],
+    "pair_op_counts": {
+     "append": 166,
+     "correct": 81754,
+     "pop": 0,
+     "none": 0
+    },
+    "stored_frac": 1.0,
+    "live_at_probe_frac": 0.9996094107627869,
+    "accuracy": {
+     "live": 0.007485834416002035,
+     "dead": 0.0
+    },
+    "mass_on_answer_row": {
+     "mean": 114.6097183227539,
+     "mean_when_live": 114.65450286865234
+    }
+   }
+  ]
+ },
+ "cooldown": {
+  "constant_steps": 1350,
+  "cooldown_steps": 150
+ }
+}

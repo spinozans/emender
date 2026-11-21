@@ -1,0 +1,135 @@
+{
+ "machine": "gdn2-growth",
+ "n": 640,
+ "lr": 0.001,
+ "seed": 3402,
+ "steps": 1500,
+ "batch": 32,
+ "device": "cuda",
+ "walls_s": 1646.1,
+ "torch": "2.9.1+cu128",
+ "exposure_probe_targets": 30720000,
+ "metrics": {
+  "value_acc": 0.0076049803756177425,
+  "value_acc_by_lag_quartile": [
+   0.0077148438431322575,
+   0.007958984933793545,
+   0.0076538086868822575,
+   0.007092285435646772
+  ],
+  "n_probes": 327680,
+  "chance": 0.0078125
+ },
+ "curve": [
+  {
+   "step": 250,
+   "loss": 4.854782581329346,
+   "value_acc": 0.007717895787209272
+  },
+  {
+   "step": 500,
+   "loss": 4.854660987854004,
+   "value_acc": 0.007843017578125
+  },
+  {
+   "step": 750,
+   "loss": 4.85402774810791,
+   "value_acc": 0.00775146484375
+  },
+  {
+   "step": 1000,
+   "loss": 4.853979587554932,
+   "value_acc": 0.00798645056784153
+  },
+  {
+   "step": 1250,
+   "loss": 4.853832721710205,
+   "value_acc": 0.0078582763671875
+  },
+  {
+   "step": 1500,
+   "loss": 4.8522539138793945,
+   "value_acc": 0.0076049803756177425
+  }
+ ],
+ "growth_events": [
+  {
+   "step": 1,
+   "layer": 0,
+   "boundary": 64,
+   "heads": 2,
+   "new_heads": 4,
+   "fire_pr": 36.734989166259766
+  },
+  {
+   "step": 1,
+   "layer": 0,
+   "boundary": 128,
+   "heads": 4,
+   "new_heads": 8,
+   "fire_pr": 39.03688049316406
+  },
+  {
+   "step": 1,
+   "layer": 1,
+   "boundary": 64,
+   "heads": 2,
+   "new_heads": 4,
+   "fire_pr": 32.00984573364258
+  },
+  {
+   "step": 1,
+   "layer": 1,
+   "boundary": 128,
+   "heads": 4,
+   "new_heads": 8,
+   "fire_pr": 33.48234176635742
+  }
+ ],
+ "curriculum": [
+  {
+   "n": 64,
+   "steps": 300,
+   "final_loss": 4.8572893142700195
+  },
+  {
+   "n": 320,
+   "steps": 300,
+   "final_loss": 4.856545448303223
+  }
+ ],
+ "last_scan_growth_events": [],
+ "final_rank": null,
+ "final_heads": 8,
+ "ceiling": {
+  "machine": "gdn2-growth",
+  "n": 640,
+  "capacity": 1024,
+  "ceiling": 1.0,
+  "ceiling_plus_band": 1.05,
+  "algebra": "key-space: per-head d_k=128 (exact retrieval needs orthogonal keys: <= 128/head); the Welch rms bound 0.0791 at N=640 forces crosstalk/signal 2.00 per head (> 1 past N~2d); the pre-stated effective capacity is H*d_k = 1024 (heads 8) with the refutation clause",
+  "band": 0.05,
+  "escape": "capacity >= n: no binding ceiling (the control regime)"
+ },
+ "summary": {
+  "machine": "gdn2-growth",
+  "heads": 2,
+  "head_dim": 128,
+  "depth": 2,
+  "dim": 576,
+  "capacity": 256,
+  "grow": true,
+  "head_cap": 8,
+  "tau": 16.994728088378906,
+  "n_wrapped": 2,
+  "parameters": {
+   "total": 9252548,
+   "note": "growth adds parameters (GDN2's keys are learned) -- the delta is a first-class column"
+  }
+ },
+ "channels": null,
+ "cooldown": {
+  "constant_steps": 1350,
+  "cooldown_steps": 150
+ }
+}

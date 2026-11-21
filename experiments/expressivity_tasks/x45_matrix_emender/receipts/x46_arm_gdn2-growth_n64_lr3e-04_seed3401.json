@@ -1,0 +1,124 @@
+{
+ "machine": "gdn2-growth",
+ "n": 64,
+ "lr": 0.0003,
+ "seed": 3401,
+ "steps": 1500,
+ "batch": 32,
+ "device": "cuda",
+ "walls_s": 171.0,
+ "torch": "2.9.1+cu128",
+ "exposure_probe_targets": 3072000,
+ "metrics": {
+  "value_acc": 0.95831298828125,
+  "value_acc_by_lag_quartile": [
+   0.9775390625,
+   0.9737548828125,
+   0.957763671875,
+   0.9241943359375
+  ],
+  "n_probes": 32768,
+  "chance": 0.0078125
+ },
+ "curve": [
+  {
+   "step": 250,
+   "loss": 4.865735054016113,
+   "value_acc": 0.007598876953125
+  },
+  {
+   "step": 500,
+   "loss": 0.6941137313842773,
+   "value_acc": 0.7686767578125
+  },
+  {
+   "step": 750,
+   "loss": 0.3798614740371704,
+   "value_acc": 0.8719482421875
+  },
+  {
+   "step": 1000,
+   "loss": 0.2892378270626068,
+   "value_acc": 0.909332275390625
+  },
+  {
+   "step": 1250,
+   "loss": 0.2202451229095459,
+   "value_acc": 0.93267822265625
+  },
+  {
+   "step": 1500,
+   "loss": 0.09991418570280075,
+   "value_acc": 0.95831298828125
+  }
+ ],
+ "growth_events": [
+  {
+   "step": 1,
+   "layer": 0,
+   "boundary": 64,
+   "heads": 2,
+   "new_heads": 4,
+   "fire_pr": 39.44804000854492
+  },
+  {
+   "step": 1,
+   "layer": 0,
+   "boundary": 128,
+   "heads": 4,
+   "new_heads": 8,
+   "fire_pr": 41.046844482421875
+  },
+  {
+   "step": 1,
+   "layer": 1,
+   "boundary": 64,
+   "heads": 2,
+   "new_heads": 4,
+   "fire_pr": 31.314289093017578
+  },
+  {
+   "step": 1,
+   "layer": 1,
+   "boundary": 128,
+   "heads": 4,
+   "new_heads": 8,
+   "fire_pr": 33.0150146484375
+  }
+ ],
+ "curriculum": [],
+ "last_scan_growth_events": [],
+ "final_rank": null,
+ "final_heads": 8,
+ "ceiling": {
+  "machine": "gdn2-growth",
+  "n": 64,
+  "capacity": 1024,
+  "ceiling": 1.0,
+  "ceiling_plus_band": 1.05,
+  "algebra": "key-space: per-head d_k=128 (exact retrieval needs orthogonal keys: <= 128/head); the Welch rms bound 0.0000 at N=64 forces crosstalk/signal 0.00 per head (> 1 past N~2d); the pre-stated effective capacity is H*d_k = 1024 (heads 8) with the refutation clause",
+  "band": 0.05,
+  "escape": "capacity >= n: no binding ceiling (the control regime)"
+ },
+ "summary": {
+  "machine": "gdn2-growth",
+  "heads": 2,
+  "head_dim": 128,
+  "depth": 2,
+  "dim": 576,
+  "capacity": 256,
+  "grow": true,
+  "head_cap": 8,
+  "tau": 16.994728088378906,
+  "n_wrapped": 2,
+  "parameters": {
+   "total": 9252548,
+   "note": "growth adds parameters (GDN2's keys are learned) -- the delta is a first-class column"
+  }
+ },
+ "channels": null,
+ "cooldown": {
+  "constant_steps": 1350,
+  "cooldown_steps": 150
+ }
+}
