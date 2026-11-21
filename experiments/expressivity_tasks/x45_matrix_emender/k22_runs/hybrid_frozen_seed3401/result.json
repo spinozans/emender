@@ -1,0 +1,1914 @@
+{
+  "probe": "k22_probe_hybrid",
+  "arm": "hybrid_frozen",
+  "seed": 3401,
+  "arm_note": "THE FALSIFIER: the same machine with the whole slot branch frozen at the zero-read birth (requires_grad=False on every slot parameter and the read gates; the branch sits outside the optimizer, the clip and the EMA by construction) -- it must be bit-identical to the banked GDN2 row's own trajectory at every step and land at the banked 1.3521734476089478 post-cooldown bit for bit",
+  "machine": "the hybrid: GDN2's committed arm (matched_arms.build_gdn2 verbatim, the banked 1.3522 machine, width 640, 24 dense mixers) with the composed slot mixer (the K15/K18 engine VERBATIM: the K13 additive read, the K11B p3 gates, the K10 separated keys at the mimetic birth, the K18 identity-born conv) at the slot layers (6, 12, 18), added to the dense mixer's output through the ZERO-BORN read gate -- born as PURE GDN2 bit for bit; the slot store machinery runs from step 1, nothing reads out until a gate opens; THE FALSIFIER: the whole slot branch frozen at birth",
+  "frozen": true,
+  "corrected_scoring": {
+    "primary": "post-cooldown eval: a linear cooldown of 24 steps (13.3% of the 180-step constant-LR budget) appended after the banked matched-exposure landing, same stream/data order, LR factor (25 - k)/24 for cooldown step k (1.0 -> 1/24, never zero), both hybrid groups scaling equally; the corrected score is the post-cooldown calibration eval",
+    "secondary": "EMA iterate at step 180 (no extra data): decay 0.99, initialized at the init weights, updated after every constant-phase optimizer step, NOT updated during the cooldown; RANKING-ONLY -- its absolute number is biased toward mid-run weights (stated, not smoothed)",
+    "cooldown_steps": 24,
+    "cooldown_fraction": 0.1333,
+    "cooldown_form": "linear",
+    "ema_decay": 0.99,
+    "exposure_note": "the cooldown steps see ~2.7M more targets (~13%), identical across arms -- a stated protocol EXTENSION; the step-180 constant-LR eval is retained so every banked row stays comparable",
+    "citations": {
+      "river_valley": "Wen et al., ICLR 2025, arXiv:2410.05192 -- constant-LR loss carries an LR-dependent oscillation penalty that decay/averaging removes",
+      "cooldown": "Haegele et al., NeurIPS 2024, arXiv:2405.18392 -- constant-LR + short cooldown matches cosine at full scale",
+      "averaging": "Defazio et al., arXiv:2405.15682 -- iterate averaging as the schedule-free fix for the same penalty",
+      "moonlight": "Liu et al. (Moonshot AI), arXiv:2502.16982 -- with the update RMS matched to AdamW's (~0.2; AdamW typical 0.2-0.4), Muon directly reuses the LR and weight decay tuned for AdamW, i.e. ~1x the AdamW-tuned LR, WITH weight decay",
+      "horizon": "Bjorck et al., ICLR 2025 -- the optimal LR shrinks with token horizon; probe-tuned LRs transfer only downscaled"
+    }
+  },
+  "status": "completed",
+  "slot_layers": [
+    6,
+    12,
+    18
+  ],
+  "width": 640,
+  "exposure_bytes": 20022866,
+  "exposure_steps": 180,
+  "total_bytes": 22745198,
+  "total_steps": 204,
+  "cooldown_steps": 24,
+  "train_seconds_constant": 912.7,
+  "train_seconds_total": 1034.5,
+  "bytes_per_s": 21938.622214305575,
+  "optimizer_step_seconds": {
+    "mean_steady": 0.17734403679004082,
+    "note": "steps 10+; the honest clock's own measure, per step"
+  },
+  "muon_update_rms": {
+    "muon_update_rms": 0.18033083280489617
+  },
+  "parameters": 152517585,
+  "parameters_dense": 149855670,
+  "parameters_slot_added": 2661915,
+  "final_eval_nll_constant_lr": 1.3950541530336653,
+  "final_eval_nll_post_cooldown": 1.3521734476089478,
+  "ema_eval_nll": 1.3803383282252721,
+  "cooldown_drop": 0.04288070542471756,
+  "step1_train_loss": 5.948033220866492,
+  "step1_receipt": {
+    "arm_step1": 5.948033220866492,
+    "banked_gdn2_same_seed_step1": 5.948033220866492,
+    "parity": true,
+    "rule": "both arms are BORN AS GDN2: the step-1 train loss must be bit-identical to the banked GDN2 row's own same-seed step-1 (the optimizer cannot touch the first forward); the slot contribution is exactly zero at birth (the read gate born at 0.0), every other slot parameter's gradient exactly zero, the gate's own gradient nonzero (the open signal)."
+  },
+  "birth_receipts": {
+    "probe": "k22_birth_receipts",
+    "seed": 3401,
+    "read_gates": {
+      "6": {
+        "value": 0.0,
+        "born_at_exact_zero": true,
+        "grad": null
+      },
+      "12": {
+        "value": 0.0,
+        "born_at_exact_zero": true,
+        "grad": null
+      },
+      "18": {
+        "value": 0.0,
+        "born_at_exact_zero": true,
+        "grad": null
+      }
+    },
+    "open_signal": {
+      "note": "dLoss/dgate x slot content at birth: the gate's own gradient (the open signal) is nonzero at birth while every other slot parameter receives an exactly-zero gradient (inert at birth)",
+      "all_gates_born_at_exact_zero": true,
+      "any_gate_gradient_nonzero": false
+    },
+    "inert_at_birth": {
+      "per_layer": {
+        "6": {
+          "tensors_with_grad": 0,
+          "all_exactly_zero": true,
+          "max_abs_grad": 0.0
+        },
+        "12": {
+          "tensors_with_grad": 0,
+          "all_exactly_zero": true,
+          "max_abs_grad": 0.0
+        },
+        "18": {
+          "tensors_with_grad": 0,
+          "all_exactly_zero": true,
+          "max_abs_grad": 0.0
+        }
+      },
+      "all_inert": true
+    },
+    "store_runs_at_birth": {
+      "note": "the slot stores fill at birth (the machinery runs; nothing reads out until a gate opens)",
+      "ops_fill": true,
+      "per_layer_op_rate": {
+        "6": {
+          "none": 0.0,
+          "append": 0.02911376953125,
+          "correct": 0.970855712890625,
+          "pop": 0.0,
+          "merge": 3.0517578125e-05
+        },
+        "12": {
+          "none": 0.0,
+          "append": 0.02911376953125,
+          "correct": 0.970855712890625,
+          "pop": 0.0,
+          "merge": 3.0517578125e-05
+        },
+        "18": {
+          "none": 0.0,
+          "append": 0.02911376953125,
+          "correct": 0.970855712890625,
+          "pop": 0.0,
+          "merge": 3.0517578125e-05
+        }
+      },
+      "occupancy": {
+        "6": 50.43017578125,
+        "12": 50.43017578125,
+        "18": 50.43017578125
+      }
+    }
+  },
+  "falsifier_divergence": {
+    "steps_compared": 204,
+    "bit_identical_steps": 204,
+    "first_diverging_step": null,
+    "max_abs_loss_delta": 0.0,
+    "reference": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/protocol_correction_runs/gdn2_speedrun_rescored/training.jsonl",
+    "note": "the frozen hybrid vs the banked GDN2 row's own training log: the K18 perfect full-trajectory receipt is the expectation to beat; ANY divergence is a birth-parity conflict (STOP and escalate)"
+  },
+  "falsifier_landing_bit_identical": true,
+  "gate_trajectory": {
+    "1": {
+      "6": 0.0,
+      "12": 0.0,
+      "18": 0.0
+    },
+    "5": {
+      "6": 0.0,
+      "12": 0.0,
+      "18": 0.0
+    },
+    "10": {
+      "6": 0.0,
+      "12": 0.0,
+      "18": 0.0
+    },
+    "20": {
+      "6": 0.0,
+      "12": 0.0,
+      "18": 0.0
+    },
+    "40": {
+      "6": 0.0,
+      "12": 0.0,
+      "18": 0.0
+    },
+    "80": {
+      "6": 0.0,
+      "12": 0.0,
+      "18": 0.0
+    },
+    "120": {
+      "6": 0.0,
+      "12": 0.0,
+      "18": 0.0
+    },
+    "160": {
+      "6": 0.0,
+      "12": 0.0,
+      "18": 0.0
+    },
+    "180": {
+      "6": 0.0,
+      "12": 0.0,
+      "18": 0.0
+    },
+    "ema_180": {
+      "6": 0.0,
+      "12": 0.0,
+      "18": 0.0
+    },
+    "final": {
+      "6": 0.0,
+      "12": 0.0,
+      "18": 0.0
+    },
+    "init": {
+      "6": 0.0,
+      "12": 0.0,
+      "18": 0.0
+    }
+  },
+  "scores": [
+    {
+      "kind": "constant",
+      "step": 1,
+      "bytes": 117712,
+      "train_loss": 5.948033220866492,
+      "eval_nll": 5.87857757295881,
+      "eval_windows": 7,
+      "eval_targets": 14336
+    },
+    {
+      "kind": "constant",
+      "step": 5,
+      "bytes": 567019,
+      "train_loss": 5.481132225796444,
+      "eval_nll": 5.215345246451242,
+      "eval_windows": 7,
+      "eval_targets": 14336
+    },
+    {
+      "kind": "constant",
+      "step": 10,
+      "bytes": 1190731,
+      "train_loss": 3.6797830164432526,
+      "eval_nll": 3.8158766882760182,
+      "eval_windows": 7,
+      "eval_targets": 14336
+    },
+    {
+      "kind": "constant",
+      "step": 20,
+      "bytes": 2367970,
+      "train_loss": 3.500713823288759,
+      "eval_nll": 2.648532049996512,
+      "eval_windows": 7,
+      "eval_targets": 14336
+    },
+    {
+      "kind": "constant",
+      "step": 40,
+      "bytes": 4542086,
+      "train_loss": 2.3577218821065498,
+      "eval_nll": 1.9542870691844396,
+      "eval_windows": 7,
+      "eval_targets": 14336
+    },
+    {
+      "kind": "constant",
+      "step": 80,
+      "bytes": 8884476,
+      "train_loss": 2.171043728509881,
+      "eval_nll": 1.537390180996486,
+      "eval_windows": 7,
+      "eval_targets": 14336
+    },
+    {
+      "kind": "constant",
+      "step": 120,
+      "bytes": 13277872,
+      "train_loss": 1.6409899981153901,
+      "eval_nll": 1.4149058546338762,
+      "eval_windows": 7,
+      "eval_targets": 14336
+    },
+    {
+      "kind": "constant",
+      "step": 160,
+      "bytes": 17718312,
+      "train_loss": 1.8031388074159622,
+      "eval_nll": 1.368820139339992,
+      "eval_windows": 7,
+      "eval_targets": 14336
+    },
+    {
+      "kind": "constant",
+      "step": 180,
+      "bytes": 20022866,
+      "train_loss": 1.7396981304540131,
+      "eval_nll": 1.3950541530336653,
+      "eval_windows": 7,
+      "eval_targets": 14336
+    },
+    {
+      "kind": "ema_180",
+      "step": 180,
+      "bytes": 20022866,
+      "eval_nll": 1.3803383282252721,
+      "eval_windows": 7,
+      "eval_targets": 14336,
+      "ema_decay": 0.99,
+      "note": "ranking-only: biased toward mid-run weights"
+    },
+    {
+      "kind": "post_cooldown",
+      "step": 204,
+      "bytes": 22745198,
+      "eval_nll": 1.3521734476089478,
+      "eval_windows": 7,
+      "eval_targets": 14336
+    }
+  ],
+  "anchors": {
+    "banked_gdn2": {
+      "post_cooldown": 1.3521734476089478,
+      "constant_lr": 1.3950541530336653,
+      "ema180": 1.3803383282252721
+    },
+    "composed_ours": {
+      "post_cooldown": {
+        "3401": 1.3811104467936925,
+        "3402": 1.383232252938407
+      },
+      "constant_lr": {
+        "3401": 1.433674931526184,
+        "3402": 1.4341776371002197
+      },
+      "ema_180": {
+        "3401": 1.424389226096017,
+        "3402": 1.4385861498968942
+      },
+      "step1_train_loss": {
+        "3401": 5.782775391046648,
+        "3402": 5.720172563202926
+      },
+      "note": "the K15 composition arm's own landed rows (the inherited 4x point, tuned for the SOFTMAX-read machine): receipts/k15_composition_summary.json"
+    },
+    "banked_mechanism_ours": {
+      "seed3401_step180": {
+        "identity_rewrite_share": 0.12220044317888193,
+        "read_entropy_nats": 1.5150481063949617,
+        "occupancy_mean_live_slots": 33.49335734049479,
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.022992451985677082,
+          "correct": 0.9743779500325521,
+          "pop": 0.0,
+          "merge": 0.0026295979817708335
+        },
+        "constant_lr_nll": 1.4907409463609969
+      },
+      "seed3402_step180": {
+        "identity_rewrite_share": 0.11799608786375947,
+        "read_entropy_nats": 1.600236432712681,
+        "occupancy_mean_live_slots": 35.15362294514974,
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.023668924967447918,
+          "correct": 0.9737930297851562,
+          "pop": 0.0,
+          "merge": 0.0025380452473958335
+        },
+        "constant_lr_nll": 1.4899048124040877
+      },
+      "seed3402_post_cooldown": {
+        "identity_rewrite_share": 0.1179643202876504,
+        "read_entropy_nats": 1.538525497965773,
+        "occupancy_mean_live_slots": 32.76612091064453,
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02294921875,
+          "correct": 0.9746373494466146,
+          "pop": 0.0,
+          "merge": 0.0024134318033854165
+        },
+        "post_cooldown_nll": 1.4338248457227434
+      }
+    }
+  },
+  "diagnostics_step180": {
+    "op_rate_per_token_lane0": {
+      "none": 0.0,
+      "append": 0.034912109375,
+      "correct": 0.9648640950520834,
+      "pop": 0.0,
+      "merge": 0.00022379557291666666
+    },
+    "op_histogram_all_lanes": {
+      "none": 49141,
+      "append": 1716,
+      "correct": 47425,
+      "pop": 0,
+      "merge": 22
+    },
+    "occupancy": {
+      "note": "live slots at every token, from the walk's recorded pre-decision liveness channel",
+      "mean_live_slots": 56.208251953125,
+      "rank": 128
+    },
+    "read_weight_entropy": {
+      "units": "nats over the |w|-mass distribution on live rows (R13-4: the additive weights are signed)",
+      "mean": 3.69996130961468
+    },
+    "top_row_w_mass_share": {
+      "units": "the max |w|-mass share per token (the collapse detector)",
+      "mean": 0.06087244273280305
+    },
+    "per_layer": {
+      "6": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.0390625,
+          "correct": 0.96087646484375,
+          "pop": 0.0,
+          "merge": 6.103515625e-05
+        },
+        "occupancy_mean_live_slots": 63.0142822265625,
+        "read_weight_entropy_nats": 3.817923869630099,
+        "top_row_share": 0.05504729751266382,
+        "identity_rewrite_share": 0.07152385187067269
+      },
+      "12": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.03594970703125,
+          "correct": 0.96405029296875,
+          "pop": 0.0,
+          "merge": 0.0
+        },
+        "occupancy_mean_live_slots": 58.149169921875,
+        "read_weight_entropy_nats": 3.7392529821652114,
+        "top_row_share": 0.05875509659953972,
+        "identity_rewrite_share": 0.06888255777144665
+      },
+      "18": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.02972412109375,
+          "correct": 0.96966552734375,
+          "pop": 0.0,
+          "merge": 0.0006103515625
+        },
+        "occupancy_mean_live_slots": 47.4613037109375,
+        "read_weight_entropy_nats": 3.5427070770487297,
+        "top_row_share": 0.06881493408620562,
+        "identity_rewrite_share": 0.06879838861962612
+      }
+    },
+    "identity_rewrite_share": 0.06973115445440169,
+    "identity_n_correct": 47425,
+    "effective_read_rows": 40.445743560791016,
+    "probe": {
+      "split": "calibration",
+      "windows": 4,
+      "mixers": 3,
+      "slot_layers": [
+        6,
+        12,
+        18
+      ],
+      "regime": "eval, bf16 autocast, the k15 composed persistent walk on the slot layers' own inputs (collect=True)",
+      "probe_wall_seconds": 0.9
+    },
+    "gate_telemetry": {
+      "note": "per-slot-layer means over the probe windows: the p3 channels' born-identity drift on the slot mixers",
+      "per_layer": {
+        "6": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.0,
+            "max": 0.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.0,
+            "max": 0.0
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.0,
+            "max": 0.0
+          }
+        },
+        "12": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.0,
+            "max": 0.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.0,
+            "max": 0.0
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.0,
+            "max": 0.0
+          }
+        },
+        "18": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.0,
+            "max": 0.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.0,
+            "max": 0.0
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.0,
+            "max": 0.0
+          }
+        }
+      }
+    },
+    "conv_telemetry": {
+      "note": "the slot mixers' learned conv kernels (per tap, the distance from the identity birth)",
+      "per_layer": {
+        "6": {
+          "tap_means": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "tap_stds": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "kernel_l2": 16.0,
+          "distance_from_identity_birth": 0.0,
+          "distance_from_identity_birth_max": 0.0
+        },
+        "12": {
+          "tap_means": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "tap_stds": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "kernel_l2": 16.0,
+          "distance_from_identity_birth": 0.0,
+          "distance_from_identity_birth_max": 0.0
+        },
+        "18": {
+          "tap_means": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "tap_stds": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "kernel_l2": 16.0,
+          "distance_from_identity_birth": 0.0,
+          "distance_from_identity_birth_max": 0.0
+        }
+      }
+    },
+    "k22_read_gates": {
+      "6": 0.0,
+      "12": 0.0,
+      "18": 0.0
+    }
+  },
+  "diagnostics_post_cooldown": {
+    "op_rate_per_token_lane0": {
+      "none": 0.0,
+      "append": 0.035888671875,
+      "correct": 0.9640096028645834,
+      "pop": 0.0,
+      "merge": 0.00010172526041666667
+    },
+    "op_histogram_all_lanes": {
+      "none": 49147,
+      "append": 1764,
+      "correct": 47383,
+      "pop": 0,
+      "merge": 10
+    },
+    "occupancy": {
+      "note": "live slots at every token, from the walk's recorded pre-decision liveness channel",
+      "mean_live_slots": 58.390848795572914,
+      "rank": 128
+    },
+    "read_weight_entropy": {
+      "units": "nats over the |w|-mass distribution on live rows (R13-4: the additive weights are signed)",
+      "mean": 3.738258966850625
+    },
+    "top_row_w_mass_share": {
+      "units": "the max |w|-mass share per token (the collapse detector)",
+      "mean": 0.05941300142900386
+    },
+    "per_layer": {
+      "6": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.0399169921875,
+          "correct": 0.9600830078125,
+          "pop": 0.0,
+          "merge": 0.0
+        },
+        "occupancy_mean_live_slots": 65.65447998046875,
+        "read_weight_entropy_nats": 3.86404873652754,
+        "top_row_share": 0.05318570381615531,
+        "identity_rewrite_share": 0.07520661157024794
+      },
+      "12": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.03717041015625,
+          "correct": 0.9627685546875,
+          "pop": 0.0,
+          "merge": 6.103515625e-05
+        },
+        "occupancy_mean_live_slots": 59.6453857421875,
+        "read_weight_entropy_nats": 3.764598345139228,
+        "top_row_share": 0.05796358605157939,
+        "identity_rewrite_share": 0.06859388867757069
+      },
+      "18": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.03057861328125,
+          "correct": 0.96917724609375,
+          "pop": 0.0,
+          "merge": 0.000244140625
+        },
+        "occupancy_mean_live_slots": 49.8726806640625,
+        "read_weight_entropy_nats": 3.586129818885106,
+        "top_row_share": 0.06708971441927687,
+        "identity_rewrite_share": 0.06801435858681278
+      }
+    },
+    "identity_rewrite_share": 0.07059493911318405,
+    "identity_n_correct": 47383,
+    "effective_read_rows": 42.02476501464844,
+    "probe": {
+      "split": "calibration",
+      "windows": 4,
+      "mixers": 3,
+      "slot_layers": [
+        6,
+        12,
+        18
+      ],
+      "regime": "eval, bf16 autocast, the k15 composed persistent walk on the slot layers' own inputs (collect=True)",
+      "probe_wall_seconds": 0.9
+    },
+    "gate_telemetry": {
+      "note": "per-slot-layer means over the probe windows: the p3 channels' born-identity drift on the slot mixers",
+      "per_layer": {
+        "6": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.0,
+            "max": 0.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.0,
+            "max": 0.0
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.0,
+            "max": 0.0
+          }
+        },
+        "12": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.0,
+            "max": 0.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.0,
+            "max": 0.0
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.0,
+            "max": 0.0
+          }
+        },
+        "18": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 0.0,
+            "max": 0.0
+          },
+          "write_gate": {
+            "mean_distance_from_1": 0.0,
+            "max": 0.0
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.0,
+            "max": 0.0
+          }
+        }
+      }
+    },
+    "conv_telemetry": {
+      "note": "the slot mixers' learned conv kernels (per tap, the distance from the identity birth)",
+      "per_layer": {
+        "6": {
+          "tap_means": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "tap_stds": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "kernel_l2": 16.0,
+          "distance_from_identity_birth": 0.0,
+          "distance_from_identity_birth_max": 0.0
+        },
+        "12": {
+          "tap_means": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "tap_stds": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "kernel_l2": 16.0,
+          "distance_from_identity_birth": 0.0,
+          "distance_from_identity_birth_max": 0.0
+        },
+        "18": {
+          "tap_means": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "tap_stds": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "kernel_l2": 16.0,
+          "distance_from_identity_birth": 0.0,
+          "distance_from_identity_birth_max": 0.0
+        }
+      }
+    },
+    "k22_read_gates": {
+      "6": 0.0,
+      "12": 0.0,
+      "18": 0.0
+    }
+  },
+  "slot_read_mask_sweep_step180": {
+    "note": "the hybrid's decorative sweep: one slot layer's read gate zeroed for the eval pass (its slot read removed), one at a time, plus the all-slots cell (the trained dense-stack floor).  The uniformity question's direct test: the banked pure-machine sweep found 4-5 of 24 layers >= 0.02 dNLL -- do the hybrid's 3 slot layers clear that bar?",
+    "base_nll": 1.3950541530336653,
+    "masked_nll_per_slot_layer": {
+      "6": 1.3950541530336653,
+      "12": 1.3950541530336653,
+      "18": 1.3950541530336653
+    },
+    "all_slots_masked_nll": 1.3950541530336653,
+    "delta_per_slot_layer": {
+      "6": 0.0,
+      "12": 0.0,
+      "18": 0.0
+    },
+    "all_slots_delta": 0.0,
+    "load_bearing_bar": 0.02,
+    "slot_layers_ge_bar": 0
+  },
+  "slot_read_mask_sweep_post_cooldown": {
+    "note": "the hybrid's decorative sweep: one slot layer's read gate zeroed for the eval pass (its slot read removed), one at a time, plus the all-slots cell (the trained dense-stack floor).  The uniformity question's direct test: the banked pure-machine sweep found 4-5 of 24 layers >= 0.02 dNLL -- do the hybrid's 3 slot layers clear that bar?",
+    "base_nll": 1.3521734476089478,
+    "masked_nll_per_slot_layer": {
+      "6": 1.3521734476089478,
+      "12": 1.3521734476089478,
+      "18": 1.3521734476089478
+    },
+    "all_slots_masked_nll": 1.3521734476089478,
+    "delta_per_slot_layer": {
+      "6": 0.0,
+      "12": 0.0,
+      "18": 0.0
+    },
+    "all_slots_delta": 0.0,
+    "load_bearing_bar": 0.02,
+    "slot_layers_ge_bar": 0
+  },
+  "routing_receipt": {
+    "muon_tensors": 191,
+    "adamw_tensors": 406,
+    "dense_muon": 191,
+    "dense_adamw": 406,
+    "slot_muon": 0,
+    "slot_adamw": 0,
+    "frozen_slot_branch_excluded": true,
+    "note": "the frozen falsifier: the banked GDN2 row's own split exactly (the slot branch excluded by requires_grad, outside the optimizer/clip/EMA by construction)"
+  },
+  "peak_allocated_gb": 4.61,
+  "config_sha256": "bfa00199c2caf85ebc280ed096d1eb04246474e5b9dd3db1ec6caa7841929e49",
+  "config": {
+    "probe": "k22_probe_hybrid",
+    "arm": "hybrid_frozen",
+    "seed": 3401,
+    "arm_note": "THE FALSIFIER: the same machine with the whole slot branch frozen at the zero-read birth (requires_grad=False on every slot parameter and the read gates; the branch sits outside the optimizer, the clip and the EMA by construction) -- it must be bit-identical to the banked GDN2 row's own trajectory at every step and land at the banked 1.3521734476089478 post-cooldown bit for bit",
+    "machine": "the hybrid: GDN2's committed arm (matched_arms.build_gdn2 verbatim, the banked 1.3522 machine, width 640, 24 dense mixers) with the composed slot mixer (the K15/K18 engine VERBATIM: the K13 additive read, the K11B p3 gates, the K10 separated keys at the mimetic birth, the K18 identity-born conv) at the slot layers (6, 12, 18), added to the dense mixer's output through the ZERO-BORN read gate -- born as PURE GDN2 bit for bit; the slot store machinery runs from step 1, nothing reads out until a gate opens; THE FALSIFIER: the whole slot branch frozen at birth",
+    "frozen": true,
+    "corrected_scoring": {
+      "primary": "post-cooldown eval: a linear cooldown of 24 steps (13.3% of the 180-step constant-LR budget) appended after the banked matched-exposure landing, same stream/data order, LR factor (25 - k)/24 for cooldown step k (1.0 -> 1/24, never zero), both hybrid groups scaling equally; the corrected score is the post-cooldown calibration eval",
+      "secondary": "EMA iterate at step 180 (no extra data): decay 0.99, initialized at the init weights, updated after every constant-phase optimizer step, NOT updated during the cooldown; RANKING-ONLY -- its absolute number is biased toward mid-run weights (stated, not smoothed)",
+      "cooldown_steps": 24,
+      "cooldown_fraction": 0.1333,
+      "cooldown_form": "linear",
+      "ema_decay": 0.99,
+      "exposure_note": "the cooldown steps see ~2.7M more targets (~13%), identical across arms -- a stated protocol EXTENSION; the step-180 constant-LR eval is retained so every banked row stays comparable",
+      "citations": {
+        "river_valley": "Wen et al., ICLR 2025, arXiv:2410.05192 -- constant-LR loss carries an LR-dependent oscillation penalty that decay/averaging removes",
+        "cooldown": "Haegele et al., NeurIPS 2024, arXiv:2405.18392 -- constant-LR + short cooldown matches cosine at full scale",
+        "averaging": "Defazio et al., arXiv:2405.15682 -- iterate averaging as the schedule-free fix for the same penalty",
+        "moonlight": "Liu et al. (Moonshot AI), arXiv:2502.16982 -- with the update RMS matched to AdamW's (~0.2; AdamW typical 0.2-0.4), Muon directly reuses the LR and weight decay tuned for AdamW, i.e. ~1x the AdamW-tuned LR, WITH weight decay",
+        "horizon": "Bjorck et al., ICLR 2025 -- the optimal LR shrinks with token horizon; probe-tuned LRs transfer only downscaled"
+      }
+    },
+    "rules": {
+      "H1": {
+        "text": "H-1: the hybrid's post-cooldown row lands BELOW GDN2's 1.3521734476089478 -- the hybrid beats pure GDN2 outright at matched exposure (the Jamba/Samba/Meta matched-param minority-interleave pattern).  A margin >= 0.01 is a BANKABLE win; a sub-band delta gets the parity phrasing (no band-worship).",
+        "bar": 0.01,
+        "reference": 1.3521734476089478
+      },
+      "H2": {
+        "text": "H-2: the hybrid's post-cooldown row lands at or below the composed machine's own same-seed row (1.3811104467936925 at 3401 / 1.383232252938407 at 3402) -- the slot store pays inside a dense stack even though the pure slot machine lost (the Meta complementarity receipt).",
+        "bar": 0.0
+      },
+      "REFUTATION": {
+        "text": "REFUTATION: if the hybrid lands >= pure GDN2's row, the literature's minority-interleave gain did NOT transfer to byte-LM at 150M/20M -- receipt it plainly; the uniformity finding would then extend to the hybrid regime."
+      },
+      "second_seed": {
+        "text": "the standing rule: any win >= 0.01 vs GDN2's banked row at seed 3401 owes the second seed 3402.",
+        "bar": 0.01
+      },
+      "band_discipline": {
+        "text": "the bands on every margin: the 0.075 endpoint-variance band (cross-machine) and the 0.0119 winner seed delta (within-machine).  A delta inside the seed band is PARITY, phrased as parity; only a >= 0.01 win vs GDN2's 1.3521734476089478 is bankable."
+      },
+      "falsifier": {
+        "text": "the frozen falsifier's own bar: bit-identical to the banked GDN2 trajectory at every one of its 204 steps (max per-step delta 0.0) and bit-identical landing at 1.3521734476089478 post-cooldown.  ANY divergence is a birth-parity conflict: STOP and escalate (the falsifier is non-negotiable)."
+      },
+      "birth_parity": {
+        "text": "both arms are BORN AS GDN2: the step-1 train loss must be bit-identical to the banked GDN2 row's own same-seed step-1 (the optimizer cannot touch the first forward); the slot contribution is exactly zero at birth (the read gate born at 0.0), every other slot parameter's gradient exactly zero, the gate's own gradient nonzero (the open signal)."
+      }
+    },
+    "exposure_targets": 20000000,
+    "model_build": "matched_arms.build_gdn2 verbatim (the registered lattice_gdn2 arm, its searched nomination's knobs, its own RNG order) + k22_hybrid.convert_gdn2_to_hybrid (the wrapper HOLDS the committed GDN2ExternalLayer; the composed slot mixer built under a forked RNG at the host width; the read gates born at exact 0.0)",
+    "placement": {
+      "slot_layers": [
+        6,
+        12,
+        18
+      ],
+      "rationale": "mid-stack spread (the operator's architecture go): Memorizing Transformers' mid-stack optimum for a memory layer in a dense stack (Wu et al., arXiv:2203.08913), even 6-spacing (the Jamba/Samba minority-interleave pattern at 1:7), our own decorative sweep's load-bearing mass in the first half (layers 0-6 hold the top deltas) -- the earliest mid-stack spread covering the decline"
+    },
+    "store_geometry": {
+      "heads": 2,
+      "value_dim": 128,
+      "rank": 128,
+      "rank_max": 128,
+      "key_dim": 16,
+      "ctx": 4,
+      "segment_tokens": 64,
+      "policy": "the K19-confirmed incumbent thresholds (tau_match 0.45, tau_merge 0.85, tau_pop 0.10, read_scale 2.787)"
+    },
+    "independent_stores": true,
+    "shared_pool_follow_up": "named follow-up, NOT this lane (independent stores per slot layer first)",
+    "optimizer": {
+      "optimizer": "bakeoff_optimizers.HybridMuonX45 (imported verbatim)",
+      "peak_lr": 0.0027100927623701265,
+      "lr_multiplier": 5,
+      "lr_convention": "the banked GDN2 row's own 5x speedrun point (5x the machine's tuned AdamW LR 0.0005420185524740253) -- the 1.3522 row's own config, inherited VERBATIM; the ONLY difference from the banked row is the machine",
+      "betas": [
+        0.9,
+        0.9392004369596886
+      ],
+      "weight_decay": 0.20059436743465126,
+      "warmup_steps": 69,
+      "microbatch": 8,
+      "grad_clip": 1.0,
+      "muon_params": "191 tensors",
+      "adamw_params": "406 tensors",
+      "inert_while_closed_note": "while a read gate is exactly zero, every other slot parameter's gradient is exactly zero (inert at birth); decoupled weight decay still shrinks the inert slot parameters each step (the recipe's own dynamics, stated, not patched)"
+    },
+    "routing": "the banked GDN2 row's own option-B split (verified equal against a pure-GDN2 twin's own split on the normalized dense names) + the slot branch per the K18 convention mirrored: matrices on Muon, the gate channels + the conv kernel + the K22 read gate on AdamW; the frozen falsifier's slot branch excluded by requires_grad",
+    "routing_receipt": {
+      "muon_tensors": 191,
+      "adamw_tensors": 406,
+      "dense_muon": 191,
+      "dense_adamw": 406,
+      "slot_muon": 0,
+      "slot_adamw": 0,
+      "frozen_slot_branch_excluded": true,
+      "note": "the frozen falsifier: the banked GDN2 row's own split exactly (the slot branch excluded by requires_grad, outside the optimizer/clip/EMA by construction)"
+    },
+    "routing_inventory": {
+      "muon": [
+        "model.embed.weight",
+        "model.head.weight",
+        "model.blocks.0.layer.gdn2.gdn2.q_proj.weight",
+        "model.blocks.0.layer.gdn2.gdn2.k_proj.weight",
+        "model.blocks.0.layer.gdn2.gdn2.v_proj.weight",
+        "model.blocks.0.layer.gdn2.gdn2.o_proj.weight",
+        "model.blocks.0.layer.mlp.w1.weight",
+        "model.blocks.0.layer.mlp.w2.weight",
+        "model.blocks.0.layer.mlp.w3.weight",
+        "model.blocks.1.layer.gdn2.gdn2.q_proj.weight",
+        "model.blocks.1.layer.gdn2.gdn2.k_proj.weight",
+        "model.blocks.1.layer.gdn2.gdn2.v_proj.weight",
+        "model.blocks.1.layer.gdn2.gdn2.o_proj.weight",
+        "model.blocks.1.layer.mlp.w1.weight",
+        "model.blocks.1.layer.mlp.w2.weight",
+        "model.blocks.1.layer.mlp.w3.weight",
+        "model.blocks.2.layer.gdn2.gdn2.q_proj.weight",
+        "model.blocks.2.layer.gdn2.gdn2.k_proj.weight",
+        "model.blocks.2.layer.gdn2.gdn2.v_proj.weight",
+        "model.blocks.2.layer.gdn2.gdn2.o_proj.weight",
+        "model.blocks.2.layer.mlp.w1.weight",
+        "model.blocks.2.layer.mlp.w2.weight",
+        "model.blocks.2.layer.mlp.w3.weight",
+        "model.blocks.3.layer.gdn2.gdn2.q_proj.weight",
+        "model.blocks.3.layer.gdn2.gdn2.k_proj.weight",
+        "model.blocks.3.layer.gdn2.gdn2.v_proj.weight",
+        "model.blocks.3.layer.gdn2.gdn2.o_proj.weight",
+        "model.blocks.3.layer.mlp.w1.weight",
+        "model.blocks.3.layer.mlp.w2.weight",
+        "model.blocks.3.layer.mlp.w3.weight",
+        "model.blocks.4.layer.gdn2.gdn2.q_proj.weight",
+        "model.blocks.4.layer.gdn2.gdn2.k_proj.weight",
+        "model.blocks.4.layer.gdn2.gdn2.v_proj.weight",
+        "model.blocks.4.layer.gdn2.gdn2.o_proj.weight",
+        "model.blocks.4.layer.mlp.w1.weight",
+        "model.blocks.4.layer.mlp.w2.weight",
+        "model.blocks.4.layer.mlp.w3.weight",
+        "model.blocks.5.layer.gdn2.gdn2.q_proj.weight",
+        "model.blocks.5.layer.gdn2.gdn2.k_proj.weight",
+        "model.blocks.5.layer.gdn2.gdn2.v_proj.weight",
+        "model.blocks.5.layer.gdn2.gdn2.o_proj.weight",
+        "model.blocks.5.layer.mlp.w1.weight",
+        "model.blocks.5.layer.mlp.w2.weight",
+        "model.blocks.5.layer.mlp.w3.weight",
+        "model.blocks.6.layer.gdn2.gdn2.gdn2.q_proj.weight",
+        "model.blocks.6.layer.gdn2.gdn2.gdn2.k_proj.weight",
+        "model.blocks.6.layer.gdn2.gdn2.gdn2.v_proj.weight",
+        "model.blocks.6.layer.gdn2.gdn2.gdn2.o_proj.weight",
+        "model.blocks.6.layer.mlp.w1.weight",
+        "model.blocks.6.layer.mlp.w2.weight",
+        "model.blocks.6.layer.mlp.w3.weight",
+        "model.blocks.7.layer.gdn2.gdn2.q_proj.weight",
+        "model.blocks.7.layer.gdn2.gdn2.k_proj.weight",
+        "model.blocks.7.layer.gdn2.gdn2.v_proj.weight",
+        "model.blocks.7.layer.gdn2.gdn2.o_proj.weight",
+        "model.blocks.7.layer.mlp.w1.weight",
+        "model.blocks.7.layer.mlp.w2.weight",
+        "model.blocks.7.layer.mlp.w3.weight",
+        "model.blocks.8.layer.gdn2.gdn2.q_proj.weight",
+        "model.blocks.8.layer.gdn2.gdn2.k_proj.weight",
+        "model.blocks.8.layer.gdn2.gdn2.v_proj.weight",
+        "model.blocks.8.layer.gdn2.gdn2.o_proj.weight",
+        "model.blocks.8.layer.mlp.w1.weight",
+        "model.blocks.8.layer.mlp.w2.weight",
+        "model.blocks.8.layer.mlp.w3.weight",
+        "model.blocks.9.layer.gdn2.gdn2.q_proj.weight",
+        "model.blocks.9.layer.gdn2.gdn2.k_proj.weight",
+        "model.blocks.9.layer.gdn2.gdn2.v_proj.weight",
+        "model.blocks.9.layer.gdn2.gdn2.o_proj.weight",
+        "model.blocks.9.layer.mlp.w1.weight",
+        "model.blocks.9.layer.mlp.w2.weight",
+        "model.blocks.9.layer.mlp.w3.weight",
+        "model.blocks.10.layer.gdn2.gdn2.q_proj.weight",
+        "model.blocks.10.layer.gdn2.gdn2.k_proj.weight",
+        "model.blocks.10.layer.gdn2.gdn2.v_proj.weight",
+        "model.blocks.10.layer.gdn2.gdn2.o_proj.weight",
+        "model.blocks.10.layer.mlp.w1.weight",
+        "model.blocks.10.layer.mlp.w2.weight",
+        "model.blocks.10.layer.mlp.w3.weight",
+        "model.blocks.11.layer.gdn2.gdn2.q_proj.weight",
+        "model.blocks.11.layer.gdn2.gdn2.k_proj.weight",
+        "model.blocks.11.layer.gdn2.gdn2.v_proj.weight",
+        "model.blocks.11.layer.gdn2.gdn2.o_proj.weight",
+        "model.blocks.11.layer.mlp.w1.weight",
+        "model.blocks.11.layer.mlp.w2.weight",
+        "model.blocks.11.layer.mlp.w3.weight",
+        "model.blocks.12.layer.gdn2.gdn2.gdn2.q_proj.weight",
+        "model.blocks.12.layer.gdn2.gdn2.gdn2.k_proj.weight",
+        "model.blocks.12.layer.gdn2.gdn2.gdn2.v_proj.weight",
+        "model.blocks.12.layer.gdn2.gdn2.gdn2.o_proj.weight",
+        "model.blocks.12.layer.mlp.w1.weight",
+        "model.blocks.12.layer.mlp.w2.weight",
+        "model.blocks.12.layer.mlp.w3.weight",
+        "model.blocks.13.layer.gdn2.gdn2.q_proj.weight",
+        "model.blocks.13.layer.gdn2.gdn2.k_proj.weight",
+        "model.blocks.13.layer.gdn2.gdn2.v_proj.weight",
+        "model.blocks.13.layer.gdn2.gdn2.o_proj.weight",
+        "model.blocks.13.layer.mlp.w1.weight",
+        "model.blocks.13.layer.mlp.w2.weight",
+        "model.blocks.13.layer.mlp.w3.weight",
+        "model.blocks.14.layer.gdn2.gdn2.q_proj.weight",
+        "model.blocks.14.layer.gdn2.gdn2.k_proj.weight",
+        "model.blocks.14.layer.gdn2.gdn2.v_proj.weight",
+        "model.blocks.14.layer.gdn2.gdn2.o_proj.weight",
+        "model.blocks.14.layer.mlp.w1.weight",
+        "model.blocks.14.layer.mlp.w2.weight",
+        "model.blocks.14.layer.mlp.w3.weight",
+        "model.blocks.15.layer.gdn2.gdn2.q_proj.weight",
+        "model.blocks.15.layer.gdn2.gdn2.k_proj.weight",
+        "model.blocks.15.layer.gdn2.gdn2.v_proj.weight",
+        "model.blocks.15.layer.gdn2.gdn2.o_proj.weight",
+        "model.blocks.15.layer.mlp.w1.weight",
+        "model.blocks.15.layer.mlp.w2.weight",
+        "model.blocks.15.layer.mlp.w3.weight",
+        "model.blocks.16.layer.gdn2.gdn2.q_proj.weight",
+        "model.blocks.16.layer.gdn2.gdn2.k_proj.weight",
+        "model.blocks.16.layer.gdn2.gdn2.v_proj.weight",
+        "model.blocks.16.layer.gdn2.gdn2.o_proj.weight",
+        "model.blocks.16.layer.mlp.w1.weight",
+        "model.blocks.16.layer.mlp.w2.weight",
+        "model.blocks.16.layer.mlp.w3.weight",
+        "model.blocks.17.layer.gdn2.gdn2.q_proj.weight",
+        "model.blocks.17.layer.gdn2.gdn2.k_proj.weight",
+        "model.blocks.17.layer.gdn2.gdn2.v_proj.weight",
+        "model.blocks.17.layer.gdn2.gdn2.o_proj.weight",
+        "model.blocks.17.layer.mlp.w1.weight",
+        "model.blocks.17.layer.mlp.w2.weight",
+        "model.blocks.17.layer.mlp.w3.weight",
+        "model.blocks.18.layer.gdn2.gdn2.gdn2.q_proj.weight",
+        "model.blocks.18.layer.gdn2.gdn2.gdn2.k_proj.weight",
+        "model.blocks.18.layer.gdn2.gdn2.gdn2.v_proj.weight",
+        "model.blocks.18.layer.gdn2.gdn2.gdn2.o_proj.weight",
+        "model.blocks.18.layer.mlp.w1.weight",
+        "model.blocks.18.layer.mlp.w2.weight",
+        "model.blocks.18.layer.mlp.w3.weight",
+        "model.blocks.19.layer.gdn2.gdn2.q_proj.weight",
+        "model.blocks.19.layer.gdn2.gdn2.k_proj.weight",
+        "model.blocks.19.layer.gdn2.gdn2.v_proj.weight",
+        "model.blocks.19.layer.gdn2.gdn2.o_proj.weight",
+        "model.blocks.19.layer.mlp.w1.weight",
+        "model.blocks.19.layer.mlp.w2.weight",
+        "model.blocks.19.layer.mlp.w3.weight",
+        "model.blocks.20.layer.gdn2.gdn2.q_proj.weight",
+        "model.blocks.20.layer.gdn2.gdn2.k_proj.weight",
+        "model.blocks.20.layer.gdn2.gdn2.v_proj.weight",
+        "model.blocks.20.layer.gdn2.gdn2.o_proj.weight",
+        "model.blocks.20.layer.mlp.w1.weight",
+        "model.blocks.20.layer.mlp.w2.weight",
+        "model.blocks.20.layer.mlp.w3.weight",
+        "model.blocks.21.layer.gdn2.gdn2.q_proj.weight",
+        "model.blocks.21.layer.gdn2.gdn2.k_proj.weight",
+        "model.blocks.21.layer.gdn2.gdn2.v_proj.weight",
+        "model.blocks.21.layer.gdn2.gdn2.o_proj.weight",
+        "model.blocks.21.layer.mlp.w1.weight",
+        "model.blocks.21.layer.mlp.w2.weight",
+        "model.blocks.21.layer.mlp.w3.weight",
+        "model.blocks.22.layer.gdn2.gdn2.q_proj.weight",
+        "model.blocks.22.layer.gdn2.gdn2.k_proj.weight",
+        "model.blocks.22.layer.gdn2.gdn2.v_proj.weight",
+        "model.blocks.22.layer.gdn2.gdn2.o_proj.weight",
+        "model.blocks.22.layer.mlp.w1.weight",
+        "model.blocks.22.layer.mlp.w2.weight",
+        "model.blocks.22.layer.mlp.w3.weight",
+        "model.blocks.23.layer.gdn2.gdn2.q_proj.weight",
+        "model.blocks.23.layer.gdn2.gdn2.k_proj.weight",
+        "model.blocks.23.layer.gdn2.gdn2.v_proj.weight",
+        "model.blocks.23.layer.gdn2.gdn2.o_proj.weight",
+        "model.blocks.23.layer.mlp.w1.weight",
+        "model.blocks.23.layer.mlp.w2.weight",
+        "model.blocks.23.layer.mlp.w3.weight",
+        "model.blocks.24.layer.gdn2.gdn2.q_proj.weight",
+        "model.blocks.24.layer.gdn2.gdn2.k_proj.weight",
+        "model.blocks.24.layer.gdn2.gdn2.v_proj.weight",
+        "model.blocks.24.layer.gdn2.gdn2.o_proj.weight",
+        "model.blocks.24.layer.mlp.w1.weight",
+        "model.blocks.24.layer.mlp.w2.weight",
+        "model.blocks.24.layer.mlp.w3.weight",
+        "model.blocks.25.layer.gdn2.gdn2.q_proj.weight",
+        "model.blocks.25.layer.gdn2.gdn2.k_proj.weight",
+        "model.blocks.25.layer.gdn2.gdn2.v_proj.weight",
+        "model.blocks.25.layer.gdn2.gdn2.o_proj.weight",
+        "model.blocks.25.layer.mlp.w1.weight",
+        "model.blocks.25.layer.mlp.w2.weight",
+        "model.blocks.25.layer.mlp.w3.weight",
+        "model.blocks.26.layer.gdn2.gdn2.q_proj.weight",
+        "model.blocks.26.layer.gdn2.gdn2.k_proj.weight",
+        "model.blocks.26.layer.gdn2.gdn2.v_proj.weight",
+        "model.blocks.26.layer.gdn2.gdn2.o_proj.weight",
+        "model.blocks.26.layer.mlp.w1.weight",
+        "model.blocks.26.layer.mlp.w2.weight",
+        "model.blocks.26.layer.mlp.w3.weight"
+      ],
+      "adamw": [
+        "model.norm.weight",
+        "model.blocks.0.norm.weight",
+        "model.blocks.0.layer.gdn2.gdn2.A_log",
+        "model.blocks.0.layer.gdn2.gdn2.dt_bias",
+        "model.blocks.0.layer.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.0.layer.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.0.layer.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.0.layer.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.0.layer.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.0.layer.gdn2.gdn2.b_proj.weight",
+        "model.blocks.0.layer.gdn2.gdn2.w_proj.weight",
+        "model.blocks.0.layer.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.0.layer.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.0.layer.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.0.layer.gdn2.gdn2.o_norm.weight",
+        "model.blocks.0.layer.norm_2.weight",
+        "model.blocks.1.norm.weight",
+        "model.blocks.1.layer.gdn2.gdn2.A_log",
+        "model.blocks.1.layer.gdn2.gdn2.dt_bias",
+        "model.blocks.1.layer.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.1.layer.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.1.layer.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.1.layer.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.1.layer.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.1.layer.gdn2.gdn2.b_proj.weight",
+        "model.blocks.1.layer.gdn2.gdn2.w_proj.weight",
+        "model.blocks.1.layer.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.1.layer.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.1.layer.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.1.layer.gdn2.gdn2.o_norm.weight",
+        "model.blocks.1.layer.norm_2.weight",
+        "model.blocks.2.norm.weight",
+        "model.blocks.2.layer.gdn2.gdn2.A_log",
+        "model.blocks.2.layer.gdn2.gdn2.dt_bias",
+        "model.blocks.2.layer.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.2.layer.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.2.layer.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.2.layer.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.2.layer.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.2.layer.gdn2.gdn2.b_proj.weight",
+        "model.blocks.2.layer.gdn2.gdn2.w_proj.weight",
+        "model.blocks.2.layer.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.2.layer.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.2.layer.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.2.layer.gdn2.gdn2.o_norm.weight",
+        "model.blocks.2.layer.norm_2.weight",
+        "model.blocks.3.norm.weight",
+        "model.blocks.3.layer.gdn2.gdn2.A_log",
+        "model.blocks.3.layer.gdn2.gdn2.dt_bias",
+        "model.blocks.3.layer.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.3.layer.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.3.layer.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.3.layer.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.3.layer.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.3.layer.gdn2.gdn2.b_proj.weight",
+        "model.blocks.3.layer.gdn2.gdn2.w_proj.weight",
+        "model.blocks.3.layer.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.3.layer.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.3.layer.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.3.layer.gdn2.gdn2.o_norm.weight",
+        "model.blocks.3.layer.norm_2.weight",
+        "model.blocks.4.norm.weight",
+        "model.blocks.4.layer.gdn2.gdn2.A_log",
+        "model.blocks.4.layer.gdn2.gdn2.dt_bias",
+        "model.blocks.4.layer.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.4.layer.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.4.layer.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.4.layer.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.4.layer.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.4.layer.gdn2.gdn2.b_proj.weight",
+        "model.blocks.4.layer.gdn2.gdn2.w_proj.weight",
+        "model.blocks.4.layer.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.4.layer.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.4.layer.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.4.layer.gdn2.gdn2.o_norm.weight",
+        "model.blocks.4.layer.norm_2.weight",
+        "model.blocks.5.norm.weight",
+        "model.blocks.5.layer.gdn2.gdn2.A_log",
+        "model.blocks.5.layer.gdn2.gdn2.dt_bias",
+        "model.blocks.5.layer.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.5.layer.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.5.layer.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.5.layer.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.5.layer.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.5.layer.gdn2.gdn2.b_proj.weight",
+        "model.blocks.5.layer.gdn2.gdn2.w_proj.weight",
+        "model.blocks.5.layer.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.5.layer.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.5.layer.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.5.layer.gdn2.gdn2.o_norm.weight",
+        "model.blocks.5.layer.norm_2.weight",
+        "model.blocks.6.norm.weight",
+        "model.blocks.6.layer.gdn2.gdn2.gdn2.A_log",
+        "model.blocks.6.layer.gdn2.gdn2.gdn2.dt_bias",
+        "model.blocks.6.layer.gdn2.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.6.layer.gdn2.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.6.layer.gdn2.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.6.layer.gdn2.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.6.layer.gdn2.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.6.layer.gdn2.gdn2.gdn2.b_proj.weight",
+        "model.blocks.6.layer.gdn2.gdn2.gdn2.w_proj.weight",
+        "model.blocks.6.layer.gdn2.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.6.layer.gdn2.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.6.layer.gdn2.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.6.layer.gdn2.gdn2.gdn2.o_norm.weight",
+        "model.blocks.6.layer.norm_2.weight",
+        "model.blocks.7.norm.weight",
+        "model.blocks.7.layer.gdn2.gdn2.A_log",
+        "model.blocks.7.layer.gdn2.gdn2.dt_bias",
+        "model.blocks.7.layer.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.7.layer.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.7.layer.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.7.layer.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.7.layer.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.7.layer.gdn2.gdn2.b_proj.weight",
+        "model.blocks.7.layer.gdn2.gdn2.w_proj.weight",
+        "model.blocks.7.layer.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.7.layer.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.7.layer.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.7.layer.gdn2.gdn2.o_norm.weight",
+        "model.blocks.7.layer.norm_2.weight",
+        "model.blocks.8.norm.weight",
+        "model.blocks.8.layer.gdn2.gdn2.A_log",
+        "model.blocks.8.layer.gdn2.gdn2.dt_bias",
+        "model.blocks.8.layer.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.8.layer.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.8.layer.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.8.layer.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.8.layer.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.8.layer.gdn2.gdn2.b_proj.weight",
+        "model.blocks.8.layer.gdn2.gdn2.w_proj.weight",
+        "model.blocks.8.layer.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.8.layer.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.8.layer.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.8.layer.gdn2.gdn2.o_norm.weight",
+        "model.blocks.8.layer.norm_2.weight",
+        "model.blocks.9.norm.weight",
+        "model.blocks.9.layer.gdn2.gdn2.A_log",
+        "model.blocks.9.layer.gdn2.gdn2.dt_bias",
+        "model.blocks.9.layer.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.9.layer.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.9.layer.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.9.layer.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.9.layer.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.9.layer.gdn2.gdn2.b_proj.weight",
+        "model.blocks.9.layer.gdn2.gdn2.w_proj.weight",
+        "model.blocks.9.layer.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.9.layer.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.9.layer.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.9.layer.gdn2.gdn2.o_norm.weight",
+        "model.blocks.9.layer.norm_2.weight",
+        "model.blocks.10.norm.weight",
+        "model.blocks.10.layer.gdn2.gdn2.A_log",
+        "model.blocks.10.layer.gdn2.gdn2.dt_bias",
+        "model.blocks.10.layer.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.10.layer.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.10.layer.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.10.layer.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.10.layer.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.10.layer.gdn2.gdn2.b_proj.weight",
+        "model.blocks.10.layer.gdn2.gdn2.w_proj.weight",
+        "model.blocks.10.layer.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.10.layer.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.10.layer.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.10.layer.gdn2.gdn2.o_norm.weight",
+        "model.blocks.10.layer.norm_2.weight",
+        "model.blocks.11.norm.weight",
+        "model.blocks.11.layer.gdn2.gdn2.A_log",
+        "model.blocks.11.layer.gdn2.gdn2.dt_bias",
+        "model.blocks.11.layer.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.11.layer.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.11.layer.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.11.layer.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.11.layer.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.11.layer.gdn2.gdn2.b_proj.weight",
+        "model.blocks.11.layer.gdn2.gdn2.w_proj.weight",
+        "model.blocks.11.layer.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.11.layer.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.11.layer.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.11.layer.gdn2.gdn2.o_norm.weight",
+        "model.blocks.11.layer.norm_2.weight",
+        "model.blocks.12.norm.weight",
+        "model.blocks.12.layer.gdn2.gdn2.gdn2.A_log",
+        "model.blocks.12.layer.gdn2.gdn2.gdn2.dt_bias",
+        "model.blocks.12.layer.gdn2.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.12.layer.gdn2.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.12.layer.gdn2.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.12.layer.gdn2.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.12.layer.gdn2.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.12.layer.gdn2.gdn2.gdn2.b_proj.weight",
+        "model.blocks.12.layer.gdn2.gdn2.gdn2.w_proj.weight",
+        "model.blocks.12.layer.gdn2.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.12.layer.gdn2.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.12.layer.gdn2.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.12.layer.gdn2.gdn2.gdn2.o_norm.weight",
+        "model.blocks.12.layer.norm_2.weight",
+        "model.blocks.13.norm.weight",
+        "model.blocks.13.layer.gdn2.gdn2.A_log",
+        "model.blocks.13.layer.gdn2.gdn2.dt_bias",
+        "model.blocks.13.layer.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.13.layer.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.13.layer.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.13.layer.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.13.layer.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.13.layer.gdn2.gdn2.b_proj.weight",
+        "model.blocks.13.layer.gdn2.gdn2.w_proj.weight",
+        "model.blocks.13.layer.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.13.layer.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.13.layer.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.13.layer.gdn2.gdn2.o_norm.weight",
+        "model.blocks.13.layer.norm_2.weight",
+        "model.blocks.14.norm.weight",
+        "model.blocks.14.layer.gdn2.gdn2.A_log",
+        "model.blocks.14.layer.gdn2.gdn2.dt_bias",
+        "model.blocks.14.layer.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.14.layer.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.14.layer.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.14.layer.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.14.layer.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.14.layer.gdn2.gdn2.b_proj.weight",
+        "model.blocks.14.layer.gdn2.gdn2.w_proj.weight",
+        "model.blocks.14.layer.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.14.layer.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.14.layer.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.14.layer.gdn2.gdn2.o_norm.weight",
+        "model.blocks.14.layer.norm_2.weight",
+        "model.blocks.15.norm.weight",
+        "model.blocks.15.layer.gdn2.gdn2.A_log",
+        "model.blocks.15.layer.gdn2.gdn2.dt_bias",
+        "model.blocks.15.layer.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.15.layer.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.15.layer.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.15.layer.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.15.layer.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.15.layer.gdn2.gdn2.b_proj.weight",
+        "model.blocks.15.layer.gdn2.gdn2.w_proj.weight",
+        "model.blocks.15.layer.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.15.layer.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.15.layer.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.15.layer.gdn2.gdn2.o_norm.weight",
+        "model.blocks.15.layer.norm_2.weight",
+        "model.blocks.16.norm.weight",
+        "model.blocks.16.layer.gdn2.gdn2.A_log",
+        "model.blocks.16.layer.gdn2.gdn2.dt_bias",
+        "model.blocks.16.layer.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.16.layer.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.16.layer.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.16.layer.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.16.layer.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.16.layer.gdn2.gdn2.b_proj.weight",
+        "model.blocks.16.layer.gdn2.gdn2.w_proj.weight",
+        "model.blocks.16.layer.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.16.layer.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.16.layer.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.16.layer.gdn2.gdn2.o_norm.weight",
+        "model.blocks.16.layer.norm_2.weight",
+        "model.blocks.17.norm.weight",
+        "model.blocks.17.layer.gdn2.gdn2.A_log",
+        "model.blocks.17.layer.gdn2.gdn2.dt_bias",
+        "model.blocks.17.layer.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.17.layer.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.17.layer.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.17.layer.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.17.layer.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.17.layer.gdn2.gdn2.b_proj.weight",
+        "model.blocks.17.layer.gdn2.gdn2.w_proj.weight",
+        "model.blocks.17.layer.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.17.layer.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.17.layer.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.17.layer.gdn2.gdn2.o_norm.weight",
+        "model.blocks.17.layer.norm_2.weight",
+        "model.blocks.18.norm.weight",
+        "model.blocks.18.layer.gdn2.gdn2.gdn2.A_log",
+        "model.blocks.18.layer.gdn2.gdn2.gdn2.dt_bias",
+        "model.blocks.18.layer.gdn2.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.18.layer.gdn2.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.18.layer.gdn2.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.18.layer.gdn2.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.18.layer.gdn2.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.18.layer.gdn2.gdn2.gdn2.b_proj.weight",
+        "model.blocks.18.layer.gdn2.gdn2.gdn2.w_proj.weight",
+        "model.blocks.18.layer.gdn2.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.18.layer.gdn2.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.18.layer.gdn2.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.18.layer.gdn2.gdn2.gdn2.o_norm.weight",
+        "model.blocks.18.layer.norm_2.weight",
+        "model.blocks.19.norm.weight",
+        "model.blocks.19.layer.gdn2.gdn2.A_log",
+        "model.blocks.19.layer.gdn2.gdn2.dt_bias",
+        "model.blocks.19.layer.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.19.layer.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.19.layer.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.19.layer.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.19.layer.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.19.layer.gdn2.gdn2.b_proj.weight",
+        "model.blocks.19.layer.gdn2.gdn2.w_proj.weight",
+        "model.blocks.19.layer.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.19.layer.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.19.layer.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.19.layer.gdn2.gdn2.o_norm.weight",
+        "model.blocks.19.layer.norm_2.weight",
+        "model.blocks.20.norm.weight",
+        "model.blocks.20.layer.gdn2.gdn2.A_log",
+        "model.blocks.20.layer.gdn2.gdn2.dt_bias",
+        "model.blocks.20.layer.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.20.layer.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.20.layer.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.20.layer.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.20.layer.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.20.layer.gdn2.gdn2.b_proj.weight",
+        "model.blocks.20.layer.gdn2.gdn2.w_proj.weight",
+        "model.blocks.20.layer.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.20.layer.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.20.layer.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.20.layer.gdn2.gdn2.o_norm.weight",
+        "model.blocks.20.layer.norm_2.weight",
+        "model.blocks.21.norm.weight",
+        "model.blocks.21.layer.gdn2.gdn2.A_log",
+        "model.blocks.21.layer.gdn2.gdn2.dt_bias",
+        "model.blocks.21.layer.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.21.layer.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.21.layer.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.21.layer.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.21.layer.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.21.layer.gdn2.gdn2.b_proj.weight",
+        "model.blocks.21.layer.gdn2.gdn2.w_proj.weight",
+        "model.blocks.21.layer.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.21.layer.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.21.layer.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.21.layer.gdn2.gdn2.o_norm.weight",
+        "model.blocks.21.layer.norm_2.weight",
+        "model.blocks.22.norm.weight",
+        "model.blocks.22.layer.gdn2.gdn2.A_log",
+        "model.blocks.22.layer.gdn2.gdn2.dt_bias",
+        "model.blocks.22.layer.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.22.layer.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.22.layer.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.22.layer.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.22.layer.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.22.layer.gdn2.gdn2.b_proj.weight",
+        "model.blocks.22.layer.gdn2.gdn2.w_proj.weight",
+        "model.blocks.22.layer.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.22.layer.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.22.layer.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.22.layer.gdn2.gdn2.o_norm.weight",
+        "model.blocks.22.layer.norm_2.weight",
+        "model.blocks.23.norm.weight",
+        "model.blocks.23.layer.gdn2.gdn2.A_log",
+        "model.blocks.23.layer.gdn2.gdn2.dt_bias",
+        "model.blocks.23.layer.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.23.layer.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.23.layer.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.23.layer.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.23.layer.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.23.layer.gdn2.gdn2.b_proj.weight",
+        "model.blocks.23.layer.gdn2.gdn2.w_proj.weight",
+        "model.blocks.23.layer.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.23.layer.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.23.layer.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.23.layer.gdn2.gdn2.o_norm.weight",
+        "model.blocks.23.layer.norm_2.weight",
+        "model.blocks.24.norm.weight",
+        "model.blocks.24.layer.gdn2.gdn2.A_log",
+        "model.blocks.24.layer.gdn2.gdn2.dt_bias",
+        "model.blocks.24.layer.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.24.layer.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.24.layer.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.24.layer.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.24.layer.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.24.layer.gdn2.gdn2.b_proj.weight",
+        "model.blocks.24.layer.gdn2.gdn2.w_proj.weight",
+        "model.blocks.24.layer.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.24.layer.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.24.layer.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.24.layer.gdn2.gdn2.o_norm.weight",
+        "model.blocks.24.layer.norm_2.weight",
+        "model.blocks.25.norm.weight",
+        "model.blocks.25.layer.gdn2.gdn2.A_log",
+        "model.blocks.25.layer.gdn2.gdn2.dt_bias",
+        "model.blocks.25.layer.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.25.layer.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.25.layer.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.25.layer.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.25.layer.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.25.layer.gdn2.gdn2.b_proj.weight",
+        "model.blocks.25.layer.gdn2.gdn2.w_proj.weight",
+        "model.blocks.25.layer.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.25.layer.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.25.layer.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.25.layer.gdn2.gdn2.o_norm.weight",
+        "model.blocks.25.layer.norm_2.weight",
+        "model.blocks.26.norm.weight",
+        "model.blocks.26.layer.gdn2.gdn2.A_log",
+        "model.blocks.26.layer.gdn2.gdn2.dt_bias",
+        "model.blocks.26.layer.gdn2.gdn2.q_conv1d.weight",
+        "model.blocks.26.layer.gdn2.gdn2.k_conv1d.weight",
+        "model.blocks.26.layer.gdn2.gdn2.v_conv1d.weight",
+        "model.blocks.26.layer.gdn2.gdn2.f_proj.0.weight",
+        "model.blocks.26.layer.gdn2.gdn2.f_proj.1.weight",
+        "model.blocks.26.layer.gdn2.gdn2.b_proj.weight",
+        "model.blocks.26.layer.gdn2.gdn2.w_proj.weight",
+        "model.blocks.26.layer.gdn2.gdn2.g_proj.0.weight",
+        "model.blocks.26.layer.gdn2.gdn2.g_proj.1.weight",
+        "model.blocks.26.layer.gdn2.gdn2.g_proj.1.bias",
+        "model.blocks.26.layer.gdn2.gdn2.o_norm.weight",
+        "model.blocks.26.layer.norm_2.weight"
+      ]
+    },
+    "parameters": {
+      "dense": 149855670,
+      "slot_added": 2661915,
+      "slot_added_percent": 1.776,
+      "slot_mixer_parameters": 887304,
+      "read_gates": 3,
+      "total": 152517585,
+      "note": "purely ADDITIVE (the falsifier's own construction: the dense mixers stay, bit-identical at birth); nothing removed; the exact delta quoted per the registration"
+    },
+    "checkpoint_steps": [
+      1,
+      5,
+      10,
+      20,
+      40,
+      80,
+      120,
+      160,
+      180
+    ],
+    "stopping_rule": "matched-EXPOSURE: train until 20000000 targets seen (the banked probe exposure, constant LR), THEN the 24-step linear cooldown (the corrected-scoring extension, same stream); the step-180 constant-LR eval is retained for banked comparability",
+    "velocity_note": "the K20/K21 receipts: the hybrid step is projected 1.37x pure-GDN2 (3-of-24 at the measured 7.28x per-mixer ratio; the checkpointed block re-runs the slot scan in backward, so the honest wall is reported first-class) -- matched-EXPOSURE means the arms eat the SAME bytes in different wall-clocks",
+    "both_bands": {
+      "endpoint_variance": 0.075,
+      "winner_seed_delta": 0.011948040553501738
+    },
+    "anchors": {
+      "banked_gdn2": {
+        "post_cooldown": 1.3521734476089478,
+        "constant_lr": 1.3950541530336653,
+        "ema180": 1.3803383282252721,
+        "run_dir": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/protocol_correction_runs/gdn2_speedrun_rescored"
+      },
+      "composed_ours": {
+        "post_cooldown": {
+          "3401": 1.3811104467936925,
+          "3402": 1.383232252938407
+        },
+        "constant_lr": {
+          "3401": 1.433674931526184,
+          "3402": 1.4341776371002197
+        },
+        "ema_180": {
+          "3401": 1.424389226096017,
+          "3402": 1.4385861498968942
+        },
+        "step1_train_loss": {
+          "3401": 5.782775391046648,
+          "3402": 5.720172563202926
+        },
+        "note": "the K15 composition arm's own landed rows (the inherited 4x point, tuned for the SOFTMAX-read machine): receipts/k15_composition_summary.json"
+      },
+      "banked_mechanism_ours": {
+        "seed3401_step180": {
+          "identity_rewrite_share": 0.12220044317888193,
+          "read_entropy_nats": 1.5150481063949617,
+          "occupancy_mean_live_slots": 33.49335734049479,
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.022992451985677082,
+            "correct": 0.9743779500325521,
+            "pop": 0.0,
+            "merge": 0.0026295979817708335
+          },
+          "constant_lr_nll": 1.4907409463609969
+        },
+        "seed3402_step180": {
+          "identity_rewrite_share": 0.11799608786375947,
+          "read_entropy_nats": 1.600236432712681,
+          "occupancy_mean_live_slots": 35.15362294514974,
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.023668924967447918,
+            "correct": 0.9737930297851562,
+            "pop": 0.0,
+            "merge": 0.0025380452473958335
+          },
+          "constant_lr_nll": 1.4899048124040877
+        },
+        "seed3402_post_cooldown": {
+          "identity_rewrite_share": 0.1179643202876504,
+          "read_entropy_nats": 1.538525497965773,
+          "occupancy_mean_live_slots": 32.76612091064453,
+          "op_rate_per_token": {
+            "none": 0.0,
+            "append": 0.02294921875,
+            "correct": 0.9746373494466146,
+            "pop": 0.0,
+            "merge": 0.0024134318033854165
+          },
+          "post_cooldown_nll": 1.4338248457227434
+        }
+      }
+    },
+    "bindings": {
+      "registration": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/PREREGISTRATION_K22_HYBRID.md",
+      "registration_sha256": "f3a0d7f8ae34c8cc40f97fef8d5ab7cc89066257662a473409029abd97dc9f6d",
+      "k22_hybrid_sha256": "d5ac0b082260402382b181a7c4d84ceeb06e90d7053b8d30a37af4d9d64d69c5",
+      "k22_gate_receipt_sha256": "37bcfa1f6837069f3ddbafe486f0d87d52907e6ae550592fc09c07d0e1e45c68",
+      "k15_composition_sha256": "b7ade13ec44cfd927493fe96a0e9d3fbe0bb547cce0a84797fe43557556b903a",
+      "k18_short_conv_sha256": "82963fe89ba75e5583ada78960da9a422be9a1b5c213ee0456f2e2bbb4e68912",
+      "matched_arms_sha256": "9d37c32469f3701ac3e0bfbd1d4b5c253e7cbdd425e95a281df62d83f6f30830",
+      "muon_control_sha256": "df348e4f8d3b333c1826490ba0813617ce6497fdccc5af55e7711a64ec07d10e",
+      "protocol_correction_sha256": "2610942b448416d7365474130f1dc3e17056295b0defbe775b8128518a53b8b9",
+      "external_gdn2_sha256": "316ddf8658a55da4a4159f77881c92e9a067570da55d0aa2592b7b11c51aa3d8",
+      "lattice_registration_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c",
+      "banked_gdn2_row": {
+        "run_dir": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/protocol_correction_runs/gdn2_speedrun_rescored",
+        "start_sha256": "e25a2a0a33ba1f1d9ce1996267b3226428f4c420217184021c8c710a2cffe5e9",
+        "result_sha256": "9253b9819f02433377aa94760047864481457c16d6a9ea4fcc6cbcb2b0262f75",
+        "training_log_sha256": "329b1358358f1f32ea3b8838a28ddd3534627c2a13da3d08eab2f828ba4f18f8",
+        "post_cooldown": 1.3521734476089478
+      }
+    },
+    "summary": {
+      "base_arm": "gdn2",
+      "parameters": {
+        "total": 149855670
+      },
+      "nomination": {
+        "arm": "gdn2",
+        "receipt": "/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/receipts/byte_velocity_nominations/gdn2.json",
+        "receipt_sha256": "5e7ab164973366817699a9df21eb1714c9203c49e44a65566c048842f2034813",
+        "generation": 7,
+        "candidate": 1,
+        "search_score": 1.3930157472689946
+      },
+      "policy": {
+        "lr": 0.0005420185524740253,
+        "microbatch": 8,
+        "beta2": 0.9392004369596886,
+        "weight_decay": 0.20059436743465126,
+        "warmup_steps": 69,
+        "init_scale": 1.3483482393728117,
+        "decay_rate_scale": 0.48706005128019486,
+        "dt_bias_shift": 1.7178302439489688,
+        "expansion": 2.0
+      }
+    },
+    "identity": {
+      "stream": "flagship_beyond_100gb",
+      "source": "/mnt/nvme2n1/erikg/pile.txt",
+      "source_size": 1307910802540,
+      "manifest": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/documents.jsonl.gz",
+      "manifest_sha256": "48b9095eeccb023ff1cb2a4f6da899a8b3e4eb3b76b2804e730f1d6ad031c414",
+      "registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/registration.json",
+      "registration_sha256": "c36f84cfd1a59530a7991a4be6c1f68b424a79c5b7de169eabfc90d3cd31cc31",
+      "boundary_bytes": 100000000000,
+      "lattice_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_150M_LATTICE.md",
+      "lattice_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c"
+    },
+    "versions": {
+      "torch": "2.9.1+cu128",
+      "schedulefree": "1.4.1",
+      "hybrid_muon_sha256": "204c55252f3032b91a965d2511cddb5d9d2eef9f94e9bfd509ee86d2987384d6",
+      "bakeoff_optimizers_sha256": "dff190059d0ff94633c3b3e42ab89ef2ccde8517ebd512a4acff96143a949745"
+    },
+    "git": {
+      "commit": "ed83688cb865170ec82679e97f58ad4bd2995a03",
+      "relevant_paths_dirty": "M experiments/expressivity_tasks/x45_matrix_emender/k22_hybrid.py\n M experiments/expressivity_tasks/x45_matrix_emender/k22_probe_hybrid.py\n?? experiments/expressivity_tasks/x45_matrix_emender/k22_runs/frozen_driver.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/k22_runs/gates_driver.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/k22_runs/k10_k13_k11b_k15_k17_k18_k22_suites_console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/k22_runs/k22_module_load_check.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/k22_runs/smoke_driver.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/k22_runs/suites_driver.console.txt",
+      "branch": "main"
+    },
+    "birth_receipts": {
+      "probe": "k22_birth_receipts",
+      "seed": 3401,
+      "read_gates": {
+        "6": {
+          "value": 0.0,
+          "born_at_exact_zero": true,
+          "grad": null
+        },
+        "12": {
+          "value": 0.0,
+          "born_at_exact_zero": true,
+          "grad": null
+        },
+        "18": {
+          "value": 0.0,
+          "born_at_exact_zero": true,
+          "grad": null
+        }
+      },
+      "open_signal": {
+        "note": "dLoss/dgate x slot content at birth: the gate's own gradient (the open signal) is nonzero at birth while every other slot parameter receives an exactly-zero gradient (inert at birth)",
+        "all_gates_born_at_exact_zero": true,
+        "any_gate_gradient_nonzero": false
+      },
+      "inert_at_birth": {
+        "per_layer": {
+          "6": {
+            "tensors_with_grad": 0,
+            "all_exactly_zero": true,
+            "max_abs_grad": 0.0
+          },
+          "12": {
+            "tensors_with_grad": 0,
+            "all_exactly_zero": true,
+            "max_abs_grad": 0.0
+          },
+          "18": {
+            "tensors_with_grad": 0,
+            "all_exactly_zero": true,
+            "max_abs_grad": 0.0
+          }
+        },
+        "all_inert": true
+      },
+      "store_runs_at_birth": {
+        "note": "the slot stores fill at birth (the machinery runs; nothing reads out until a gate opens)",
+        "ops_fill": true,
+        "per_layer_op_rate": {
+          "6": {
+            "none": 0.0,
+            "append": 0.02911376953125,
+            "correct": 0.970855712890625,
+            "pop": 0.0,
+            "merge": 3.0517578125e-05
+          },
+          "12": {
+            "none": 0.0,
+            "append": 0.02911376953125,
+            "correct": 0.970855712890625,
+            "pop": 0.0,
+            "merge": 3.0517578125e-05
+          },
+          "18": {
+            "none": 0.0,
+            "append": 0.02911376953125,
+            "correct": 0.970855712890625,
+            "pop": 0.0,
+            "merge": 3.0517578125e-05
+          }
+        },
+        "occupancy": {
+          "6": 50.43017578125,
+          "12": 50.43017578125,
+          "18": 50.43017578125
+        }
+      }
+    }
+  },
+  "session": {
+    "host": "lambda01",
+    "card": "2",
+    "device": "NVIDIA RTX 6000 Ada Generation",
+    "card_gib": 47.38,
+    "torch": "2.9.1+cu128",
+    "triton": "3.5.1"
+  },
+  "trajectory": [
+    {
+      "step": 1,
+      "active_seconds": 4.882012703455985,
+      "bytes": 117712,
+      "loss": 5.948033220866492
+    },
+    {
+      "step": 2,
+      "active_seconds": 9.682699871249497,
+      "bytes": 248784,
+      "loss": 5.906929612159729
+    },
+    {
+      "step": 3,
+      "active_seconds": 14.487856015563011,
+      "bytes": 364722,
+      "loss": 5.813067854948886
+    },
+    {
+      "step": 4,
+      "active_seconds": 19.284229007549584,
+      "bytes": 461739,
+      "loss": 5.70783822362994
+    },
+    {
+      "step": 5,
+      "active_seconds": 24.11620089970529,
+      "bytes": 567019,
+      "loss": 5.481132225796444
+    },
+    {
+      "step": 25,
+      "active_seconds": 124.04083645436913,
+      "bytes": 2920934,
+      "loss": 2.957372488019362
+    },
+    {
+      "step": 50,
+      "active_seconds": 251.74478907231241,
+      "bytes": 5640425,
+      "loss": 1.9521988295824608
+    },
+    {
+      "step": 75,
+      "active_seconds": 379.00137053243816,
+      "bytes": 8340023,
+      "loss": 1.5530220121145248
+    },
+    {
+      "step": 100,
+      "active_seconds": 506.0826540449634,
+      "bytes": 11089562,
+      "loss": 1.7574884854850732
+    },
+    {
+      "step": 125,
+      "active_seconds": 633.1523962877691,
+      "bytes": 13866716,
+      "loss": 1.7349875506279748
+    },
+    {
+      "step": 150,
+      "active_seconds": 760.0668652094901,
+      "bytes": 16597785,
+      "loss": 2.0562210573055553
+    },
+    {
+      "step": 175,
+      "active_seconds": 887.3867652202025,
+      "bytes": 19507355,
+      "loss": 1.8128241781652006
+    },
+    {
+      "step": 200,
+      "active_seconds": 1014.0238715149462,
+      "bytes": 22220910,
+      "loss": 2.5022606715143736
+    },
+    {
+      "step": 201,
+      "active_seconds": 1019.1446331506595,
+      "bytes": 22351982,
+      "loss": 3.1180747151374817
+    },
+    {
+      "step": 202,
+      "active_seconds": 1024.2634363332763,
+      "bytes": 22483054,
+      "loss": 2.797148674726486
+    },
+    {
+      "step": 203,
+      "active_seconds": 1029.3808002937585,
+      "bytes": 22614126,
+      "loss": 2.6680147647857666
+    },
+    {
+      "step": 204,
+      "active_seconds": 1034.500473337248,
+      "bytes": 22745198,
+      "loss": 2.7929458618164062
+    }
+  ],
+  "clauses": {
+    "rules": {
+      "H1": {
+        "text": "H-1: the hybrid's post-cooldown row lands BELOW GDN2's 1.3521734476089478 -- the hybrid beats pure GDN2 outright at matched exposure (the Jamba/Samba/Meta matched-param minority-interleave pattern).  A margin >= 0.01 is a BANKABLE win; a sub-band delta gets the parity phrasing (no band-worship).",
+        "bar": 0.01,
+        "reference": 1.3521734476089478
+      },
+      "H2": {
+        "text": "H-2: the hybrid's post-cooldown row lands at or below the composed machine's own same-seed row (1.3811104467936925 at 3401 / 1.383232252938407 at 3402) -- the slot store pays inside a dense stack even though the pure slot machine lost (the Meta complementarity receipt).",
+        "bar": 0.0
+      },
+      "REFUTATION": {
+        "text": "REFUTATION: if the hybrid lands >= pure GDN2's row, the literature's minority-interleave gain did NOT transfer to byte-LM at 150M/20M -- receipt it plainly; the uniformity finding would then extend to the hybrid regime."
+      },
+      "second_seed": {
+        "text": "the standing rule: any win >= 0.01 vs GDN2's banked row at seed 3401 owes the second seed 3402.",
+        "bar": 0.01
+      },
+      "band_discipline": {
+        "text": "the bands on every margin: the 0.075 endpoint-variance band (cross-machine) and the 0.0119 winner seed delta (within-machine).  A delta inside the seed band is PARITY, phrased as parity; only a >= 0.01 win vs GDN2's 1.3521734476089478 is bankable."
+      },
+      "falsifier": {
+        "text": "the frozen falsifier's own bar: bit-identical to the banked GDN2 trajectory at every one of its 204 steps (max per-step delta 0.0) and bit-identical landing at 1.3521734476089478 post-cooldown.  ANY divergence is a birth-parity conflict: STOP and escalate (the falsifier is non-negotiable)."
+      },
+      "birth_parity": {
+        "text": "both arms are BORN AS GDN2: the step-1 train loss must be bit-identical to the banked GDN2 row's own same-seed step-1 (the optimizer cannot touch the first forward); the slot contribution is exactly zero at birth (the read gate born at 0.0), every other slot parameter's gradient exactly zero, the gate's own gradient nonzero (the open signal)."
+      }
+    },
+    "bands": {
+      "endpoint_variance": 0.075,
+      "winner_seed_delta": 0.011948040553501738
+    },
+    "same_seed_composed_post_cooldown": 1.3811104467936925,
+    "vs_gdn2_post_cooldown": 0.0,
+    "gdn2_contact_flag": true,
+    "improvement_vs_gdn2": 0.0,
+    "improvement_vs_composed_ours": 0.028936999184744794,
+    "within_winner_seed_band_of_gdn2": true,
+    "clause_at_this_seed": "FALSIFIER_PASSED",
+    "falsifier": {
+      "steps_compared": 204,
+      "bit_identical_steps": 204,
+      "max_abs_loss_delta": 0.0,
+      "landing_bit_identical": true,
+      "expected_post_cooldown": 1.3521734476089478
+    }
+  }
+}

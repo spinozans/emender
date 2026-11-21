@@ -711,7 +711,7 @@ def run_arm(args) -> dict:
     # convention mirrored
     muon_params, adamw_params, muon_names, adamw_names = \
         split_parameters_k22(model, frozen)
-    routing_receipt = _routing_cross_check_k22(model, seed)
+    routing_receipt = _routing_cross_check_k22(model, seed, frozen)
     optimizer = HybridMuonX45(
         muon_params, adamw_params, lr=PEAK_LR, betas=tuple(
             optimizer_config["betas"]),

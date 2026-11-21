@@ -401,7 +401,7 @@ def split_parameters_k22(model, frozen: bool = False):
             muon, adamw)
 
 
-def _routing_cross_check_k22(model, seed: int) -> dict:
+def _routing_cross_check_k22(model, seed: int, frozen: bool = False) -> dict:
     """The no-drift receipt: a pure-GDN2 twin of the SAME build must route
     EXACTLY as the banked row's own split routes it; the hybrid model's
     DENSE names (after the slot-layer normalization) must equal that split
@@ -415,7 +415,7 @@ def _routing_cross_check_k22(model, seed: int) -> dict:
     from experiments.expressivity_tasks.x45_matrix_emender.muon_control \
         import split_parameters_gdn2
     hybrid_muon, hybrid_adamw, muon_names, adamw_names = \
-        split_parameters_k22(model)
+        split_parameters_k22(model, frozen)
     normalize = _slot_normalizer()
     dense_muon = sorted(normalize(n) for n in muon_names
                         if ".slot." not in n and not n.endswith(".read_gate"))
@@ -432,6 +432,21 @@ def _routing_cross_check_k22(model, seed: int) -> dict:
     if dense_adamw != sorted(twin_adamw):
         raise ValueError("the hybrid's dense AdamW group (normalized) "
                          "drifted from the banked GDN2 row's own split")
+    if frozen:
+        # the falsifier's own plumbing receipt: the whole slot branch is
+        # excluded by requires_grad, and the dense split equals the banked
+        # row's own exactly
+        if any(".slot." in n or n.endswith(".read_gate")
+               for n in muon_names + adamw_names):
+            raise ValueError("the frozen falsifier's slot branch must be "
+                             "excluded from the routing entirely")
+        return dict(
+            muon_tensors=len(muon_names), adamw_tensors=len(adamw_names),
+            dense_muon=len(dense_muon), dense_adamw=len(dense_adamw),
+            slot_muon=0, slot_adamw=0, frozen_slot_branch_excluded=True,
+            note="the frozen falsifier: the banked GDN2 row's own split "
+                 "exactly (the slot branch excluded by requires_grad, "
+                 "outside the optimizer/clip/EMA by construction)")
     prefix = "model." if any(n.startswith("model.")
                               for n in muon_names) else ""
     expected_slot_muon = sorted(
