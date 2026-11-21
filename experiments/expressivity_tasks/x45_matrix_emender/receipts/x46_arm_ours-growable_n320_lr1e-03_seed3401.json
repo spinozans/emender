@@ -6,16 +6,16 @@
  "steps": 1500,
  "batch": 32,
  "device": "cuda",
- "walls_s": 337.5,
+ "walls_s": 409.8,
  "torch": "2.9.1+cu128",
  "exposure_probe_targets": 15360000,
  "metrics": {
-  "value_acc": 0.007672119420021772,
+  "value_acc": 0.4449096620082855,
   "value_acc_by_lag_quartile": [
-   0.008569336496293545,
-   0.007519531529396772,
-   0.0068359375,
-   0.007763672154396772
+   0.45515137910842896,
+   0.44636231660842896,
+   0.44379884004592896,
+   0.434326171875
   ],
   "n_probes": 163840,
   "chance": 0.0078125
@@ -23,41 +23,56 @@
  "curve": [
   {
    "step": 250,
-   "loss": 4.85372257232666,
-   "value_acc": 0.0076965331099927425
+   "loss": 4.851405143737793,
+   "value_acc": 0.008349609561264515
   },
   {
    "step": 500,
-   "loss": 4.852336883544922,
-   "value_acc": 0.0077575682662427425
+   "loss": 4.832119464874268,
+   "value_acc": 0.014636230655014515
   },
   {
    "step": 750,
-   "loss": 4.853554725646973,
-   "value_acc": 0.0078063965775072575
+   "loss": 4.669161796569824,
+   "value_acc": 0.06392822414636612
   },
   {
    "step": 1000,
-   "loss": 4.8528032302856445,
-   "value_acc": 0.007781982421875
+   "loss": 4.119736671447754,
+   "value_acc": 0.19693604111671448
   },
   {
    "step": 1250,
-   "loss": 4.852683067321777,
-   "value_acc": 0.007702636998146772
+   "loss": 3.3631293773651123,
+   "value_acc": 0.344696044921875
   },
   {
    "step": 1500,
-   "loss": 4.852317810058594,
-   "value_acc": 0.007672119420021772
+   "loss": 2.811636447906494,
+   "value_acc": 0.4449096620082855
   }
  ],
  "growth_events": [],
  "curriculum": [
   {
    "n": 64,
-   "steps": 300,
-   "final_loss": 4.851533889770508
+   "steps": 400,
+   "final_loss": 4.8585205078125
+  },
+  {
+   "n": 128,
+   "steps": 400,
+   "final_loss": 4.854223728179932
+  },
+  {
+   "n": 192,
+   "steps": 400,
+   "final_loss": 4.852949142456055
+  },
+  {
+   "n": 256,
+   "steps": 400,
+   "final_loss": 4.8522233963012695
   }
  ],
  "last_scan_growth_events": [
@@ -83,18 +98,6 @@
     1.0,
     1.0,
     1.0
-   ]
-  },
-  {
-   "boundary": 832,
-   "rank_before": 512,
-   "rank_after": 1024,
-   "smoothed_rate": 0.64593505859375,
-   "window_rates": [
-    0.4913330078125,
-    0.6300048828125,
-    0.712158203125,
-    0.750244140625
    ]
   },
   {
@@ -125,27 +128,27 @@
    "boundary": 768,
    "rank_before": 512,
    "rank_after": 1024,
-   "smoothed_rate": 0.752349853515625,
+   "smoothed_rate": 0.75390625,
    "window_rates": [
     0.015625,
-    0.99853515625,
-    0.99755859375,
-    0.9976806640625
+    1.0,
+    1.0,
+    1.0
    ]
   }
  ],
  "final_rank": [
-  1024,
+  512,
   1024
  ],
  "final_heads": null,
  "ceiling": {
   "machine": "ours-growable",
   "n": 320,
-  "capacity": 1024,
+  "capacity": 512,
   "ceiling": 1.0,
   "ceiling_plus_band": 1.05,
-  "algebra": "slot-count: the store holds 1024 rows; a post-fill binding enters only by destroying a live row (every post-fill APPEND paid by a POP), so <= 1024 live bindings; aliased rows resolve at most one probe of a pair",
+  "algebra": "slot-count: the store holds 512 rows; a post-fill binding enters only by destroying a live row (every post-fill APPEND paid by a POP), so <= 512 live bindings; aliased rows resolve at most one probe of a pair",
   "band": 0.05,
   "escape": "capacity >= n: no binding ceiling (the control regime)"
  },
@@ -185,7 +188,7 @@
   "per_layer": [
    {
     "layer": 0,
-    "final_rank": 1024,
+    "final_rank": 512,
     "growth_events": [
      {
       "boundary": 256,
@@ -210,35 +213,23 @@
        1.0,
        1.0
       ]
-     },
-     {
-      "boundary": 832,
-      "rank_before": 512,
-      "rank_after": 1024,
-      "smoothed_rate": 0.64593505859375,
-      "window_rates": [
-       0.4913330078125,
-       0.6300048828125,
-       0.712158203125,
-       0.750244140625
-      ]
      }
     ],
     "pair_op_counts": {
-     "append": 8798,
-     "correct": 32162,
-     "pop": 0,
+     "append": 31262,
+     "correct": 2273,
+     "pop": 7425,
      "none": 0
     },
     "stored_frac": 1.0,
-    "live_at_probe_frac": 1.0,
+    "live_at_probe_frac": 0.999951183795929,
     "accuracy": {
-     "live": 0.007373047061264515,
-     "dead": null
+     "live": 0.440548837184906,
+     "dead": 0.0
     },
     "mass_on_answer_row": {
-     "mean": 0.04087471216917038,
-     "mean_when_live": 0.04087471216917038
+     "mean": 0.2269589900970459,
+     "mean_when_live": 0.22697007656097412
     }
    },
    {
@@ -273,30 +264,30 @@
       "boundary": 768,
       "rank_before": 512,
       "rank_after": 1024,
-      "smoothed_rate": 0.752349853515625,
+      "smoothed_rate": 0.75390625,
       "window_rates": [
        0.015625,
-       0.99853515625,
-       0.99755859375,
-       0.9976806640625
+       1.0,
+       1.0,
+       1.0
       ]
      }
     ],
     "pair_op_counts": {
-     "append": 147,
-     "correct": 40813,
+     "append": 6,
+     "correct": 40954,
      "pop": 0,
      "none": 0
     },
     "stored_frac": 1.0,
     "live_at_probe_frac": 1.0,
     "accuracy": {
-     "live": 0.007373047061264515,
+     "live": 0.4405273497104645,
      "dead": null
     },
     "mass_on_answer_row": {
-     "mean": 40.11314392089844,
-     "mean_when_live": 40.11314392089844
+     "mean": 6.191686153411865,
+     "mean_when_live": 6.191686153411865
     }
    }
   ]
@@ -304,5 +295,6 @@
  "cooldown": {
   "constant_steps": 1350,
   "cooldown_steps": 150
- }
+ },
+ "card": "2"
 }
