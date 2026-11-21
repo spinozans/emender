@@ -96,7 +96,7 @@ def gate_a_conv(receipt: dict) -> dict:
     """The conv's own receipts at the registered channel count."""
     gate = dict(name="A-conv", note="the conv's own unit receipts at the "
                "registered channel count (256, kernel 4)")
-    conv = IdentityBornShortConv(CHANNELS)
+    conv = IdentityBornShortConv(CHANNELS).cuda()
     gate["identity_birth_taps"] = list(IDENTITY_SHORT_CONV_BIRTH)
     # (i) the identity birth is exactly the pass-through, every dtype
     g = torch.Generator().manual_seed(11)
@@ -137,10 +137,14 @@ def gate_a_conv(receipt: dict) -> dict:
         "fla ShortConvolution layout); cuDNN's accumulation order is the "
         "only difference")
     # (iii) the fp64 tap adjoint is the analytic correlation exactly, and
-    # the fp64 gradcheck through the conv passes
-    xd = torch.randn(2, 64, CHANNELS, dtype=torch.float64,
+    # the fp64 gradcheck through the conv passes (a small fixture: the
+    # numerical jacobian is quadratic in the element count; the registered
+    # 256-channel shape is carried by the receipts above, and the SUITE's
+    # gradcheck-through-the-composed-path carries the composition)
+    xd = torch.randn(2, 32, 48, dtype=torch.float64,
                     generator=g).cuda().requires_grad_(True)
-    wd = w.double().clone().requires_grad_(True)
+    wd = torch.randn(48, 4, dtype=torch.float64,
+                     generator=g).cuda().requires_grad_(True)
     assert torch.autograd.gradcheck(short_conv1d_causal, (xd, wd),
                                     eps=1e-6, atol=1e-9, rtol=1e-9)
     y = short_conv1d_causal(xd, wd)
@@ -148,7 +152,7 @@ def gate_a_conv(receipt: dict) -> dict:
     y.backward(grad)
     padded = torch.nn.functional.pad(xd.detach(), (0, 0, 3, 0))
     expect = torch.stack(
-        [(grad * padded[:, j: j + 64]).sum((0, 1)) for j in range(4)], 1)
+        [(grad * padded[:, j: j + 32]).sum((0, 1)) for j in range(4)], 1)
     gate["fp64_tap_adjoint_exact"] = bool(torch.equal(wd.grad, expect))
     gate["fp64_gradcheck_through_the_conv"] = True
     receipt["gate_a_conv"] = gate
@@ -297,10 +301,11 @@ def gate_b(receipt: dict) -> dict:
         conved = short_conv1d_causal(
             p.reshape(BATCH, TOKENS, CHANNELS), ww).view_as(p)
         result = scan_fn(conved, wk, qk, d, g_)
-        upstream = torch.randn(result.reads.shape,
+        reads = result["reads"] if isinstance(result, dict) else result.reads
+        upstream = torch.randn(reads.shape,
                                generator=torch.Generator()
-                               .manual_seed(1234)).to(dtype)
-        (result.reads * upstream).sum().backward()
+                               .manual_seed(1234)).to(dtype).to(reads.device)
+        (reads * upstream).sum().backward()
         return dict(dp=p.grad, dw=ww.grad)
 
     kern = chain(lambda *a: composed_scan(*a, policy=POLICY, gated=True,
