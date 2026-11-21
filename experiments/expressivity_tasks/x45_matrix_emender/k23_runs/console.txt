@@ -1,0 +1,150 @@
+[walls] step 1: 11.42 s (opt 0.26 s)
+[walls] step 2: 10.50 s (opt 0.19 s)
+[walls] step 3: 10.53 s (opt 0.16 s)
+[walls] step 4: 10.62 s (opt 0.16 s)
+[walls] step 5: 10.59 s (opt 0.16 s)
+[step_profile] FAILED:
+Traceback (most recent call last):
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k23_step_speed.py", line 1226, in run_stage
+    result = fn()
+             ^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k23_step_speed.py", line 1288, in <lambda>
+    prof, _ = run_stage(args.out, "step_profile", lambda: step_profile_stage(
+                                                          ^^^^^^^^^^^^^^^^^^^
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k23_step_speed.py", line 383, in step_profile_stage
+    100.0 * entry["self_cuda_ms_per_step"] / device_busy_ms, 2)
+                                             ^^^^^^^^^^^^^^
+NameError: name 'device_busy_ms' is not defined
+
+[capture] 8 groups, layer 6; capture losses [5.7849, 5.8087, 5.7745, 5.7646, 5.787, 5.7734, 5.7859, 5.7854]
+[batch fwd] 1 groups (16 rows): bit=True 22.062 ms (0.98x per-group equivalent)
+[batch fwd] 2 groups (32 rows): bit=True 22.201 ms (1.95x per-group equivalent)
+[batch fwd] 4 groups (64 rows): bit=True 22.218 ms (3.90x per-group equivalent)
+[batch fwd] 8 groups (128 rows): bit=True 22.272 ms (7.78x per-group equivalent)
+[batch fwd] stack (w8, s1) batch-64: bit=True 16.873 ms (10.27x)
+[batch fwd] stack (w8, s3) batch-64: bit=True 17.632 ms (9.83x)
+[batch fwd] stack (w8, s1) single-group: bit=True 16.785 ms
+[batch fwd] stack (w8, s3) single-group: bit=True 17.548 ms
+[batch bwd] 8 groups: grads bit=True; batched fwd 22.266 ms, pair 105.583 ms (bwd 83.317 ms; committed loop bwd 159.624 ms)
+[graphs] host-issue costs: {'committed_fwd_per_group_ms': 0.31, 'committed_pair_per_group_ms': 13.595, 'batched_pair8_ms': 13.801}
+[graphs] per-group committed fwd+bwd train (the no-restructure option: same 16-row grid, launch overhead only): bit=True eager 42.377 ms -> replay 41.910 ms (1.01x)
+[graphs] the batch-64 fwd+bwd train (the recommended grid, launch overhead only): bit=True eager 105.966 ms -> replay 105.440 ms (1.00x)
+W1121 19:51:06.900000 3526719 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0] Graph break from `Tensor.item()`, consider setting:
+W1121 19:51:06.900000 3526719 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0]     torch._dynamo.config.capture_scalar_outputs = True
+W1121 19:51:06.900000 3526719 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0] or:
+W1121 19:51:06.900000 3526719 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0]     env TORCHDYNAMO_CAPTURE_SCALAR_OUTPUTS=1
+W1121 19:51:06.900000 3526719 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0] to include these operations in the captured graph.
+W1121 19:51:06.900000 3526719 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0] 
+W1121 19:51:06.900000 3526719 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0] Graph break: from user code at:
+W1121 19:51:06.900000 3526719 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0]   File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k18_short_conv.py", line 287, in forward
+W1121 19:51:06.900000 3526719 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0]     out, _ = self.mix(x)
+W1121 19:51:06.900000 3526719 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0]   File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k18_short_conv.py", line 262, in mix
+W1121 19:51:06.900000 3526719 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0]     lam_vec, _lam_inc = self.channel_decay(x)
+W1121 19:51:06.900000 3526719 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0]   File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k11b_channel_gates.py", line 1515, in channel_decay
+W1121 19:51:06.900000 3526719 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0]     floor = float(torch.tensor(DECAY_FLOOR, dtype=torch.bfloat16))
+W1121 19:51:06.900000 3526719 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0] 
+W1121 19:51:06.900000 3526719 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0] 
+[flows] mixer whole: bit=True 23.516 -> 23.268 ms
+[flows] mixer compile FAILED: error most often comes from a incorrect fake (aka meta) kernel for a custom op.
+Use torch.library.opcheck to test your custom op.
+See https://pytorch.org/docs/stable/library.html#torch.library.opcheck
+[flows] mlp: bit=False 1.968 -> 1.762 ms
+{
+ "clean_step_wall_s": 10.587,
+ "committed_scan_fwd_ms_per_group": 21.889,
+ "committed_scan_fwd_ms_per_layer_step": 173.305,
+ "committed_scan_bwd_ms_per_group": 19.956,
+ "committed_scan_bwd_ms_per_layer_step": 159.626,
+ "batched_fwd_ms_per_layer_step": 16.873,
+ "batched_bwd_ms_per_layer_step": 83.317,
+ "bit_identical_pair_speedup_per_layer_step": 3.32,
+ "host_gap_pct_of_wall": null,
+ "launches_per_step": null
+}
+{
+ "committed_layer_step_fwd_ms": 173.305,
+ "composite_layer_step_fwd_ms": 16.873,
+ "floor_8group_ms": 3.741,
+ "committed_over_floor": 46.3,
+ "composite_over_floor": 4.51,
+ "fraction_of_gap_closed": 0.923,
+ "note": "K21's floor was stated at the 16-row exposure of ONE group (3.74 ms); the batched launch's 8x work runs at the 128-row ceiling the batch legitimately exposes (the semantics forbid token-parallelism, not group-parallelism), so its floor is the SAME 3.74 ms -- the bracket is per LAYER-STEP (8 groups)"
+}
+{
+ "scan_savings_per_layer_step_ms": 233.267,
+ "scan_step_savings_s": 5.598,
+ "graph_pair_gain_ms": 0.526,
+ "graph_gain_note": "folded: the batch-64 fwd+bwd train's graph-replay gain, measured on the committed batched launch (not the stack) -- a lower bound on the gain at the composite",
+ "fusion_step_savings_s": 0.0,
+ "fusion_step_savings_note": "the compiled mixer's FORWARD delta only, per (layer, group) -- a lower bound; the backward glue's fusion delta is not separately receipted",
+ "pure_ours_step_s_at_composite": 4.989,
+ "step_decomposition_note": "clean wall 10.587 s = scan fwd 0 ms + scan bwd 0 ms + everything else per the profile buckets"
+}
+{
+ "step_s_mixer_swap_banked_muon": 3.556,
+ "exposure_pct_of_gdn2_in_2700s_mixer_swap_banked_muon": 87.7,
+ "step_s_mixer_swap_gdn2_adamw": 3.402,
+ "exposure_pct_of_gdn2_in_2700s_mixer_swap_gdn2_adamw": 91.7
+}
+receipt written to experiments/expressivity_tasks/x45_matrix_emender/receipts/k23_speed.json
+
+===== RERUN: profile, flows, verdict (the failed/overwritten stages) =====
+[capture] 8 groups, layer 6; capture losses [5.7849, 5.8087, 5.7745, 5.7646, 5.787, 5.7734, 5.7859, 5.7854]
+W1121 19:58:53.827000 3537562 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0] Graph break from `Tensor.item()`, consider setting:
+W1121 19:58:53.827000 3537562 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0]     torch._dynamo.config.capture_scalar_outputs = True
+W1121 19:58:53.827000 3537562 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0] or:
+W1121 19:58:53.827000 3537562 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0]     env TORCHDYNAMO_CAPTURE_SCALAR_OUTPUTS=1
+W1121 19:58:53.827000 3537562 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0] to include these operations in the captured graph.
+W1121 19:58:53.827000 3537562 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0] 
+W1121 19:58:53.827000 3537562 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0] Graph break: from user code at:
+W1121 19:58:53.827000 3537562 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0]   File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k18_short_conv.py", line 287, in forward
+W1121 19:58:53.827000 3537562 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0]     out, _ = self.mix(x)
+W1121 19:58:53.827000 3537562 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0]   File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k18_short_conv.py", line 262, in mix
+W1121 19:58:53.827000 3537562 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0]     lam_vec, _lam_inc = self.channel_decay(x)
+W1121 19:58:53.827000 3537562 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0]   File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k11b_channel_gates.py", line 1515, in channel_decay
+W1121 19:58:53.827000 3537562 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0]     floor = float(torch.tensor(DECAY_FLOOR, dtype=torch.bfloat16))
+W1121 19:58:53.827000 3537562 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0] 
+W1121 19:58:53.827000 3537562 .venv/lib/python3.12/site-packages/torch/_dynamo/variables/tensor.py:1048] [0/0] 
+[flows] mixer whole: bit=True 23.291 -> 23.194 ms
+[flows] mixer backward compile FAILED: error most often comes from a incorrect fake (aka meta) kernel for a custom op.
+Use torch.library.opcheck to test your custom op.
+See https://pytorch.org/docs/stable/library.html#torch.library.opcheck
+[flows] mlp: bit=False 1.911 -> 1.719 ms
+{
+ "clean_step_wall_s": 10.587,
+ "committed_scan_fwd_ms_per_group": 21.889,
+ "committed_scan_fwd_ms_per_layer_step": 173.305,
+ "committed_scan_bwd_ms_per_group": 19.956,
+ "committed_scan_bwd_ms_per_layer_step": 159.626,
+ "batched_fwd_ms_per_layer_step": 16.873,
+ "batched_bwd_ms_per_layer_step": 83.317,
+ "bit_identical_pair_speedup_per_layer_step": 3.32,
+ "host_gap_pct_of_wall": 1.75,
+ "launches_per_step": 105534.0
+}
+{
+ "committed_layer_step_fwd_ms": 173.305,
+ "composite_layer_step_fwd_ms": 16.873,
+ "floor_8group_ms": 3.741,
+ "committed_over_floor": 46.3,
+ "composite_over_floor": 4.51,
+ "fraction_of_gap_closed": 0.923,
+ "note": "K21's floor was stated at the 16-row exposure of ONE group (3.74 ms); the batched launch's 8x work runs at the 128-row ceiling the batch legitimately exposes (the semantics forbid token-parallelism, not group-parallelism), so its floor is the SAME 3.74 ms -- the bracket is per LAYER-STEP (8 groups)"
+}
+{
+ "scan_savings_per_layer_step_ms": 233.267,
+ "scan_step_savings_s": 5.598,
+ "graph_pair_gain_ms": 0.526,
+ "graph_gain_note": "folded: the batch-64 fwd+bwd train's graph-replay gain, measured on the committed batched launch (not the stack) -- a lower bound on the gain at the composite",
+ "fusion_step_savings_s": 0.019,
+ "fusion_step_savings_note": "the compiled mixer's FORWARD delta only, per (layer, group) -- a lower bound; the backward glue's fusion delta is not separately receipted",
+ "pure_ours_step_s_at_composite": 4.97,
+ "step_decomposition_note": "clean wall 10.587 s = scan fwd 4169 ms + scan bwd 3905 ms + everything else per the profile buckets"
+}
+{
+ "step_s_mixer_swap_banked_muon": 3.554,
+ "exposure_pct_of_gdn2_in_2700s_mixer_swap_banked_muon": 87.8,
+ "step_s_mixer_swap_gdn2_adamw": 3.4,
+ "exposure_pct_of_gdn2_in_2700s_mixer_swap_gdn2_adamw": 91.7
+}
+receipt written to experiments/expressivity_tasks/x45_matrix_emender/receipts/k23_speed.json

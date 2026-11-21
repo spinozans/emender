@@ -1,0 +1,824 @@
+{
+ "probe": "k23_step_speed",
+ "question": "the step-level speed program: interleaving, flows, graphs, and the floor -- measured with receipts, bit-identical or honestly parked",
+ "pre_state": "no directional prediction; the decomposition IS the result",
+ "unit": "the probe protocol's step: 64 windows (8 window-groups x batch 8) x 2048 tokens x 24 layers at the committed 150M width 576, bf16 autocast compute, fp32 params -- and the per-(layer, window-group) scan probe at batch 8 x 2048 x heads 2 x rank/value 128 x key 16, segment 64",
+ "seed": 3401,
+ "session": {
+  "host": "lambda01",
+  "card": "5",
+  "device": "NVIDIA RTX 6000 Ada Generation",
+  "card_gib": 47.38,
+  "torch": "2.9.1+cu128",
+  "triton": "3.5.1",
+  "versions": {
+   "torch": "2.9.1+cu128",
+   "schedulefree": "1.4.1",
+   "hybrid_muon_sha256": "204c55252f3032b91a965d2511cddb5d9d2eef9f94e9bfd509ee86d2987384d6",
+   "bakeoff_optimizers_sha256": "dff190059d0ff94633c3b3e42ab89ef2ccde8517ebd512a4acff96143a949745"
+  }
+ },
+ "git": {
+  "commit": "dc9fa333f7910d06e4927a214ad2c4da2ca622bc",
+  "branch": "main",
+  "relevant_paths_dirty": ""
+ },
+ "bindings": {
+  "k15_composition_sha256": "b7ade13ec44cfd927493fe96a0e9d3fbe0bb547cce0a84797fe43557556b903a",
+  "k18_short_conv_sha256": "82963fe89ba75e5583ada78960da9a422be9a1b5c213ee0456f2e2bbb4e68912",
+  "matched_arms_sha256": "9d37c32469f3701ac3e0bfbd1d4b5c253e7cbdd425e95a281df62d83f6f30830",
+  "velocity_ladder_sha256": "a78f37c2692b094f813c0b06adac6a47e063e94f8e72f0e127ea4ce0f0b52473",
+  "external_gdn2_sha256": "316ddf8658a55da4a4159f77881c92e9a067570da55d0aa2592b7b11c51aa3d8",
+  "k18_gates_receipt_sha256": "f4b248a14c94b32dc62c40b5722d5535ebf5ededa367d7b342e34697a8b9e81f",
+  "lattice_registration_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c"
+ },
+ "scratch_bindings": {
+  "k21_micro_brackets_sha256": "bfbad628be9d8702f383bafe0c62fd534879b24571faaa6314c644972a3990be",
+  "k23_batch_brackets_sha256": "d9eedc85f0c5e156530521c0c198fccd2d483dd9cfba2f28faad8494d41137a0"
+ },
+ "profiling_tools": {
+  "torch_profiler": "CUPTI kernel timings: per-kernel self CUDA time, per-op CPU time, launch counts",
+  "ncu": "UNAVAILABLE on this host: ERR_NVGPUCTRPERM (K21's same-session receipt) -- no hardware counters; the host-vs-device split below is wall-clock minus summed kernel self time, honestly labeled"
+ },
+ "recorded_anchors": {
+  "k20_receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k20_hybrid_velocity.json",
+  "k21_receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k21_scan_profile.json",
+  "pure_ours_step_s_k20": 10.624,
+  "pure_gdn2_step_s_k20": 3.119,
+  "ours_optimizer_s_k20": 0.169,
+  "gdn2_optimizer_s_k20": 0.015,
+  "mixer_forward_ms_k20": 23.403,
+  "mixer_backward_ms_k20": 24.554,
+  "mixer_pair_ms_k20": 47.983,
+  "gdn2_mixer_pair_ms_k20": 6.589,
+  "gdn2_mixer_forward_ms_k20": 2.352,
+  "gdn2_mixer_backward_ms_k20": 4.252,
+  "committed_scan_direct_ms_k21": 22.129,
+  "stack_bit_identical_ms_k21": 16.785,
+  "stack_speedup_k21": 1.32,
+  "scan_floor_16rows_ms_k21": 3.741,
+  "hybrid_exposure_pct_at_3_of_24_k20": 73.1,
+  "hybrid_exposure_pct_after_stack_k21": 75.4,
+  "pure_ours_step_s_after_stack_k21": 9.61
+ },
+ "step_walls": {
+  "machine": "the committed K18 conv machine under the banked probe protocol's step body (K20.steps_ours verbatim: HybridMuonX45, the K18 arm's optimizer split)",
+  "parameters": 158663424,
+  "warmup_steps": 2,
+  "measured_steps": 3,
+  "step_rows": [
+   {
+    "step": 1,
+    "wall_s": 11.419,
+    "opt_s": 0.255,
+    "targets": 117712,
+    "loss": 5.782775
+   },
+   {
+    "step": 2,
+    "wall_s": 10.505,
+    "opt_s": 0.19,
+    "targets": 131072,
+    "loss": 5.777757
+   },
+   {
+    "step": 3,
+    "wall_s": 10.531,
+    "opt_s": 0.165,
+    "targets": 115938,
+    "loss": 5.75276
+   },
+   {
+    "step": 4,
+    "wall_s": 10.624,
+    "opt_s": 0.163,
+    "targets": 97017,
+    "loss": 5.722565
+   },
+   {
+    "step": 5,
+    "wall_s": 10.587,
+    "opt_s": 0.163,
+    "targets": 105280,
+    "loss": 5.689922
+   }
+  ],
+  "step_wall_s": {
+   "iterations": 3,
+   "median_ms": 10587.0,
+   "p25_ms": 10531.0,
+   "p75_ms": 10624.0,
+   "min_ms": 10531.0,
+   "max_ms": 10624.0,
+   "mean_ms": 10580.667,
+   "std_over_median_pct": 0.36
+  },
+  "opt_s": {
+   "iterations": 3,
+   "median_ms": 163.0,
+   "p25_ms": 163.0,
+   "p75_ms": 165.0,
+   "min_ms": 163.0,
+   "max_ms": 165.0,
+   "mean_ms": 163.667,
+   "std_over_median_pct": 0.58
+  },
+  "recorded_reference": {
+   "pure_ours_step_s_k20": 10.624,
+   "ours_optimizer_s_k20": 0.169
+  },
+  "activation_footprint": {
+   "one_group_fwd_graph_bytes": 25278730752,
+   "one_group_fwd_graph_gib": 23.54,
+   "eight_groups_gib": 188.34,
+   "note": "the retained-graph bytes ONE window-group's forward holds between its fwd and bwd (allocator books, steady state with optimizer states resident); the batching lever's all-groups-together integration would hold ~8x this, against the card's free memory below",
+   "card_free_gib_at_measure": 21.07,
+   "card_total_gib": 47.38
+  }
+ },
+ "capture": {
+  "machine": "the committed K18 conv machine (K21's own capture form: one real probe step's 8 window-groups driven through the machine under no_grad, hooks only)",
+  "capture": {
+   "batch_rows": 64,
+   "targets": 117712,
+   "losses": [
+    5.78492,
+    5.808687,
+    5.774506,
+    5.764578,
+    5.787,
+    5.773389,
+    5.785882,
+    5.785438
+   ],
+   "layer": 6,
+   "scan_shape": {
+    "payload": [
+     8,
+     2048,
+     2,
+     128
+    ],
+    "payload_dtype": "torch.bfloat16",
+    "decay_dtype": "torch.float32",
+    "gates_dtype": "torch.float32",
+    "rank": 128,
+    "rank_max": 128,
+    "segment_tokens": 64,
+    "gated": true,
+    "key_dim": 16,
+    "policy": {
+     "tau_match": 0.45,
+     "tau_merge": 0.85,
+     "tau_pop": 0.1,
+     "tie_break": 1e-06,
+     "read_scale": 2.7870458737509636,
+     "ops": true
+    }
+   },
+   "parameters": 158663424
+  },
+  "scan_args_note": "layer 6's EXACT production scan arguments per window-group (a recording shim on the committed mixer's own composed_scan binding, removed before any timing); the mixer inputs are the same groups' layer-6 pre-hook activations"
+ },
+ "lever_batching_forward": {
+  "lever": "batching/interleaving: all window-groups of a layer in ONE kernel launch (pure re-scheduling of independent rows)",
+  "bar": "torch.equal on all 13 output channels of the committed opaque op pair, PER GROUP, on layer 6's captured production arguments of all 8 window-groups",
+  "committed_per_group_fwd_ms": [
+   22.117,
+   21.957,
+   21.603,
+   21.823,
+   21.879,
+   21.884,
+   21.893,
+   21.925
+  ],
+  "committed_per_group_fwd_median_ms": 21.889,
+  "committed_layer_step_fwd_ms": 173.305,
+  "committed_determinism_selfcheck": true,
+  "brackets": [
+   {
+    "window_groups": 1,
+    "rows_exposed": 16,
+    "bit_identical": true,
+    "failed_channels": [],
+    "wall_ms": 22.062,
+    "per_group_amortized_ms": 22.062,
+    "speedup_vs_committed_layer_step": 7.855,
+    "committed_equivalent_ms": 21.663
+   },
+   {
+    "window_groups": 2,
+    "rows_exposed": 32,
+    "bit_identical": true,
+    "failed_channels": [],
+    "wall_ms": 22.201,
+    "per_group_amortized_ms": 11.101,
+    "speedup_vs_committed_layer_step": 7.806,
+    "committed_equivalent_ms": 43.326
+   },
+   {
+    "window_groups": 4,
+    "rows_exposed": 64,
+    "bit_identical": true,
+    "failed_channels": [],
+    "wall_ms": 22.218,
+    "per_group_amortized_ms": 5.554,
+    "speedup_vs_committed_layer_step": 7.8,
+    "committed_equivalent_ms": 86.653
+   },
+   {
+    "window_groups": 8,
+    "rows_exposed": 128,
+    "bit_identical": true,
+    "failed_channels": [],
+    "wall_ms": 22.272,
+    "per_group_amortized_ms": 2.784,
+    "speedup_vs_committed_layer_step": 7.781,
+    "committed_equivalent_ms": 173.305
+   }
+  ],
+  "stack_batched": [
+   {
+    "grid": "batch-64 (128 rows)",
+    "stages": 1,
+    "warps": 8,
+    "flags": {
+     "lazy_norms": 1,
+     "lazy_old_row": 1,
+     "reduce_nr": 1
+    },
+    "bit_identical": true,
+    "failed_channels": [],
+    "wall_ms": 16.873,
+    "per_group_amortized_ms": 2.109,
+    "speedup_vs_committed_layer_step": 10.271
+   },
+   {
+    "grid": "batch-64 (128 rows)",
+    "stages": 3,
+    "warps": 8,
+    "flags": {
+     "lazy_norms": 1,
+     "lazy_old_row": 1,
+     "reduce_nr": 1
+    },
+    "bit_identical": true,
+    "failed_channels": [],
+    "wall_ms": 17.632,
+    "per_group_amortized_ms": 2.204,
+    "speedup_vs_committed_layer_step": 9.829
+   }
+  ],
+  "stack_single": [
+   {
+    "grid": "single-group (16 rows)",
+    "stages": 1,
+    "warps": 8,
+    "flags": {
+     "lazy_norms": 1,
+     "lazy_old_row": 1,
+     "reduce_nr": 1
+    },
+    "bit_identical": true,
+    "failed_channels": [],
+    "wall_ms": 16.785,
+    "speedup_vs_committed": 1.318
+   },
+   {
+    "grid": "single-group (16 rows)",
+    "stages": 3,
+    "warps": 8,
+    "flags": {
+     "lazy_norms": 1,
+     "lazy_old_row": 1,
+     "reduce_nr": 1
+    },
+    "bit_identical": true,
+    "failed_channels": [],
+    "wall_ms": 17.548,
+    "speedup_vs_committed": 1.26
+   }
+  ],
+  "note": "the committed layer-step wall is the production form: 8 sequential composed_scan calls (wrapper overhead included), exactly what the committed loop pays per layer per step"
+ },
+ "lever_batching_backward": {
+  "lever": "backward batching: the committed adjoint op on the concatenated window-groups",
+  "bar": "torch.equal on all 7 gradient tensors (dpayload, dwrite_keys, dquery_keys, ddecay, dgates, dstate, dkeys), PER GROUP, at fixed seeded dreads",
+  "bit_identical": true,
+  "per_group_checks": [
+   {
+    "group": 0,
+    "bit_identical": true,
+    "failed": []
+   },
+   {
+    "group": 1,
+    "bit_identical": true,
+    "failed": []
+   },
+   {
+    "group": 2,
+    "bit_identical": true,
+    "failed": []
+   },
+   {
+    "group": 3,
+    "bit_identical": true,
+    "failed": []
+   },
+   {
+    "group": 4,
+    "bit_identical": true,
+    "failed": []
+   },
+   {
+    "group": 5,
+    "bit_identical": true,
+    "failed": []
+   },
+   {
+    "group": 6,
+    "bit_identical": true,
+    "failed": []
+   },
+   {
+    "group": 7,
+    "bit_identical": true,
+    "failed": []
+   }
+  ],
+  "committed_fwd_ms": [
+   22.261,
+   22.074,
+   21.719,
+   21.938,
+   22.002,
+   21.977,
+   22.001,
+   22.035
+  ],
+  "committed_pair_ms": [
+   42.288,
+   42.076,
+   41.543,
+   41.845,
+   41.96,
+   41.93,
+   41.955,
+   42.035
+  ],
+  "committed_bwd_ms": [
+   20.026,
+   20.002,
+   19.824,
+   19.908,
+   19.958,
+   19.953,
+   19.955,
+   20.0
+  ],
+  "committed_bwd_median_ms": 19.956,
+  "batched_fwd_ms": 22.266,
+  "batched_pair_ms": 105.583,
+  "batched_bwd_ms": 83.317,
+  "batched_bwd_speedup_vs_committed_loop": 1.916,
+  "recorded_reference": {
+   "mixer_backward_ms_k20": 24.554,
+   "note": "K20's mixer backward (24.55 ms) includes the glue's own adjoint and autograd dispatch around this scan-adjoint op; the difference is the mixer glue's backward, stated in the verdict"
+  },
+  "committed_pair_loop_ms": 333.808,
+  "committed_pair_loop_note": "the 8-group sequential fwd+bwd loop's wall (fwd + bwd per group); the layer-step BACKWARD-only cost is sum(committed_bwd_ms)"
+ },
+ "lever_graphs": {
+  "lever": "graphs: CUDA-graph capture of the scan's own kernel trains (same kernels, same arguments, same order)",
+  "host_issue_ms": {
+   "committed_fwd_per_group_ms": 0.31,
+   "committed_pair_per_group_ms": 13.595,
+   "batched_pair8_ms": 13.801
+  },
+  "host_issue_note": "the host-side cost of ISSUING one call without waiting: at the committed 16-row grid the fwd is one kernel (issue << wall), while the backward's ~32-segment launch train is the launch-census object; the step-level host gap is in the profile stage",
+  "graphs": [
+   {
+    "label": "per-group committed fwd+bwd train (the no-restructure option: same 16-row grid, launch overhead only)",
+    "captured": true,
+    "bit_identical": true,
+    "eager_wall_ms": 42.377,
+    "replay_wall_ms": 41.91,
+    "replay_speedup": 1.011,
+    "timing": {
+     "iterations": 15,
+     "median_ms": 41.91,
+     "p25_ms": 41.896,
+     "p75_ms": 41.93,
+     "min_ms": 41.886,
+     "max_ms": 41.939,
+     "mean_ms": 41.912,
+     "std_over_median_pct": 0.04
+    }
+   },
+   {
+    "label": "the batch-64 fwd+bwd train (the recommended grid, launch overhead only)",
+    "captured": true,
+    "bit_identical": true,
+    "eager_wall_ms": 105.966,
+    "replay_wall_ms": 105.44,
+    "replay_speedup": 1.005,
+    "timing": {
+     "iterations": 15,
+     "median_ms": 105.44,
+     "p25_ms": 105.39,
+     "p75_ms": 105.458,
+     "min_ms": 105.343,
+     "max_ms": 105.505,
+     "mean_ms": 105.43,
+     "std_over_median_pct": 0.05
+    }
+   }
+  ],
+  "allocator_note": "the probe protocol's expandable-segments allocator is load-bearing (configure_production); if capture is refused, the refusal is receipted and the launch-overhead evidence stands on the host-issue and census numbers"
+ },
+ "lever_flows": {
+  "lever": "flows/fusion: torch.compile of the eager glue OUTSIDE the Triton kernel (the scan op pair stays the committed opaque engine)",
+  "bar": "bit-identity of the fused piece's outputs (and its parameter/input gradients for the mixer), torch.equal at the captured production activation; the K21 wrapper lever 'fused value|b_proj projections' is already receipted bit-identical (1.42x on 0.19 ms -- negligible), not re-run here",
+  "pieces": {
+   "mixer_whole": {
+    "piece": "the whole K18 mixer forward (the scan op opaque, the eager glue around it fused by inductor)",
+    "bit_identical": true,
+    "max_abs_diff": 0.0,
+    "eager_ms": 23.291,
+    "compiled_ms": 23.194,
+    "delta_ms": 0.097
+   },
+   "mixer_whole_backward": {
+    "piece": "the compiled mixer's backward",
+    "compiled": false,
+    "failure": "AssertionError: expected size 2048==2048, stride 128==256 at dim=1; expected size 2==2, stride 262144==128 at dim=2\nError in op: torch.ops.x45.k15_scan_bwd.default\nThis error most often comes from a incorrect fake (aka meta) kernel for a custom op.\nUse torch.library.opcheck to test your custom op.\nSee https://pytorch.org/docs/stable/library.html#torch.library.opcheck"
+   },
+   "mlp": {
+    "piece": "the SwiGLU MLP forward",
+    "bit_identical": false,
+    "eager_ms": 1.911,
+    "compiled_ms": 1.719,
+    "delta_ms": 0.193
+   }
+  }
+ },
+ "verdict": {
+  "the_question": "where does a bit-identical step go from here -- interleaving, flows, graphs, and the floor",
+  "measured": {
+   "clean_step_wall_s": 10.587,
+   "committed_scan_fwd_ms_per_group": 21.889,
+   "committed_scan_fwd_ms_per_layer_step": 173.305,
+   "committed_scan_bwd_ms_per_group": 19.956,
+   "committed_scan_bwd_ms_per_layer_step": 159.626,
+   "batched_fwd_ms_per_layer_step": 16.873,
+   "batched_bwd_ms_per_layer_step": 83.317,
+   "bit_identical_pair_speedup_per_layer_step": 3.32,
+   "host_gap_pct_of_wall": 1.75,
+   "launches_per_step": 105534.0
+  },
+  "floor_bracket": {
+   "committed_layer_step_fwd_ms": 173.305,
+   "composite_layer_step_fwd_ms": 16.873,
+   "floor_8group_ms": 3.741,
+   "committed_over_floor": 46.3,
+   "composite_over_floor": 4.51,
+   "fraction_of_gap_closed": 0.923,
+   "note": "K21's floor was stated at the 16-row exposure of ONE group (3.74 ms); the batched launch's 8x work runs at the 128-row ceiling the batch legitimately exposes (the semantics forbid token-parallelism, not group-parallelism), so its floor is the SAME 3.74 ms -- the bracket is per LAYER-STEP (8 groups)"
+  },
+  "composite": {
+   "scan_savings_per_layer_step_ms": 233.267,
+   "scan_step_savings_s": 5.598,
+   "graph_pair_gain_ms": 0.526,
+   "graph_gain_note": "folded: the batch-64 fwd+bwd train's graph-replay gain, measured on the committed batched launch (not the stack) -- a lower bound on the gain at the composite",
+   "fusion_step_savings_s": 0.019,
+   "fusion_step_savings_note": "the compiled mixer's FORWARD delta only, per (layer, group) -- a lower bound; the backward glue's fusion delta is not separately receipted",
+   "pure_ours_step_s_at_composite": 4.97,
+   "step_decomposition_note": "clean wall 10.587 s = scan fwd 4169 ms + scan bwd 3905 ms + everything else per the profile buckets"
+  },
+  "per_mixer_pair": {
+   "committed_pair_ms": 47.983,
+   "composite_pair_ms_per_group": 18.298,
+   "gdn2_pair_ms": 6.589,
+   "ratio_committed": 7.28,
+   "ratio_composite": 2.78
+  },
+  "hybrid_exposure_at_3_of_24": {
+   "step_s_mixer_swap_banked_muon": 3.554,
+   "exposure_pct_of_gdn2_in_2700s_mixer_swap_banked_muon": 87.8,
+   "step_s_mixer_swap_gdn2_adamw": 3.4,
+   "exposure_pct_of_gdn2_in_2700s_mixer_swap_gdn2_adamw": 91.7
+  },
+  "escalation_check": {
+   "bit_identical_pair_speedup": 3.322996307016669,
+   "threshold": 2.0,
+   "escalated": true,
+   "note": "the task's own escalation bar: a bit-identical composite >= 2x changes the hybrid board case materially"
+  },
+  "residual_risks": {
+   "memory": "the batching lever's integration holds all 8 window-groups' graphs together: the measured per-group footprint is 23.54 GiB, x8 = 188.34 GiB against 21.07 GiB free",
+   "restructure": "the batched launch is receipted at the SCAN level; the step integration is a layer-major restructure of the committed loop (all groups' forward at a layer before the backward), whose grad-accumulation order CAN be preserved (backward in group order) but must be receipted end-to-end -- the integration lane's first falsifier, not assumed here"
+  }
+ },
+ "first_run_session": {
+  "host": "lambda01",
+  "card": "5",
+  "device": "NVIDIA RTX 6000 Ada Generation",
+  "card_gib": 47.38,
+  "torch": "2.9.1+cu128",
+  "triton": "3.5.1",
+  "versions": {
+   "torch": "2.9.1+cu128",
+   "schedulefree": "1.4.1",
+   "hybrid_muon_sha256": "204c55252f3032b91a965d2511cddb5d9d2eef9f94e9bfd509ee86d2987384d6",
+   "bakeoff_optimizers_sha256": "dff190059d0ff94633c3b3e42ab89ef2ccde8517ebd512a4acff96143a949745"
+  }
+ },
+ "step_profile": {
+  "steps_profiled": 2,
+  "device_busy_ms_per_step": 10401.5,
+  "clean_step_wall_ms": 10587.0,
+  "host_gap_ms_per_step": 185.5,
+  "host_gap_pct_of_wall": 1.75,
+  "host_gap_note": "clean unprofiled wall minus summed device-kernel self time: the launch/dispatch/data-pipeline share the CUDA-graph and compile levers could target -- it bounds BOTH levers from above",
+  "launches_per_step": 105534.0,
+  "launch_histogram": {
+   "< 50 us": {
+    "kernel_types": 101,
+    "launches_per_step": 74812.0,
+    "self_cuda_ms_per_step": 1127.237
+   },
+   "50-500 us": {
+    "kernel_types": 25,
+    "launches_per_step": 30530.0,
+    "self_cuda_ms_per_step": 5104.948
+   },
+   "0.5-5 ms": {
+    "kernel_types": 0,
+    "launches_per_step": 0,
+    "self_cuda_ms_per_step": 0
+   },
+   "> 5 ms": {
+    "kernel_types": 1,
+    "launches_per_step": 192.0,
+    "self_cuda_ms_per_step": 4169.303
+   }
+  },
+  "buckets": {
+   "the composed scan FORWARD kernel": {
+    "launches_per_step": 192.0,
+    "self_cuda_ms_per_step": 4169.303,
+    "kernels": 1,
+    "pct_of_device_busy": 40.08
+   },
+   "the composed scan BACKWARD kernels": {
+    "launches_per_step": 30720.0,
+    "self_cuda_ms_per_step": 3904.674,
+    "kernels": 5,
+    "pct_of_device_busy": 37.54
+   },
+   "elementwise/copy/other glue (the optimizer's shared-name elementwise share included, bounded by the isolated total)": {
+    "launches_per_step": 56493.0,
+    "self_cuda_ms_per_step": 1340.472,
+    "kernels": 91,
+    "pct_of_device_busy": 12.89
+   },
+   "GEMM (projections / MLP / head, fwd+bwd)": {
+    "launches_per_step": 10772.0,
+    "self_cuda_ms_per_step": 914.666,
+    "kernels": 18,
+    "pct_of_device_busy": 8.79
+   },
+   "the optimizer (Muon + fused aux AdamW)": {
+    "launches_per_step": 2550.0,
+    "self_cuda_ms_per_step": 66.556,
+    "kernels": 7,
+    "pct_of_device_busy": 0.64
+   },
+   "memcpy/memset": {
+    "launches_per_step": 4799.0,
+    "self_cuda_ms_per_step": 5.238,
+    "kernels": 4,
+    "pct_of_device_busy": 0.05
+   },
+   "the fused cross-entropy head": {
+    "launches_per_step": 8.0,
+    "self_cuda_ms_per_step": 0.578,
+    "kernels": 1,
+    "pct_of_device_busy": 0.01
+   }
+  },
+  "top_kernels": [
+   {
+    "name": "_k15_seq_fwd_kernel",
+    "count": 384,
+    "self_cuda_ms_total": 8338.606335000008,
+    "self_cuda_ms_per_iter": 4169.3032,
+    "avg_us_per_launch": 21715.12,
+    "launches_per_iter": 192.0
+   },
+   {
+    "name": "_k11b_bwd_value_walk_kernel",
+    "count": 12288,
+    "self_cuda_ms_total": 2222.8905510000072,
+    "self_cuda_ms_per_iter": 1111.4453,
+    "avg_us_per_launch": 180.9,
+    "launches_per_iter": 6144.0
+   },
+   {
+    "name": "_k13_bwd_prep_kernel",
+    "count": 12288,
+    "self_cuda_ms_total": 2175.313633999914,
+    "self_cuda_ms_per_iter": 1087.6568,
+    "avg_us_per_launch": 177.03,
+    "launches_per_iter": 6144.0
+   },
+   {
+    "name": "_k10_bwd_key_walk_kernel",
+    "count": 12288,
+    "self_cuda_ms_total": 2014.5822260000841,
+    "self_cuda_ms_per_iter": 1007.2911,
+    "avg_us_per_launch": 163.95,
+    "launches_per_iter": 6144.0
+   },
+   {
+    "name": "_k11b_traj_kernel",
+    "count": 12288,
+    "self_cuda_ms_total": 1054.7378510001138,
+    "self_cuda_ms_per_iter": 527.3689,
+    "avg_us_per_launch": 85.83,
+    "launches_per_iter": 6144.0
+   },
+   {
+    "name": "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8>(cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_nt_align8::Pa",
+    "count": 2304,
+    "self_cuda_ms_total": 606.1885200000256,
+    "self_cuda_ms_per_iter": 303.0943,
+    "avg_us_per_launch": 263.1,
+    "launches_per_iter": 1152.0
+   },
+   {
+    "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::arr",
+    "count": 13606,
+    "self_cuda_ms_total": 494.0514560001018,
+    "self_cuda_ms_per_iter": 247.0257,
+    "avg_us_per_launch": 36.31,
+    "launches_per_iter": 6803.0
+   },
+   {
+    "name": "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<c10::BFloat16, c10::BFloat16, c10::BFloat16, at::native::binary_internal::MulFunctor",
+    "count": 1152,
+    "self_cuda_ms_total": 434.00374000005513,
+    "self_cuda_ms_per_iter": 217.0019,
+    "avg_us_per_launch": 376.74,
+    "launches_per_iter": 576.0
+   },
+   {
+    "name": "void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda(float)#1}, std::array<char*, 2ul> >(in",
+    "count": 12336,
+    "self_cuda_ms_total": 363.9259970002597,
+    "self_cuda_ms_per_iter": 181.963,
+    "avg_us_per_launch": 29.5,
+    "launches_per_iter": 6168.0
+   },
+   {
+    "name": "_k10_key_traj_kernel",
+    "count": 12288,
+    "self_cuda_ms_total": 341.8239829999348,
+    "self_cuda_ms_per_iter": 170.912,
+    "avg_us_per_launch": 27.82,
+    "launches_per_iter": 6144.0
+   },
+   {
+    "name": "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::opera",
+    "count": 10048,
+    "self_cuda_ms_total": 309.6336520000412,
+    "self_cuda_ms_per_iter": 154.8168,
+    "avg_us_per_launch": 30.82,
+    "launches_per_iter": 5024.0
+   },
+   {
+    "name": "ampere_bf16_s1688gemm_bf16_64x128_sliced1x2_ldg8_f2f_nn",
+    "count": 768,
+    "self_cuda_ms_total": 304.86957200004076,
+    "self_cuda_ms_per_iter": 152.4348,
+    "avg_us_per_launch": 396.97,
+    "launches_per_iter": 384.0
+   },
+   {
+    "name": "ampere_bf16_s16816gemm_bf16_128x64_ldg8_f2f_tn",
+    "count": 768,
+    "self_cuda_ms_total": 270.813820000047,
+    "self_cuda_ms_per_iter": 135.4069,
+    "avg_us_per_launch": 352.62,
+    "launches_per_iter": 384.0
+   },
+   {
+    "name": "ampere_bf16_s1688gemm_bf16_64x128_sliced1x2_ldg8_f2f_tn",
+    "count": 384,
+    "self_cuda_ms_total": 159.018179000005,
+    "self_cuda_ms_per_iter": 79.5091,
+    "avg_us_per_launch": 414.11,
+    "launches_per_iter": 192.0
+   },
+   {
+    "name": "ampere_bf16_s16816gemm_bf16_128x64_ldg8_f2f_nn",
+    "count": 384,
+    "self_cuda_ms_total": 156.59326900000195,
+    "self_cuda_ms_per_iter": 78.2966,
+    "avg_us_per_launch": 407.79,
+    "launches_per_iter": 192.0
+   },
+   {
+    "name": "void at::native::vectorized_elementwise_kernel<4, at::native::(anonymous namespace)::silu_backward_kernel(at::TensorIteratorBase&)::{lambda()#1}::operator()() c",
+    "count": 384,
+    "self_cuda_ms_total": 144.1179150000005,
+    "self_cuda_ms_per_iter": 72.059,
+    "avg_us_per_launch": 375.31,
+    "launches_per_iter": 192.0
+   },
+   {
+    "name": "void (anonymous namespace)::indexing_backward_kernel<float, 4>(long const*, long const*, float const*, float*, long, long, long, long, bool)",
+    "count": 384,
+    "self_cuda_ms_total": 97.78872999998264,
+    "self_cuda_ms_per_iter": 48.8944,
+    "avg_us_per_launch": 254.66,
+    "launches_per_iter": 192.0
+   },
+   {
+    "name": "void at::native::vectorized_elementwise_kernel<4, at::native::(anonymous namespace)::silu_kernel(at::TensorIteratorBase&)::{lambda()#1}::operator()() const::{la",
+    "count": 384,
+    "self_cuda_ms_total": 90.64915599997039,
+    "self_cuda_ms_per_iter": 45.3246,
+    "avg_us_per_launch": 236.07,
+    "launches_per_iter": 192.0
+   },
+   {
+    "name": "ampere_bf16_s16816gemm_bf16_128x64_ldg8_f2f_stages_64x3_nt",
+    "count": 768,
+    "self_cuda_ms_total": 90.29022500001872,
+    "self_cuda_ms_per_iter": 45.1451,
+    "avg_us_per_launch": 117.57,
+    "launches_per_iter": 384.0
+   },
+   {
+    "name": "ampere_bf16_s1688gemm_bf16_128x128_ldg8_f2f_stages_32x1_nn",
+    "count": 3472,
+    "self_cuda_ms_total": 89.18384599996207,
+    "self_cuda_ms_per_iter": 44.5919,
+    "avg_us_per_launch": 25.69,
+    "launches_per_iter": 1736.0
+   },
+   {
+    "name": "void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_kernel_impl<at::native::OpaqueType<4> >(at::TensorIteratorBase&",
+    "count": 384,
+    "self_cuda_ms_total": 74.23858199998492,
+    "self_cuda_ms_per_iter": 37.1193,
+    "avg_us_per_launch": 193.33,
+    "launches_per_iter": 192.0
+   },
+   {
+    "name": "void at::native::(anonymous namespace)::layer_norm_grad_input_kernel_vectorized<float, float, true>(float const*, float const*, float const*, float const*, floa",
+    "count": 784,
+    "self_cuda_ms_total": 69.88012700000522,
+    "self_cuda_ms_per_iter": 34.9401,
+    "avg_us_per_launch": 89.13,
+    "launches_per_iter": 392.0
+   },
+   {
+    "name": "void at::native::(anonymous namespace)::GammaBetaBackwardCUDAKernelTemplate<float, float, 32u, 32u, 256u, false, true, true>(long, long, float const*, float con",
+    "count": 784,
+    "self_cuda_ms_total": 64.65660900001228,
+    "self_cuda_ms_per_iter": 32.3283,
+    "avg_us_per_launch": 82.47,
+    "launches_per_iter": 392.0
+   },
+   {
+    "name": "void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>, 4, TrivialOffsetCalculator<2, unsigned int>, TrivialOff",
+    "count": 768,
+    "self_cuda_ms_total": 60.010800000016694,
+    "self_cuda_ms_per_iter": 30.0054,
+    "avg_us_per_launch": 78.14,
+    "launches_per_iter": 384.0
+   },
+   {
+    "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*",
+    "count": 17346,
+    "self_cuda_ms_total": 58.59697999995498,
+    "self_cuda_ms_per_iter": 29.2985,
+    "avg_us_per_launch": 3.38,
+    "launches_per_iter": 8673.0
+   }
+  ],
+  "full_table": "experiments/expressivity_tasks/x45_matrix_emender/k23_runs/profiler_full_step.txt",
+  "optimizer_isolated_self_cuda_ms": 95.5,
+  "optimizer_specific_bucket_ms_per_step": 66.556,
+  "clean_opt_s": 0.163,
+  "counting_note": "device kernels only; per-bucket rows aggregate per-kernel self CUDA time over 2 steps; the wall anchors come from the unprofiled stage (the profiler inflates host time)"
+ },
+ "driver_notes": {
+  "runs": "two passes on one leased card (GPU 5): run 1 (all stages) whose step_profile stage failed on a driver-side bucketing bug (NameError: device_busy_ms, fixed in k23_step_speed.py before run 2) and whose lever_flows forward receipt was overwritten by the backward-compile failure (also fixed: the backward check now has its own try); run 2 (--stages profile,flows,verdict) re-ran those stages and the verdict on the same receipt. The batching/graphs/capture/walls receipts are run 1's, unchanged.",
+  "receipt_edits": "documented bookkeeping, made by the driver's operator after run 2: the stale step_profile_failed marker removed (superseded by run 2's clean step_profile), and lever_batching_backward's mislabeled committed_layer_step_bwd_ms renamed to committed_pair_loop_ms (it is the fwd+bwd loop wall; no measurement changed)"
+ }
+}
