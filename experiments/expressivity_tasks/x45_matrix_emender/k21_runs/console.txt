@@ -1,0 +1,70 @@
+[reproduce] mixer fwd 23.291 ms, composed_scan 22.084 ms
+[ablation] no read sweep (scores + gather; reads stored as zeros): 13.473 ms (delta +8.768)
+[ablation] no per-token value-norm fold (nr/strength := 1): 19.092 ms (delta +3.149)
+[ablation] no hit-sums (old_pre/old_row := 0): 18.737 ms (delta +3.504)
+[ablation] no per-channel decay tile multiply: 22.181 ms (delta +0.060)
+[ablation] no segment checkpoint stores: 20.840 ms (delta +1.401)
+[ablation] no record-channel stores (slot/op/erase/live_after/payload lanes/live_pre): 21.599 ms (delta +0.642)
+[lever] reduce_nr__same_pairings_split_fold: bit_identical=True 20.221 ms (1.10x)
+[lever] reduce_sum__defined_order_axis0_fold: bit_identical=False 80.325 ms (0.28x)
+[lever] lazy_norms__merge_branch_only: bit_identical=True 19.286 ms (1.15x)
+[lever] lazy_old_row__erase_else_only: bit_identical=True 21.191 ms (1.05x)
+[lever] stacked(reduce_nr__same_pairings_split_fold+lazy_norms__merge_branch_only+lazy_old_row__erase_else_only): bit_identical=True 17.533 ms (1.26x)
+[launch] committed (w8, s3): bit=True 22.129 ms (1.00x)
+[launch] committed (w4, s3): bit=False 32.423 ms (0.68x)
+[launch] committed (w8, s1): bit=True 21.216 ms (1.04x)
+[launch] committed (w8, s5): bit=True 22.176 ms (1.00x)
+[launch] committed (w16, s3): bit=False 25.866 ms (0.86x)
+[launch] stacked (w8, s3): bit=True 17.545 ms (1.26x)
+[launch] stacked (w8, s1): bit=True 16.785 ms (1.32x)
+[launch] stacked (w8, s5): bit=True 17.526 ms (1.26x)
+[launch] stacked (w4, s3): bit=False 25.458 ms (0.87x)
+[launch] stacked (w16, s3): bit=False 20.526 ms (1.08x)
+[launch] stacked (w16, s4): bit=False 20.540 ms (1.08x)
+[wrapper] fp32 pre-cast: bit=True 22.590 ms
+[wrapper] fused key|query_key: bit=False 0.682 -> 0.368 ms
+[wrapper] fused value|b_proj: bit=True 0.194 -> 0.134 ms
+{
+ "committed_scan_wall_ms": 22.084,
+ "committed_direct_launch_ms": 22.129,
+ "scan_kernel_cuda_ms": 21.859,
+ "best_bit_identical_ms": 16.785,
+ "best_bit_identical_variant": "stacked at (w8, s1)",
+ "bit_identical_speedup": 1.32
+}
+{
+ "recoverable_bit_identically_pct": 24.1,
+ "semantics_floor_pct_of_current": 16.9,
+ "floor_detail": {
+  "compute_at_16_sm_ceiling_ms": 3.741,
+  "memory_at_measured_bw_ms": 0.154,
+  "floor_bound_ms": 3.741,
+  "floor_over_current": 0.169
+ },
+ "residual_note": "the gap between the best bit-identical variant and the semantics' floor is implementation headroom that only a kernel rewrite lane could claim -- stated, not taken in this lane"
+}
+{
+ "k20_anchor": {
+  "per_mixer_ratio": 7.28,
+  "pure_ours_step_s": 10.624,
+  "pure_gdn2_step_s": 3.119,
+  "hybrid_exposure_pct_at_3_of_24": 73.1
+ },
+ "after_the_bit_identical_recovery": {
+  "scan_forward_ms": 16.785,
+  "mixer_forward_ms": 17.992,
+  "per_mixer_ratio": 6.44,
+  "hybrid_step_s_at_3_of_24": 4.136,
+  "hybrid_exposure_pct_of_gdn2_in_2700s": 75.4,
+  "pure_ours_step_s": 9.607
+ },
+ "at_the_semantics_floor": {
+  "scan_forward_ms": 3.741,
+  "mixer_forward_ms": 4.948,
+  "per_mixer_ratio": 4.47,
+  "hybrid_step_s_at_3_of_24": 3.823,
+  "hybrid_exposure_pct_of_gdn2_in_2700s": 81.6,
+  "pure_ours_step_s": 7.102
+ }
+}
+receipt written to experiments/expressivity_tasks/x45_matrix_emender/receipts/k21_scan_profile.json

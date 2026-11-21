@@ -1,0 +1,1018 @@
+{
+ "probe": "k21_scan_profile",
+ "question": "is the composed scan's 7.28x per-mixer cost INHERENT to the slot semantics or INCIDENTAL to a receipts-first kernel -- decompose the 23.40 ms forward, bound the floor, bracket the bit-identical levers",
+ "pre_state": "no directional prediction; the decomposition IS the result",
+ "unit": "one (layer, window-group): batch 8 x 2048 tokens at the committed 150M width 576, bf16 autocast compute, fp32 params -- the scan probe at batch 8 x 2048 x heads 2 x rank/value 128 x key 16, segment 64 (the registered shape)",
+ "seed": 3401,
+ "session": {
+  "host": "lambda01",
+  "card": "0",
+  "device": "NVIDIA RTX 6000 Ada Generation",
+  "card_gib": 47.38,
+  "torch": "2.9.1+cu128",
+  "triton": "3.5.1",
+  "versions": {
+   "torch": "2.9.1+cu128",
+   "schedulefree": "1.4.1",
+   "hybrid_muon_sha256": "204c55252f3032b91a965d2511cddb5d9d2eef9f94e9bfd509ee86d2987384d6",
+   "bakeoff_optimizers_sha256": "dff190059d0ff94633c3b3e42ab89ef2ccde8517ebd512a4acff96143a949745"
+  }
+ },
+ "git": {
+  "commit": "a1bfbe7f16222be37e5b971c410aa5c0a9eacf62",
+  "branch": "main",
+  "relevant_paths_dirty": ""
+ },
+ "bindings": {
+  "k15_composition_sha256": "b7ade13ec44cfd927493fe96a0e9d3fbe0bb547cce0a84797fe43557556b903a",
+  "k18_short_conv_sha256": "82963fe89ba75e5583ada78960da9a422be9a1b5c213ee0456f2e2bbb4e68912",
+  "matched_arms_sha256": "9d37c32469f3701ac3e0bfbd1d4b5c253e7cbdd425e95a281df62d83f6f30830",
+  "velocity_ladder_sha256": "a78f37c2692b094f813c0b06adac6a47e063e94f8e72f0e127ea4ce0f0b52473",
+  "external_gdn2_sha256": "316ddf8658a55da4a4159f77881c92e9a067570da55d0aa2592b7b11c51aa3d8",
+  "k18_gates_receipt_sha256": "f4b248a14c94b32dc62c40b5722d5535ebf5ededa367d7b342e34697a8b9e81f",
+  "lattice_registration_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c"
+ },
+ "profiling_tools": {
+  "torch_profiler": "CUPTI kernel timings: per-kernel self CUDA time, per-op CPU time",
+  "ncu": "UNAVAILABLE on this host: ERR_NVGPUCTRPERM (driver-level performance-counter permission denies non-admin profiling, verified same-session with a plain sgemm probe) -- the achieved-bandwidth/compute classification is therefore ANALYTIC: the scan kernel's byte traffic and op counts are DETERMINISTIC (counted from the committed Triton source), so achieved rate = traffic / measured kernel time, against the card's measured peaks",
+  "nsys_gpu_metrics": "UNAVAILABLE: the same ERR_NVGPUCTRPERM"
+ },
+ "recorded_anchors": {
+  "k20_receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k20_hybrid_velocity.json",
+  "mixer_forward_ms_per_window_k20": 23.403,
+  "mixer_backward_ms_per_window_k20": 24.554,
+  "gdn2_mixer_forward_ms": 2.352,
+  "gdn2_mixer_backward_ms": 4.252,
+  "per_mixer_ratio_k20": 7.28,
+  "composed_scan_forward_ms_banked": 22.964699504276116,
+  "composed_scan_banked_receipt": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/receipts/k18_gates.json",
+  "pure_ours_step_s_k20": 10.624,
+  "pure_gdn2_step_s_k20": 3.119,
+  "hybrid_exposure_pct_at_3_of_24_k20": 73.1
+ },
+ "machine": {
+  "build": "velocity_ladder._build_k10(TUNED_WINNER) + convert_model_to_composition + convert_model_to_short_conv(birth='identity') -- the committed K18 machine, K20's per_layer build verbatim; engines imported, never modified",
+  "parameters": 158663424,
+  "summary": {
+   "base_arm": "matrix",
+   "shape": {
+    "width": 576,
+    "depth": 24,
+    "hidden": 3352,
+    "heads": 2,
+    "value_dim": 128,
+    "rank": 128,
+    "rank_max": 128,
+    "vocab": 256
+   },
+   "parameters": {
+    "total": 149981808,
+    "trainable": 149981808,
+    "per_layer": 6236930,
+    "mixer": 443522,
+    "mlp": 5792256,
+    "norms": 1152,
+    "embedding": 147456,
+    "head": 147456,
+    "final_norm": 576,
+    "capacity": 150003984,
+    "capacity_relative": -0.00014783607347390593
+   },
+   "routing": {
+    "ops": true,
+    "tau_match": 0.45,
+    "tau_merge": 0.85,
+    "tau_pop": 0.1,
+    "tie_break": 1e-06,
+    "read_scale": 2.0,
+    "grow": false,
+    "grow_trigger": 0.5,
+    "grow_window": 4,
+    "grow_window_tokens": 512,
+    "grow_geometric": 2.0,
+    "grow_stride_floor": 64
+   },
+   "chunk_tokens": 128,
+   "compile_scan": true,
+   "compile_mode": "default",
+   "fused_whole_scan": false,
+   "scan_path": "k10_separated_keys (per-token, the key channel)",
+   "fused_scan": false,
+   "fused_backward": false,
+   "fused_routing": false,
+   "fused_routing_diff": false,
+   "optimizer_note": "the registered gdn2 nomination's optimizer settings (gates.py / profile_step_vs_gdn2.py)",
+   "key_dim": 16,
+   "key_context": 4,
+   "segment_tokens": 64,
+   "key_init": "mimetic at the fixed orthonormal family (QR, seed 3401 + head), free drift"
+  },
+  "capture": {
+   "batch_rows": 64,
+   "targets": 117712,
+   "width": 576,
+   "capture_loss": 5.784919738769531
+  },
+  "scan_shape": {
+   "payload": [
+    8,
+    2048,
+    2,
+    128
+   ],
+   "payload_dtype": "torch.bfloat16",
+   "write_keys": [
+    8,
+    2048,
+    2,
+    16
+   ],
+   "write_keys_dtype": "torch.bfloat16",
+   "decay_dtype": "torch.float32",
+   "gates_dtype": "torch.float32",
+   "rank": 128,
+   "rank_max": 128,
+   "segment_tokens": 64,
+   "gated": true,
+   "key_dim": 16,
+   "policy": {
+    "tau_match": 0.45,
+    "tau_merge": 0.85,
+    "tau_pop": 0.1,
+    "tie_break": 1e-06,
+    "read_scale": 2.7870458737509636,
+    "ops": true
+   },
+   "mixer_input": [
+    8,
+    2048,
+    576
+   ]
+  },
+  "layer": 6,
+  "scan_args_note": "the EXACT production arguments layer 6's mixer passed to composed_scan during the capture forward (a recording shim on the committed mixer's own composed_scan binding, removed before any timing)",
+  "microbatch": 8
+ },
+ "reproduce": {
+  "mixer_forward": {
+   "iterations": 25,
+   "median_ms": 23.291,
+   "p25_ms": 23.28,
+   "p75_ms": 23.316,
+   "min_ms": 23.26,
+   "max_ms": 23.927,
+   "mean_ms": 23.326,
+   "std_over_median_pct": 0.55
+  },
+  "composed_scan_forward": {
+   "iterations": 25,
+   "median_ms": 22.084,
+   "p25_ms": 22.078,
+   "p75_ms": 22.089,
+   "min_ms": 22.075,
+   "max_ms": 22.153,
+   "mean_ms": 22.089,
+   "std_over_median_pct": 0.08
+  },
+  "recorded_reference": {
+   "mixer_forward_ms_k20": 23.403,
+   "composed_scan_forward_ms_banked": 22.964699504276116
+  }
+ },
+ "profiler": {
+  "mixer_forward": {
+   "iterations": 10,
+   "kernel_self_cuda_ms_per_iter": 23.117,
+   "buckets_ms_per_iter": {
+    "the composed scan kernel": 21.709,
+    "elementwise/copy (conv taps, sigmoid, gate arithmetic, casts)": 1.196,
+    "GEMM (the projections / the out projection)": 0.212
+   },
+   "top_kernels": [
+    {
+     "name": "_k15_seq_fwd_kernel",
+     "count": 10,
+     "self_cuda_ms": 217.09
+    },
+    {
+     "name": "void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16_copy_kernel_cuda(at::TensorIteratorBase&)::{lambd",
+     "count": 210,
+     "self_cuda_ms": 7.775
+    },
+    {
+     "name": "void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_kernel_impl<at::native:",
+     "count": 10,
+     "self_cuda_ms": 1.983
+    },
+    {
+     "name": "ampere_bf16_s1688gemm_bf16_128x128_ldg8_f2f_stages_32x1_tn",
+     "count": 60,
+     "self_cuda_ms": 1.019
+    },
+    {
+     "name": "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_64x64_32x6_tn_align8>(cutlass_80_tensorop_bf16_s1681",
+     "count": 20,
+     "self_cuda_ms": 0.907
+    },
+    {
+     "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl<at::native::BinaryFunctor<float, float, float, a",
+     "count": 40,
+     "self_cuda_ms": 0.565
+    },
+    {
+     "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<c10::BFloat16, ",
+     "count": 40,
+     "self_cuda_ms": 0.348
+    },
+    {
+     "name": "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<float, float, float, at::native::binary_inte",
+     "count": 10,
+     "self_cuda_ms": 0.275
+    },
+    {
+     "name": "void at::native::vectorized_elementwise_kernel<4, at::native::sigmoid_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}",
+     "count": 40,
+     "self_cuda_ms": 0.21
+    },
+    {
+     "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::T",
+     "count": 10,
+     "self_cuda_ms": 0.181
+    },
+    {
+     "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char*, 2ul> >(int",
+     "count": 20,
+     "self_cuda_ms": 0.177
+    },
+    {
+     "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<char*, 3ul> >(i",
+     "count": 30,
+     "self_cuda_ms": 0.153
+    },
+    {
+     "name": "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_bf16_64x64_32x6_tn_align2>(cutlass_80_tensorop_bf16_s16816gemm",
+     "count": 10,
+     "self_cuda_ms": 0.106
+    },
+    {
+     "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnOther_add<float>, std::array<char*, 2ul> >(in",
+     "count": 10,
+     "self_cuda_ms": 0.09
+    },
+    {
+     "name": "ampere_bf16_s1688gemm_bf16_128x128_ldg8_relu_f2f_stages_32x1_tn",
+     "count": 10,
+     "self_cuda_ms": 0.087
+    }
+   ],
+   "full_table": "experiments/expressivity_tasks/x45_matrix_emender/k21_runs/profiler_mixer_forward.txt",
+   "counting_note": "device kernels only -- op/autograd wrapper rows that mirror their child kernel's device time are excluded to avoid double-counting"
+  },
+  "scan_only": {
+   "iterations": 10,
+   "kernel_self_cuda_ms_per_iter": 21.862,
+   "buckets_ms_per_iter": {
+    "the composed scan kernel": 21.859,
+    "elementwise/copy (conv taps, sigmoid, gate arithmetic, casts)": 0.003
+   },
+   "top_kernels": [
+    {
+     "name": "_k15_seq_fwd_kernel",
+     "count": 10,
+     "self_cuda_ms": 218.588
+    },
+    {
+     "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::nati",
+     "count": 20,
+     "self_cuda_ms": 0.022
+    },
+    {
+     "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<bool>, std::array<char*, 1ul> >(int, at::nativ",
+     "count": 10,
+     "self_cuda_ms": 0.01
+    }
+   ],
+   "full_table": "experiments/expressivity_tasks/x45_matrix_emender/k21_runs/profiler_scan_only.txt",
+   "counting_note": "device kernels only -- op/autograd wrapper rows that mirror their child kernel's device time are excluded to avoid double-counting",
+   "eager_gap_ms_per_iter": 0.222,
+   "eager_gap_note": "the composed_scan wrapper's own cost (the zeros state init, the custom-op dispatch, the output allocations) -- measured as the wall minus the kernel's self CUDA time; the outputs are allocator-cached across calls"
+  }
+ },
+ "peaks": {
+  "device": "NVIDIA RTX 6000 Ada Generation",
+  "sm_count": 142,
+  "measured_dram_bandwidth_gbs": 839.0,
+  "measured_matmul_tflops": {
+   "fp32": 31.3,
+   "bf16": 114.0
+  },
+  "measured_fp32_op_rate_gop_s": 15650.0,
+  "scan_parallelism_note": "the content-addressed decisions at token t read the whole store, so a bit-identical walk is SEQUENTIAL over tokens; the independent rows at the registered shape are batch*heads = 16 of the card's 142 SMs -- the semantics' own occupancy ceiling, an idealization that assumes each of the 16 resident CTAs sustains the full-SM fp32 issue rate",
+  "semantics_ceiling_fp32_gop_s": 1763.4,
+  "cardwide_ceiling_fp32_gop_s": 15650.0
+ },
+ "cost_model": {
+  "shape": {
+   "R": 128,
+   "V": 128,
+   "K": 16,
+   "T": 2048,
+   "rows": 16,
+   "segment": 64,
+   "token_rows": 32768
+  },
+  "counting_discipline": "1 op = 1 fp32-pipe issue (the discipline's inline-asm mul.rn/add.rn -- no FMA contraction); selects/compares issue on the same pipes and are counted separately",
+  "per_pass": [
+   {
+    "name": "input loads (p/wk/qk/lam/gates)",
+    "per_token_row": {
+     "fp32_mul_add_div_sqrt_ops": 0,
+     "select_compare_ops": 0,
+     "load_bytes": 1088,
+     "store_bytes": 0
+    },
+    "per_scan": {
+     "fp32_ops": 0,
+     "load_bytes": 35651584,
+     "store_bytes": 0
+    },
+    "floor_at_semantics_ceiling_ms": 0.0,
+    "floor_at_card_wide_peak_ms": 0.0,
+    "floor_memory_at_measured_bw_ms": 0.0425
+   },
+   {
+    "name": "value norms: the nr fold + strength (the MERGE strengths)",
+    "per_token_row": {
+     "fp32_mul_add_div_sqrt_ops": 32896,
+     "select_compare_ops": 128,
+     "load_bytes": 0,
+     "store_bytes": 0
+    },
+    "per_scan": {
+     "fp32_ops": 1082130432,
+     "load_bytes": 0,
+     "store_bytes": 0
+    },
+    "floor_at_semantics_ceiling_ms": 0.6137,
+    "floor_at_card_wide_peak_ms": 0.0691,
+    "floor_memory_at_measured_bw_ms": 0.0
+   },
+   {
+    "name": "key/query norms (nk/nqk/uqk)",
+    "per_token_row": {
+     "fp32_mul_add_div_sqrt_ops": 4144,
+     "select_compare_ops": 0,
+     "load_bytes": 0,
+     "store_bytes": 0
+    },
+    "per_scan": {
+     "fp32_ops": 135790592,
+     "load_bytes": 0,
+     "store_bytes": 0
+    },
+    "floor_at_semantics_ceiling_ms": 0.077,
+    "floor_at_card_wide_peak_ms": 0.0087,
+    "floor_memory_at_measured_bw_ms": 0.0
+   },
+   {
+    "name": "read scores: the cosine-sim sweep over the slots",
+    "per_token_row": {
+     "fp32_mul_add_div_sqrt_ops": 4224,
+     "select_compare_ops": 128,
+     "load_bytes": 0,
+     "store_bytes": 0
+    },
+    "per_scan": {
+     "fp32_ops": 142606336,
+     "load_bytes": 0,
+     "store_bytes": 0
+    },
+    "floor_at_semantics_ceiling_ms": 0.0809,
+    "floor_at_card_wide_peak_ms": 0.0091,
+    "floor_memory_at_measured_bw_ms": 0.0
+   },
+   {
+    "name": "the read gather (the rank-axis fold) + the read store",
+    "per_token_row": {
+     "fp32_mul_add_div_sqrt_ops": 32640,
+     "select_compare_ops": 0,
+     "load_bytes": 0,
+     "store_bytes": 512
+    },
+    "per_scan": {
+     "fp32_ops": 1069547520,
+     "load_bytes": 0,
+     "store_bytes": 16777216
+    },
+    "floor_at_semantics_ceiling_ms": 0.6065,
+    "floor_at_card_wide_peak_ms": 0.0683,
+    "floor_memory_at_measured_bw_ms": 0.02
+   },
+   {
+    "name": "decision sim sweep (the threshold chain's inputs)",
+    "per_token_row": {
+     "fp32_mul_add_div_sqrt_ops": 4144,
+     "select_compare_ops": 128,
+     "load_bytes": 0,
+     "store_bytes": 0
+    },
+    "per_scan": {
+     "fp32_ops": 139984896,
+     "load_bytes": 0,
+     "store_bytes": 0
+    },
+    "floor_at_semantics_ceiling_ms": 0.0794,
+    "floor_at_card_wide_peak_ms": 0.0089,
+    "floor_memory_at_measured_bw_ms": 0.0
+   },
+   {
+    "name": "the threshold-decision chain (best/second/worst + op select)",
+    "per_token_row": {
+     "fp32_mul_add_div_sqrt_ops": 890,
+     "select_compare_ops": 1792,
+     "load_bytes": 0,
+     "store_bytes": 0
+    },
+    "per_scan": {
+     "fp32_ops": 87883776,
+     "load_bytes": 0,
+     "store_bytes": 0
+    },
+    "floor_at_semantics_ceiling_ms": 0.0498,
+    "floor_at_card_wide_peak_ms": 0.0056,
+    "floor_memory_at_measured_bw_ms": 0.0
+   },
+   {
+    "name": "the MERGE strengths (fw/sw/a_mix/b_mix)",
+    "per_token_row": {
+     "fp32_mul_add_div_sqrt_ops": 257,
+     "select_compare_ops": 256,
+     "load_bytes": 0,
+     "store_bytes": 0
+    },
+    "per_scan": {
+     "fp32_ops": 16809984,
+     "load_bytes": 0,
+     "store_bytes": 0
+    },
+    "floor_at_semantics_ceiling_ms": 0.0095,
+    "floor_at_card_wide_peak_ms": 0.0011,
+    "floor_memory_at_measured_bw_ms": 0.0
+   },
+   {
+    "name": "gates lane-0 (the old_pre hit-sum + the delta-rule blend)",
+    "per_token_row": {
+     "fp32_mul_add_div_sqrt_ops": 16896,
+     "select_compare_ops": 16384,
+     "load_bytes": 0,
+     "store_bytes": 0
+    },
+    "per_scan": {
+     "fp32_ops": 1090519040,
+     "load_bytes": 0,
+     "store_bytes": 0
+    },
+    "floor_at_semantics_ceiling_ms": 0.6184,
+    "floor_at_card_wide_peak_ms": 0.0697,
+    "floor_memory_at_measured_bw_ms": 0.0
+   },
+   {
+    "name": "the write scatter's old_row hit-sum",
+    "per_token_row": {
+     "fp32_mul_add_div_sqrt_ops": 16256,
+     "select_compare_ops": 16384,
+     "load_bytes": 0,
+     "store_bytes": 0
+    },
+    "per_scan": {
+     "fp32_ops": 1069547520,
+     "load_bytes": 0,
+     "store_bytes": 0
+    },
+    "floor_at_semantics_ceiling_ms": 0.6065,
+    "floor_at_card_wide_peak_ms": 0.0683,
+    "floor_memory_at_measured_bw_ms": 0.0
+   },
+   {
+    "name": "DECAY: the per-channel value tile multiply",
+    "per_token_row": {
+     "fp32_mul_add_div_sqrt_ops": 16384,
+     "select_compare_ops": 0,
+     "load_bytes": 0,
+     "store_bytes": 0
+    },
+    "per_scan": {
+     "fp32_ops": 536870912,
+     "load_bytes": 0,
+     "store_bytes": 0
+    },
+    "floor_at_semantics_ceiling_ms": 0.3045,
+    "floor_at_card_wide_peak_ms": 0.0343,
+    "floor_memory_at_measured_bw_ms": 0.0
+   },
+   {
+    "name": "the write scatter apply (new_row + where-updates + key lane)",
+    "per_token_row": {
+     "fp32_mul_add_div_sqrt_ops": 144,
+     "select_compare_ops": 37248,
+     "load_bytes": 0,
+     "store_bytes": 0
+    },
+    "per_scan": {
+     "fp32_ops": 1225261056,
+     "load_bytes": 0,
+     "store_bytes": 0
+    },
+    "floor_at_semantics_ceiling_ms": 0.6948,
+    "floor_at_card_wide_peak_ms": 0.0783,
+    "floor_memory_at_measured_bw_ms": 0.0
+   },
+   {
+    "name": "record stores (schedule lanes + live_pre + payload lanes)",
+    "per_token_row": {
+     "fp32_mul_add_div_sqrt_ops": 0,
+     "select_compare_ops": 0,
+     "load_bytes": 0,
+     "store_bytes": 1188
+    },
+    "per_scan": {
+     "fp32_ops": 0,
+     "load_bytes": 0,
+     "store_bytes": 38928384
+    },
+    "floor_at_semantics_ceiling_ms": 0.0,
+    "floor_at_card_wide_peak_ms": 0.0,
+    "floor_memory_at_measured_bw_ms": 0.0464
+   },
+   {
+    "name": "segment checkpoints (amortized per token)",
+    "per_token_row": {
+     "fp32_mul_add_div_sqrt_ops": 0,
+     "select_compare_ops": 0,
+     "load_bytes": 0,
+     "store_bytes": 1154
+    },
+    "per_scan": {
+     "fp32_ops": 0,
+     "load_bytes": 0,
+     "store_bytes": 37814272
+    },
+    "floor_at_semantics_ceiling_ms": 0.0,
+    "floor_at_card_wide_peak_ms": 0.0,
+    "floor_memory_at_measured_bw_ms": 0.0451
+   }
+  ],
+  "per_scan_totals": {
+   "fp32_ops": 6596952064,
+   "select_ops": 2373976064,
+   "load_bytes": 35651584,
+   "store_bytes": 93519872,
+   "dram_bytes_moved": 129171456
+  },
+  "floors": {
+   "compute_at_semantics_ceiling_ms": 3.741,
+   "compute_at_card_wide_peak_ms": 0.422,
+   "memory_at_measured_bw_ms": 0.154
+  },
+  "note": "the semantics' ceiling: the same arithmetic, sequential over tokens, 16 independent rows (batch*heads) of the card's SMs -- the floor ANY bit-identical implementation of these semantics at this shape must exceed; the card-wide figure is stated only to show what the FORBIDDEN token-parallel reformulation would buy"
+ },
+ "committed_determinism_selfcheck": {
+  "bit_identical": true,
+  "note": "the committed opaque op pair reproduces its own outputs bit for bit across two runs at fixed inputs -- the receipts bar is well-posed"
+ },
+ "pass_breakdown": {
+  "faithful_copy": {
+   "bit_identical": true,
+   "median_ms": 22.241,
+   "timing": {
+    "iterations": 10,
+    "median_ms": 22.241,
+    "p25_ms": 22.224,
+    "p75_ms": 22.251,
+    "min_ms": 22.217,
+    "max_ms": 22.254,
+    "mean_ms": 22.239,
+    "std_over_median_pct": 0.06
+   },
+   "note": "the scratch kernel at all flags zero reproduces the committed op pair bit for bit -- the copy is the instrument, and its timing is the attribution baseline"
+  },
+  "brackets": {
+   "abl_1": {
+    "name": "no read sweep (scores + gather; reads stored as zeros)",
+    "median_ms": 13.473,
+    "attributed_pass_cost_ms": 8.768,
+    "attributed_share_pct": 39.42,
+    "timing": {
+     "iterations": 10,
+     "median_ms": 13.473,
+     "p25_ms": 13.467,
+     "p75_ms": 13.479,
+     "min_ms": 13.465,
+     "max_ms": 13.491,
+     "mean_ms": 13.474,
+     "std_over_median_pct": 0.06
+    }
+   },
+   "abl_2": {
+    "name": "no per-token value-norm fold (nr/strength := 1)",
+    "median_ms": 19.092,
+    "attributed_pass_cost_ms": 3.149,
+    "attributed_share_pct": 14.16,
+    "timing": {
+     "iterations": 10,
+     "median_ms": 19.092,
+     "p25_ms": 19.08,
+     "p75_ms": 19.102,
+     "min_ms": 19.064,
+     "max_ms": 19.2,
+     "mean_ms": 19.1,
+     "std_over_median_pct": 0.19
+    }
+   },
+   "abl_3": {
+    "name": "no hit-sums (old_pre/old_row := 0)",
+    "median_ms": 18.737,
+    "attributed_pass_cost_ms": 3.504,
+    "attributed_share_pct": 15.76,
+    "timing": {
+     "iterations": 10,
+     "median_ms": 18.737,
+     "p25_ms": 18.725,
+     "p75_ms": 18.749,
+     "min_ms": 18.717,
+     "max_ms": 18.759,
+     "mean_ms": 18.736,
+     "std_over_median_pct": 0.07
+    }
+   },
+   "abl_4": {
+    "name": "no per-channel decay tile multiply",
+    "median_ms": 22.181,
+    "attributed_pass_cost_ms": 0.06,
+    "attributed_share_pct": 0.27,
+    "timing": {
+     "iterations": 10,
+     "median_ms": 22.181,
+     "p25_ms": 22.164,
+     "p75_ms": 22.201,
+     "min_ms": 22.141,
+     "max_ms": 22.219,
+     "mean_ms": 22.18,
+     "std_over_median_pct": 0.11
+    }
+   },
+   "abl_6": {
+    "name": "no segment checkpoint stores",
+    "median_ms": 20.84,
+    "attributed_pass_cost_ms": 1.401,
+    "attributed_share_pct": 6.3,
+    "timing": {
+     "iterations": 10,
+     "median_ms": 20.84,
+     "p25_ms": 20.827,
+     "p75_ms": 20.863,
+     "min_ms": 20.805,
+     "max_ms": 20.903,
+     "mean_ms": 20.845,
+     "std_over_median_pct": 0.13
+    }
+   },
+   "abl_7": {
+    "name": "no record-channel stores (slot/op/erase/live_after/payload lanes/live_pre)",
+    "median_ms": 21.599,
+    "attributed_pass_cost_ms": 0.642,
+    "attributed_share_pct": 2.89,
+    "timing": {
+     "iterations": 10,
+     "median_ms": 21.599,
+     "p25_ms": 21.583,
+     "p75_ms": 21.618,
+     "min_ms": 21.547,
+     "max_ms": 21.63,
+     "mean_ms": 21.597,
+     "std_over_median_pct": 0.12
+    }
+   }
+  },
+  "caveat": "ablation deltas are marginal costs in the committed kernel's own regime (per-branch compiler effects included); the decision sim sweep is NOT ablated because zeroing it would change the discrete op mix and corrupt the attribution -- its cost is stated from the op-count model"
+ },
+ "micro_brackets__levers": {
+  "individual": {
+   "reduce_nr__same_pairings_split_fold": {
+    "flags": {
+     "reduce_nr": 1
+    },
+    "bit_identical": true,
+    "failed_channels": [],
+    "median_ms": 20.221,
+    "speedup_vs_committed": 1.096,
+    "timing": {
+     "iterations": 10,
+     "median_ms": 20.221,
+     "p25_ms": 20.204,
+     "p75_ms": 20.255,
+     "min_ms": 20.177,
+     "max_ms": 20.277,
+     "mean_ms": 20.227,
+     "std_over_median_pct": 0.14
+    }
+   },
+   "reduce_sum__defined_order_axis0_fold": {
+    "flags": {
+     "reduce_sum": 1
+    },
+    "bit_identical": false,
+    "failed_channels": [
+     "reads"
+    ],
+    "median_ms": 80.325,
+    "speedup_vs_committed": 0.276,
+    "timing": {
+     "iterations": 4,
+     "median_ms": 80.325,
+     "p25_ms": 80.306,
+     "p75_ms": 80.35,
+     "min_ms": 80.301,
+     "max_ms": 80.359,
+     "mean_ms": 80.327,
+     "std_over_median_pct": 0.03
+    }
+   },
+   "lazy_norms__merge_branch_only": {
+    "flags": {
+     "lazy_norms": 1
+    },
+    "bit_identical": true,
+    "failed_channels": [],
+    "median_ms": 19.286,
+    "speedup_vs_committed": 1.149,
+    "timing": {
+     "iterations": 10,
+     "median_ms": 19.286,
+     "p25_ms": 19.268,
+     "p75_ms": 19.295,
+     "min_ms": 19.259,
+     "max_ms": 19.309,
+     "mean_ms": 19.283,
+     "std_over_median_pct": 0.08
+    }
+   },
+   "lazy_old_row__erase_else_only": {
+    "flags": {
+     "lazy_old_row": 1
+    },
+    "bit_identical": true,
+    "failed_channels": [],
+    "median_ms": 21.191,
+    "speedup_vs_committed": 1.046,
+    "timing": {
+     "iterations": 10,
+     "median_ms": 21.191,
+     "p25_ms": 21.166,
+     "p75_ms": 21.21,
+     "min_ms": 21.165,
+     "max_ms": 21.216,
+     "mean_ms": 21.189,
+     "std_over_median_pct": 0.09
+    }
+   }
+  },
+  "stacked": {
+   "flags": {
+    "reduce_nr": 1,
+    "lazy_norms": 1,
+    "lazy_old_row": 1
+   },
+   "levers_stacked": [
+    "reduce_nr__same_pairings_split_fold",
+    "lazy_norms__merge_branch_only",
+    "lazy_old_row__erase_else_only"
+   ],
+   "bit_identical": true,
+   "failed_channels": [],
+   "median_ms": 17.533,
+   "speedup_vs_committed": 1.264,
+   "timing": {
+    "iterations": 10,
+    "median_ms": 17.533,
+    "p25_ms": 17.531,
+    "p75_ms": 17.542,
+    "min_ms": 17.527,
+    "max_ms": 17.555,
+    "mean_ms": 17.537,
+    "std_over_median_pct": 0.05
+   }
+  }
+ },
+ "micro_brackets__launch_sweep": {
+  "committed_kernel": [
+   {
+    "kernel": "committed",
+    "warps": 8,
+    "stages": 3,
+    "bit_identical": true,
+    "median_ms": 22.129,
+    "speedup_vs_committed": 1.001
+   },
+   {
+    "kernel": "committed",
+    "warps": 4,
+    "stages": 3,
+    "bit_identical": false,
+    "median_ms": 32.423,
+    "speedup_vs_committed": 0.683
+   },
+   {
+    "kernel": "committed",
+    "warps": 8,
+    "stages": 1,
+    "bit_identical": true,
+    "median_ms": 21.216,
+    "speedup_vs_committed": 1.045
+   },
+   {
+    "kernel": "committed",
+    "warps": 8,
+    "stages": 5,
+    "bit_identical": true,
+    "median_ms": 22.176,
+    "speedup_vs_committed": 0.999
+   },
+   {
+    "kernel": "committed",
+    "warps": 16,
+    "stages": 3,
+    "bit_identical": false,
+    "median_ms": 25.866,
+    "speedup_vs_committed": 0.857
+   }
+  ],
+  "stacked_scratch": [
+   {
+    "kernel": "scratch_stacked",
+    "warps": 8,
+    "stages": 3,
+    "bit_identical": true,
+    "median_ms": 17.545,
+    "speedup_vs_committed": 1.263
+   },
+   {
+    "kernel": "scratch_stacked",
+    "warps": 8,
+    "stages": 1,
+    "bit_identical": true,
+    "median_ms": 16.785,
+    "speedup_vs_committed": 1.32
+   },
+   {
+    "kernel": "scratch_stacked",
+    "warps": 8,
+    "stages": 5,
+    "bit_identical": true,
+    "median_ms": 17.526,
+    "speedup_vs_committed": 1.264
+   },
+   {
+    "kernel": "scratch_stacked",
+    "warps": 4,
+    "stages": 3,
+    "bit_identical": false,
+    "median_ms": 25.458,
+    "speedup_vs_committed": 0.87
+   },
+   {
+    "kernel": "scratch_stacked",
+    "warps": 16,
+    "stages": 3,
+    "bit_identical": false,
+    "median_ms": 20.526,
+    "speedup_vs_committed": 1.08
+   },
+   {
+    "kernel": "scratch_stacked",
+    "warps": 16,
+    "stages": 4,
+    "bit_identical": false,
+    "median_ms": 20.54,
+    "speedup_vs_committed": 1.079
+   }
+  ],
+  "note": "(8, 3) is the committed configuration (_seq_warps(128, 128) = 8 warps, stages 3)"
+ },
+ "micro_brackets__wrapper": {
+  "fp32_precast_inputs": {
+   "bit_identical": true,
+   "failed_channels": [],
+   "median_ms": 22.59,
+   "timing": {
+    "iterations": 6,
+    "median_ms": 22.59,
+    "p25_ms": 22.58,
+    "p75_ms": 22.604,
+    "min_ms": 22.574,
+    "max_ms": 22.605,
+    "mean_ms": 22.591,
+    "std_over_median_pct": 0.05
+   },
+   "note": "the committed kernel already loads bf16 and casts to fp32 in-register (exact), so pre-casting only moves the cast out of the kernel and QUADRUPLES the input bytes"
+  },
+  "fused_key_query_key_projections": {
+   "bit_identical": false,
+   "separate_ms": 0.682,
+   "fused_ms": 0.368,
+   "speedup": 1.853,
+   "note": "the two projections share the (b, T, ctx*width) context input; the fused GEMM's accumulation order is cuBLAS's own choice at the wider output -- the check decides"
+  },
+  "fused_value_bproj_projections": {
+   "bit_identical": true,
+   "separate_ms": 0.194,
+   "fused_ms": 0.134,
+   "speedup": 1.443
+  }
+ },
+ "micro_brackets__out_of_scope": [
+  {
+   "lever": "bf16 accumulation in the scan's value/state arithmetic",
+   "verdict": "cannot preserve bit-exactness",
+   "reason": "the committed discipline is fp32 mul.rn/add.rn with no FMA contraction; any bf16 accumulation regime changes the rounding of every folded sum -- a different machine, refused by the receipts bar"
+  },
+  {
+   "lever": "precomputed / incremental key norms (maintain nk across tokens instead of recomputing the tile)",
+   "verdict": "not worth a bracket + the incremental form is not bit-identical",
+   "reason": "only one slot's key changes per token, so recomputing only the hit slot's norm is value-identical, but the recompute is <= 2*R*K of ~194K ops per token-row (~2%): bounded below relevance; the arithmetic incremental update (sum += new - old) is not the defined recompute and is not bit-identical"
+  },
+  {
+   "lever": "a batched cosine-sim over all slots at once vs per-slot loops",
+   "verdict": "not applicable -- the committed kernel is already batched",
+   "reason": "the committed kernel already sweeps all 128 slots per token in ONE register tile (scores and sim are (rank,) tiles built by one (rank, key) fold each); there is no per-slot loop to batch away; the eager oracle is batched the same way"
+  },
+  {
+   "lever": "the read gather / hit-sums as tl.dot (tensor-core) matmuls",
+   "verdict": "cannot preserve bit-exactness",
+   "reason": "MMA accumulation order is implementation-defined and is not the defined-order rank-axis tree; the TF32/bf16 tensor paths change the arithmetic outright -- the chunked-delta-rule formulation GDN2 uses is exactly the token-parallel reformulation these semantics forbid at fixed schedule"
+  }
+ ],
+ "micro_brackets__bar": {
+  "committed_direct_launch_ms": 22.16,
+  "receipts_bar": "a lever counts only if every output channel of the committed opaque op pair (reads, state, live, keys, slot, op, erase, live_after, payload, live_pre, ckpt_state, ckpt_live, ckpt_keys) is torch.equal at the captured real activations"
+ },
+ "verdict": {
+  "the_question": "is the 7.28x INHERENT to the slot semantics or INCIDENTAL to a receipts-first kernel",
+  "measured": {
+   "committed_scan_wall_ms": 22.084,
+   "committed_direct_launch_ms": 22.129,
+   "scan_kernel_cuda_ms": 21.859,
+   "best_bit_identical_ms": 16.785,
+   "best_bit_identical_variant": "stacked at (w8, s1)",
+   "bit_identical_speedup": 1.32
+  },
+  "bound_classification": {
+   "kernel_cuda_ms": 21.859,
+   "dram_bytes_moved": 129171456,
+   "achieved_dram_gbs": 5.91,
+   "achieved_vs_measured_peak_bw_pct": 0.7,
+   "achieved_fp32_issue_gop_s": 301.8,
+   "achieved_vs_cardwide_fp32_peak_pct": 1.93,
+   "achieved_vs_semantics_ceiling_pct": 17.11,
+   "select_ops_also_issued": 2373976064,
+   "classification": "LATENCY/LAYOUT-BOUND, neither memory- nor throughput-bound: the kernel moves 129 MB per scan (a sub-millisecond memory floor) while running at 17% of its own 16-SM fp32 issue ceiling -- the serial per-token walk plus tl.sum's reduction-layout machinery own the time, not the arithmetic's volume"
+  },
+  "decomposition": {
+   "recoverable_bit_identically_pct": 24.1,
+   "semantics_floor_pct_of_current": 16.9,
+   "floor_detail": {
+    "compute_at_16_sm_ceiling_ms": 3.741,
+    "memory_at_measured_bw_ms": 0.154,
+    "floor_bound_ms": 3.741,
+    "floor_over_current": 0.169
+   },
+   "residual_note": "the gap between the best bit-identical variant and the semantics' floor is implementation headroom that only a kernel rewrite lane could claim -- stated, not taken in this lane"
+  },
+  "projections": {
+   "k20_anchor": {
+    "per_mixer_ratio": 7.28,
+    "pure_ours_step_s": 10.624,
+    "pure_gdn2_step_s": 3.119,
+    "hybrid_exposure_pct_at_3_of_24": 73.1
+   },
+   "after_the_bit_identical_recovery": {
+    "scan_forward_ms": 16.785,
+    "mixer_forward_ms": 17.992,
+    "per_mixer_ratio": 6.44,
+    "hybrid_step_s_at_3_of_24": 4.136,
+    "hybrid_exposure_pct_of_gdn2_in_2700s": 75.4,
+    "pure_ours_step_s": 9.607
+   },
+   "at_the_semantics_floor": {
+    "scan_forward_ms": 3.741,
+    "mixer_forward_ms": 4.948,
+    "per_mixer_ratio": 4.47,
+    "hybrid_step_s_at_3_of_24": 3.823,
+    "hybrid_exposure_pct_of_gdn2_in_2700s": 81.6,
+    "pure_ours_step_s": 7.102
+   }
+  },
+  "candidate_followup": "no bit-identical lever reached the 1.5x candidate bar (best: 1.32x)",
+  "backward_boundary": "the levers bracketed here are the FORWARD scan's; the backward's cost body is a different kernel set (segment replay + walks) whose levers were not bracketed in this lane -- the step-wall projections apply the forward's recoverable fraction to the forward term only, honestly"
+ }
+}
