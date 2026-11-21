@@ -1,0 +1,99 @@
+{
+ "probe": "k18_short_conv_gates",
+ "registration": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/PREREGISTRATION_SHORT_CONV.md",
+ "policy": {
+  "ops": true,
+  "tau_match": 0.45,
+  "tau_merge": 0.85,
+  "tau_pop": 0.1,
+  "tie_break": 1e-06,
+  "read_scale": 2.0,
+  "grow": false,
+  "grow_trigger": 0.5,
+  "grow_window": 4,
+  "grow_window_tokens": 512,
+  "grow_geometric": 2.0,
+  "grow_stride_floor": 64
+ },
+ "score_form": "the short-conv machine: the K15 composed machine (the K13 additive read under the K11B p3 per-channel gate stack) + GDN2's registered short depthwise convolution (kernel 4, bias-free, the silu NOT transplanted) on the payload path, born at the identity kernel [0,0,0,1] (the standard nn.Conv1d layout)",
+ "gate_a_conv": {
+  "name": "A-conv",
+  "note": "the conv's own unit receipts at the registered channel count (256, kernel 4)",
+  "identity_birth_taps": [
+   0.0,
+   0.0,
+   0.0,
+   1.0
+  ],
+  "identity_birth_exact_pass_through": {
+   "torch.float32": true,
+   "torch.float64": true,
+   "torch.bfloat16": true
+  },
+  "minus_zero_corner": {
+   "sign_of_zero_flips": 1,
+   "flips_outside_exact_zeros": 0,
+   "note": "the IEEE corner: -0.0 can flip to +0.0 through the zero taps' additions; counted here, invisible to every ==-based parity bar and to the loss"
+  },
+  "equivalence_to_nn_conv1d": {
+   "fp64_max_abs_diff": 1.7763568394002505e-15,
+   "fp32_max_abs_diff": 1.9073486328125e-06,
+   "note": "the explicit tap sum IS the causal depthwise conv (nn.Conv1d(C,C,4,groups=C,bias=False) with left zero-padding, the fla ShortConvolution layout); cuDNN's accumulation order is the only difference"
+  },
+  "fp64_tap_adjoint_exact": true,
+  "fp64_gradcheck_through_the_conv": true
+ },
+ "gate_a2": {
+  "name": "A2",
+  "note": "the conv machine's birth receipts at the registered shape (batch 8, 2048 tokens, rank 128)",
+  "conv_payload_bit_equal_at_birth": true,
+  "born_as_the_composed_machine": {
+   "flips": 0,
+   "lanes": 21530624,
+   "bit_identical": true,
+   "note": "at the identity birth the conv'd payload IS the raw payload, so the composed kernel's every channel is the composed machine's own -- the machine is BORN AS THE COMPOSED MACHINE bit for bit (and hence as the K13 additive machine: the K15 receipt's own chain)"
+  },
+  "decisions_bit_identical_under_random_conv_kernels": {
+   "flips": 0,
+   "lanes": 8683520,
+   "bit_identical": true,
+   "state_moves": true,
+   "reads_move": true,
+   "note": "P2 trivially held: no conv value feeds op selection, the read weights or the key table -- the value state and the reads move as designed off the identity birth"
+  }
+ },
+ "gate_b": {
+  "name": "B",
+  "fp64_gradcheck_through_the_conv_path": {
+   "True": true,
+   "False": true
+  },
+  "fixture_op_histogram": {
+   "none": 48,
+   "append": 16,
+   "correct": 32,
+   "pop": 0,
+   "merge": 0
+  },
+  "kernel_gradients_through_the_conv_vs_floors": {
+   "dp": {
+    "floor": 2.86102294921875e-06,
+    "deviation": 0.0,
+    "within_noise": true
+   },
+   "dw": {
+    "floor": 9.1552734375e-05,
+    "deviation": 0.0,
+    "within_noise": true
+   }
+  }
+ },
+ "gate_d": {
+  "name": "D",
+  "conv_forward_ms_per_window": 0.17119236290454865,
+  "conv_backward_ms_per_window": 0.8706951513886452,
+  "composed_scan_forward_ms_per_window": 22.964699504276116,
+  "conv_over_scan_percent": 0.7454587545230974,
+  "note": "the conv's own block-call cost per (layer, window) at the registered shape, vs the composed scan's own same-session launch -- stated, not estimated; the conv's cost is the mixer's, outside the scan's opaque op pair"
+ }
+}
