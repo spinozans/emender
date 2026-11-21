@@ -1,0 +1,36 @@
+gpu_lease: granted GPUs: 2 (pid 3687001)
+leased card: 2 (CUDA_VISIBLE_DEVICES=2)
+[pin-autotune] pinned mode: 18 kernels / 30 (name,key) configs from registry (set NDM_PIN_TRITON_AUTOTUNE=0 to restore sweep)
+{"arm": "hybrid", "card": "2", "seed": 3401, "frozen": false, "slot_layers": [6, 12, 18], "width": 640, "parameters": 152517585, "slot_parameters_added": 2661915, "peak_lr": 0.0027100927623701265}
+  born-as-GDN2: gates exact-zero True; open signal True; slot inert True; store fills True
+  hybrid_seed3401 step 25 123s 2.9MB loss 2.9549
+  hybrid_seed3401 step 50 252s 5.6MB loss 1.9548
+  hybrid_seed3401 step 75 380s 8.3MB loss 1.5509
+  hybrid_seed3401 step 100 509s 11.1MB loss 1.7581
+  hybrid_seed3401 step 125 637s 13.9MB loss 1.7307
+  hybrid_seed3401 step 150 766s 16.6MB loss 2.0322
+  hybrid_seed3401 step 175 894s 19.5MB loss 1.7934
+  hybrid_seed3401 cooldown 20/24 1022s 22.2MB loss 2.6009
+  hybrid_seed3401 cooldown 24/24 1042s 22.7MB loss 2.8270
+  step-1 train loss 5.948033220866492 (the banked GDN2 row's own 5.948033220866492)
+/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/checkpoint.py:85: UserWarning: None of the inputs have requires_grad=True. Gradients will be None
+  warnings.warn(
+  constant step 1: eval 5.8785 gates {'6': -3.9276579627767205e-05, '12': 3.9276554161915556e-05, '18': 3.927383659174666e-05}
+  constant step 5: eval 5.2152 gates {'6': -0.0005418850923888385, '12': 0.0005547705804929137, '18': 0.000494413950946182}
+  constant step 10: eval 3.8150 gates {'6': -0.0019088167464360595, '12': 0.0019893189892172813, '18': 0.001835239352658391}
+  constant step 20: eval 2.6458 gates {'6': -0.007605330552905798, '12': 0.007581770420074463, '18': 0.007428244687616825}
+  constant step 40: eval 1.9612 gates {'6': -0.027119887992739677, '12': 0.025744890794157982, '18': 0.025050386786460876}
+  constant step 80: eval 1.5158 gates {'6': -0.056417517364025116, '12': 0.04474576935172081, '18': 0.05448570102453232}
+  constant step 120: eval 1.4038 gates {'6': -0.08786872774362564, '12': 0.08012048155069351, '18': 0.0733470544219017}
+  constant step 160: eval 1.3698 gates {'6': -0.11061839759349823, '12': 0.11517483741044998, '18': 0.10984688252210617}
+  constant step 180: eval 1.4083 gates {'6': -0.11669306457042694, '12': 0.1228635236620903, '18': 0.12262175977230072}
+  EMA at step 180: eval 1.3817
+  post-cooldown final (step 204): eval 1.3548
+  slot-read-mask layer 6: nll 1.4096 (base 1.4083, gate -0.116693)
+  slot-read-mask layer 12: nll 1.4073 (base 1.4083, gate 0.122864)
+  slot-read-mask layer 18: nll 1.4085 (base 1.4083, gate 0.122622)
+  slot-read-mask layer 6: nll 1.3545 (base 1.3548, gate -0.130380)
+  slot-read-mask layer 12: nll 1.3542 (base 1.3548, gate 0.132950)
+  slot-read-mask layer 18: nll 1.3558 (base 1.3548, gate 0.133361)
+{"arm": "hybrid", "seed": 3401, "status": "completed", "exposure_steps": 180, "final_eval_nll_constant_lr": 1.4082818201610021, "final_eval_nll_post_cooldown": 1.3547673906598772, "ema_eval_nll": 1.3816877944128854}
+committed: X45 K22 THE HYBRID: the hybrid arm landed (seed 3401) -- GDN2's committed 150M arm (the banked 1.3522 machine, matched_arms.build_gdn2 verbatim, width 640, 24 dense mixers) with 3 of its 24 mixer positions {6, 12, 18} carrying our committed composed slot mixer (the K15/K18 engine VERBATIM: the K13 additive read, the K11B p3 gates, the K10 separated keys at the mimetic birth, the K18 identity-born conv; independent stores; the K19-confirmed incumbent thresholds) added to the dense mixer output through the ZERO-BORN read gate -- born as PURE GDN2 bit for bit, +2,661,915 parameters (+1.776%) purely additive, quoted per the registration; the live arm: born zero-read (bit-identical to GDN2 at step 1, asserted), the gates LEARN to open -- any delta belongs to the slot reads opening; at the exact probe protocol (matched exposure 20,022,866 targets, the banked GDN2 row's own 5x HybridMuonX45 recipe VERBATIM, option-B routing + the slot branch per the K18 convention mirrored, the corrected cooldown-primary scoring), the at-birth receipts (the open signal, the inert birth, the store fills), the C5 instrument on the slot layers, THE DECORATIVE SWEEP AS THE HEADLINE (the slot-read mask per slot layer: do the slot layers become load-bearing -- does the uniformity finding invert?), the gate trajectory receipts, the op-mix rows, occupancy/effective rows/identity share vs the pure machine's banked anchors, both parents' rows quoted (GDN2 1.3522, composed-ours 1.3811/1.3832), the pre-stated H-1/H-2/REFUTATION clause read

@@ -1,0 +1,16 @@
+gpu_lease: granted GPUs: 2 (pid 3654132)
+leased card: 2 (CUDA_VISIBLE_DEVICES=2)
+[pin-autotune] pinned mode: 18 kernels / 30 (name,key) configs from registry (set NDM_PIN_TRITON_AUTOTUNE=0 to restore sweep)
+{"arm": "hybrid", "card": "2", "seed": 3401, "frozen": false, "slot_layers": [6, 12, 18], "width": 640, "parameters": 152517585, "slot_parameters_added": 2661915, "peak_lr": 0.0027100927623701265}
+  born-as-GDN2: gates exact-zero True; open signal True; slot inert True; store fills True
+  hybrid_seed3401 cooldown 3/3 30s 0.7MB loss 5.4066
+  step-1 train loss 5.948033220866492 (the banked GDN2 row's own 5.948033220866492)
+/home/erikg/emender/.venv/lib/python3.12/site-packages/torch/utils/checkpoint.py:85: UserWarning: None of the inputs have requires_grad=True. Gradients will be None
+  warnings.warn(
+  constant step 1: eval 5.8785 gates {'6': -3.9276579627767205e-05, '12': 3.9276554161915556e-05, '18': 3.927383659174666e-05}
+  post-cooldown final (step 6): eval 5.1956
+  slot-read-mask layer 6: nll 5.1956 (base 5.1956, gate -0.000555)
+  slot-read-mask layer 12: nll 5.1956 (base 5.1956, gate 0.000568)
+  slot-read-mask layer 18: nll 5.1956 (base 5.1956, gate 0.000506)
+{"arm": "hybrid", "seed": 3401, "status": "completed", "exposure_steps": 3, "final_eval_nll_constant_lr": null, "final_eval_nll_post_cooldown": 5.195554188319615, "ema_eval_nll": null}
+committed: X45 K22 THE HYBRID: the hybrid arm landed (seed 3401) -- GDN2's committed 150M arm (the banked 1.3522 machine, matched_arms.build_gdn2 verbatim, width 640, 24 dense mixers) with 3 of its 24 mixer positions {6, 12, 18} carrying our committed composed slot mixer (the K15/K18 engine VERBATIM: the K13 additive read, the K11B p3 gates, the K10 separated keys at the mimetic birth, the K18 identity-born conv; independent stores; the K19-confirmed incumbent thresholds) added to the dense mixer output through the ZERO-BORN read gate -- born as PURE GDN2 bit for bit, +2,661,915 parameters (+1.776%) purely additive, quoted per the registration; the live arm: born zero-read (bit-identical to GDN2 at step 1, asserted), the gates LEARN to open -- any delta belongs to the slot reads opening; at the exact probe protocol (matched exposure 20,022,866 targets, the banked GDN2 row's own 5x HybridMuonX45 recipe VERBATIM, option-B routing + the slot branch per the K18 convention mirrored, the corrected cooldown-primary scoring), the at-birth receipts (the open signal, the inert birth, the store fills), the C5 instrument on the slot layers, THE DECORATIVE SWEEP AS THE HEADLINE (the slot-read mask per slot layer: do the slot layers become load-bearing -- does the uniformity finding invert?), the gate trajectory receipts, the op-mix rows, occupancy/effective rows/identity share vs the pure machine's banked anchors, both parents' rows quoted (GDN2 1.3522, composed-ours 1.3811/1.3832), the pre-stated H-1/H-2/REFUTATION clause read (smoke)

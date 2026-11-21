@@ -1,0 +1,30 @@
+gpu_lease: granted GPUs: 3 (pid 3622019)
+leased card: 3 (CUDA_VISIBLE_DEVICES=3)
+k22 module loaded: ['ComposedReadMixer', 'DEFAULT_CONTEXT', 'DEFAULT_KEY_DIM', 'DEFAULT_SEGMENT_TOKENS'] ...
+k22 probe module loaded; arms: ['hybrid', 'hybrid_frozen']
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/erikg/emender
+configfile: pyproject.toml
+plugins: timeout-2.4.0, anyio-4.13.0
+collected 148 items
+
+experiments/expressivity_tasks/x45_matrix_emender/test_k22_hybrid.py ... [  2%]
+.........                                                                [  8%]
+experiments/expressivity_tasks/x45_matrix_emender/test_k10_separated_keys.py . [  8%]
+..................                                                       [ 20%]
+experiments/expressivity_tasks/x45_matrix_emender/test_k13_additive_read.py . [ 21%]
+..................                                                       [ 33%]
+experiments/expressivity_tasks/x45_matrix_emender/test_k11b_channel_gates.py . [ 34%]
+....................                                                     [ 47%]
+experiments/expressivity_tasks/x45_matrix_emender/test_k15_composition.py . [ 48%]
+........................                                                 [ 64%]
+experiments/expressivity_tasks/x45_matrix_emender/test_k17_dense_write.py . [ 65%]
+..........................                                               [ 83%]
+experiments/expressivity_tasks/x45_matrix_emender/test_k18_short_conv.py . [ 83%]
+.................                                                        [ 95%]
+tests/test_k22_hybrid_probe.py .......                                   [100%]
+
+======================= 148 passed in 4925.85s (1:22:05) =======================
+SUITES_RC=0
+committed: X45 K22 THE HYBRID: the committed suites' green receipts with the K22 module loaded -- the lane's own suite + the K10/K13/K11B/K15/K17/K18 suites + the CPU-only probe tests, one console committed (the standing receipt: the module's import changes nothing the committed engines do)
