@@ -78,6 +78,15 @@ HEADS, RANK, VALUE_DIM, KEY_DIM = 2, 128, 128, 16
 LONG_BATCH, LONG_TOKENS = 2, 8192
 
 
+_T0 = time.monotonic()
+
+
+def _stage(msg: str) -> None:
+    """Live progress for the console: a gate step this lane has wedged on
+    three times gets OBSERVABLE progress, not liveness-inference."""
+    print(f"[gate {time.monotonic() - _T0:8.1f}s] {msg}", flush=True)
+
+
 def _long_fixture(seed: int = 77, batch: int = LONG_BATCH,
                   tokens: int = LONG_TOKENS,
                   dtype: torch.dtype = torch.bfloat16):
@@ -237,10 +246,12 @@ def gate_lw_b(receipt: dict) -> dict:
                                    initial_state=s_, initial_keys=k_)
         return ref["reads"], ref["state"], ref["keys"]
 
+    _stage("LW-B: gradcheck start")
     started = time.monotonic()
     gradcheck_ok = bool(torch.autograd.gradcheck(
         f, (p, wk, qk, d, g_, s, k), eps=1e-6, atol=1e-4, rtol=1e-4))
     gradcheck_wall = time.monotonic() - started
+    _stage(f"LW-B: gradcheck done wall={gradcheck_wall:.1f}s")
 
     # (ii) the kernel path's seven gradients vs the floors, at the 4x
     # production scan shape
@@ -412,10 +423,12 @@ def gate_lw_c(receipt: dict) -> dict:
             out, _slot = _seam_outputs(mixer, scan_fn, x_, dense_, gate_)
             return out
 
+        _stage(f"LW-C: seam gradcheck gated={gated} start")
         inputs = [dense, gate_value, x] + list(mixer.parameters())
         gradchecks[str(gated)] = bool(torch.autograd.gradcheck(
             f, tuple(inputs), eps=1e-6, atol=1e-4, rtol=1e-4,
             nondet_tol=0.0))
+        _stage(f"LW-C: seam gradcheck gated={gated} done")
     gate["fp64_gradcheck_through_the_seam"] = dict(
         gradchecks=gradchecks,
         fixture=dict(batch=2, tokens=128, width=48, segments=2,
@@ -567,10 +580,18 @@ def main():
              "composed scan and the hybrid seam at the LONGEST window "
              "(8192 tokens), the fp64 gradchecks with longer sequences, "
              "and the honest walls at all three window shapes")
+    _stage("LW-A start (bit-equality at 8192 tokens)")
     gate_lw_a(receipt)
+    _stage("LW-A done")
+    _stage("LW-B start (12-token gradcheck + 4x-shape floors)")
     gate_lw_b(receipt)
+    _stage("LW-B done")
+    _stage("LW-C start (seam gradchecks + 4x seam gradients)")
     gate_lw_c(receipt)
+    _stage("LW-C done")
+    _stage("LW-D start (walls at the three shapes)")
     gate_lw_d(receipt)
+    _stage("LW-D done -- writing the receipt")
     ok = (receipt["gate_lw_a"]["total"]["bit_equal"]
           and receipt["gate_lw_a"]["read_within_noise"]
           and receipt["gate_lw_b"]["oracle_gradcheck_fp64"]["ok"]
