@@ -185,7 +185,8 @@ def gate_lw_a(receipt: dict) -> dict:
         op_histogram=op_histogram(ref["schedule"]),
         walls=dict(kernel_forward_s=round(kernel_wall, 3),
                   eager_oracle_s=round(oracle_wall, 1)),
-        key_spread=float(span_key_std(write_keys.float())))
+        key_spread_min=float(span_key_std(write_keys.float()).min()),
+        key_spread_mean=float(span_key_std(write_keys.float()).mean()))
     receipt["gate_lw_a"] = gate
     return gate
 

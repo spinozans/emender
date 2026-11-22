@@ -114,6 +114,24 @@ EOF
   done
 }
 
+# Is a step already landed (its committed receipt on disk)?  A resumed
+# chain skips landed steps -- the committed partial beats the re-run.
+landed() {
+  case "$1" in
+    registration) [ -f "$X45/receipts/k24_window_arithmetic.json" ] ;;
+    gates) [ -f "$X45/receipts/k24_gates.json" ] \
+      && $PY -c "import json; r = json.load(open('$X45/receipts/k24_gates.json')); raise SystemExit(0 if r.get('all_checks') else 1)" ;;
+    suites) grep -q "SUITES_RC=0" "$RUNS/k10_k13_k11b_k15_k17_k18_k22_k24_suites_console.txt" 2>/dev/null ;;
+    smoke:*) local m="${1#smoke:}"; local a
+      case "$m" in OURS) a=ours_4x ;; GDN2) a=gdn2_4x ;; HYBRID) a=hybrid_4x ;; *) return 1 ;; esac
+      [ -f "$RUNS/smoke_${a}/result.json" ] ;;
+    arm:*) local a="${1#arm:}"
+      [ -f "$RUNS/${a}_seed3401/result.json" ] ;;
+    assemble) return 1 ;;    # always re-run (cheap, and the last word)
+    *) return 1 ;;
+  esac
+}
+
 run_step() {
   local step="$1"
   case "$step" in
@@ -207,21 +225,18 @@ EOF
         "$RUNS/assemble_console.txt" "$RUNS/assemble.json" "${LANE_SOURCES[@]}"
       ;;
     chain)
-      run_step registration
-      run_step gates
-      run_step suites
-      run_step smoke:OURS
-      run_step smoke:GDN2
-      run_step smoke:HYBRID
-      run_step arm:ours_1x
-      run_step arm:gdn2_1x
+      for s in registration gates suites smoke:OURS smoke:GDN2 smoke:HYBRID \
+               arm:ours_1x arm:gdn2_1x \
+               arm:ours_2x arm:gdn2_2x arm:ours_4x arm:gdn2_4x arm:hybrid_4x \
+               assemble; do
+        if landed "$s"; then
+          echo "[chain] $s already landed -- skipping"
+          continue
+        fi
+        echo "[chain] running $s"
+        run_step "$s"
+      done
       anchor_ok "the chain" || return 3
-      run_step arm:ours_2x
-      run_step arm:gdn2_2x
-      run_step arm:ours_4x
-      run_step arm:gdn2_4x
-      run_step arm:hybrid_4x
-      run_step assemble
       ;;
     *)
       echo "unknown STEP: $step" >&2
