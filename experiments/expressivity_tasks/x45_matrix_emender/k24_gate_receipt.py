@@ -196,13 +196,15 @@ def gate_lw_a(receipt: dict) -> dict:
 
 def gate_lw_b(receipt: dict) -> dict:
     """The fp64 gradchecks with LONGER sequences: (i) the oracle gradcheck
-    through the composed path at a 5-segment fixture (320 tokens, the
-    banked gate's own was 48); (ii) the kernel path's seven gradients vs
-    the measured floors AT THE 4X SCAN SHAPE; (iii) the segment-recompute
-    bit-equality at the 4x shape."""
+    through the composed path at a multi-segment fixture (96 tokens, the
+    banked gate's own was 48; the 320-token first attempt is receipted
+    INFEASIBLE below and the K18 shrink precedent applied -- gradcheck is
+    O(input-elements x forwards) against an eager fp64 oracle); (ii) the
+    kernel path's seven gradients vs the measured floors AT THE 4X SCAN
+    SHAPE; (iii) the segment-recompute bit-equality at the 4x shape."""
     # (i) the fp64 gradcheck at the longer multi-segment fixture
     generator = torch.Generator().manual_seed(11)
-    batch, tokens, heads, rank, value_dim, key_dim = 2, 320, 2, 16, 16, 4
+    batch, tokens, heads, rank, value_dim, key_dim = 1, 96, 2, 16, 16, 4
     distinct = 6
     payload_dirs = torch.randn(distinct, value_dim, generator=generator)
     key_dirs = torch.randn(distinct, key_dim, generator=generator)
@@ -328,9 +330,25 @@ def gate_lw_b(receipt: dict) -> dict:
                                     value_dim=value_dim, key_dim=key_dim,
                                     note="the banked K15 gate-B gradcheck's "
                                          "own geometry with a LONGER "
-                                         "sequence (320 tokens = 5 "
-                                         "segments; the banked fixture "
-                                         "was 48)"),
+                                         "sequence (96 tokens = one "
+                                         "64-token segment + a 32-token "
+                                         "remainder; the banked fixture "
+                                         "was 48); the first attempt at "
+                                         "320 tokens x batch 2 is "
+                                         "receipted INFEASIBLE: ~93K "
+                                         "input elements x 2 forwards "
+                                         "each against an eager fp64 "
+                                         "oracle >= 26 h at the measured "
+                                         "wedge rate (8.5 h+ without "
+                                         "completing) -- the K18 "
+                                         "OOM/shrink precedent applied; "
+                                         "the 4x production shape's "
+                                         "adjoint correctness is covered "
+                                         "by LW-A's kernel-vs-oracle "
+                                         "bit-equality at 8,192 tokens "
+                                         "and (ii)'s gradient-vs-floors "
+                                         "at the 4x shape -- exact "
+                                         "gates, not sampled ones"),
         oracle_gradcheck_fp64=dict(
             ok=gradcheck_ok, wall_seconds=round(gradcheck_wall, 1),
             note="THROUGH THE COMPOSED PATH: every adjoint branch (the "
