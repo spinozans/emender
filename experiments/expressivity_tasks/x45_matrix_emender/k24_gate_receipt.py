@@ -534,7 +534,7 @@ def main():
     ap.add_argument("--out", default=str(
         ROOT / "receipts" / "k24_gates.json"))
     args = ap.parse_args()
-    if not separated_available():
+    if not separated_available(RANK, VALUE_DIM, KEY_DIM):
         raise SystemExit("the separated-key scan path is unavailable on "
                          "this host -- the K24 lane cannot run")
     receipt = dict(
