@@ -1,0 +1,76 @@
+{
+  "probe": "k24_window_arithmetic",
+  "manifest": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/documents.jsonl.gz",
+  "manifest_sha256": "48b9095eeccb023ff1cb2a4f6da899a8b3e4eb3b76b2804e730f1d6ad031c414",
+  "exposure_targets": 20000000,
+  "tokens_per_microbatch": 16384,
+  "eval_rule": "the first 7 FULL windows of the arm's own context in calibration order; at 1x this picks the banked eval's own window set (L.evaluate's first-24-kept-full rule yields the same 7)",
+  "arms": {
+    "1": {
+      "mult": 1,
+      "context": 2048,
+      "windows_per_step": 64,
+      "microbatch": 8,
+      "tokens_per_microbatch": 16384,
+      "microbatch_groups_per_step": 8,
+      "landing_step": 180,
+      "exposure_landing": 20022866,
+      "windows_consumed": 11520,
+      "effective_window_bytes": {
+        "mean": 1738.1,
+        "p50": 2048.0,
+        "p90": 2048.0,
+        "min": 1,
+        "max": 2048,
+        "full_length_fraction": 0.7178,
+        "mean_over_1x_mean": 1.0
+      },
+      "calibration_full_windows": 6969,
+      "note": "the boundary-respecting windowing's own distribution over the windows the arm actually consumes (mean/p50/p90 bytes, the full-length fraction); the lever is only as strong as what was actually achieved -- the corpus's median document is ~1,850 bytes, shorter than one banked window"
+    },
+    "2": {
+      "mult": 2,
+      "context": 4096,
+      "windows_per_step": 38,
+      "microbatch": 4,
+      "tokens_per_microbatch": 16384,
+      "microbatch_groups_per_step": 10,
+      "landing_step": 182,
+      "exposure_landing": 20067118,
+      "windows_consumed": 6916,
+      "effective_window_bytes": {
+        "mean": 2901.5,
+        "p50": 4096.0,
+        "p90": 4096.0,
+        "min": 1,
+        "max": 4096,
+        "full_length_fraction": 0.5295,
+        "mean_over_1x_mean": 1.669
+      },
+      "calibration_full_windows": 3109,
+      "note": "the boundary-respecting windowing's own distribution over the windows the arm actually consumes (mean/p50/p90 bytes, the full-length fraction); the lever is only as strong as what was actually achieved -- the corpus's median document is ~1,850 bytes, shorter than one banked window"
+    },
+    "4": {
+      "mult": 4,
+      "context": 8192,
+      "windows_per_step": 27,
+      "microbatch": 2,
+      "tokens_per_microbatch": 16384,
+      "microbatch_groups_per_step": 14,
+      "landing_step": 178,
+      "exposure_landing": 20088160,
+      "windows_consumed": 4806,
+      "effective_window_bytes": {
+        "mean": 4179.8,
+        "p50": 3042.0,
+        "p90": 8192.0,
+        "min": 1,
+        "max": 8192,
+        "full_length_fraction": 0.3225,
+        "mean_over_1x_mean": 2.405
+      },
+      "calibration_full_windows": 1333,
+      "note": "the boundary-respecting windowing's own distribution over the windows the arm actually consumes (mean/p50/p90 bytes, the full-length fraction); the lever is only as strong as what was actually achieved -- the corpus's median document is ~1,850 bytes, shorter than one banked window"
+    }
+  }
+}
