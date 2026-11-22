@@ -47,6 +47,13 @@ mkdir -p "$RUNS"
 
 commit_run() {
   local msg="$1"; shift
+  # an idempotent re-run of an already-landed step (git add succeeded AND
+  # nothing new is staged) is a SUCCESS, not a failure
+  if git add -- "$@" 2>/dev/null \
+      && git diff --cached --quiet 2>/dev/null; then
+    echo "nothing to commit (already landed): ${msg:0:80}..."
+    return 0
+  fi
   local attempt=0
   until git add -- "$@" 2>/dev/null \
       && git commit -m "$msg" -- "$@" >/dev/null; do
