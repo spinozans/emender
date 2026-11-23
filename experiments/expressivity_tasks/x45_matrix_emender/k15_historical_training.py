@@ -50,6 +50,22 @@ def load_net():
     return net.cuda()
 
 
+def load_port_checkpoint(path):
+    """Reconstruct deployment model; apply log_distribution to its logits/trace."""
+    state=torch.load(path,weights_only=True,map_location='cpu')
+    assert state['anchor_sha256']==ANCHOR_SHA and state['arm'] in ('write','index') and state['step']==512
+    net=load_net(); net.port.load_state_dict(state['port']); net.eval()
+    net.port.intervention='clear' if state['arm']=='index' else 'none'
+    return net
+
+
+def check_prefix(net,x,end,full,events):
+    p,t,*_=net(x[:,:end],pad_to=1024,audit=True)
+    delta=(log_distribution(p,t)-full[:end]).abs().max().item()
+    if events[:len(t)]!=t or delta!=0:
+        raise ValueError(f'fixed-bucket prefix failure: end={end} exact_events={events[:len(t)]==t} max_abs_logp={delta}')
+
+
 @torch.no_grad()
 def score(net, stream, arm, out):
     net.eval()
@@ -62,7 +78,7 @@ def score(net, stream, arm, out):
                 z,tr,*_=net(x,doors=mode!='off',audit=not n); lp=log_distribution(z,tr)
                 if not n and mode=='none':
                     for end in (16,17,129):
-                        p,t,*_=net(x[:,:end],pad_to=1024,audit=True); assert tr[:len(t)]==t and torch.equal(log_distribution(p,t),lp[:end])
+                        check_prefix(net,x,end,lp,tr)
                 losses=F.nll_loss(lp,y,reduction='none'); assert losses.isfinite().all()
                 f.write(json.dumps(dict(doc=doc,mode=mode,nll=float(losses.mean()),delayed=float(losses[keep].mean()),writes=sum('saved_pos' in e for e in tr),extensions=sum(e['op']==2 for e in tr),miss=sum(e.get('miss',False) for e in tr),trace=tr if not n else None))+'\n')
 
@@ -97,7 +113,7 @@ def main(out):
                         off=net(x,doors=False)[0].clone(); assert torch.equal(off,net.backbone.head(net.backbone.features(x)))
                         net.port.eval(); z0,t0,*_=net(x,audit=True); lp0=log_distribution(z0,t0)
                         for end in (16,17,129):
-                            p,t,*_=net(x[:,:end],pad_to=1024,audit=True); assert t0[:len(t)]==t and torch.equal(log_distribution(p,t),lp0[:end])
+                            check_prefix(net,x,end,lp0,t0)
                         net.port.train();j.emit(arm=arm,origin_prefix_exact=True)
                         if reference is None: reference=off
                         else: assert torch.equal(off,reference)
@@ -107,7 +123,8 @@ def main(out):
                 if step<=3 or step%32==0:j.emit(arm=arm,step=step,nll=float(loss.detach()))
                 if step%128==0:
                     path=out/(arm+'.pt'); tmp=path.with_suffix('.partial'); torch.save(dict(port=net.port.state_dict(),optimizer=opt.state_dict(),step=step,arm=arm,anchor_sha256=ANCHOR_SHA,cuda_rng=torch.cuda.get_rng_state(),cpu_rng=torch.get_rng_state()),tmp); os.replace(tmp,path)
-        net.port.load_state_dict(torch.load(path,weights_only=True)['port']);score(net,stream,arm,out);del net,opt
+        del net,opt
+        score(load_port_checkpoint(path),stream,arm,out)
     j.emit(complete=True)
 
 if __name__=='__main__': main(Path(sys.argv[1]))
