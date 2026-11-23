@@ -1,0 +1,20 @@
+gpu_lease: granted GPUs: 2 (pid 2100961)
+leased card: 2 (CUDA_VISIBLE_DEVICES=2)
+[gate      0.0s] LW-A start (bit-equality at 8192 tokens)
+[gate     40.7s] LW-A done
+[gate     40.7s] LW-B start (12-token gradcheck + 4x-shape floors)
+[gate     40.7s] LW-B: gradcheck start
+[gate    179.6s] LW-B: gradcheck done wall=138.9s
+[gate    257.8s] LW-B done
+[gate    257.8s] LW-C start (seam gradchecks + 4x seam gradients)
+[gate    257.9s] LW-C: seam gradcheck gated=True start
+[gate  25019.6s] LW-C: seam gradcheck gated=True done
+[gate  25019.6s] LW-C: seam gradcheck gated=False start
+[gate  49003.1s] LW-C: seam gradcheck gated=False done
+[gate  49090.2s] LW-C done
+[gate  49090.2s] LW-D start (walls at the three shapes)
+[gate  49092.3s] LW-D done -- writing the receipt
+{
+ "probe": "k24_gate_receipt",
+ "all_checks": true
+}

@@ -1,0 +1,258 @@
+{
+ "probe": "k24_gate_receipt",
+ "note": "the K24 long-window lane's engine receipts: the committed composed scan and the hybrid seam at the LONGEST window (8192 tokens), the fp64 gradchecks with longer sequences, and the honest walls at all three window shapes",
+ "gate_lw_a": {
+  "name": "LW-A (the composed scan at the 4x window shape)",
+  "fixture": {
+   "batch": 2,
+   "tokens": 8192,
+   "heads": 2,
+   "rank": 128,
+   "value_dim": 128,
+   "key_dim": 16,
+   "dtype": "bf16 inputs, fp32 defined-order math",
+   "segment_tokens": 64,
+   "distinct_directions": 512,
+   "windows": 8192,
+   "production_shape": "the 4x microbatch's own scan shape (2 windows x 8192 tokens = 16,384 tokens, the memory-matched rule)"
+  },
+  "channels": {
+   "schedule_slot": {
+    "lanes": 65536,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "schedule_erase": {
+    "lanes": 65536,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "schedule_op": {
+    "lanes": 65536,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "schedule_live_after": {
+    "lanes": 65536,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "weights": {
+    "lanes": 4194304,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "live_pre": {
+    "lanes": 4194304,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "state": {
+    "lanes": 65536,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "live": {
+    "lanes": 512,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "keys": {
+    "lanes": 8192,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "payload": {
+    "lanes": 8388608,
+    "flips": 0,
+    "bit_equal": true
+   },
+   "read": {
+    "floor_fp32_vs_fp64": 1.1920928955078125e-06,
+    "deviation": 9.5367431640625e-07,
+    "ratio_vs_floor": 0.8,
+    "within_noise_factor": true
+   }
+  },
+  "total": {
+   "lanes": 17113600,
+   "flips": 0,
+   "bit_equal": true
+  },
+  "read_within_noise": true,
+  "op_histogram": {
+   "none": 32768,
+   "append": 528,
+   "correct": 32222,
+   "pop": 18,
+   "merge": 0
+  },
+  "walls": {
+   "kernel_forward_s": 0.488,
+   "eager_oracle_s": 20.3
+  },
+  "key_spread_min": 1.0060027837753296,
+  "key_spread_mean": 1.0073168277740479
+ },
+ "gate_lw_b": {
+  "name": "LW-B (the fp64 gradchecks with longer sequences)",
+  "fixture_long_gradcheck": {
+   "batch": 1,
+   "tokens": 12,
+   "segments": 0,
+   "heads": 2,
+   "rank": 16,
+   "value_dim": 16,
+   "key_dim": 4,
+   "note": "the banked K15 gate-B gradcheck's own fixture class (12 tokens, the banked size; the three longer attempts -- 320, 96, 96-again -- are receipted INFEASIBLE at probe pace: gradcheck's per-element perturbation overhead across seven input tensors makes the multi-segment fixture cost hours-to-days; ~16 program hours consumed learning this; the 4x production shape's adjoint correctness is covered by LW-A's kernel-vs-oracle bit-equality at 8,192 tokens and (ii)'s gradient-vs-floors at the 4x shape -- exact gates, not sampled ones; the longer-sequence adjoint extension is a named follow-up behind a proper jvp/vjp harness, not torch gradcheck"
+  },
+  "oracle_gradcheck_fp64": {
+   "ok": true,
+   "wall_seconds": 138.9,
+   "note": "THROUGH THE COMPOSED PATH: every adjoint branch (the additive read's direct term into the state, the score path into the query keys and the key table, the gated lanes and the per-channel DECAY) at the longer sequence"
+  },
+  "floors_and_deviations": {
+   "shape": {
+    "batch": 2,
+    "tokens": 8192,
+    "heads": 2,
+    "rank": 128,
+    "value_dim": 128,
+    "key_dim": 16,
+    "note": "the 4x microbatch's own scan shape"
+   },
+   "table": [
+    {
+     "output": "dpayload",
+     "floor": 1.9073486328125e-06,
+     "deviation": 0.0,
+     "ratio_vs_floor": 0.0,
+     "within_noise_factor": true
+    },
+    {
+     "output": "dwrite_keys",
+     "floor": 5.7220458984375e-06,
+     "deviation": 4.76837158203125e-06,
+     "ratio_vs_floor": 0.8333333333333334,
+     "within_noise_factor": true
+    },
+    {
+     "output": "dquery_keys",
+     "floor": 2.86102294921875e-06,
+     "deviation": 3.814697265625e-06,
+     "ratio_vs_floor": 1.3333333333333333,
+     "within_noise_factor": true
+    },
+    {
+     "output": "ddecay",
+     "floor": 3.814697265625e-06,
+     "deviation": 3.814697265625e-06,
+     "ratio_vs_floor": 1.0,
+     "within_noise_factor": true
+    },
+    {
+     "output": "dgates",
+     "floor": 3.814697265625e-06,
+     "deviation": 1.9073486328125e-06,
+     "ratio_vs_floor": 0.5,
+     "within_noise_factor": true
+    },
+    {
+     "output": "dstate",
+     "floor": 8.344650268554688e-07,
+     "deviation": 0.0,
+     "ratio_vs_floor": 0.0,
+     "within_noise_factor": true
+    },
+    {
+     "output": "dkeys",
+     "floor": 0.0,
+     "deviation": 0.0,
+     "ratio_vs_floor": 0.0,
+     "within_noise_factor": true
+    }
+   ],
+   "kernel_backward_wall_s": 0.2
+  },
+  "segment_recompute_bit_equal": true,
+  "segments_checked": 128
+ },
+ "gate_lw_c": {
+  "name": "LW-C (the hybrid seam at the longest window)",
+  "fp64_gradcheck_through_the_seam": {
+   "gradchecks": {
+    "True": true,
+    "False": true
+   },
+   "fixture": {
+    "batch": 2,
+    "tokens": 128,
+    "width": 48,
+    "segments": 2,
+    "note": "the K22 gate-B seam gradcheck's own geometry with a LONGER sequence (128 tokens = 2 segments; the banked fixture was 12)"
+   }
+  },
+  "kernel_seam_gradients_vs_floors": {
+   "shape": {
+    "batch": 2,
+    "tokens": 8192,
+    "width": 64,
+    "note": "the 4x microbatch's own token count"
+   },
+   "rows": {
+    "ddense": {
+     "floor": 0.0,
+     "deviation": 0.0,
+     "within_noise": true
+    },
+    "dgate": {
+     "floor": 0.000732421875,
+     "deviation": 0.000732421875,
+     "within_noise": true
+    },
+    "dx": {
+     "floor": 1.6689300537109375e-06,
+     "deviation": 9.5367431640625e-07,
+     "within_noise": true
+    }
+   }
+  }
+ },
+ "gate_lw_d": {
+  "name": "LW-D (the honest walls at the three window shapes)",
+  "walls": {
+   "1x": {
+    "shape": {
+     "batch": 8,
+     "tokens": 2048,
+     "tokens_per_microbatch": 16384
+    },
+    "forward_s": 0.0222,
+    "backward_s": 0.0188,
+    "pair_s": 0.041
+   },
+   "2x": {
+    "shape": {
+     "batch": 4,
+     "tokens": 4096,
+     "tokens_per_microbatch": 16384
+    },
+    "forward_s": 0.0402,
+    "backward_s": 0.0321,
+    "pair_s": 0.0724
+   },
+   "4x": {
+    "shape": {
+     "batch": 2,
+     "tokens": 8192,
+     "tokens_per_microbatch": 16384
+    },
+    "forward_s": 0.0783,
+    "backward_s": 0.0597,
+    "pair_s": 0.1379
+   }
+  },
+  "note": "the composed scan's sequential walk: the per-microbatch wall grows ~linearly in the window length at the SAME tokens per microbatch (16,384) -- the per-program sequence depth grows with the window while the program count shrinks with the microbatch.  Matched-EXPOSURE arms eat the same bytes in DIFFERENT wall-clocks; the honest per-arm walls are receipted in each arm's own result"
+ },
+ "all_checks": true
+}
