@@ -1,0 +1,983 @@
+{
+  "probe": "k24_long_window",
+  "arm": "gdn2_4x",
+  "machine": "gdn2",
+  "window_mult": 4,
+  "context": 8192,
+  "windows_per_step": 27,
+  "microbatch": 2,
+  "seed": 3401,
+  "arm_note": "the committed GDN2 arm at the 4x windows",
+  "role": "long",
+  "corrected_scoring": {
+    "primary": "post-cooldown eval: a linear cooldown of 24 steps (13.3% of the 180-step constant-LR budget) appended after the banked matched-exposure landing, same stream/data order, LR factor (25 - k)/24 for cooldown step k (1.0 -> 1/24, never zero), both hybrid groups scaling equally; the corrected score is the post-cooldown calibration eval",
+    "secondary": "EMA iterate at step 180 (no extra data): decay 0.99, initialized at the init weights, updated after every constant-phase optimizer step, NOT updated during the cooldown; RANKING-ONLY -- its absolute number is biased toward mid-run weights (stated, not smoothed)",
+    "cooldown_steps": 24,
+    "cooldown_fraction": 0.1333,
+    "cooldown_form": "linear",
+    "ema_decay": 0.99,
+    "exposure_note": "the cooldown steps see ~2.7M more targets (~13%), identical across arms -- a stated protocol EXTENSION; the step-180 constant-LR eval is retained so every banked row stays comparable",
+    "citations": {
+      "river_valley": "Wen et al., ICLR 2025, arXiv:2410.05192 -- constant-LR loss carries an LR-dependent oscillation penalty that decay/averaging removes",
+      "cooldown": "Haegele et al., NeurIPS 2024, arXiv:2405.18392 -- constant-LR + short cooldown matches cosine at full scale",
+      "averaging": "Defazio et al., arXiv:2405.15682 -- iterate averaging as the schedule-free fix for the same penalty",
+      "moonlight": "Liu et al. (Moonshot AI), arXiv:2502.16982 -- with the update RMS matched to AdamW's (~0.2; AdamW typical 0.2-0.4), Muon directly reuses the LR and weight decay tuned for AdamW, i.e. ~1x the AdamW-tuned LR, WITH weight decay",
+      "horizon": "Bjorck et al., ICLR 2025 -- the optimal LR shrinks with token horizon; probe-tuned LRs transfer only downscaled"
+    }
+  },
+  "status": "completed",
+  "window_arithmetic": {
+    "mult": 4,
+    "context": 8192,
+    "windows_per_step": 27,
+    "microbatch": 2,
+    "tokens_per_microbatch": 16384,
+    "microbatch_groups_per_step": 14,
+    "landing_step": 178,
+    "exposure_landing": 20088160,
+    "windows_consumed": 4806,
+    "effective_window_bytes": {
+      "mean": 4179.8,
+      "p50": 3042.0,
+      "p90": 8192.0,
+      "min": 1,
+      "max": 8192,
+      "full_length_fraction": 0.3225,
+      "mean_over_1x_mean": 2.405
+    },
+    "calibration_full_windows": 1333,
+    "note": "the boundary-respecting windowing's own distribution over the windows the arm actually consumes (mean/p50/p90 bytes, the full-length fraction); the lever is only as strong as what was actually achieved -- the corpus's median document is ~1,850 bytes, shorter than one banked window"
+  },
+  "exposure_bytes": 346216,
+  "exposure_steps": 2,
+  "total_bytes": 612061,
+  "total_steps": 5,
+  "cooldown_steps": 3,
+  "train_seconds_constant": 11.8,
+  "train_seconds_total": 27.7,
+  "bytes_per_s": 29362.202681436687,
+  "optimizer_step_seconds": {
+    "mean_steady": 0.20458168294280768,
+    "note": "steps 10+; the honest clock's own measure, per step"
+  },
+  "parameters": 149855670,
+  "final_eval_nll_constant_lr": 5.834869112287249,
+  "final_eval_nll_post_cooldown": 5.5175637517656595,
+  "ema_eval_nll": 5.943895476205008,
+  "cross_eval_grid": {
+    "1": {
+      "eval_nll": 5.42140919821603,
+      "eval_windows": 7,
+      "eval_targets": 14336
+    },
+    "2": {
+      "eval_nll": 5.556421620505197,
+      "eval_windows": 7,
+      "eval_targets": 28672
+    },
+    "4": {
+      "eval_nll": 5.5175637517656595,
+      "eval_windows": 7,
+      "eval_targets": 57344
+    }
+  },
+  "cooldown_drop": 0.31730536052158964,
+  "step1_train_loss": 5.950889347246541,
+  "anchor_receipt": null,
+  "birth_receipts": null,
+  "gate_trajectory": {
+    "init": null,
+    "constant": null,
+    "final": null
+  },
+  "scores": [
+    {
+      "kind": "constant",
+      "step": 1,
+      "bytes": 162768,
+      "train_loss": 5.950889347246541,
+      "eval_nll": 5.908733367919922,
+      "eval_windows": 7,
+      "eval_targets": 57344
+    },
+    {
+      "kind": "constant",
+      "step": 2,
+      "bytes": 346216,
+      "train_loss": 5.91072465650733,
+      "eval_nll": 5.834869112287249,
+      "eval_windows": 7,
+      "eval_targets": 57344
+    },
+    {
+      "kind": "ema_constant",
+      "step": 2,
+      "bytes": 346216,
+      "eval_nll": 5.943895476205008,
+      "eval_windows": 7,
+      "eval_targets": 57344,
+      "ema_decay": 0.99,
+      "note": "ranking-only: biased toward mid-run weights"
+    },
+    {
+      "kind": "post_cooldown",
+      "step": 5,
+      "bytes": 612061,
+      "eval_nll": 5.5175637517656595,
+      "eval_windows": 7,
+      "eval_targets": 57344
+    }
+  ],
+  "anchors": {
+    "ours_1x": null,
+    "gdn2_1x": null,
+    "hybrid_1x": null,
+    "composed_ours_banked": {
+      "post_cooldown": {
+        "3401": 1.3811104467936925,
+        "3402": 1.383232252938407
+      },
+      "constant_lr": {
+        "3401": 1.433674931526184,
+        "3402": 1.4341776371002197
+      },
+      "ema_180": {
+        "3401": 1.424389226096017,
+        "3402": 1.4385861498968942
+      },
+      "step1_train_loss": {
+        "3401": 5.782775391046648,
+        "3402": 5.720172563202926
+      },
+      "note": "the K15 composition arm's own landed rows (the inherited 4x point, tuned for the SOFTMAX-read machine): receipts/k15_composition_summary.json"
+    },
+    "note": "the 1x cells MUST reproduce the banked rows bit for bit FIRST; any mismatch STOPS the lane and escalates"
+  },
+  "diagnostics_step180": null,
+  "diagnostics_post_cooldown": null,
+  "read_mask_sweep_step180": null,
+  "read_mask_sweep_post_cooldown": null,
+  "slot_read_mask_sweep_step180": null,
+  "slot_read_mask_sweep_post_cooldown": null,
+  "gdn2_telemetry_step180": {
+    "note": "gdn2's own gate telemetry per layer at the arm's own window length (the state's write/forget coefficients -- the committed arm's exposed state surface; the recurrent state itself is internal to the FLA chunk kernel): the retention exp(g), its reciprocal-of-complement the implied memory horizon, the erase and write gates.  The saturation question's own receipt: does the dense state's horizon MOVE when the regime demands longer state?",
+    "window_mult": 4,
+    "context": 8192,
+    "windows": 2,
+    "per_layer": {
+      "0": {
+        "mean_state_retention_exp_g": 0.7022275030612946,
+        "implied_memory_horizon_tokens": 3.3582685112985553,
+        "mean_erase_gate_b": 0.5006895065307617,
+        "mean_write_gate_w": 0.4989430457353592
+      },
+      "1": {
+        "mean_state_retention_exp_g": 0.7698260247707367,
+        "implied_memory_horizon_tokens": 4.3445398160411335,
+        "mean_erase_gate_b": 0.49869248270988464,
+        "mean_write_gate_w": 0.4983609616756439
+      },
+      "2": {
+        "mean_state_retention_exp_g": 0.701483964920044,
+        "implied_memory_horizon_tokens": 3.349903799077845,
+        "mean_erase_gate_b": 0.49923622608184814,
+        "mean_write_gate_w": 0.5019210278987885
+      },
+      "3": {
+        "mean_state_retention_exp_g": 0.741907149553299,
+        "implied_memory_horizon_tokens": 3.874574589219436,
+        "mean_erase_gate_b": 0.5005568861961365,
+        "mean_write_gate_w": 0.5006068050861359
+      },
+      "4": {
+        "mean_state_retention_exp_g": 0.7378561496734619,
+        "implied_memory_horizon_tokens": 3.814699443661773,
+        "mean_erase_gate_b": 0.4982813000679016,
+        "mean_write_gate_w": 0.5000344663858414
+      },
+      "5": {
+        "mean_state_retention_exp_g": 0.8805014789104462,
+        "implied_memory_horizon_tokens": 8.368304401445991,
+        "mean_erase_gate_b": 0.4999087005853653,
+        "mean_write_gate_w": 0.4987494498491287
+      },
+      "6": {
+        "mean_state_retention_exp_g": 0.7375968098640442,
+        "implied_memory_horizon_tokens": 3.810929278267852,
+        "mean_erase_gate_b": 0.4971077889204025,
+        "mean_write_gate_w": 0.5006206929683685
+      },
+      "7": {
+        "mean_state_retention_exp_g": 0.7639429569244385,
+        "implied_memory_horizon_tokens": 4.236264196869997,
+        "mean_erase_gate_b": 0.49992331862449646,
+        "mean_write_gate_w": 0.4982435554265976
+      },
+      "8": {
+        "mean_state_retention_exp_g": 0.5946105122566223,
+        "implied_memory_horizon_tokens": 2.4667635205997906,
+        "mean_erase_gate_b": 0.4991399347782135,
+        "mean_write_gate_w": 0.4998585879802704
+      },
+      "9": {
+        "mean_state_retention_exp_g": 0.7877871990203857,
+        "implied_memory_horizon_tokens": 4.712251077144318,
+        "mean_erase_gate_b": 0.5026721954345703,
+        "mean_write_gate_w": 0.500779390335083
+      },
+      "10": {
+        "mean_state_retention_exp_g": 0.632633626461029,
+        "implied_memory_horizon_tokens": 2.7220782086467095,
+        "mean_erase_gate_b": 0.4950956255197525,
+        "mean_write_gate_w": 0.4991537630558014
+      },
+      "11": {
+        "mean_state_retention_exp_g": 0.7280146181583405,
+        "implied_memory_horizon_tokens": 3.6766681842561866,
+        "mean_erase_gate_b": 0.4969157576560974,
+        "mean_write_gate_w": 0.49983759224414825
+      },
+      "12": {
+        "mean_state_retention_exp_g": 0.7198069095611572,
+        "implied_memory_horizon_tokens": 3.568967380436771,
+        "mean_erase_gate_b": 0.5038919448852539,
+        "mean_write_gate_w": 0.49856826663017273
+      },
+      "13": {
+        "mean_state_retention_exp_g": 0.7466002404689789,
+        "implied_memory_horizon_tokens": 3.9463336581326955,
+        "mean_erase_gate_b": 0.49798327684402466,
+        "mean_write_gate_w": 0.4965628683567047
+      },
+      "14": {
+        "mean_state_retention_exp_g": 0.698991596698761,
+        "implied_memory_horizon_tokens": 3.3221663881563925,
+        "mean_erase_gate_b": 0.4962459206581116,
+        "mean_write_gate_w": 0.5016827583312988
+      },
+      "15": {
+        "mean_state_retention_exp_g": 0.5969116985797882,
+        "implied_memory_horizon_tokens": 2.4808459994414953,
+        "mean_erase_gate_b": 0.501999020576477,
+        "mean_write_gate_w": 0.4993473291397095
+      },
+      "16": {
+        "mean_state_retention_exp_g": 0.6649908125400543,
+        "implied_memory_horizon_tokens": 2.984992762682253,
+        "mean_erase_gate_b": 0.498854324221611,
+        "mean_write_gate_w": 0.49793197214603424
+      },
+      "17": {
+        "mean_state_retention_exp_g": 0.5748753249645233,
+        "implied_memory_horizon_tokens": 2.3522511364849614,
+        "mean_erase_gate_b": 0.5004855096340179,
+        "mean_write_gate_w": 0.5002529621124268
+      },
+      "18": {
+        "mean_state_retention_exp_g": 0.699282705783844,
+        "implied_memory_horizon_tokens": 3.3253824081071928,
+        "mean_erase_gate_b": 0.4966711103916168,
+        "mean_write_gate_w": 0.49989236891269684
+      },
+      "19": {
+        "mean_state_retention_exp_g": 0.6689745783805847,
+        "implied_memory_horizon_tokens": 3.02091602242475,
+        "mean_erase_gate_b": 0.501442551612854,
+        "mean_write_gate_w": 0.501651793718338
+      },
+      "20": {
+        "mean_state_retention_exp_g": 0.7565146684646606,
+        "implied_memory_horizon_tokens": 4.107023588215048,
+        "mean_erase_gate_b": 0.4993298202753067,
+        "mean_write_gate_w": 0.5003923177719116
+      },
+      "21": {
+        "mean_state_retention_exp_g": 0.7114110291004181,
+        "implied_memory_horizon_tokens": 3.4651358881901357,
+        "mean_erase_gate_b": 0.5032879412174225,
+        "mean_write_gate_w": 0.5006153285503387
+      },
+      "22": {
+        "mean_state_retention_exp_g": 0.693463921546936,
+        "implied_memory_horizon_tokens": 3.2622587365458107,
+        "mean_erase_gate_b": 0.49765896797180176,
+        "mean_write_gate_w": 0.5000940561294556
+      },
+      "23": {
+        "mean_state_retention_exp_g": 0.7097465693950653,
+        "implied_memory_horizon_tokens": 3.4452650496355535,
+        "mean_erase_gate_b": 0.5014831125736237,
+        "mean_write_gate_w": 0.49808748066425323
+      },
+      "24": {
+        "mean_state_retention_exp_g": 0.6302277445793152,
+        "implied_memory_horizon_tokens": 2.70436731079868,
+        "mean_erase_gate_b": 0.500897616147995,
+        "mean_write_gate_w": 0.5005038976669312
+      },
+      "25": {
+        "mean_state_retention_exp_g": 0.6207626163959503,
+        "implied_memory_horizon_tokens": 2.6368708445791564,
+        "mean_erase_gate_b": 0.5007854700088501,
+        "mean_write_gate_w": 0.5009265542030334
+      },
+      "26": {
+        "mean_state_retention_exp_g": 0.7787536382675171,
+        "implied_memory_horizon_tokens": 4.519848336349759,
+        "mean_erase_gate_b": 0.5012626051902771,
+        "mean_write_gate_w": 0.5000550001859665
+      }
+    },
+    "mean_implied_memory_horizon_tokens": 3.6251063161744534,
+    "head_decay_base": {
+      "0": [
+        7.396134376525879,
+        2.4989006519317627
+      ],
+      "1": [
+        2.5352442264556885,
+        3.7433462142944336
+      ],
+      "2": [
+        3.5087220668792725,
+        4.315175533294678
+      ],
+      "3": [
+        6.2438435554504395,
+        1.3834917545318604
+      ],
+      "4": [
+        5.8123674392700195,
+        1.5595357418060303
+      ],
+      "5": [
+        0.9928444623947144,
+        1.4674335718154907
+      ],
+      "6": [
+        2.678797483444214,
+        3.863027334213257
+      ],
+      "7": [
+        4.163607120513916,
+        2.1865265369415283
+      ],
+      "8": [
+        5.590597152709961,
+        7.662209987640381
+      ],
+      "9": [
+        1.815520167350769,
+        3.63950777053833
+      ],
+      "10": [
+        3.767775297164917,
+        6.588222503662109
+      ],
+      "11": [
+        4.67588996887207,
+        3.1107335090637207
+      ],
+      "12": [
+        4.946042060852051,
+        2.901198148727417
+      ],
+      "13": [
+        1.2168896198272705,
+        7.01927375793457
+      ],
+      "14": [
+        5.512082576751709,
+        3.355682134628296
+      ],
+      "15": [
+        7.010023593902588,
+        6.466641426086426
+      ],
+      "16": [
+        5.272939205169678,
+        5.478056907653809
+      ],
+      "17": [
+        7.131990909576416,
+        7.231632709503174
+      ],
+      "18": [
+        4.974442958831787,
+        3.5863685607910156
+      ],
+      "19": [
+        3.736934185028076,
+        5.499814033508301
+      ],
+      "20": [
+        5.248805999755859,
+        2.3845481872558594
+      ],
+      "21": [
+        1.8403350114822388,
+        7.036555290222168
+      ],
+      "22": [
+        3.0138330459594727,
+        5.684035778045654
+      ],
+      "23": [
+        7.751613140106201,
+        2.4387502670288086
+      ],
+      "24": [
+        5.829897403717041,
+        7.24161958694458
+      ],
+      "25": [
+        6.239729881286621,
+        6.827366352081299
+      ],
+      "26": [
+        0.5986944437026978,
+        5.97514533996582
+      ]
+    }
+  },
+  "gdn2_telemetry_post_cooldown": {
+    "note": "gdn2's own gate telemetry per layer at the arm's own window length (the state's write/forget coefficients -- the committed arm's exposed state surface; the recurrent state itself is internal to the FLA chunk kernel): the retention exp(g), its reciprocal-of-complement the implied memory horizon, the erase and write gates.  The saturation question's own receipt: does the dense state's horizon MOVE when the regime demands longer state?",
+    "window_mult": 4,
+    "context": 8192,
+    "windows": 2,
+    "per_layer": {
+      "0": {
+        "mean_state_retention_exp_g": 0.7023796439170837,
+        "implied_memory_horizon_tokens": 3.3599852280312525,
+        "mean_erase_gate_b": 0.5006396770477295,
+        "mean_write_gate_w": 0.49901553988456726
+      },
+      "1": {
+        "mean_state_retention_exp_g": 0.769940197467804,
+        "implied_memory_horizon_tokens": 4.346695898167841,
+        "mean_erase_gate_b": 0.49699200689792633,
+        "mean_write_gate_w": 0.49927034974098206
+      },
+      "2": {
+        "mean_state_retention_exp_g": 0.701588362455368,
+        "implied_memory_horizon_tokens": 3.3510757429841687,
+        "mean_erase_gate_b": 0.4983117878437042,
+        "mean_write_gate_w": 0.5022749304771423
+      },
+      "3": {
+        "mean_state_retention_exp_g": 0.7419234216213226,
+        "implied_memory_horizon_tokens": 3.87481888624815,
+        "mean_erase_gate_b": 0.4988035559654236,
+        "mean_write_gate_w": 0.5010961890220642
+      },
+      "4": {
+        "mean_state_retention_exp_g": 0.7380208373069763,
+        "implied_memory_horizon_tokens": 3.817097473403862,
+        "mean_erase_gate_b": 0.4960128217935562,
+        "mean_write_gate_w": 0.5008021593093872
+      },
+      "5": {
+        "mean_state_retention_exp_g": 0.8805420994758606,
+        "implied_memory_horizon_tokens": 8.371149966744355,
+        "mean_erase_gate_b": 0.49783211946487427,
+        "mean_write_gate_w": 0.49975302815437317
+      },
+      "6": {
+        "mean_state_retention_exp_g": 0.7375834584236145,
+        "implied_memory_horizon_tokens": 3.810735382734686,
+        "mean_erase_gate_b": 0.49553246796131134,
+        "mean_write_gate_w": 0.5012847781181335
+      },
+      "7": {
+        "mean_state_retention_exp_g": 0.7638940215110779,
+        "implied_memory_horizon_tokens": 4.235386187168992,
+        "mean_erase_gate_b": 0.4985758811235428,
+        "mean_write_gate_w": 0.4987267851829529
+      },
+      "8": {
+        "mean_state_retention_exp_g": 0.5947130918502808,
+        "implied_memory_horizon_tokens": 2.467387867437812,
+        "mean_erase_gate_b": 0.49809618294239044,
+        "mean_write_gate_w": 0.5008352696895599
+      },
+      "9": {
+        "mean_state_retention_exp_g": 0.7877012491226196,
+        "implied_memory_horizon_tokens": 4.710343305682381,
+        "mean_erase_gate_b": 0.5005240142345428,
+        "mean_write_gate_w": 0.5015772879123688
+      },
+      "10": {
+        "mean_state_retention_exp_g": 0.6325773596763611,
+        "implied_memory_horizon_tokens": 2.721661351949255,
+        "mean_erase_gate_b": 0.4945313334465027,
+        "mean_write_gate_w": 0.4998510479927063
+      },
+      "11": {
+        "mean_state_retention_exp_g": 0.7280969321727753,
+        "implied_memory_horizon_tokens": 3.677781232815768,
+        "mean_erase_gate_b": 0.49653470516204834,
+        "mean_write_gate_w": 0.5004950165748596
+      },
+      "12": {
+        "mean_state_retention_exp_g": 0.719759464263916,
+        "implied_memory_horizon_tokens": 3.5683631469422687,
+        "mean_erase_gate_b": 0.5033956170082092,
+        "mean_write_gate_w": 0.4990704208612442
+      },
+      "13": {
+        "mean_state_retention_exp_g": 0.7463864386081696,
+        "implied_memory_horizon_tokens": 3.9430068112761916,
+        "mean_erase_gate_b": 0.49578407406806946,
+        "mean_write_gate_w": 0.49740418791770935
+      },
+      "14": {
+        "mean_state_retention_exp_g": 0.6990921497344971,
+        "implied_memory_horizon_tokens": 3.3232765416976005,
+        "mean_erase_gate_b": 0.49513842165470123,
+        "mean_write_gate_w": 0.5023608207702637
+      },
+      "15": {
+        "mean_state_retention_exp_g": 0.5970113277435303,
+        "implied_memory_horizon_tokens": 2.4814593283743243,
+        "mean_erase_gate_b": 0.5010794997215271,
+        "mean_write_gate_w": 0.49973300099372864
+      },
+      "16": {
+        "mean_state_retention_exp_g": 0.6649844348430634,
+        "implied_memory_horizon_tokens": 2.984935937324447,
+        "mean_erase_gate_b": 0.4985661655664444,
+        "mean_write_gate_w": 0.4978967607021332
+      },
+      "17": {
+        "mean_state_retention_exp_g": 0.5749771595001221,
+        "implied_memory_horizon_tokens": 2.352814730671603,
+        "mean_erase_gate_b": 0.4999273866415024,
+        "mean_write_gate_w": 0.500783383846283
+      },
+      "18": {
+        "mean_state_retention_exp_g": 0.6993109583854675,
+        "implied_memory_horizon_tokens": 3.325694859481934,
+        "mean_erase_gate_b": 0.49654650688171387,
+        "mean_write_gate_w": 0.5002710819244385
+      },
+      "19": {
+        "mean_state_retention_exp_g": 0.6690800189971924,
+        "implied_memory_horizon_tokens": 3.0218785730908033,
+        "mean_erase_gate_b": 0.5009341835975647,
+        "mean_write_gate_w": 0.5019098818302155
+      },
+      "20": {
+        "mean_state_retention_exp_g": 0.7564838230609894,
+        "implied_memory_horizon_tokens": 4.106503364868663,
+        "mean_erase_gate_b": 0.49849559366703033,
+        "mean_write_gate_w": 0.5010788440704346
+      },
+      "21": {
+        "mean_state_retention_exp_g": 0.7116823792457581,
+        "implied_memory_horizon_tokens": 3.4683971010304173,
+        "mean_erase_gate_b": 0.5028671324253082,
+        "mean_write_gate_w": 0.5010783970355988
+      },
+      "22": {
+        "mean_state_retention_exp_g": 0.6936133801937103,
+        "implied_memory_horizon_tokens": 3.2638501010006293,
+        "mean_erase_gate_b": 0.497032955288887,
+        "mean_write_gate_w": 0.500701904296875
+      },
+      "23": {
+        "mean_state_retention_exp_g": 0.7098100781440735,
+        "implied_memory_horizon_tokens": 3.4460190540196636,
+        "mean_erase_gate_b": 0.5003268718719482,
+        "mean_write_gate_w": 0.4985630065202713
+      },
+      "24": {
+        "mean_state_retention_exp_g": 0.6301267147064209,
+        "implied_memory_horizon_tokens": 2.7036286202888946,
+        "mean_erase_gate_b": 0.5006789863109589,
+        "mean_write_gate_w": 0.5011118948459625
+      },
+      "25": {
+        "mean_state_retention_exp_g": 0.6207903623580933,
+        "implied_memory_horizon_tokens": 2.6370637788070006,
+        "mean_erase_gate_b": 0.499760240316391,
+        "mean_write_gate_w": 0.5017869174480438
+      },
+      "26": {
+        "mean_state_retention_exp_g": 0.7788503766059875,
+        "implied_memory_horizon_tokens": 4.521825471157798,
+        "mean_erase_gate_b": 0.5009535849094391,
+        "mean_write_gate_w": 0.5003362596035004
+      }
+    },
+    "mean_implied_memory_horizon_tokens": 3.6256605904963246,
+    "head_decay_base": {
+      "0": [
+        7.393343448638916,
+        2.4983115196228027
+      ],
+      "1": [
+        2.5345680713653564,
+        3.7423806190490723
+      ],
+      "2": [
+        3.508024215698242,
+        4.313762187957764
+      ],
+      "3": [
+        6.24360990524292,
+        1.383129358291626
+      ],
+      "4": [
+        5.810198783874512,
+        1.5591282844543457
+      ],
+      "5": [
+        0.9926097989082336,
+        1.4670188426971436
+      ],
+      "6": [
+        2.6780991554260254,
+        3.8620529174804688
+      ],
+      "7": [
+        4.162351131439209,
+        2.185950994491577
+      ],
+      "8": [
+        5.588729381561279,
+        7.659506797790527
+      ],
+      "9": [
+        1.815069317817688,
+        3.638645648956299
+      ],
+      "10": [
+        3.7668607234954834,
+        6.58599853515625
+      ],
+      "11": [
+        4.674259185791016,
+        3.1099276542663574
+      ],
+      "12": [
+        4.9446330070495605,
+        2.900327682495117
+      ],
+      "13": [
+        1.2165980339050293,
+        7.017120361328125
+      ],
+      "14": [
+        5.510262966156006,
+        3.354663848876953
+      ],
+      "15": [
+        7.008011817932129,
+        6.464916229248047
+      ],
+      "16": [
+        5.271184921264648,
+        5.477095127105713
+      ],
+      "17": [
+        7.1297078132629395,
+        7.228945255279541
+      ],
+      "18": [
+        4.972765922546387,
+        3.5854153633117676
+      ],
+      "19": [
+        3.736013174057007,
+        5.4978742599487305
+      ],
+      "20": [
+        5.246942520141602,
+        2.38413143157959
+      ],
+      "21": [
+        1.8399449586868286,
+        7.033918380737305
+      ],
+      "22": [
+        3.012871742248535,
+        5.682191848754883
+      ],
+      "23": [
+        7.749914646148682,
+        2.4381096363067627
+      ],
+      "24": [
+        5.827764511108398,
+        7.239320278167725
+      ],
+      "25": [
+        6.2374587059021,
+        6.824816703796387
+      ],
+      "26": [
+        0.5985669493675232,
+        5.972914695739746
+      ]
+    }
+  },
+  "routing_receipt": null,
+  "peak_allocated_gb": 4.6,
+  "config_sha256": "565de4133c4fa5d6e44ee38ec3e0d2581814b2fd01fbcfc7b4f68296562134d6",
+  "config": {
+    "probe": "k24_long_window",
+    "arm": "gdn2_4x",
+    "machine": "gdn2",
+    "window_mult": 4,
+    "context": 8192,
+    "windows_per_step": 27,
+    "microbatch": 2,
+    "tokens_per_microbatch": 16384,
+    "microbatch_groups_per_step": 14,
+    "seed": 3401,
+    "arm_note": "the committed GDN2 arm at the 4x windows",
+    "role": "long",
+    "corrected_scoring": {
+      "primary": "post-cooldown eval: a linear cooldown of 24 steps (13.3% of the 180-step constant-LR budget) appended after the banked matched-exposure landing, same stream/data order, LR factor (25 - k)/24 for cooldown step k (1.0 -> 1/24, never zero), both hybrid groups scaling equally; the corrected score is the post-cooldown calibration eval",
+      "secondary": "EMA iterate at step 180 (no extra data): decay 0.99, initialized at the init weights, updated after every constant-phase optimizer step, NOT updated during the cooldown; RANKING-ONLY -- its absolute number is biased toward mid-run weights (stated, not smoothed)",
+      "cooldown_steps": 24,
+      "cooldown_fraction": 0.1333,
+      "cooldown_form": "linear",
+      "ema_decay": 0.99,
+      "exposure_note": "the cooldown steps see ~2.7M more targets (~13%), identical across arms -- a stated protocol EXTENSION; the step-180 constant-LR eval is retained so every banked row stays comparable",
+      "citations": {
+        "river_valley": "Wen et al., ICLR 2025, arXiv:2410.05192 -- constant-LR loss carries an LR-dependent oscillation penalty that decay/averaging removes",
+        "cooldown": "Haegele et al., NeurIPS 2024, arXiv:2405.18392 -- constant-LR + short cooldown matches cosine at full scale",
+        "averaging": "Defazio et al., arXiv:2405.15682 -- iterate averaging as the schedule-free fix for the same penalty",
+        "moonlight": "Liu et al. (Moonshot AI), arXiv:2502.16982 -- with the update RMS matched to AdamW's (~0.2; AdamW typical 0.2-0.4), Muon directly reuses the LR and weight decay tuned for AdamW, i.e. ~1x the AdamW-tuned LR, WITH weight decay",
+        "horizon": "Bjorck et al., ICLR 2025 -- the optimal LR shrinks with token horizon; probe-tuned LRs transfer only downscaled"
+      }
+    },
+    "rules": {
+      "L1": {
+        "text": "L-1 (the horizon hypothesis): the slot layers' load-bearing count RISES with window length -- the decorative sweep lights up (more layers clear the 0.02 dNLL bar at 4x than at 1x; the banked 1x regime's own count is 4 of 24 on ours, 0 of 3 slot layers on the hybrid), and/or the occupancy/effective rows rise on the slot machines.",
+        "bar": 0.02
+      },
+      "L2": {
+        "text": "L-2: the quality gap (ours - gdn2) SHRINKS with window length (the dense state saturates as sequences grow; the addressable store does not).  Read on the own-window post-cooldown rows at each mult, with the fixed-1x-eval cross-grid as the decomposition."
+      },
+      "REFUTATION": {
+        "text": "REFUTATION, receipted plainly: if the mask stays dark (the load-bearing count does not rise at 4x) and the gap stays flat at 4x (inside the 0.0119 seed band of the 1x gap), the horizon hypothesis is dead at probe scale -- the board run's horizon rationale goes with it, and the remaining board value is scale/exposure alone."
+      },
+      "band_discipline": {
+        "text": "no band-worship: every delta is stated against the 0.0119 winner-seed band (and the 0.075 endpoint-variance band cross-machine); a delta inside the seed band is PARITY, phrased as parity."
+      },
+      "anchor": {
+        "text": "the anchor convention: the 1x cells MUST reproduce the banked rows bit for bit FIRST (ours 1.3811104467936925, GDN2 1.3521734476089478; the full training-log trajectory, the constant-180, the EMA-180 and the landing, every digit).  ANY mismatch STOPS the lane and escalates -- before any long window run."
+      },
+      "boundaries": {
+        "text": "the standing discipline: NEVER pack across document boundaries; windows TRUNCATE at the boundary; the document-disjoint splits stay intact; every document slice SHA-256-verified at consumption.  The longer windows are the corpus pipeline's own boundary-respecting windowing (the lattice.Stream constructor's own context parameter), hash-bound to the flagship manifest.  An engine that cannot honor the boundaries at longer windows is a STOP, never a forced fit."
+      }
+    },
+    "bands": {
+      "endpoint_variance": 0.075,
+      "winner_seed_delta": 0.011948040553501738
+    },
+    "exposure_targets": 300000,
+    "step_shape": {
+      "note": "the probe's step shape, adjusted per the registration so steps x tokens consume the same 20M targets: the ~111K-targets/step shape and the ~180-step landing are HELD (windows/step scaled down as the context grows), and the microbatch's TOKEN count is held at the banked 16,384 (the memory-matched rule); matched EXPOSURE is the invariant",
+      "window_arithmetic": {
+        "mult": 4,
+        "context": 8192,
+        "windows_per_step": 27,
+        "microbatch": 2,
+        "tokens_per_microbatch": 16384,
+        "microbatch_groups_per_step": 14,
+        "landing_step": 178,
+        "exposure_landing": 20088160,
+        "windows_consumed": 4806,
+        "effective_window_bytes": {
+          "mean": 4179.8,
+          "p50": 3042.0,
+          "p90": 8192.0,
+          "min": 1,
+          "max": 8192,
+          "full_length_fraction": 0.3225,
+          "mean_over_1x_mean": 2.405
+        },
+        "calibration_full_windows": 1333,
+        "note": "the boundary-respecting windowing's own distribution over the windows the arm actually consumes (mean/p50/p90 bytes, the full-length fraction); the lever is only as strong as what was actually achieved -- the corpus's median document is ~1,850 bytes, shorter than one banked window"
+      }
+    },
+    "window_discipline": "the standing discipline: NEVER pack across document boundaries; windows TRUNCATE at the boundary; the document-disjoint splits stay intact; every document slice SHA-256-verified at consumption.  The longer windows are the corpus pipeline's own boundary-respecting windowing (the lattice.Stream constructor's own context parameter), hash-bound to the flagship manifest.  An engine that cannot honor the boundaries at longer windows is a STOP, never a forced fit.",
+    "eval_rule": "the arm's own-window eval: the first 7 FULL windows of the arm's context in calibration order (at 1x this IS the banked L.evaluate set, verbatim); plus the cross-eval grid at all three window lengths on the post-cooldown final state",
+    "machine_build": "matched_arms.build_gdn2 verbatim (the banked 1.3522 machine's own build)",
+    "optimizer": {
+      "optimizer": "bakeoff_optimizers.HybridMuonX45 (imported verbatim)",
+      "peak_lr": 0.0027100927623701265,
+      "lr_multiplier": 5,
+      "lr_convention": "5x GDN2's own banked AdamW LR -- the banked 1.3522 row's own recipe VERBATIM (option B, gates on AdamW)",
+      "betas": [
+        0.9,
+        0.9392004369596886
+      ],
+      "weight_decay": 0.20059436743465126,
+      "warmup_steps": 69,
+      "microbatch": 8,
+      "grad_clip": 1.0,
+      "muon_params": "191 tensors",
+      "adamw_params": "406 tensors"
+    },
+    "routing": "the machine's own banked routing split, imported verbatim (ours: k11b_probe_channel_gates.split_parameters_gated 'p3'; gdn2: muon_control.split_parameters_gdn2 option B; hybrid: k22_hybrid.split_parameters_k22)",
+    "routing_receipt": null,
+    "slot_layers": null,
+    "parameters": 149855670,
+    "checkpoint_steps": [
+      1,
+      2,
+      3,
+      178
+    ],
+    "stopping_rule": "matched-EXPOSURE: train until 300000 targets seen (the banked probe stopping rule, constant LR), THEN the 24-step linear cooldown (the corrected-scoring extension, same stream); the honest elapsed wall is reported first-class",
+    "anchors": {
+      "ours_1x": null,
+      "gdn2_1x": null,
+      "hybrid_1x": null,
+      "composed_ours_banked": {
+        "post_cooldown": {
+          "3401": 1.3811104467936925,
+          "3402": 1.383232252938407
+        },
+        "constant_lr": {
+          "3401": 1.433674931526184,
+          "3402": 1.4341776371002197
+        },
+        "ema_180": {
+          "3401": 1.424389226096017,
+          "3402": 1.4385861498968942
+        },
+        "step1_train_loss": {
+          "3401": 5.782775391046648,
+          "3402": 5.720172563202926
+        },
+        "note": "the K15 composition arm's own landed rows (the inherited 4x point, tuned for the SOFTMAX-read machine): receipts/k15_composition_summary.json"
+      },
+      "note": "the 1x cells MUST reproduce the banked rows bit for bit FIRST; any mismatch STOPS the lane and escalates"
+    },
+    "bindings": {
+      "registration": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/PREREGISTRATION_K24_LONG_WINDOW.md",
+      "registration_sha256": "03b225234e4e97df1fc8e827f5ee3c70fa0fb71821ed9c88cc972cab4b2a3c44",
+      "k24_long_window_sha256": "cc9143cb6cb6a385d688ce17276ef8f5e738ae74f265ebc35c47c207c6998e04",
+      "k24_gate_receipt_sha256": "80ea73a25ba4cc27d36e3572003a62d9eacc3ef5dec085ca78973e74472fcfa4",
+      "k15_composition_sha256": "b7ade13ec44cfd927493fe96a0e9d3fbe0bb547cce0a84797fe43557556b903a",
+      "k15_probe_sha256": "e769a26157ca3da36569258289476f0c1e74e9b2e33e3d187e8b185076349d2c",
+      "k22_hybrid_sha256": "d5ac0b082260402382b181a7c4d84ceeb06e90d7053b8d30a37af4d9d64d69c5",
+      "k22_probe_sha256": "6385a813623b560de2043dfc68a09897399c51cab7ab7654ff03ccbdb9400b51",
+      "matched_arms_sha256": "9d37c32469f3701ac3e0bfbd1d4b5c253e7cbdd425e95a281df62d83f6f30830",
+      "muon_control_sha256": "df348e4f8d3b333c1826490ba0813617ce6497fdccc5af55e7711a64ec07d10e",
+      "protocol_correction_sha256": "2610942b448416d7365474130f1dc3e17056295b0defbe775b8128518a53b8b9",
+      "external_gdn2_sha256": "316ddf8658a55da4a4159f77881c92e9a067570da55d0aa2592b7b11c51aa3d8",
+      "lattice_registration_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c",
+      "flagship_manifest_sha256": "48b9095eeccb023ff1cb2a4f6da899a8b3e4eb3b76b2804e730f1d6ad031c414",
+      "banked_ours_row": {
+        "run_dir": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k15_runs/composition_seed3401",
+        "start_sha256": "57fcecc5ab368a387b17c80a873f639e738a9b3352fb18388638d9542715f876",
+        "result_sha256": "fd23ea64d25dd6166e95016e513020724060e6937fda6faf63a1197817bfd622",
+        "training_log_sha256": "3ce08b54551d754f833f3a9680ec47e17178bf88eb228ff7108e5443c3d89476"
+      },
+      "banked_gdn2_row": {
+        "run_dir": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/protocol_correction_runs/gdn2_speedrun_rescored",
+        "start_sha256": "e25a2a0a33ba1f1d9ce1996267b3226428f4c420217184021c8c710a2cffe5e9",
+        "result_sha256": "9253b9819f02433377aa94760047864481457c16d6a9ea4fcc6cbcb2b0262f75",
+        "training_log_sha256": "329b1358358f1f32ea3b8838a28ddd3534627c2a13da3d08eab2f828ba4f18f8"
+      },
+      "banked_hybrid_1x_row": {
+        "run_dir": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k22_runs/hybrid_seed3401",
+        "result_sha256": "5839ab78489d3bc6755e4349456ca9d2a886523d1bf0f88ef6635355d186f815"
+      }
+    },
+    "summary": {
+      "base_arm": "gdn2",
+      "parameters": {
+        "total": 149855670
+      },
+      "nomination": {
+        "arm": "gdn2",
+        "receipt": "/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/receipts/byte_velocity_nominations/gdn2.json",
+        "receipt_sha256": "5e7ab164973366817699a9df21eb1714c9203c49e44a65566c048842f2034813",
+        "generation": 7,
+        "candidate": 1,
+        "search_score": 1.3930157472689946
+      },
+      "policy": {
+        "lr": 0.0005420185524740253,
+        "microbatch": 8,
+        "beta2": 0.9392004369596886,
+        "weight_decay": 0.20059436743465126,
+        "warmup_steps": 69,
+        "init_scale": 1.3483482393728117,
+        "decay_rate_scale": 0.48706005128019486,
+        "dt_bias_shift": 1.7178302439489688,
+        "expansion": 2.0
+      }
+    },
+    "identity": {
+      "stream": "flagship_beyond_100gb",
+      "source": "/mnt/nvme2n1/erikg/pile.txt",
+      "source_size": 1307910802540,
+      "manifest": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/documents.jsonl.gz",
+      "manifest_sha256": "48b9095eeccb023ff1cb2a4f6da899a8b3e4eb3b76b2804e730f1d6ad031c414",
+      "registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/registration.json",
+      "registration_sha256": "c36f84cfd1a59530a7991a4be6c1f68b424a79c5b7de169eabfc90d3cd31cc31",
+      "boundary_bytes": 100000000000,
+      "lattice_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_150M_LATTICE.md",
+      "lattice_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c"
+    },
+    "versions": {
+      "torch": "2.9.1+cu128",
+      "schedulefree": "1.4.1",
+      "hybrid_muon_sha256": "204c55252f3032b91a965d2511cddb5d9d2eef9f94e9bfd509ee86d2987384d6",
+      "bakeoff_optimizers_sha256": "dff190059d0ff94633c3b3e42ab89ef2ccde8517ebd512a4acff96143a949745"
+    },
+    "git": {
+      "commit": "978d496e3a064bd03b798a120005c52c779fa36f",
+      "relevant_paths_dirty": "?? experiments/expressivity_tasks/x45_matrix_emender/k24_runs/chain_console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/k24_runs/chain_relx.console\n?? experiments/expressivity_tasks/x45_matrix_emender/k24_runs/chain_relx2.console\n?? experiments/expressivity_tasks/x45_matrix_emender/k24_runs/chain_relx3.console\n?? experiments/expressivity_tasks/x45_matrix_emender/k24_runs/chain_relx4.console\n?? experiments/expressivity_tasks/x45_matrix_emender/k24_runs/smoke_gdn2_4x.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/k24_runs/window_receipt_console.txt",
+      "branch": "main"
+    }
+  },
+  "session": {
+    "host": "lambda01",
+    "card": "2",
+    "device": "NVIDIA RTX 6000 Ada Generation",
+    "card_gib": 47.38,
+    "torch": "2.9.1+cu128",
+    "triton": "3.5.1"
+  },
+  "trajectory": [
+    {
+      "step": 1,
+      "active_seconds": 6.366616707295179,
+      "bytes": 162768,
+      "loss": 5.950889347246541
+    },
+    {
+      "step": 2,
+      "active_seconds": 11.791213477961719,
+      "bytes": 346216,
+      "loss": 5.91072465650733
+    },
+    {
+      "step": 3,
+      "active_seconds": 17.043088319711387,
+      "bytes": 411860,
+      "loss": 5.836847851251846
+    },
+    {
+      "step": 4,
+      "active_seconds": 22.367449776269495,
+      "bytes": 526036,
+      "loss": 5.673785388766216
+    },
+    {
+      "step": 5,
+      "active_seconds": 27.65287868771702,
+      "bytes": 612061,
+      "loss": 5.575199518594517
+    }
+  ]
+}
