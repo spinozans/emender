@@ -24,7 +24,8 @@ def publish(paths,msg):
     return git('rev-parse','HEAD')
 
 def archive(root):
-    launch=json.loads((root/'launch.json').read_text());done={};DEST.mkdir(parents=True,exist_ok=True)
+    if root.name not in ('xsa_budget_campaign_v1','xsa_budget_cap8192_v2'):raise ValueError('unexpected archive namespace')
+    dest=DEST.parent/root.name;launch=json.loads((root/'launch.json').read_text());done={};dest.mkdir(parents=True,exist_ok=True)
     while time.time()<launch['deadline']+90:
         for h in (2048,8192):
             for seed in (3401,3402):
@@ -32,11 +33,13 @@ def archive(root):
                 if cell in done or not result.exists():continue
                 if hashlib.sha256((src/f'{seed}.pt').read_bytes()).hexdigest()!=json.loads((src/f'{seed}_training.json').read_text())['sha']:raise ValueError('checkpoint digest')
                 sources=[result,src/f'{seed}.pt',src/f'{seed}_training.json',src/'manifest.json',*[src/f'{s}_identity.json' for s in ('train','calibration','final_test')],root/'binding.json'];targets=[]
+                if root.name=='xsa_budget_cap8192_v2':sources.extend([root/'wide_gate.json',root/'recovery.json'])
+                if root.name=='xsa_budget_cap8192_v2' and h==8192:sources.append(root/'2048_parity.json')
                 for f in sources:
-                    target=DEST/str(h)/f.name;target.parent.mkdir(exist_ok=True);tmp=target.with_suffix('.incoming');shutil.copyfile(f,tmp);os.replace(tmp,target);targets.append(target)
+                    target=dest/str(h)/f.name;target.parent.mkdir(exist_ok=True);tmp=target.with_suffix('.incoming');shutil.copyfile(f,tmp);os.replace(tmp,target);targets.append(target)
                 done[cell]=publish(targets,f'Retain budgeted positional policy H{h} seed {seed} and paired final scores');print(cell,done[cell],flush=True)
         if len(done)==4 and (root/'complete.json').is_file():
-            dst=DEST/'complete.json';shutil.copyfile(root/'complete.json',dst);publish([dst],'Close unattended budgeted positional controller sweep');return
+            dst=dest/'complete.json';shutil.copyfile(root/'complete.json',dst);publish([dst],'Close unattended budgeted positional controller sweep');return
         alive=Path(f"/proc/{launch['pid']}/stat")
         if not alive.exists() or alive.read_text().split()[21]!=launch['starttime']:raise RuntimeError('runner ended before all cells; inspect status.json')
         time.sleep(10)

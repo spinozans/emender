@@ -15,7 +15,13 @@ class Decoder:
     def __init__(self,bundle,seed):
         bind=json.loads((bundle/'binding.json').read_text());ck=bundle/f'{seed}.pt';rec=json.loads((bundle/f'{seed}_training.json').read_text());self.price=json.loads((bundle/f'{seed}_result.json').read_text())['selected_price']
         if D.digest(D.EXE)!=bind['engine'] or D.digest(ck)!=rec['sha'] or D.digest(Path(D.__file__))!=bind['data']:raise ValueError('inference identity mismatch')
-        self.base,_=D.models();self.net=Policy().eval();self.net.load_state_dict(torch.load(ck,weights_only=True));self.s=D.Session(D.EXE);self.ctx=b'';self.t=0
+        session=D.Session
+        if (bundle/'recovery.json').is_file():
+            from . import xsa_budget_cap_recovery as recovery
+            rec=json.loads((bundle/'recovery.json').read_text())
+            if rec['cap']!=8192 or rec['wrapper_sha']!=D.digest(Path(recovery.__file__)):raise ValueError('recovery identity mismatch')
+            session=recovery.FullWindow
+        self.base,_=D.models();self.net=Policy().eval();self.net.load_state_dict(torch.load(ck,weights_only=True));self.s=session(D.EXE);self.ctx=b'';self.t=0
 
     def close(self):self.s.close()
 
