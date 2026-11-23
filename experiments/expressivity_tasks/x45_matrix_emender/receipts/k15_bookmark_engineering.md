@@ -19,3 +19,29 @@ f327bce5334b4cd5c22f3d4524f87f3f9cccc641613506701f1b166dcf84e4b3  /mnt/nvme2n1/e
 42c489e40e3c5b323768707d09f3ec6dd49c1764124d7869eba127ed86e8e814  /mnt/nvme2n1/erikg/k15_bookmarks_A/forced_trace.json
 ```
 fc01aed0 CPU pytest 1 passed in 1.74s with shared composed mixer geometry. Attempt B uses fresh directory, new source, same <=0.5h timeout.
+
+Attempt B f2cf39aa: anchor, four full steps, delayed gradient and exact chosen native action/reply prefix replay passed. Variable-shape end-logit parity FAILED at prefix 33 (max 0.17676 > 0.0625); matched forward timer not reached. PPID=1 GPU0 owner 3466029/starttime 550173030, renewed 1795435742 -> 1795435744; lease absent at 1795435768. Charge <=26s. Do not relax tolerance.
+```
+gpu_lease: granted GPUs: 0 (pid 3466029)
+{"anchor": {"base": "k15", "seed": 3401, "anchor": 1.3811104467936925, "state": "/mnt/nvme2n1/erikg/xsa_anchor_replays_v1/k15/final.pt", "sha256": "accb73ce3ad0cbe5b88d439dad8073d17a0ab3ec25a9f3f52b6cfdf7f968ecd0", "engine_sha256": "e769a26157ca3da36569258289476f0c1e74e9b2e33e3d187e8b185076349d2c"}, "identity": {"stream": "flagship_beyond_100gb", "source": "/mnt/nvme2n1/erikg/pile.txt", "source_size": 1307910802540, "manifest": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/documents.jsonl.gz", "manifest_sha256": "48b9095eeccb023ff1cb2a4f6da899a8b3e4eb3b76b2804e730f1d6ad031c414", "registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/registration.json", "registration_sha256": "c36f84cfd1a59530a7991a4be6c1f68b424a79c5b7de169eabfc90d3cd31cc31", "boundary_bytes": 100000000000, "lattice_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_150M_LATTICE.md", "lattice_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c"}, "exe": "87d917c19518e7dd25976420b25b2fbebef5fdcb36a09bc39e0ed76e3c96f40f", "params": 158790278}
+{"anchor_evaluation": {"score": 1.3811104467936925, "nll_heldout": 1.3811104467936925, "eval_split": "calibration", "eval_windows": 7, "eval_targets": 14336, "units": "nats/byte"}}
+{"step": 1, "doc": 100000000071, "start": 0, "bytes_sha": "1ad1b22f9162aa8088b6f06942a876145c2b85b1ed4394bb911662f0c848f688", "forced": true, "delayed_gradient": 0.0011940469266846776, "norm": 0.23711992800235748, "nll": 1.9876651763916016, "calls": [[0, 1, 2], [1, 0, 2], [0, 2, 3], [1, 2, 3], [0, 3, 0], [0, 1, 2], [1, 2, 3]], "seconds": 0.49880014453083277, "tokens_per_second": 256.6158037512113}
+{"step": 2, "doc": 100000000524, "start": 0, "bytes_sha": "5e84cbc087aed301a1c00a76197088797cafd50320f1ff8c246e1acc56fec2ac", "forced": false, "delayed_gradient": null, "norm": 14.14575481414795, "nll": 1.8186670541763306, "calls": [[0, 1, 2], [0, 0, 2], [0, 0, 2], [0, 1, 2], [0, 0, 2], [0, 1, 2], [1, 1, 2]], "seconds": 0.2567654363811016, "tokens_per_second": 498.5094637504763}
+{"step": 3, "doc": 100000002302, "start": 0, "bytes_sha": "a5ec7e42567b89e26fa73b207fb667aa06794be3775b1964d88d4846bf829cea", "forced": false, "delayed_gradient": null, "norm": 22.28959083557129, "nll": 2.215632438659668, "calls": [[0, 1, 2], [0, 2, 3], [0, 2, 3], [0, 3, 0], [1, 0, 2], [0, 1, 2], [0, 2, 3]], "seconds": 0.20859395805746317, "tokens_per_second": 613.6323467467774}
+{"step": 4, "doc": 100000007119, "start": 0, "bytes_sha": "ff4600a937df3054f6bcec2632f37ac7c5756a7537b6b11cba247eee04954d0e", "forced": false, "delayed_gradient": null, "norm": 9.168537139892578, "nll": 1.9225044250488281, "calls": [[1, 1, 2], [0, 1, 2], [0, 0, 2], [1, 3, 0], [1, 0, 2], [0, 3, 0], [0, 1, 2]], "seconds": 0.2152174385264516, "tokens_per_second": 594.7473442504892}
+{"checkpoint": "0b4eeb8208b2a44f366d935a3bbaa702eed13e980258f545973b77a56c2a76f5"}
+{"prefix_replay_max_abs": [0.046875, 0.1767578125, 0.015625, 0.0625, 0.0625, 0.0, 0.0], "greedy_trace": [[1, 0], [1, 2], [1, 0], [0, 1], [1, 0], [0, 2], [0, 3]]}
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k15_bookmark_probe.py", line 102, in <module>
+    main(Path(sys.argv[1]))
+  File "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k15_bookmark_probe.py", line 92, in main
+    assert max(differences) <= 0.0625  # one bf16 ulp around logit magnitude 8
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+86ec39b46ec18260813322b48d66e12fb640f9e6366e6844e4833f94af176e2b  /mnt/nvme2n1/erikg/k15_bookmarks_B/console
+42c489e40e3c5b323768707d09f3ec6dd49c1764124d7869eba127ed86e8e814  /mnt/nvme2n1/erikg/k15_bookmarks_B/forced_trace.json
+7d7ebc1bffe9dcb602170900567baa64dd8550ecc7cea8f7d6276be51e54615f  /mnt/nvme2n1/erikg/k15_bookmarks_B/launch.json
+428349af37061e41d8aac5df5284f17d8213d3f6bd5a275cea1c5d3a0e6c0b88  /mnt/nvme2n1/erikg/k15_bookmarks_B/owner_check
+```
