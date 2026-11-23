@@ -78,7 +78,24 @@ def main(out):
             (out/'forced_trace.json').write_text(json.dumps(trace,indent=2))
         if step == 4:
             path=out/'integrated.pt';tmp=path.with_suffix('.partial')
-            torch.save(net.state_dict(),tmp);os.replace(tmp,path);emit(checkpoint=digest(path));return
+            torch.save(net.state_dict(),tmp);os.replace(tmp,path);emit(checkpoint=digest(path))
+            net.load_state_dict(torch.load(path, map_location='cpu', weights_only=True))
+            net.eval()
+            with torch.no_grad(), torch.autocast('cuda', dtype=torch.bfloat16):
+                online, chosen, _, _ = net(ids, audit=True)
+                differences = []
+                for end in (17, 33, 49, 65, 81, 97, 113):
+                    prefix, events, _, _ = net(ids[:,:end], audit=True)
+                    assert events == chosen[:len(events)]
+                    differences.append(float((online[:,end-1]-prefix[:,-1]).abs().max()))
+                emit(prefix_replay_max_abs=differences, greedy_trace=[(e['slot'], e['op']) for e in chosen])
+                assert max(differences) <= 0.0625  # one bf16 ulp around logit magnitude 8
+                for doors in (False, True):
+                    net(ids, doors=doors);torch.cuda.synchronize();t=time.perf_counter()
+                    for _ in range(8):
+                        net(ids, doors=doors)
+                    torch.cuda.synchronize();emit(forward_tokens_s=1024/(time.perf_counter()-t),doors=doors)
+            return
     raise RuntimeError('insufficient independent full windows')
 
 if __name__ == '__main__':

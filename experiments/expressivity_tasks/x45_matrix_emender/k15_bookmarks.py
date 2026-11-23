@@ -1,5 +1,4 @@
 """Two prefix-scoped records between incumbent K15 layers. One window per call."""
-import math
 from pathlib import Path
 import subprocess
 
@@ -10,6 +9,10 @@ import torch.nn.functional as F
 from experiments.expressivity_tasks.x43_fork_resolved.xsa_binding_live import Session
 
 
+from .key_separation_probe import causal_context
+from .schedule import EPS
+
+
 class BookmarkSession(Session):
     def __init__(self, exe: Path):
         self.p = subprocess.Popen([exe, 'session', '32'], stdin=subprocess.PIPE,
@@ -17,19 +20,17 @@ class BookmarkSession(Session):
 
 
 class BookmarkPort(nn.Module):
-    def __init__(self, width, size=32):
+    def __init__(self, width, value_dim):
         super().__init__()
-        self.query = nn.Linear(width, size)
         self.slot_bias = nn.Linear(width, 2)
-        self.action = nn.Linear(width + size, 4)
-        self.key = nn.Linear(width + size, size)
-        self.payload = nn.Linear(width + size, size)
-        self.byte = nn.Embedding(256, size)
-        self.inject = nn.Linear(size, width, bias=False)
+        self.action = nn.Linear(width + value_dim, 4)
+        self.byte = nn.Embedding(256, width)
 
-    def forward(self, hidden, ids, session, forced=None, audit=False, stride=16):
-        keys = hidden.new_zeros(2, self.byte.embedding_dim)
-        values = torch.zeros_like(keys)
+    def forward(self, mixer, hidden, ids, session, forced=None, audit=False, stride=16):
+        ctx = causal_context(hidden, mixer.ctx).flatten(2)
+        queries = mixer.query_key(ctx)[..., :mixer.key_dim]
+        keys = hidden.new_zeros(2, mixer.key_dim)
+        values = hidden.new_zeros(2, mixer.value_dim)
         # Immutable byte strings and occurrence starts are non-differentiable fields
         # of the same two rows as keys/values. Invalidated together on retirement.
         handles = [None, None]
@@ -38,11 +39,13 @@ class BookmarkPort(nn.Module):
         for i, start in enumerate(range(0, len(raw), stride)):
             stop = min(start + stride, len(raw))
             chunk = hidden[:, start:stop]
-            q = self.query(chunk)
-            scores = self.slot_bias(chunk) + q @ keys.T / math.sqrt(keys.size(1))
-            attention = scores.float().softmax(-1).to(values.dtype)
-            recalled = attention @ values
-            output.append(chunk + self.inject(recalled))
+            q = F.normalize(queries[:, start:stop].float(), dim=-1, eps=EPS)
+            # K15 additive read on reserved rows, without softmax. Empty keys and
+            # values are zero. Original rows still use the incumbent fast scan.
+            weight = mixer.policy.read_scale * (q @ F.normalize(keys.float(), dim=-1, eps=EPS).T)
+            recalled = weight @ values
+            scores = self.slot_bias(chunk) + weight
+            output.append(recalled)
             assert session.rpc('append ' + raw[start:stop].hex())['visible'] == stop
             if stop == len(raw):
                 break
@@ -86,8 +89,12 @@ class BookmarkPort(nn.Module):
                 b = read(f'byte {offset}')['byte']
                 if audit:
                     assert raw[offset] == b
-                response = torch.cat([h, self.byte.weight[b]])
-                k, v = self.key(response), self.payload(response).tanh()
+                response = h + self.byte.weight[b]
+                write_ctx = torch.cat([ctx[0, stop-1, :-mixer.width], response])
+                k = mixer.key(write_ctx)[:mixer.key_dim]
+                gate = 1 - mixer.write_scalar[0] * mixer.b_proj(response)[:mixer.value_dim].sigmoid()
+                payload = mixer.value(response)[:mixer.value_dim]
+                v = gate * payload + (1 - gate) * values[slot]
                 handles[slot] = (pattern, pos)
                 writes.append(v)
             mask = (torch.arange(2, device=h.device) == slot)[:, None]
@@ -101,7 +108,7 @@ class BookmarkK15(nn.Module):
     def __init__(self, backbone, exe):
         super().__init__()
         self.backbone = backbone
-        self.port = BookmarkPort(backbone.embed.embedding_dim)
+        self.port = BookmarkPort(backbone.embed.embedding_dim, backbone.blocks[len(backbone.blocks)//2].mixer.value_dim)
         self.exe = exe
 
     def forward(self, ids, *, doors=True, forced=None, audit=False):
@@ -114,8 +121,17 @@ class BookmarkK15(nn.Module):
             if i == len(self.backbone.blocks)//2:
                 session = BookmarkSession(self.exe)
                 try:
-                    h, trace, probs, writes = self.port(h, ids, session, forced, audit)
+                    x = layer.norm1(h)
+                    mixer = layer.mixer
+                    extra, trace, probs, writes = self.port(mixer, x, ids, session, forced, audit)
                 finally:
                     session.close()
-            h = layer(h)
+                _, ordinary = mixer.mix(x)
+                reads = torch.cat([(ordinary.reads[:, :, 0] + extra).unsqueeze(2),
+                                   ordinary.reads[:, :, 1:]], dim=2)
+                gate = 1 + mixer.read_scalar.view(1, 1, -1, 1) * mixer.g_proj(x).view_as(reads).sigmoid()
+                h = h + mixer.out((reads * gate).flatten(2))
+                h = h + layer.mlp(layer.norm2(h))
+            else:
+                h = layer(h)
         return self.backbone.head(self.backbone.norm(h)), trace, probs, writes
