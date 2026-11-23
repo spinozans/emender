@@ -1,0 +1,1128 @@
+{
+  "probe": "k24_long_window",
+  "arm": "hybrid_4x",
+  "machine": "hybrid",
+  "window_mult": 4,
+  "context": 8192,
+  "windows_per_step": 27,
+  "microbatch": 2,
+  "seed": 3401,
+  "arm_note": "the K22 hybrid engine at the 4x windows: born as GDN2 at the 4x batch (receipted vs a pure twin), the gates learn to open -- do they open FURTHER when state is demanded?",
+  "role": "long",
+  "corrected_scoring": {
+    "primary": "post-cooldown eval: a linear cooldown of 24 steps (13.3% of the 180-step constant-LR budget) appended after the banked matched-exposure landing, same stream/data order, LR factor (25 - k)/24 for cooldown step k (1.0 -> 1/24, never zero), both hybrid groups scaling equally; the corrected score is the post-cooldown calibration eval",
+    "secondary": "EMA iterate at step 180 (no extra data): decay 0.99, initialized at the init weights, updated after every constant-phase optimizer step, NOT updated during the cooldown; RANKING-ONLY -- its absolute number is biased toward mid-run weights (stated, not smoothed)",
+    "cooldown_steps": 24,
+    "cooldown_fraction": 0.1333,
+    "cooldown_form": "linear",
+    "ema_decay": 0.99,
+    "exposure_note": "the cooldown steps see ~2.7M more targets (~13%), identical across arms -- a stated protocol EXTENSION; the step-180 constant-LR eval is retained so every banked row stays comparable",
+    "citations": {
+      "river_valley": "Wen et al., ICLR 2025, arXiv:2410.05192 -- constant-LR loss carries an LR-dependent oscillation penalty that decay/averaging removes",
+      "cooldown": "Haegele et al., NeurIPS 2024, arXiv:2405.18392 -- constant-LR + short cooldown matches cosine at full scale",
+      "averaging": "Defazio et al., arXiv:2405.15682 -- iterate averaging as the schedule-free fix for the same penalty",
+      "moonlight": "Liu et al. (Moonshot AI), arXiv:2502.16982 -- with the update RMS matched to AdamW's (~0.2; AdamW typical 0.2-0.4), Muon directly reuses the LR and weight decay tuned for AdamW, i.e. ~1x the AdamW-tuned LR, WITH weight decay",
+      "horizon": "Bjorck et al., ICLR 2025 -- the optimal LR shrinks with token horizon; probe-tuned LRs transfer only downscaled"
+    }
+  },
+  "status": "completed",
+  "window_arithmetic": {
+    "mult": 4,
+    "context": 8192,
+    "windows_per_step": 27,
+    "microbatch": 2,
+    "tokens_per_microbatch": 16384,
+    "microbatch_groups_per_step": 14,
+    "landing_step": 178,
+    "exposure_landing": 20088160,
+    "windows_consumed": 4806,
+    "effective_window_bytes": {
+      "mean": 4179.8,
+      "p50": 3042.0,
+      "p90": 8192.0,
+      "min": 1,
+      "max": 8192,
+      "full_length_fraction": 0.3225,
+      "mean_over_1x_mean": 2.405
+    },
+    "calibration_full_windows": 1333,
+    "note": "the boundary-respecting windowing's own distribution over the windows the arm actually consumes (mean/p50/p90 bytes, the full-length fraction); the lever is only as strong as what was actually achieved -- the corpus's median document is ~1,850 bytes, shorter than one banked window"
+  },
+  "exposure_bytes": 346216,
+  "exposure_steps": 2,
+  "total_bytes": 612061,
+  "total_steps": 5,
+  "cooldown_steps": 3,
+  "train_seconds_constant": 30.9,
+  "train_seconds_total": 77.6,
+  "bytes_per_s": 11210.55892857261,
+  "optimizer_step_seconds": {
+    "mean_steady": 0.21193744521588087,
+    "note": "steps 10+; the honest clock's own measure, per step"
+  },
+  "parameters": 152517585,
+  "final_eval_nll_constant_lr": 5.8348100525992255,
+  "final_eval_nll_post_cooldown": 5.517422948564802,
+  "ema_eval_nll": 5.943929536002023,
+  "cross_eval_grid": {
+    "1": {
+      "eval_nll": 5.421269825526646,
+      "eval_windows": 7,
+      "eval_targets": 14336
+    },
+    "2": {
+      "eval_nll": 5.55610009602138,
+      "eval_windows": 7,
+      "eval_targets": 28672
+    },
+    "4": {
+      "eval_nll": 5.517422948564802,
+      "eval_windows": 7,
+      "eval_targets": 57344
+    }
+  },
+  "cooldown_drop": 0.31738710403442383,
+  "step1_train_loss": 5.950889347246541,
+  "anchor_receipt": null,
+  "birth_receipts": {
+    "probe": "k24_hybrid_birth_receipts",
+    "seed": 3401,
+    "window_mult": 4,
+    "context": 8192,
+    "microbatch": 2,
+    "born_as_gdn2": {
+      "hybrid_loss": 5.9552903175354,
+      "pure_twin_loss": 5.9552903175354,
+      "bit_identical": true,
+      "note": "the hybrid vs a pure-GDN2 twin of the same build on the arm's own first long-window microbatch: the read gates are born at exact 0.0, so the machine IS the committed GDN2 arm at birth, at the LONG window"
+    },
+    "read_gates": {
+      "6": {
+        "value": 0.0,
+        "born_at_exact_zero": true,
+        "grad": 0.00119781494140625
+      },
+      "12": {
+        "value": 0.0,
+        "born_at_exact_zero": true,
+        "grad": -0.000263214111328125
+      },
+      "18": {
+        "value": 0.0,
+        "born_at_exact_zero": true,
+        "grad": -0.018310546875
+      }
+    },
+    "open_signal": {
+      "note": "dLoss/dgate x slot content at birth: the gate's own gradient (the open signal) is nonzero at birth while every other slot parameter receives an exactly-zero gradient (inert at birth)",
+      "all_gates_born_at_exact_zero": true,
+      "any_gate_gradient_nonzero": true
+    },
+    "inert_at_birth": {
+      "per_layer": {
+        "6": {
+          "tensors_with_grad": 16,
+          "all_exactly_zero": true,
+          "max_abs_grad": 0.0
+        },
+        "12": {
+          "tensors_with_grad": 16,
+          "all_exactly_zero": true,
+          "max_abs_grad": 0.0
+        },
+        "18": {
+          "tensors_with_grad": 16,
+          "all_exactly_zero": true,
+          "max_abs_grad": 0.0
+        }
+      },
+      "all_inert": true
+    },
+    "store_runs_at_birth": {
+      "note": "the slot stores fill at birth (the machinery runs; nothing reads out until a gate opens)",
+      "ops_fill": true,
+      "per_layer_op_rate": {
+        "6": {
+          "none": 0.0,
+          "append": 0.007354736328125,
+          "correct": 0.992645263671875,
+          "pop": 0.0,
+          "merge": 0.0
+        },
+        "12": {
+          "none": 0.0,
+          "append": 0.007354736328125,
+          "correct": 0.992645263671875,
+          "pop": 0.0,
+          "merge": 0.0
+        },
+        "18": {
+          "none": 0.0,
+          "append": 0.00726318359375,
+          "correct": 0.99273681640625,
+          "pop": 0.0,
+          "merge": 0.0
+        }
+      },
+      "occupancy": {
+        "6": 58.20404052734375,
+        "12": 58.2088623046875,
+        "18": 57.53466796875
+      }
+    }
+  },
+  "gate_trajectory": {
+    "init": {
+      "6": 0.0,
+      "12": 0.0,
+      "18": 0.0
+    },
+    "constant": {
+      "6": -0.00011757725587813184,
+      "12": 0.0001170370596810244,
+      "18": 0.00010024609218817204
+    },
+    "final": {
+      "6": -0.00034579093335196376,
+      "12": 0.00039452576311305165,
+      "18": 0.0003485249762888998
+    }
+  },
+  "scores": [
+    {
+      "kind": "constant",
+      "step": 1,
+      "bytes": 162768,
+      "train_loss": 5.950889347246541,
+      "eval_nll": 5.908699921199253,
+      "eval_windows": 7,
+      "eval_targets": 57344
+    },
+    {
+      "kind": "constant",
+      "step": 2,
+      "bytes": 346216,
+      "train_loss": 5.910731054335932,
+      "eval_nll": 5.8348100525992255,
+      "eval_windows": 7,
+      "eval_targets": 57344
+    },
+    {
+      "kind": "ema_constant",
+      "step": 2,
+      "bytes": 346216,
+      "eval_nll": 5.943929536002023,
+      "eval_windows": 7,
+      "eval_targets": 57344,
+      "ema_decay": 0.99,
+      "note": "ranking-only: biased toward mid-run weights"
+    },
+    {
+      "kind": "post_cooldown",
+      "step": 5,
+      "bytes": 612061,
+      "eval_nll": 5.517422948564802,
+      "eval_windows": 7,
+      "eval_targets": 57344
+    }
+  ],
+  "anchors": {
+    "ours_1x": null,
+    "gdn2_1x": null,
+    "hybrid_1x": {
+      "post_cooldown": 1.3547673906598772,
+      "constant_lr": 1.4082818201610021,
+      "ema180": 1.3816877944128854,
+      "parameters": 152517585,
+      "gates_final": {
+        "6": -0.1303802728652954,
+        "12": 0.13295027613639832,
+        "18": 0.13336104154586792
+      },
+      "slot_read_mask_sweep": {
+        "delta_per_slot_layer": {
+          "6": -0.00030171871185302734,
+          "12": -0.0005513599940707437,
+          "18": 0.001003350530351943
+        },
+        "all_slots_delta": -8.656297411224756e-05,
+        "slot_layers_ge_bar": 0
+      },
+      "mechanism": {
+        "effective_rows": 25.25851058959961,
+        "occupancy": 35.091695149739586,
+        "identity_share": 0.05551040820153779,
+        "op_mix": {
+          "none": 0.0,
+          "append": 0.022440592447916668,
+          "correct": 0.97637939453125,
+          "pop": 0.0,
+          "merge": 0.0011800130208333333
+        }
+      },
+      "run_dir": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k22_runs/hybrid_seed3401"
+    },
+    "composed_ours_banked": {
+      "post_cooldown": {
+        "3401": 1.3811104467936925,
+        "3402": 1.383232252938407
+      },
+      "constant_lr": {
+        "3401": 1.433674931526184,
+        "3402": 1.4341776371002197
+      },
+      "ema_180": {
+        "3401": 1.424389226096017,
+        "3402": 1.4385861498968942
+      },
+      "step1_train_loss": {
+        "3401": 5.782775391046648,
+        "3402": 5.720172563202926
+      },
+      "note": "the K15 composition arm's own landed rows (the inherited 4x point, tuned for the SOFTMAX-read machine): receipts/k15_composition_summary.json"
+    },
+    "note": "the 1x cells MUST reproduce the banked rows bit for bit FIRST; any mismatch STOPS the lane and escalates"
+  },
+  "diagnostics_step180": {
+    "op_rate_per_token_lane0": {
+      "none": 0.0,
+      "append": 0.011728922526041666,
+      "correct": 0.9881490071614584,
+      "pop": 0.0,
+      "merge": 0.0001220703125
+    },
+    "op_histogram_all_lanes": {
+      "none": 98292,
+      "append": 1153,
+      "correct": 97139,
+      "pop": 0,
+      "merge": 24
+    },
+    "occupancy": {
+      "note": "live slots at every token, from the walk's recorded pre-decision liveness channel",
+      "mean_live_slots": 77.70419311523438,
+      "rank": 128
+    },
+    "read_weight_entropy": {
+      "units": "nats over the |w|-mass distribution on live rows (R13-4: the additive weights are signed)",
+      "mean": 4.035262359220486
+    },
+    "top_row_w_mass_share": {
+      "units": "the max |w|-mass share per token (the collapse detector)",
+      "mean": 0.047341966883232806
+    },
+    "per_layer": {
+      "6": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.01165771484375,
+          "correct": 0.988189697265625,
+          "pop": 0.0,
+          "merge": 0.000152587890625
+        },
+        "occupancy_mean_live_slots": 77.17990112304688,
+        "read_weight_entropy_nats": 4.02852955034489,
+        "top_row_share": 0.047659451905340086,
+        "identity_rewrite_share": 0.6118711590130015
+      },
+      "12": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.01177978515625,
+          "correct": 0.988189697265625,
+          "pop": 0.0,
+          "merge": 3.0517578125e-05
+        },
+        "occupancy_mean_live_slots": 78.31765747070312,
+        "read_weight_entropy_nats": 4.042095077676718,
+        "top_row_share": 0.047643509442051486,
+        "identity_rewrite_share": 0.6122417467033137
+      },
+      "18": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.011749267578125,
+          "correct": 0.988067626953125,
+          "pop": 0.0,
+          "merge": 0.00018310546875
+        },
+        "occupancy_mean_live_slots": 77.61502075195312,
+        "read_weight_entropy_nats": 4.035162449639849,
+        "top_row_share": 0.04672293930230684,
+        "identity_rewrite_share": 0.6115143466040708
+      }
+    },
+    "identity_rewrite_share": 0.611875765655401,
+    "identity_n_correct": 97139,
+    "effective_read_rows": 56.557769775390625,
+    "probe": {
+      "split": "calibration",
+      "windows": 2,
+      "mixers": 3,
+      "slot_layers": [
+        6,
+        12,
+        18
+      ],
+      "window_mult": 4,
+      "context": 8192,
+      "regime": "eval, bf16 autocast, the k15 composed persistent walk on the hybrid's slot layers' own inputs (collect=True)",
+      "probe_wall_seconds": 1.2
+    },
+    "gate_telemetry": {
+      "note": "per-slot-layer means over the probe windows",
+      "per_layer": {
+        "6": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 2.7548998332349584e-05,
+            "max": 2.8133392333984375e-05
+          },
+          "write_gate": {
+            "mean_distance_from_1": 1.2367963790893555e-05,
+            "max": 1.519918441772461e-05
+          },
+          "read_gate": {
+            "mean_distance_from_1": 1.806020736694336e-05,
+            "max": 2.0265579223632812e-05
+          }
+        },
+        "12": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 2.7915109967580065e-05,
+            "max": 2.86102294921875e-05
+          },
+          "write_gate": {
+            "mean_distance_from_1": 1.9878149032592773e-05,
+            "max": 2.5510787963867188e-05
+          },
+          "read_gate": {
+            "mean_distance_from_1": 2.154707908630371e-05,
+            "max": 2.5987625122070312e-05
+          }
+        },
+        "18": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 2.570134893176146e-05,
+            "max": 2.849102020263672e-05
+          },
+          "write_gate": {
+            "mean_distance_from_1": 1.4901161193847656e-05,
+            "max": 2.300739288330078e-05
+          },
+          "read_gate": {
+            "mean_distance_from_1": 1.6570091247558594e-05,
+            "max": 2.288818359375e-05
+          }
+        }
+      }
+    },
+    "conv_telemetry": {
+      "note": "the slot mixers' learned conv kernels (per tap, the distance from the identity birth)",
+      "per_layer": {
+        "6": {
+          "tap_means": [
+            6.021411422807432e-07,
+            -2.8384044981066836e-06,
+            1.2561845323943999e-06,
+            0.9999764561653137
+          ],
+          "tap_stds": [
+            2.492450221325271e-05,
+            2.6194196834694594e-05,
+            2.6724434064817615e-05,
+            2.6159246772294864e-05
+          ],
+          "kernel_l2": 15.999622344970703,
+          "distance_from_identity_birth": 2.462076736264862e-05,
+          "distance_from_identity_birth_max": 7.176399230957031e-05
+        },
+        "12": {
+          "tap_means": [
+            -5.77769014853402e-07,
+            -8.708540235602413e-07,
+            -5.75557237425528e-07,
+            0.9999771118164062
+          ],
+          "tap_stds": [
+            2.360686266911216e-05,
+            2.5772693334147334e-05,
+            2.5135908799711615e-05,
+            2.404866427241359e-05
+          ],
+          "kernel_l2": 15.999632835388184,
+          "distance_from_identity_birth": 2.31634021474747e-05,
+          "distance_from_identity_birth_max": 6.794929504394531e-05
+        },
+        "18": {
+          "tap_means": [
+            1.4766519598197192e-06,
+            -5.615140707959654e-07,
+            -2.719016833907517e-08,
+            0.999977171421051
+          ],
+          "tap_stds": [
+            2.2914173314347863e-05,
+            2.319238228665199e-05,
+            2.409923035884276e-05,
+            2.1325411580619402e-05
+          ],
+          "kernel_l2": 15.999634742736816,
+          "distance_from_identity_birth": 2.1434068912640214e-05,
+          "distance_from_identity_birth_max": 6.473064422607422e-05
+        }
+      }
+    },
+    "k22_read_gates": {
+      "6": -0.00011757725587813184,
+      "12": 0.0001170370596810244,
+      "18": 0.00010024609218817204
+    }
+  },
+  "diagnostics_post_cooldown": {
+    "op_rate_per_token_lane0": {
+      "none": 0.0,
+      "append": 0.011912027994791666,
+      "correct": 0.9879353841145834,
+      "pop": 0.0,
+      "merge": 0.000152587890625
+    },
+    "op_histogram_all_lanes": {
+      "none": 98289,
+      "append": 1171,
+      "correct": 97118,
+      "pop": 0,
+      "merge": 30
+    },
+    "occupancy": {
+      "note": "live slots at every token, from the walk's recorded pre-decision liveness channel",
+      "mean_live_slots": 79.40318806966145,
+      "rank": 128
+    },
+    "read_weight_entropy": {
+      "units": "nats over the |w|-mass distribution on live rows (R13-4: the additive weights are signed)",
+      "mean": 4.056393712420644
+    },
+    "top_row_w_mass_share": {
+      "units": "the max |w|-mass share per token (the collapse detector)",
+      "mean": 0.04646533880217076
+    },
+    "per_layer": {
+      "6": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.01165771484375,
+          "correct": 0.98822021484375,
+          "pop": 0.0,
+          "merge": 0.0001220703125
+        },
+        "occupancy_mean_live_slots": 77.29769897460938,
+        "read_weight_entropy_nats": 4.028576047643756,
+        "top_row_share": 0.04780976522858072,
+        "identity_rewrite_share": 0.6141683651411278
+      },
+      "12": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.011871337890625,
+          "correct": 0.988067626953125,
+          "pop": 0.0,
+          "merge": 6.103515625e-05
+        },
+        "occupancy_mean_live_slots": 79.68148803710938,
+        "read_weight_entropy_nats": 4.062315322266818,
+        "top_row_share": 0.046340953560047804,
+        "identity_rewrite_share": 0.6145411866448405
+      },
+      "18": {
+        "op_rate_per_token": {
+          "none": 0.0,
+          "append": 0.01220703125,
+          "correct": 0.987518310546875,
+          "pop": 0.0,
+          "merge": 0.000274658203125
+        },
+        "occupancy_mean_live_slots": 81.23037719726562,
+        "read_weight_entropy_nats": 4.078289767351361,
+        "top_row_share": 0.04524529761788377,
+        "identity_rewrite_share": 0.6136468988534874
+      }
+    },
+    "identity_rewrite_share": 0.6141189068967647,
+    "identity_n_correct": 97118,
+    "effective_read_rows": 57.76560974121094,
+    "probe": {
+      "split": "calibration",
+      "windows": 2,
+      "mixers": 3,
+      "slot_layers": [
+        6,
+        12,
+        18
+      ],
+      "window_mult": 4,
+      "context": 8192,
+      "regime": "eval, bf16 autocast, the k15 composed persistent walk on the hybrid's slot layers' own inputs (collect=True)",
+      "probe_wall_seconds": 1.2
+    },
+    "gate_telemetry": {
+      "note": "per-slot-layer means over the probe windows",
+      "per_layer": {
+        "6": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 3.6276105674915016e-05,
+            "max": 5.3763389587402344e-05
+          },
+          "write_gate": {
+            "mean_distance_from_1": 3.403425216674805e-05,
+            "max": 4.6253204345703125e-05
+          },
+          "read_gate": {
+            "mean_distance_from_1": 7.319450378417969e-05,
+            "max": 0.00010979175567626953
+          }
+        },
+        "12": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 8.046637231018394e-05,
+            "max": 0.00014203786849975586
+          },
+          "write_gate": {
+            "mean_distance_from_1": 8.216500282287598e-05,
+            "max": 0.0001347064971923828
+          },
+          "read_gate": {
+            "mean_distance_from_1": 0.0001004934310913086,
+            "max": 0.0001360177993774414
+          }
+        },
+        "18": {
+          "decay_gate": {
+            "mean_distance_from_registered_scalar": 7.846012886147946e-05,
+            "max": 0.0001379847526550293
+          },
+          "write_gate": {
+            "mean_distance_from_1": 6.628036499023438e-05,
+            "max": 0.00012731552124023438
+          },
+          "read_gate": {
+            "mean_distance_from_1": 7.617473602294922e-05,
+            "max": 0.00012636184692382812
+          }
+        }
+      }
+    },
+    "conv_telemetry": {
+      "note": "the slot mixers' learned conv kernels (per tap, the distance from the identity birth)",
+      "per_layer": {
+        "6": {
+          "tap_means": [
+            2.5801189167395933e-06,
+            -1.016237547446508e-05,
+            4.028756393381627e-06,
+            0.9999265670776367
+          ],
+          "tap_stds": [
+            0.00016283767763525248,
+            0.0001686896721366793,
+            0.00017256240244023502,
+            0.00016804975166451186
+          ],
+          "kernel_l2": 15.998826026916504,
+          "distance_from_identity_birth": 0.0001537479693070054,
+          "distance_from_identity_birth_max": 0.00034290552139282227
+        },
+        "12": {
+          "tap_means": [
+            4.0425220504403114e-07,
+            -8.429924491792917e-06,
+            -4.746618742501596e-06,
+            0.9999226331710815
+          ],
+          "tap_stds": [
+            0.00015809987962711602,
+            0.0001662943250266835,
+            0.0001653815561439842,
+            0.0001569990417920053
+          ],
+          "kernel_l2": 15.998762130737305,
+          "distance_from_identity_birth": 0.00014755132724530995,
+          "distance_from_identity_birth_max": 0.00032585859298706055
+        },
+        "18": {
+          "tap_means": [
+            9.558851161273196e-06,
+            -4.713843736681156e-06,
+            6.544224106619367e-06,
+            0.9999269247055054
+          ],
+          "tap_stds": [
+            0.0001517486962256953,
+            0.0001512225717306137,
+            0.00015792438352946192,
+            0.00014346474199555814
+          ],
+          "kernel_l2": 15.998830795288086,
+          "distance_from_identity_birth": 0.0001361377362627536,
+          "distance_from_identity_birth_max": 0.00032210350036621094
+        }
+      }
+    },
+    "k22_read_gates": {
+      "6": -0.00034579093335196376,
+      "12": 0.00039452576311305165,
+      "18": 0.0003485249762888998
+    }
+  },
+  "read_mask_sweep_step180": null,
+  "read_mask_sweep_post_cooldown": null,
+  "slot_read_mask_sweep_step180": {
+    "note": "the hybrid's decorative sweep at the arm's own window length: one slot layer's read gate zeroed for the eval pass, one at a time, plus the all-slots cell.  The horizon question's direct test: the banked 1x hybrid found 0 of 3 slot layers >= the 0.02 bar -- do they clear it when the regime demands state?",
+    "window_mult": 4,
+    "context": 8192,
+    "base_nll": 5.8348100525992255,
+    "masked_nll_per_slot_layer": {
+      "6": 5.834837981632778,
+      "12": 5.8347858020237515,
+      "18": 5.83480555670602
+    },
+    "all_slots_masked_nll": 5.834847109658377,
+    "delta_per_slot_layer": {
+      "6": 2.7929033552531735e-05,
+      "12": -2.425057547394971e-05,
+      "18": -4.495893205280765e-06
+    },
+    "all_slots_delta": 3.70570591519126e-05,
+    "gates_at_sweep": {
+      "6": -0.00011757725587813184,
+      "12": 0.0001170370596810244,
+      "18": 0.00010024609218817204
+    },
+    "load_bearing_bar": 0.02,
+    "slot_layers_ge_bar": 0
+  },
+  "slot_read_mask_sweep_post_cooldown": {
+    "note": "the hybrid's decorative sweep at the arm's own window length: one slot layer's read gate zeroed for the eval pass, one at a time, plus the all-slots cell.  The horizon question's direct test: the banked 1x hybrid found 0 of 3 slot layers >= the 0.02 bar -- do they clear it when the regime demands state?",
+    "window_mult": 4,
+    "context": 8192,
+    "base_nll": 5.517422948564802,
+    "masked_nll_per_slot_layer": {
+      "6": 5.517431599753244,
+      "12": 5.517419406345913,
+      "18": 5.51742764881679
+    },
+    "all_slots_masked_nll": 5.517461844852993,
+    "delta_per_slot_layer": {
+      "6": 8.651188442065916e-06,
+      "12": -3.5422188888745154e-06,
+      "18": 4.700251988509763e-06
+    },
+    "all_slots_delta": 3.889628819120361e-05,
+    "gates_at_sweep": {
+      "6": -0.00034579093335196376,
+      "12": 0.00039452576311305165,
+      "18": 0.0003485249762888998
+    },
+    "load_bearing_bar": 0.02,
+    "slot_layers_ge_bar": 0
+  },
+  "gdn2_telemetry_step180": null,
+  "gdn2_telemetry_post_cooldown": null,
+  "routing_receipt": {
+    "muon_tensors": 203,
+    "adamw_tensors": 445,
+    "dense_muon": 191,
+    "dense_adamw": 406,
+    "slot_muon": 12,
+    "slot_adamw": 39,
+    "note": "the banked GDN2 row's own option-B split (the 1.3522 machine's), verified equal on the normalized dense names against a pure-GDN2 twin's own split; the slot branch per the K18 convention mirrored: matrices on Muon, the gate channels + the conv kernel + the K22 read gate on AdamW"
+  },
+  "peak_allocated_gb": 4.85,
+  "config_sha256": "1dc9e7870b76987f4bdd4d15b078288a2f7fc8f216ce2ea9ddbfad6d9af1a1c9",
+  "config": {
+    "probe": "k24_long_window",
+    "arm": "hybrid_4x",
+    "machine": "hybrid",
+    "window_mult": 4,
+    "context": 8192,
+    "windows_per_step": 27,
+    "microbatch": 2,
+    "tokens_per_microbatch": 16384,
+    "microbatch_groups_per_step": 14,
+    "seed": 3401,
+    "arm_note": "the K22 hybrid engine at the 4x windows: born as GDN2 at the 4x batch (receipted vs a pure twin), the gates learn to open -- do they open FURTHER when state is demanded?",
+    "role": "long",
+    "corrected_scoring": {
+      "primary": "post-cooldown eval: a linear cooldown of 24 steps (13.3% of the 180-step constant-LR budget) appended after the banked matched-exposure landing, same stream/data order, LR factor (25 - k)/24 for cooldown step k (1.0 -> 1/24, never zero), both hybrid groups scaling equally; the corrected score is the post-cooldown calibration eval",
+      "secondary": "EMA iterate at step 180 (no extra data): decay 0.99, initialized at the init weights, updated after every constant-phase optimizer step, NOT updated during the cooldown; RANKING-ONLY -- its absolute number is biased toward mid-run weights (stated, not smoothed)",
+      "cooldown_steps": 24,
+      "cooldown_fraction": 0.1333,
+      "cooldown_form": "linear",
+      "ema_decay": 0.99,
+      "exposure_note": "the cooldown steps see ~2.7M more targets (~13%), identical across arms -- a stated protocol EXTENSION; the step-180 constant-LR eval is retained so every banked row stays comparable",
+      "citations": {
+        "river_valley": "Wen et al., ICLR 2025, arXiv:2410.05192 -- constant-LR loss carries an LR-dependent oscillation penalty that decay/averaging removes",
+        "cooldown": "Haegele et al., NeurIPS 2024, arXiv:2405.18392 -- constant-LR + short cooldown matches cosine at full scale",
+        "averaging": "Defazio et al., arXiv:2405.15682 -- iterate averaging as the schedule-free fix for the same penalty",
+        "moonlight": "Liu et al. (Moonshot AI), arXiv:2502.16982 -- with the update RMS matched to AdamW's (~0.2; AdamW typical 0.2-0.4), Muon directly reuses the LR and weight decay tuned for AdamW, i.e. ~1x the AdamW-tuned LR, WITH weight decay",
+        "horizon": "Bjorck et al., ICLR 2025 -- the optimal LR shrinks with token horizon; probe-tuned LRs transfer only downscaled"
+      }
+    },
+    "rules": {
+      "L1": {
+        "text": "L-1 (the horizon hypothesis): the slot layers' load-bearing count RISES with window length -- the decorative sweep lights up (more layers clear the 0.02 dNLL bar at 4x than at 1x; the banked 1x regime's own count is 4 of 24 on ours, 0 of 3 slot layers on the hybrid), and/or the occupancy/effective rows rise on the slot machines.",
+        "bar": 0.02
+      },
+      "L2": {
+        "text": "L-2: the quality gap (ours - gdn2) SHRINKS with window length (the dense state saturates as sequences grow; the addressable store does not).  Read on the own-window post-cooldown rows at each mult, with the fixed-1x-eval cross-grid as the decomposition."
+      },
+      "REFUTATION": {
+        "text": "REFUTATION, receipted plainly: if the mask stays dark (the load-bearing count does not rise at 4x) and the gap stays flat at 4x (inside the 0.0119 seed band of the 1x gap), the horizon hypothesis is dead at probe scale -- the board run's horizon rationale goes with it, and the remaining board value is scale/exposure alone."
+      },
+      "band_discipline": {
+        "text": "no band-worship: every delta is stated against the 0.0119 winner-seed band (and the 0.075 endpoint-variance band cross-machine); a delta inside the seed band is PARITY, phrased as parity."
+      },
+      "anchor": {
+        "text": "the anchor convention: the 1x cells MUST reproduce the banked rows bit for bit FIRST (ours 1.3811104467936925, GDN2 1.3521734476089478; the full training-log trajectory, the constant-180, the EMA-180 and the landing, every digit).  ANY mismatch STOPS the lane and escalates -- before any long window run."
+      },
+      "boundaries": {
+        "text": "the standing discipline: NEVER pack across document boundaries; windows TRUNCATE at the boundary; the document-disjoint splits stay intact; every document slice SHA-256-verified at consumption.  The longer windows are the corpus pipeline's own boundary-respecting windowing (the lattice.Stream constructor's own context parameter), hash-bound to the flagship manifest.  An engine that cannot honor the boundaries at longer windows is a STOP, never a forced fit."
+      }
+    },
+    "bands": {
+      "endpoint_variance": 0.075,
+      "winner_seed_delta": 0.011948040553501738
+    },
+    "exposure_targets": 300000,
+    "step_shape": {
+      "note": "the probe's step shape, adjusted per the registration so steps x tokens consume the same 20M targets: the ~111K-targets/step shape and the ~180-step landing are HELD (windows/step scaled down as the context grows), and the microbatch's TOKEN count is held at the banked 16,384 (the memory-matched rule); matched EXPOSURE is the invariant",
+      "window_arithmetic": {
+        "mult": 4,
+        "context": 8192,
+        "windows_per_step": 27,
+        "microbatch": 2,
+        "tokens_per_microbatch": 16384,
+        "microbatch_groups_per_step": 14,
+        "landing_step": 178,
+        "exposure_landing": 20088160,
+        "windows_consumed": 4806,
+        "effective_window_bytes": {
+          "mean": 4179.8,
+          "p50": 3042.0,
+          "p90": 8192.0,
+          "min": 1,
+          "max": 8192,
+          "full_length_fraction": 0.3225,
+          "mean_over_1x_mean": 2.405
+        },
+        "calibration_full_windows": 1333,
+        "note": "the boundary-respecting windowing's own distribution over the windows the arm actually consumes (mean/p50/p90 bytes, the full-length fraction); the lever is only as strong as what was actually achieved -- the corpus's median document is ~1,850 bytes, shorter than one banked window"
+      }
+    },
+    "window_discipline": "the standing discipline: NEVER pack across document boundaries; windows TRUNCATE at the boundary; the document-disjoint splits stay intact; every document slice SHA-256-verified at consumption.  The longer windows are the corpus pipeline's own boundary-respecting windowing (the lattice.Stream constructor's own context parameter), hash-bound to the flagship manifest.  An engine that cannot honor the boundaries at longer windows is a STOP, never a forced fit.",
+    "eval_rule": "the arm's own-window eval: the first 7 FULL windows of the arm's context in calibration order (at 1x this IS the banked L.evaluate set, verbatim); plus the cross-eval grid at all three window lengths on the post-cooldown final state",
+    "machine_build": "matched_arms.build_gdn2 verbatim + k22_hybrid.convert_gdn2_to_hybrid (the K22 engine VERBATIM: the composed slot mixers at {6, 12, 18} through the zero-born read gates)",
+    "optimizer": {
+      "optimizer": "bakeoff_optimizers.HybridMuonX45 (imported verbatim)",
+      "peak_lr": 0.0027100927623701265,
+      "lr_multiplier": 5,
+      "lr_convention": "the banked GDN2 row's own 5x HybridMuonX45 recipe VERBATIM (option B + the slot branch per the K18 convention mirrored; the K22 hybrid engine's own)",
+      "betas": [
+        0.9,
+        0.9392004369596886
+      ],
+      "weight_decay": 0.20059436743465126,
+      "warmup_steps": 69,
+      "microbatch": 8,
+      "grad_clip": 1.0,
+      "muon_params": "203 tensors",
+      "adamw_params": "445 tensors"
+    },
+    "routing": "the machine's own banked routing split, imported verbatim (ours: k11b_probe_channel_gates.split_parameters_gated 'p3'; gdn2: muon_control.split_parameters_gdn2 option B; hybrid: k22_hybrid.split_parameters_k22)",
+    "routing_receipt": {
+      "muon_tensors": 203,
+      "adamw_tensors": 445,
+      "dense_muon": 191,
+      "dense_adamw": 406,
+      "slot_muon": 12,
+      "slot_adamw": 39,
+      "note": "the banked GDN2 row's own option-B split (the 1.3522 machine's), verified equal on the normalized dense names against a pure-GDN2 twin's own split; the slot branch per the K18 convention mirrored: matrices on Muon, the gate channels + the conv kernel + the K22 read gate on AdamW"
+    },
+    "slot_layers": [
+      6,
+      12,
+      18
+    ],
+    "parameters": 152517585,
+    "checkpoint_steps": [
+      1,
+      2,
+      3,
+      178
+    ],
+    "stopping_rule": "matched-EXPOSURE: train until 300000 targets seen (the banked probe stopping rule, constant LR), THEN the 24-step linear cooldown (the corrected-scoring extension, same stream); the honest elapsed wall is reported first-class",
+    "anchors": {
+      "ours_1x": null,
+      "gdn2_1x": null,
+      "hybrid_1x": {
+        "post_cooldown": 1.3547673906598772,
+        "constant_lr": 1.4082818201610021,
+        "ema180": 1.3816877944128854,
+        "parameters": 152517585,
+        "gates_final": {
+          "6": -0.1303802728652954,
+          "12": 0.13295027613639832,
+          "18": 0.13336104154586792
+        },
+        "slot_read_mask_sweep": {
+          "delta_per_slot_layer": {
+            "6": -0.00030171871185302734,
+            "12": -0.0005513599940707437,
+            "18": 0.001003350530351943
+          },
+          "all_slots_delta": -8.656297411224756e-05,
+          "slot_layers_ge_bar": 0
+        },
+        "mechanism": {
+          "effective_rows": 25.25851058959961,
+          "occupancy": 35.091695149739586,
+          "identity_share": 0.05551040820153779,
+          "op_mix": {
+            "none": 0.0,
+            "append": 0.022440592447916668,
+            "correct": 0.97637939453125,
+            "pop": 0.0,
+            "merge": 0.0011800130208333333
+          }
+        },
+        "run_dir": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k22_runs/hybrid_seed3401"
+      },
+      "composed_ours_banked": {
+        "post_cooldown": {
+          "3401": 1.3811104467936925,
+          "3402": 1.383232252938407
+        },
+        "constant_lr": {
+          "3401": 1.433674931526184,
+          "3402": 1.4341776371002197
+        },
+        "ema_180": {
+          "3401": 1.424389226096017,
+          "3402": 1.4385861498968942
+        },
+        "step1_train_loss": {
+          "3401": 5.782775391046648,
+          "3402": 5.720172563202926
+        },
+        "note": "the K15 composition arm's own landed rows (the inherited 4x point, tuned for the SOFTMAX-read machine): receipts/k15_composition_summary.json"
+      },
+      "note": "the 1x cells MUST reproduce the banked rows bit for bit FIRST; any mismatch STOPS the lane and escalates"
+    },
+    "bindings": {
+      "registration": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/PREREGISTRATION_K24_LONG_WINDOW.md",
+      "registration_sha256": "03b225234e4e97df1fc8e827f5ee3c70fa0fb71821ed9c88cc972cab4b2a3c44",
+      "k24_long_window_sha256": "cc9143cb6cb6a385d688ce17276ef8f5e738ae74f265ebc35c47c207c6998e04",
+      "k24_gate_receipt_sha256": "80ea73a25ba4cc27d36e3572003a62d9eacc3ef5dec085ca78973e74472fcfa4",
+      "k15_composition_sha256": "b7ade13ec44cfd927493fe96a0e9d3fbe0bb547cce0a84797fe43557556b903a",
+      "k15_probe_sha256": "e769a26157ca3da36569258289476f0c1e74e9b2e33e3d187e8b185076349d2c",
+      "k22_hybrid_sha256": "d5ac0b082260402382b181a7c4d84ceeb06e90d7053b8d30a37af4d9d64d69c5",
+      "k22_probe_sha256": "6385a813623b560de2043dfc68a09897399c51cab7ab7654ff03ccbdb9400b51",
+      "matched_arms_sha256": "9d37c32469f3701ac3e0bfbd1d4b5c253e7cbdd425e95a281df62d83f6f30830",
+      "muon_control_sha256": "df348e4f8d3b333c1826490ba0813617ce6497fdccc5af55e7711a64ec07d10e",
+      "protocol_correction_sha256": "2610942b448416d7365474130f1dc3e17056295b0defbe775b8128518a53b8b9",
+      "external_gdn2_sha256": "316ddf8658a55da4a4159f77881c92e9a067570da55d0aa2592b7b11c51aa3d8",
+      "lattice_registration_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c",
+      "flagship_manifest_sha256": "48b9095eeccb023ff1cb2a4f6da899a8b3e4eb3b76b2804e730f1d6ad031c414",
+      "banked_ours_row": {
+        "run_dir": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k15_runs/composition_seed3401",
+        "start_sha256": "57fcecc5ab368a387b17c80a873f639e738a9b3352fb18388638d9542715f876",
+        "result_sha256": "fd23ea64d25dd6166e95016e513020724060e6937fda6faf63a1197817bfd622",
+        "training_log_sha256": "3ce08b54551d754f833f3a9680ec47e17178bf88eb228ff7108e5443c3d89476"
+      },
+      "banked_gdn2_row": {
+        "run_dir": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/protocol_correction_runs/gdn2_speedrun_rescored",
+        "start_sha256": "e25a2a0a33ba1f1d9ce1996267b3226428f4c420217184021c8c710a2cffe5e9",
+        "result_sha256": "9253b9819f02433377aa94760047864481457c16d6a9ea4fcc6cbcb2b0262f75",
+        "training_log_sha256": "329b1358358f1f32ea3b8838a28ddd3534627c2a13da3d08eab2f828ba4f18f8"
+      },
+      "banked_hybrid_1x_row": {
+        "run_dir": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k22_runs/hybrid_seed3401",
+        "result_sha256": "5839ab78489d3bc6755e4349456ca9d2a886523d1bf0f88ef6635355d186f815"
+      }
+    },
+    "summary": {
+      "base_arm": "gdn2",
+      "parameters": {
+        "total": 149855670
+      },
+      "nomination": {
+        "arm": "gdn2",
+        "receipt": "/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/receipts/byte_velocity_nominations/gdn2.json",
+        "receipt_sha256": "5e7ab164973366817699a9df21eb1714c9203c49e44a65566c048842f2034813",
+        "generation": 7,
+        "candidate": 1,
+        "search_score": 1.3930157472689946
+      },
+      "policy": {
+        "lr": 0.0005420185524740253,
+        "microbatch": 8,
+        "beta2": 0.9392004369596886,
+        "weight_decay": 0.20059436743465126,
+        "warmup_steps": 69,
+        "init_scale": 1.3483482393728117,
+        "decay_rate_scale": 0.48706005128019486,
+        "dt_bias_shift": 1.7178302439489688,
+        "expansion": 2.0
+      }
+    },
+    "identity": {
+      "stream": "flagship_beyond_100gb",
+      "source": "/mnt/nvme2n1/erikg/pile.txt",
+      "source_size": 1307910802540,
+      "manifest": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/documents.jsonl.gz",
+      "manifest_sha256": "48b9095eeccb023ff1cb2a4f6da899a8b3e4eb3b76b2804e730f1d6ad031c414",
+      "registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/registration.json",
+      "registration_sha256": "c36f84cfd1a59530a7991a4be6c1f68b424a79c5b7de169eabfc90d3cd31cc31",
+      "boundary_bytes": 100000000000,
+      "lattice_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_150M_LATTICE.md",
+      "lattice_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c"
+    },
+    "versions": {
+      "torch": "2.9.1+cu128",
+      "schedulefree": "1.4.1",
+      "hybrid_muon_sha256": "204c55252f3032b91a965d2511cddb5d9d2eef9f94e9bfd509ee86d2987384d6",
+      "bakeoff_optimizers_sha256": "dff190059d0ff94633c3b3e42ab89ef2ccde8517ebd512a4acff96143a949745"
+    },
+    "git": {
+      "commit": "dde19628f41d2c01017f7fd3665017957c815f6f",
+      "relevant_paths_dirty": "?? experiments/expressivity_tasks/x45_matrix_emender/k24_runs/chain_console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/k24_runs/chain_relx.console\n?? experiments/expressivity_tasks/x45_matrix_emender/k24_runs/chain_relx2.console\n?? experiments/expressivity_tasks/x45_matrix_emender/k24_runs/chain_relx3.console\n?? experiments/expressivity_tasks/x45_matrix_emender/k24_runs/chain_relx4.console\n?? experiments/expressivity_tasks/x45_matrix_emender/k24_runs/smoke_hybrid_4x.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/k24_runs/window_receipt_console.txt",
+      "branch": "main"
+    },
+    "birth_receipts": {
+      "probe": "k24_hybrid_birth_receipts",
+      "seed": 3401,
+      "window_mult": 4,
+      "context": 8192,
+      "microbatch": 2,
+      "born_as_gdn2": {
+        "hybrid_loss": 5.9552903175354,
+        "pure_twin_loss": 5.9552903175354,
+        "bit_identical": true,
+        "note": "the hybrid vs a pure-GDN2 twin of the same build on the arm's own first long-window microbatch: the read gates are born at exact 0.0, so the machine IS the committed GDN2 arm at birth, at the LONG window"
+      },
+      "read_gates": {
+        "6": {
+          "value": 0.0,
+          "born_at_exact_zero": true,
+          "grad": 0.00119781494140625
+        },
+        "12": {
+          "value": 0.0,
+          "born_at_exact_zero": true,
+          "grad": -0.000263214111328125
+        },
+        "18": {
+          "value": 0.0,
+          "born_at_exact_zero": true,
+          "grad": -0.018310546875
+        }
+      },
+      "open_signal": {
+        "note": "dLoss/dgate x slot content at birth: the gate's own gradient (the open signal) is nonzero at birth while every other slot parameter receives an exactly-zero gradient (inert at birth)",
+        "all_gates_born_at_exact_zero": true,
+        "any_gate_gradient_nonzero": true
+      },
+      "inert_at_birth": {
+        "per_layer": {
+          "6": {
+            "tensors_with_grad": 16,
+            "all_exactly_zero": true,
+            "max_abs_grad": 0.0
+          },
+          "12": {
+            "tensors_with_grad": 16,
+            "all_exactly_zero": true,
+            "max_abs_grad": 0.0
+          },
+          "18": {
+            "tensors_with_grad": 16,
+            "all_exactly_zero": true,
+            "max_abs_grad": 0.0
+          }
+        },
+        "all_inert": true
+      },
+      "store_runs_at_birth": {
+        "note": "the slot stores fill at birth (the machinery runs; nothing reads out until a gate opens)",
+        "ops_fill": true,
+        "per_layer_op_rate": {
+          "6": {
+            "none": 0.0,
+            "append": 0.007354736328125,
+            "correct": 0.992645263671875,
+            "pop": 0.0,
+            "merge": 0.0
+          },
+          "12": {
+            "none": 0.0,
+            "append": 0.007354736328125,
+            "correct": 0.992645263671875,
+            "pop": 0.0,
+            "merge": 0.0
+          },
+          "18": {
+            "none": 0.0,
+            "append": 0.00726318359375,
+            "correct": 0.99273681640625,
+            "pop": 0.0,
+            "merge": 0.0
+          }
+        },
+        "occupancy": {
+          "6": 58.20404052734375,
+          "12": 58.2088623046875,
+          "18": 57.53466796875
+        }
+      }
+    }
+  },
+  "session": {
+    "host": "lambda01",
+    "card": "2",
+    "device": "NVIDIA RTX 6000 Ada Generation",
+    "card_gib": 47.38,
+    "torch": "2.9.1+cu128",
+    "triton": "3.5.1"
+  },
+  "trajectory": [
+    {
+      "step": 1,
+      "active_seconds": 15.641338254325092,
+      "bytes": 162768,
+      "loss": 5.950889347246541
+    },
+    {
+      "step": 2,
+      "active_seconds": 30.88302752841264,
+      "bytes": 346216,
+      "loss": 5.910731054335932
+    },
+    {
+      "step": 3,
+      "active_seconds": 46.47274282947183,
+      "bytes": 411860,
+      "loss": 5.836771014919157
+    },
+    {
+      "step": 4,
+      "active_seconds": 62.00959741603583,
+      "bytes": 526036,
+      "loss": 5.6737716251758705
+    },
+    {
+      "step": 5,
+      "active_seconds": 77.58977415412664,
+      "bytes": 612061,
+      "loss": 5.575104818319172
+    }
+  ]
+}

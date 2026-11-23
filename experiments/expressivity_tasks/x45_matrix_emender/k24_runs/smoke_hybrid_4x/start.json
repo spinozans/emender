@@ -1,0 +1,274 @@
+{
+  "probe": "k24_long_window",
+  "arm": "hybrid_4x",
+  "machine": "hybrid",
+  "window_mult": 4,
+  "context": 8192,
+  "windows_per_step": 27,
+  "microbatch": 2,
+  "tokens_per_microbatch": 16384,
+  "microbatch_groups_per_step": 14,
+  "seed": 3401,
+  "arm_note": "the K22 hybrid engine at the 4x windows: born as GDN2 at the 4x batch (receipted vs a pure twin), the gates learn to open -- do they open FURTHER when state is demanded?",
+  "role": "long",
+  "corrected_scoring": {
+    "primary": "post-cooldown eval: a linear cooldown of 24 steps (13.3% of the 180-step constant-LR budget) appended after the banked matched-exposure landing, same stream/data order, LR factor (25 - k)/24 for cooldown step k (1.0 -> 1/24, never zero), both hybrid groups scaling equally; the corrected score is the post-cooldown calibration eval",
+    "secondary": "EMA iterate at step 180 (no extra data): decay 0.99, initialized at the init weights, updated after every constant-phase optimizer step, NOT updated during the cooldown; RANKING-ONLY -- its absolute number is biased toward mid-run weights (stated, not smoothed)",
+    "cooldown_steps": 24,
+    "cooldown_fraction": 0.1333,
+    "cooldown_form": "linear",
+    "ema_decay": 0.99,
+    "exposure_note": "the cooldown steps see ~2.7M more targets (~13%), identical across arms -- a stated protocol EXTENSION; the step-180 constant-LR eval is retained so every banked row stays comparable",
+    "citations": {
+      "river_valley": "Wen et al., ICLR 2025, arXiv:2410.05192 -- constant-LR loss carries an LR-dependent oscillation penalty that decay/averaging removes",
+      "cooldown": "Haegele et al., NeurIPS 2024, arXiv:2405.18392 -- constant-LR + short cooldown matches cosine at full scale",
+      "averaging": "Defazio et al., arXiv:2405.15682 -- iterate averaging as the schedule-free fix for the same penalty",
+      "moonlight": "Liu et al. (Moonshot AI), arXiv:2502.16982 -- with the update RMS matched to AdamW's (~0.2; AdamW typical 0.2-0.4), Muon directly reuses the LR and weight decay tuned for AdamW, i.e. ~1x the AdamW-tuned LR, WITH weight decay",
+      "horizon": "Bjorck et al., ICLR 2025 -- the optimal LR shrinks with token horizon; probe-tuned LRs transfer only downscaled"
+    }
+  },
+  "rules": {
+    "L1": {
+      "text": "L-1 (the horizon hypothesis): the slot layers' load-bearing count RISES with window length -- the decorative sweep lights up (more layers clear the 0.02 dNLL bar at 4x than at 1x; the banked 1x regime's own count is 4 of 24 on ours, 0 of 3 slot layers on the hybrid), and/or the occupancy/effective rows rise on the slot machines.",
+      "bar": 0.02
+    },
+    "L2": {
+      "text": "L-2: the quality gap (ours - gdn2) SHRINKS with window length (the dense state saturates as sequences grow; the addressable store does not).  Read on the own-window post-cooldown rows at each mult, with the fixed-1x-eval cross-grid as the decomposition."
+    },
+    "REFUTATION": {
+      "text": "REFUTATION, receipted plainly: if the mask stays dark (the load-bearing count does not rise at 4x) and the gap stays flat at 4x (inside the 0.0119 seed band of the 1x gap), the horizon hypothesis is dead at probe scale -- the board run's horizon rationale goes with it, and the remaining board value is scale/exposure alone."
+    },
+    "band_discipline": {
+      "text": "no band-worship: every delta is stated against the 0.0119 winner-seed band (and the 0.075 endpoint-variance band cross-machine); a delta inside the seed band is PARITY, phrased as parity."
+    },
+    "anchor": {
+      "text": "the anchor convention: the 1x cells MUST reproduce the banked rows bit for bit FIRST (ours 1.3811104467936925, GDN2 1.3521734476089478; the full training-log trajectory, the constant-180, the EMA-180 and the landing, every digit).  ANY mismatch STOPS the lane and escalates -- before any long window run."
+    },
+    "boundaries": {
+      "text": "the standing discipline: NEVER pack across document boundaries; windows TRUNCATE at the boundary; the document-disjoint splits stay intact; every document slice SHA-256-verified at consumption.  The longer windows are the corpus pipeline's own boundary-respecting windowing (the lattice.Stream constructor's own context parameter), hash-bound to the flagship manifest.  An engine that cannot honor the boundaries at longer windows is a STOP, never a forced fit."
+    }
+  },
+  "bands": {
+    "endpoint_variance": 0.075,
+    "winner_seed_delta": 0.011948040553501738
+  },
+  "exposure_targets": 300000,
+  "step_shape": {
+    "note": "the probe's step shape, adjusted per the registration so steps x tokens consume the same 20M targets: the ~111K-targets/step shape and the ~180-step landing are HELD (windows/step scaled down as the context grows), and the microbatch's TOKEN count is held at the banked 16,384 (the memory-matched rule); matched EXPOSURE is the invariant",
+    "window_arithmetic": {
+      "mult": 4,
+      "context": 8192,
+      "windows_per_step": 27,
+      "microbatch": 2,
+      "tokens_per_microbatch": 16384,
+      "microbatch_groups_per_step": 14,
+      "landing_step": 178,
+      "exposure_landing": 20088160,
+      "windows_consumed": 4806,
+      "effective_window_bytes": {
+        "mean": 4179.8,
+        "p50": 3042.0,
+        "p90": 8192.0,
+        "min": 1,
+        "max": 8192,
+        "full_length_fraction": 0.3225,
+        "mean_over_1x_mean": 2.405
+      },
+      "calibration_full_windows": 1333,
+      "note": "the boundary-respecting windowing's own distribution over the windows the arm actually consumes (mean/p50/p90 bytes, the full-length fraction); the lever is only as strong as what was actually achieved -- the corpus's median document is ~1,850 bytes, shorter than one banked window"
+    }
+  },
+  "window_discipline": "the standing discipline: NEVER pack across document boundaries; windows TRUNCATE at the boundary; the document-disjoint splits stay intact; every document slice SHA-256-verified at consumption.  The longer windows are the corpus pipeline's own boundary-respecting windowing (the lattice.Stream constructor's own context parameter), hash-bound to the flagship manifest.  An engine that cannot honor the boundaries at longer windows is a STOP, never a forced fit.",
+  "eval_rule": "the arm's own-window eval: the first 7 FULL windows of the arm's context in calibration order (at 1x this IS the banked L.evaluate set, verbatim); plus the cross-eval grid at all three window lengths on the post-cooldown final state",
+  "machine_build": "matched_arms.build_gdn2 verbatim + k22_hybrid.convert_gdn2_to_hybrid (the K22 engine VERBATIM: the composed slot mixers at {6, 12, 18} through the zero-born read gates)",
+  "optimizer": {
+    "optimizer": "bakeoff_optimizers.HybridMuonX45 (imported verbatim)",
+    "peak_lr": 0.0027100927623701265,
+    "lr_multiplier": 5,
+    "lr_convention": "the banked GDN2 row's own 5x HybridMuonX45 recipe VERBATIM (option B + the slot branch per the K18 convention mirrored; the K22 hybrid engine's own)",
+    "betas": [
+      0.9,
+      0.9392004369596886
+    ],
+    "weight_decay": 0.20059436743465126,
+    "warmup_steps": 69,
+    "microbatch": 8,
+    "grad_clip": 1.0,
+    "muon_params": "203 tensors",
+    "adamw_params": "445 tensors"
+  },
+  "routing": "the machine's own banked routing split, imported verbatim (ours: k11b_probe_channel_gates.split_parameters_gated 'p3'; gdn2: muon_control.split_parameters_gdn2 option B; hybrid: k22_hybrid.split_parameters_k22)",
+  "routing_receipt": {
+    "muon_tensors": 203,
+    "adamw_tensors": 445,
+    "dense_muon": 191,
+    "dense_adamw": 406,
+    "slot_muon": 12,
+    "slot_adamw": 39,
+    "note": "the banked GDN2 row's own option-B split (the 1.3522 machine's), verified equal on the normalized dense names against a pure-GDN2 twin's own split; the slot branch per the K18 convention mirrored: matrices on Muon, the gate channels + the conv kernel + the K22 read gate on AdamW"
+  },
+  "slot_layers": [
+    6,
+    12,
+    18
+  ],
+  "parameters": {
+    "total": 152517585,
+    "trainable": 152517585
+  },
+  "checkpoint_steps": [
+    1,
+    2,
+    3,
+    178
+  ],
+  "stopping_rule": "matched-EXPOSURE: train until 300000 targets seen (the banked probe stopping rule, constant LR), THEN the 24-step linear cooldown (the corrected-scoring extension, same stream); the honest elapsed wall is reported first-class",
+  "anchors": {
+    "ours_1x": null,
+    "gdn2_1x": null,
+    "hybrid_1x": {
+      "post_cooldown": 1.3547673906598772,
+      "constant_lr": 1.4082818201610021,
+      "ema180": 1.3816877944128854,
+      "parameters": 152517585,
+      "gates_final": {
+        "6": -0.1303802728652954,
+        "12": 0.13295027613639832,
+        "18": 0.13336104154586792
+      },
+      "slot_read_mask_sweep": {
+        "delta_per_slot_layer": {
+          "6": -0.00030171871185302734,
+          "12": -0.0005513599940707437,
+          "18": 0.001003350530351943
+        },
+        "all_slots_delta": -8.656297411224756e-05,
+        "slot_layers_ge_bar": 0
+      },
+      "mechanism": {
+        "effective_rows": 25.25851058959961,
+        "occupancy": 35.091695149739586,
+        "identity_share": 0.05551040820153779,
+        "op_mix": {
+          "none": 0.0,
+          "append": 0.022440592447916668,
+          "correct": 0.97637939453125,
+          "pop": 0.0,
+          "merge": 0.0011800130208333333
+        }
+      },
+      "run_dir": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k22_runs/hybrid_seed3401"
+    },
+    "composed_ours_banked": {
+      "post_cooldown": {
+        "3401": 1.3811104467936925,
+        "3402": 1.383232252938407
+      },
+      "constant_lr": {
+        "3401": 1.433674931526184,
+        "3402": 1.4341776371002197
+      },
+      "ema_180": {
+        "3401": 1.424389226096017,
+        "3402": 1.4385861498968942
+      },
+      "step1_train_loss": {
+        "3401": 5.782775391046648,
+        "3402": 5.720172563202926
+      },
+      "note": "the K15 composition arm's own landed rows (the inherited 4x point, tuned for the SOFTMAX-read machine): receipts/k15_composition_summary.json"
+    },
+    "note": "the 1x cells MUST reproduce the banked rows bit for bit FIRST; any mismatch STOPS the lane and escalates"
+  },
+  "bindings": {
+    "registration": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/PREREGISTRATION_K24_LONG_WINDOW.md",
+    "registration_sha256": "03b225234e4e97df1fc8e827f5ee3c70fa0fb71821ed9c88cc972cab4b2a3c44",
+    "k24_long_window_sha256": "cc9143cb6cb6a385d688ce17276ef8f5e738ae74f265ebc35c47c207c6998e04",
+    "k24_gate_receipt_sha256": "80ea73a25ba4cc27d36e3572003a62d9eacc3ef5dec085ca78973e74472fcfa4",
+    "k15_composition_sha256": "b7ade13ec44cfd927493fe96a0e9d3fbe0bb547cce0a84797fe43557556b903a",
+    "k15_probe_sha256": "e769a26157ca3da36569258289476f0c1e74e9b2e33e3d187e8b185076349d2c",
+    "k22_hybrid_sha256": "d5ac0b082260402382b181a7c4d84ceeb06e90d7053b8d30a37af4d9d64d69c5",
+    "k22_probe_sha256": "6385a813623b560de2043dfc68a09897399c51cab7ab7654ff03ccbdb9400b51",
+    "matched_arms_sha256": "9d37c32469f3701ac3e0bfbd1d4b5c253e7cbdd425e95a281df62d83f6f30830",
+    "muon_control_sha256": "df348e4f8d3b333c1826490ba0813617ce6497fdccc5af55e7711a64ec07d10e",
+    "protocol_correction_sha256": "2610942b448416d7365474130f1dc3e17056295b0defbe775b8128518a53b8b9",
+    "external_gdn2_sha256": "316ddf8658a55da4a4159f77881c92e9a067570da55d0aa2592b7b11c51aa3d8",
+    "lattice_registration_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c",
+    "flagship_manifest_sha256": "48b9095eeccb023ff1cb2a4f6da899a8b3e4eb3b76b2804e730f1d6ad031c414",
+    "banked_ours_row": {
+      "run_dir": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k15_runs/composition_seed3401",
+      "start_sha256": "57fcecc5ab368a387b17c80a873f639e738a9b3352fb18388638d9542715f876",
+      "result_sha256": "fd23ea64d25dd6166e95016e513020724060e6937fda6faf63a1197817bfd622",
+      "training_log_sha256": "3ce08b54551d754f833f3a9680ec47e17178bf88eb228ff7108e5443c3d89476"
+    },
+    "banked_gdn2_row": {
+      "run_dir": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/protocol_correction_runs/gdn2_speedrun_rescored",
+      "start_sha256": "e25a2a0a33ba1f1d9ce1996267b3226428f4c420217184021c8c710a2cffe5e9",
+      "result_sha256": "9253b9819f02433377aa94760047864481457c16d6a9ea4fcc6cbcb2b0262f75",
+      "training_log_sha256": "329b1358358f1f32ea3b8838a28ddd3534627c2a13da3d08eab2f828ba4f18f8"
+    },
+    "banked_hybrid_1x_row": {
+      "run_dir": "/home/erikg/emender/experiments/expressivity_tasks/x45_matrix_emender/k22_runs/hybrid_seed3401",
+      "result_sha256": "5839ab78489d3bc6755e4349456ca9d2a886523d1bf0f88ef6635355d186f815"
+    }
+  },
+  "summary": {
+    "base_arm": "gdn2",
+    "parameters": {
+      "total": 149855670
+    },
+    "nomination": {
+      "arm": "gdn2",
+      "receipt": "/home/erikg/emender/experiments/expressivity_tasks/x42_pile_scale/receipts/byte_velocity_nominations/gdn2.json",
+      "receipt_sha256": "5e7ab164973366817699a9df21eb1714c9203c49e44a65566c048842f2034813",
+      "generation": 7,
+      "candidate": 1,
+      "search_score": 1.3930157472689946
+    },
+    "policy": {
+      "lr": 0.0005420185524740253,
+      "microbatch": 8,
+      "beta2": 0.9392004369596886,
+      "weight_decay": 0.20059436743465126,
+      "warmup_steps": 69,
+      "init_scale": 1.3483482393728117,
+      "decay_rate_scale": 0.48706005128019486,
+      "dt_bias_shift": 1.7178302439489688,
+      "expansion": 2.0
+    }
+  },
+  "identity": {
+    "stream": "flagship_beyond_100gb",
+    "source": "/mnt/nvme2n1/erikg/pile.txt",
+    "source_size": 1307910802540,
+    "manifest": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/documents.jsonl.gz",
+    "manifest_sha256": "48b9095eeccb023ff1cb2a4f6da899a8b3e4eb3b76b2804e730f1d6ad031c414",
+    "registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/receipts/flagship_stream/registration.json",
+    "registration_sha256": "c36f84cfd1a59530a7991a4be6c1f68b424a79c5b7de169eabfc90d3cd31cc31",
+    "boundary_bytes": 100000000000,
+    "lattice_registration": "/home/erikg/emender/experiments/expressivity_tasks/x43_fork_resolved/PREREGISTRATION_150M_LATTICE.md",
+    "lattice_sha256": "99bed43706538c553ac57b279b1ce28fa78dfefe6a4808dbcedd973af6e1797c"
+  },
+  "versions": {
+    "torch": "2.9.1+cu128",
+    "schedulefree": "1.4.1",
+    "hybrid_muon_sha256": "204c55252f3032b91a965d2511cddb5d9d2eef9f94e9bfd509ee86d2987384d6",
+    "bakeoff_optimizers_sha256": "dff190059d0ff94633c3b3e42ab89ef2ccde8517ebd512a4acff96143a949745"
+  },
+  "git": {
+    "commit": "dde19628f41d2c01017f7fd3665017957c815f6f",
+    "relevant_paths_dirty": "?? experiments/expressivity_tasks/x45_matrix_emender/k24_runs/chain_console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/k24_runs/chain_relx.console\n?? experiments/expressivity_tasks/x45_matrix_emender/k24_runs/chain_relx2.console\n?? experiments/expressivity_tasks/x45_matrix_emender/k24_runs/chain_relx3.console\n?? experiments/expressivity_tasks/x45_matrix_emender/k24_runs/chain_relx4.console\n?? experiments/expressivity_tasks/x45_matrix_emender/k24_runs/smoke_hybrid_4x.console.txt\n?? experiments/expressivity_tasks/x45_matrix_emender/k24_runs/window_receipt_console.txt",
+    "branch": "main"
+  },
+  "config_sha256": "48423ab7a4ca17b8f79c6d956cb8e32bae5695510ff698e616d646a1fb6f71f0",
+  "pid": 3470067,
+  "session": {
+    "host": "lambda01",
+    "card": "2",
+    "device": "NVIDIA RTX 6000 Ada Generation",
+    "card_gib": 47.38,
+    "torch": "2.9.1+cu128",
+    "triton": "3.5.1"
+  },
+  "started_ns": 1795435869578010465
+}
