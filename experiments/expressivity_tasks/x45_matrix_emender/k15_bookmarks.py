@@ -7,7 +7,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from ..x43_fork_resolved.xsa_binding_live import Session
+from experiments.expressivity_tasks.x43_fork_resolved.xsa_binding_live import Session
 
 
 class BookmarkSession(Session):
