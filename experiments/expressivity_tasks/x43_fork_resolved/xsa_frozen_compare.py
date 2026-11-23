@@ -10,6 +10,10 @@ from .xsa_controller_data import TEST, digest, load_pieces
 from .xsa_neural_evidence import BINARY, flagship_identity, Stream
 from ..x45_matrix_emender import k15_probe_composition as k15, protocol_correction as pc
 from ..x40_emender_lm.part6_surface import features
+from ..x45_matrix_emender.matched_arms import build_gdn2
+from ..x45_matrix_emender.velocity_ladder import _build_k10
+from ..x45_matrix_emender.k15_composition import convert_model_to_composition
+from ..x42_pile_scale.lattice import evaluate
 
 GRID=(0.,1/16,1/4,1.,4.)
 N=1792
@@ -33,11 +37,11 @@ def run(base,root,output):
     engine=('2610942b448416d7365474130f1dc3e17056295b0defbe775b8128518a53b8b9' if base=='gdn2' else 'e769a26157ca3da36569258289476f0c1e74e9b2e33e3d187e8b185076349d2c')
     with state.open('rb') as f: sha=hashlib.file_digest(f,'sha256').hexdigest()
     if not (anchor['base']==base and anchor['anchor']==expected and anchor['sha256']==sha and anchor['engine_sha256']==engine==digest(Path(module.__file__))):raise ValueError('anchor identity')
-    if base=='gdn2':model,*_=pc.matched_arms.build_gdn2(3401)
+    if base=='gdn2':model,*_=build_gdn2(3401)
     else:
-        model,*_=k15._build_k10(dict(k15._tuned_winner()),3401);model=k15.convert_model_to_composition(model).cuda()
+        model,*_=_build_k10(dict(k15._tuned_winner()),3401);model=convert_model_to_composition(model).cuda()
     model.load_state_dict(torch.load(state,map_location='cpu',weights_only=True));model.eval()
-    identity=flagship_identity();stream=Stream(identity['source'],identity['manifest']);orig=pc.L.evaluate(model,stream,'gdn2' if base=='gdn2' else 'matrix_ops','calibration')
+    identity=flagship_identity();stream=Stream(identity['source'],identity['manifest']);orig=evaluate(model,stream,'gdn2' if base=='gdn2' else 'matrix_ops','calibration')
     if orig['score']!=expected: raise ValueError(f'reloaded anchor mismatch: {orig}')
     manifest=json.loads((TEST/'targets.json').read_text()); refs=json.loads((TEST/'evidence.json').read_text())
     if manifest['binary']!=BINARY or manifest['identity']!=identity or refs['targets_manifest_sha256']!=digest(TEST/'targets.json'):raise ValueError('target binding')
