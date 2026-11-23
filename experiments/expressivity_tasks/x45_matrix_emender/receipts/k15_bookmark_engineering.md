@@ -18,3 +18,4 @@ gpu_lease: granted GPUs: 0 (pid 3462180)
 f327bce5334b4cd5c22f3d4524f87f3f9cccc641613506701f1b166dcf84e4b3  /mnt/nvme2n1/erikg/k15_bookmarks_A/console
 42c489e40e3c5b323768707d09f3ec6dd49c1764124d7869eba127ed86e8e814  /mnt/nvme2n1/erikg/k15_bookmarks_A/forced_trace.json
 ```
+fc01aed0 CPU pytest 1 passed in 1.74s with shared composed mixer geometry. Attempt B uses fresh directory, new source, same <=0.5h timeout.
