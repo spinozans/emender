@@ -38,14 +38,14 @@ class BookmarkPort(nn.Module):
         raw = bytes(ids[0].tolist())
         for i, start in enumerate(range(0, len(raw), stride)):
             stop = min(start + stride, len(raw))
-            chunk = hidden[:, start:stop]
-            q = F.normalize(queries[:, start:stop].float(), dim=-1, eps=EPS)
+            chunk = hidden[:, start:start+stride]
+            q = F.normalize(queries[:, start:start+stride].float(), dim=-1, eps=EPS)
             # K15 additive read on reserved rows, without softmax. Empty keys and
             # values are zero. Original rows still use the incumbent fast scan.
             weight = mixer.policy.read_scale * (q @ F.normalize(keys.float(), dim=-1, eps=EPS).T)
             recalled = weight @ values
             scores = self.slot_bias(chunk) + weight
-            output.append(recalled)
+            output.append(recalled[:, :stop-start])
             assert session.rpc('append ' + raw[start:stop].hex())['visible'] == stop
             if stop == len(raw):
                 break
@@ -111,12 +111,16 @@ class BookmarkK15(nn.Module):
         self.port = BookmarkPort(backbone.embed.embedding_dim, backbone.blocks[len(backbone.blocks)//2].mixer.value_dim)
         self.exe = exe
 
-    def forward(self, ids, *, doors=True, forced=None, audit=False):
+    def forward(self, ids, *, doors=True, forced=None, audit=False, pad_to=None):
+        valid = ids.shape[1]
+        if pad_to is not None and not valid <= pad_to <= 65536:
+            raise ValueError('invalid right padding')
+        padded = ids if pad_to is None else F.pad(ids, (0, pad_to-valid))
         if not doors:
-            return self.backbone.head(self.backbone.features(ids)), [], [], []
+            return self.backbone.head(self.backbone.features(padded))[:, :valid], [], [], []
         if ids.shape[0] != 1 or not 1 <= ids.shape[1] <= 65536:
             raise ValueError('one bounded independent window required')
-        h = self.backbone.embed(ids)
+        h = self.backbone.embed(padded)
         for i, layer in enumerate(self.backbone.blocks):
             if i == len(self.backbone.blocks)//2:
                 session = BookmarkSession(self.exe)
@@ -126,6 +130,7 @@ class BookmarkK15(nn.Module):
                     extra, trace, probs, writes = self.port(mixer, x, ids, session, forced, audit)
                 finally:
                     session.close()
+                extra = F.pad(extra, (0, 0, 0, padded.shape[1]-valid))
                 _, ordinary = mixer.mix(x)
                 reads = torch.cat([(ordinary.reads[:, :, 0] + extra).unsqueeze(2),
                                    ordinary.reads[:, :, 1:]], dim=2)
@@ -134,4 +139,4 @@ class BookmarkK15(nn.Module):
                 h = h + layer.mlp(layer.norm2(h))
             else:
                 h = layer(h)
-        return self.backbone.head(self.backbone.norm(h)), trace, probs, writes
+        return self.backbone.head(self.backbone.norm(h))[:, :valid], trace, probs, writes
