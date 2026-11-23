@@ -67,11 +67,24 @@ def score(net, stream, arm, out):
                 f.write(json.dumps(dict(doc=doc,mode=mode,nll=float(losses.mean()),delayed=float(losses[keep].mean()),writes=sum('saved_pos' in e for e in tr),extensions=sum(e['op']==2 for e in tr),miss=sum(e.get('miss',False) for e in tr),trace=tr if not n else None))+'\n')
 
 
+def replay_g(stream,out):
+    from .k15_recovery_g import compare
+    gpath=j.B.parents[1]/'k15_bookmarks_G/joint.pt'; dpath=j.B.parents[1]/'k15_bookmarks_D/joint.pt'
+    assert j.digest(dpath)==j.D_SHA256
+    lines=(gpath.parent/'console').read_text().splitlines(); snapshots=[json.loads(l) for l in lines if l.startswith('{')]
+    assert snapshots[-1]=={'complete':True} and j.digest(gpath)==next(r['sha'] for r in snapshots if r.get('snapshot')==4096)
+    snap=torch.load(gpath,map_location='cpu',weights_only=True); d=torch.load(dpath,map_location='cpu',weights_only=True)
+    assert d['step']==snap['step']==4096 and all(torch.equal(d[k],snap[k]) for k in ('cpu_rng','cuda_rng')); del d
+    base,*_=j._build_k10(dict(j.incumbent._tuned_winner()),3401); net=j.BookmarkK15(j.convert_model_to_composition(base),j.EXE); net.port=j.InterventionPort(net.port.byte.embedding_dim,net.port.action.in_features-net.port.byte.embedding_dim); net.load_state_dict(snap['model']); del snap
+    compare(net.cuda(),stream,out);j.emit(G_replay=True,final_rng_equal=True)
+
+
 def main(out):
     assert j._require_lease() in ('0','1') and os.environ['OMP_NUM_THREADS']=='4'
     assert j.digest(j.EXE)=='87d917c19518e7dd25976420b25b2fbebef5fdcb36a09bc39e0ed76e3c96f40f'
     assert j.digest(REACH)=='bb7153fba112d2808afb7d9331b4c3e66cfce4c1f29b3c6cb81b96fc7c41aacb'
     identity=j.flagship_identity(); assert identity['manifest_sha256']=='48b9095eeccb023ff1cb2a4f6da899a8b3e4eb3b76b2804e730f1d6ad031c414'; stream=j.Stream(identity['source'],identity['manifest']); j.emit(identity=identity)
+    replay_g(stream,out)
     reference=None
     for arm in ('write','index'):
         net=load_net(); net.backbone.eval(); net.port.train(); net.port.intervention='none' if arm=='write' else 'clear'
@@ -82,6 +95,10 @@ def main(out):
                 if step==1:
                     with torch.no_grad():
                         off=net(x,doors=False)[0].clone(); assert torch.equal(off,net.backbone.head(net.backbone.features(x)))
+                        net.port.eval(); z0,t0,*_=net(x,audit=True); lp0=log_distribution(z0,t0)
+                        for end in (16,17,129):
+                            p,t,*_=net(x[:,:end],pad_to=1024,audit=True); assert t0[:len(t)]==t and torch.equal(log_distribution(p,t),lp0[:end])
+                        net.port.train();j.emit(arm=arm,origin_prefix_exact=True)
                         if reference is None: reference=off
                         else: assert torch.equal(off,reference)
                 z,tr,probs,_=net(x,audit=step==1); lp=log_distribution(z,tr); losses=F.nll_loss(lp,y,reduction='none'); loss=losses.mean()

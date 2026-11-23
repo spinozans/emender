@@ -17,7 +17,7 @@ def compare(net, stream, out):
     net.eval()
     anchor=B.parents[1]/'xsa_anchor_replays_v1/k15/final.pt'
     assert digest(anchor)=='accb73ce3ad0cbe5b88d439dad8073d17a0ab3ec25a9f3f52b6cfdf7f968ecd0'
-    with (out/'panel.jsonl').open('x') as f, torch.autocast('cuda',dtype=torch.bfloat16):
+    with (out/'panel.jsonl').open('x') as f, torch.autocast('cuda',dtype=torch.bfloat16,cache_enabled=False):
         for arm in ('G','original','B','D'):
             if arm=='original': net.backbone.load_state_dict(torch.load(anchor,weights_only=True,map_location='cpu'))
             if arm=='B': net.load_state_dict(torch.load(B,weights_only=True,map_location='cpu'))
