@@ -69,3 +69,4 @@ gpu_lease: granted GPUs: 0 (pid 3468731)
 97dde8b2a93480a5acbe8e23852eeb2dde8eb551e242b92c6360dc63ad37e701  /mnt/nvme2n1/erikg/k15_bookmarks_C/launch.json
 60bf365ab807a13adf29530429b54151e7d2d67f9df8b68c34ac4beb16c1c77a  /mnt/nvme2n1/erikg/k15_bookmarks_C/owner_check
 ```
+Post-C regression on 97088678: CUDA_VISIBLE_DEVICES empty, OMP_NUM_THREADS=4 .venv/bin/python -m pytest -q experiments/expressivity_tasks/x45_matrix_emender/test_k15_bookmarks.py: 1 passed in 1.68s. No additional card allocation.
