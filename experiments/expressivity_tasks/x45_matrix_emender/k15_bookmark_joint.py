@@ -81,6 +81,17 @@ def decode(net, prompt):
     emit(prompt=prompt.decode(errors='replace'), generated=bytes(seq[len(prompt):]).decode(errors='replace'), hex=bytes(seq).hex(), decode_seconds=time.perf_counter()-t)
 
 
+D_SHA256 = "6dc7db5428ac0248278203b85de3eeeed55c4da610eae2ba5b66ae1b83af34ba"
+
+def load_d_model(path):
+    if digest(path) != D_SHA256:
+        raise ValueError("D checkpoint digest mismatch")
+    state = torch.load(path, weights_only=True, map_location="cpu")
+    if state["step"] != 4096:
+        raise ValueError("D checkpoint step mismatch")
+    return state["model"]
+
+
 def main(out, inference=False):
     assert _require_lease() in ('0','1') and os.environ['OMP_NUM_THREADS']=='4'
     assert digest(EXE)=='87d917c19518e7dd25976420b25b2fbebef5fdcb36a09bc39e0ed76e3c96f40f'
@@ -92,7 +103,7 @@ def main(out, inference=False):
     net.port=InterventionPort(net.port.byte.embedding_dim,net.port.action.in_features-net.port.byte.embedding_dim)
     net.cuda().load_state_dict(torch.load(B,weights_only=True,map_location='cpu')); path=out/'joint.pt'
     if inference:
-        net.load_state_dict(torch.load(path,weights_only=True,map_location='cpu')['model']);net.eval(); decode(net,sys.argv[3].encode());return
+        net.load_state_dict(load_d_model(path));net.eval(); decode(net,sys.argv[3].encode());return
     torch.manual_seed(3407); net.train(); opt=torch.optim.AdamW([dict(params=net.backbone.parameters(),lr=1e-5),dict(params=net.port.parameters(),lr=1e-4)],fused=True)
     with (out/'train.jsonl').open('x') as f:
         for step,(doc,start,ids,y) in enumerate(islice(rows(stream,'train'),4096),1):

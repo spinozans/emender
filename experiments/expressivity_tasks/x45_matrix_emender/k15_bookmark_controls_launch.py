@@ -14,7 +14,8 @@ timeout --kill-after=15s 300 .venv/bin/python -u -m "experiments.expressivity_ta
 '''
 if __name__ == '__main__':
     module = 'k15_bookmark_controls'
-    if sys.argv[2:]: raise ValueError('unexpected argument')
+    if sys.argv[2:] == ['payload']: module = 'k15_bookmark_payload'
+    elif sys.argv[2:]: raise ValueError('unexpected argument')
     out = Path(sys.argv[1]).resolve();out.mkdir(exist_ok=False, parents=True)
     with (out/'console').open('xb') as log:
         p=subprocess.Popen(['bash','-c',SCRIPT,'bookmarks',str(out),module],cwd=ROOT,
