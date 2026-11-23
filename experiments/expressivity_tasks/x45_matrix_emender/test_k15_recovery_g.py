@@ -1,5 +1,5 @@
 import torch
-from .k15_recovery_g import draws
+from experiments.expressivity_tasks.x45_matrix_emender.k15_recovery_g import draws
 
 
 def test_sampling_matches_rng_state():
