@@ -95,5 +95,3 @@ class HistoricalPort(BookmarkPort):
             values = torch.where(mask, v, values)
             trace.append(event)
         return torch.cat(output, dim=1), trace, log_probs, writes
-
-
