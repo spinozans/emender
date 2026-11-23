@@ -2,6 +2,12 @@
 
 Goal: replace re-feeding long context with a growing, causally queryable index of visible bytes. Keep the neural controller and its programmable scratch memory distinct from that index. Freeze the LM baseline. This campaign does not depend on K24 or authorize board training.
 
+## Design target: a navigable index, not a menu of suffix lengths
+
+The depth-8 branch read is a baseline. Treat a controller context as a logical locus (matched string and depth, possibly inside a compressed edge), not a snapshot-local node ID. Drive it forward on an observed byte; on mismatch, dropping leading bytes retains a suffix and widens the candidate set. This is not the same as going to a tree parent, which shortens the right end. Suffix intervals, longest-common-prefix (LCP) structure and occurrence coordinates also support exact-match discovery, including maximal exact matches (MEMs) anchored elsewhere in the visible history. Navigation, statistics and reads belong to the index; the learned policy decides which to use. A scratch slot can retain a logical anchor or computed result across decisions, not a raw interval from an obsolete generation.
+
+Next structural baseline: matching statistics against eligible earlier text (exclude the trivial self-match at the cursor), followed by the continuation histogram. Test an incremental cursor against independent enumeration, including implicit loci, overlaps, boundaries and publication. Then compare learned stay/extend/contract/reseed decisions with deterministic longest-match/backoff at equal counted navigation and read cost. For a MEM pilot specify query and reference ranges, left and right maximality, ambiguity and result caps explicitly; a match stopped by the visible horizon is not proof that the next unseen bytes disagree. These are intended uses of the full SXGC index, not claims that the branch-only live protocol already implements them. Keep the fixed-read strong-base gate as a control, not the architectural endpoint.
+
 ## First contact: existing sealed XSA, not a mock
 
 Read-only CPU smoke, on the existing local release executable. Emender base `e784d327`; SXGC checkout `ea90a637`. The binary identity is the SHA below, not an assertion that it was built from the current checkout. This is a pinned regression witness, not independent verification of the histogram.
