@@ -5,6 +5,7 @@ import json
 import sys
 
 import numpy as np
+from .k15_bookmark_domain import domains
 
 
 def measure(out):
@@ -13,6 +14,7 @@ def measure(out):
     docs = {r['doc'] for r in train}; test = {r['doc'] for r in held}
     assert len({(r['doc'],r['start']) for r in train}) == len(train) == 4096
     assert not docs.intersection(test) and len(test) == len(held) == 64
+    components=domains(test)
     nll = defaultdict(list); latency = defaultdict(list); strata = defaultdict(list)
     work = defaultdict(Counter); choices = Counter(); lives=[]; endings=Counter(); changed=0
     for row in held:
@@ -41,7 +43,7 @@ def measure(out):
                 newest_support=('many' if len(hits[0])>1 else 'one') if hits else 'none'
             ages=[j-b for b in birth if b is not None];age=max(ages,default=-1)
             domain='ascii_prose_proxy' if sum(65<=b<=90 or 97<=b<=122 or b==32 for b in raw)>=96 else 'other_text_proxy'
-            labels=[domain,'support_'+newest_support,'age_'+('none' if age<0 else '<16' if age<16 else '16-31' if age<32 else '32+'), 'boundary_delay_'+str((j%16)//4*4)]
+            labels=['component_'+components[row['doc']],domain,'support_'+newest_support,'age_'+('none' if age<0 else '<16' if age<16 else '16-31' if age<32 else '32+'), 'boundary_delay_'+str((j%16)//4*4)]
             for label in labels:
                 strata[label].append([modes[m]['loss'][j]-modes['none']['loss'][j] for m in ('clear','address','payload','fixed')])
         for b in birth:
