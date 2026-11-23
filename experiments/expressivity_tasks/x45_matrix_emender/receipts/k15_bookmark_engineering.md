@@ -45,3 +45,27 @@ AssertionError
 7d7ebc1bffe9dcb602170900567baa64dd8550ecc7cea8f7d6276be51e54615f  /mnt/nvme2n1/erikg/k15_bookmarks_B/launch.json
 428349af37061e41d8aac5df5284f17d8213d3f6bd5a275cea1c5d3a0e6c0b88  /mnt/nvme2n1/erikg/k15_bookmarks_B/owner_check
 ```
+
+C (5d32c41a): reloaded B checkpoint, greedy chosen-only greedy RPCs identical on all seven prefixes. Padded: all logits on all visible positions exactly equal. Unpadded variable-shape differences also present with doors off on same updated backbone (max 0.34375), so no claim of variable-shape logit equivalence. Warmed B=1 T=128 throughput integrated 1920.98 vs off 2294.68 input bytes/s; not incremental decode. GPU0 PPID=1 owner 3468731 starttime 550180937 renewed 1795435821 -> 1795435823, lease absent 1795435838. Charge <=17s. Total shared conservative charge A+B+C = 65s (0.01806h); no running allocation.
+```
+gpu_lease: granted GPUs: 0 (pid 3468731)
+{"doors": false, "tokens_s": 2294.683794948707}
+{"doors": false, "end": 17, "prefix_max": [0.0625, 0.0]}
+{"doors": false, "end": 33, "prefix_max": [0.203125, 0.0]}
+{"doors": false, "end": 49, "prefix_max": [0.203125, 0.0]}
+{"doors": false, "end": 65, "prefix_max": [0.34375, 0.0]}
+{"doors": false, "end": 81, "prefix_max": [0.310546875, 0.0]}
+{"doors": false, "end": 97, "prefix_max": [0.0, 0.0]}
+{"doors": false, "end": 113, "prefix_max": [0.0, 0.0]}
+{"doors": true, "tokens_s": 1920.975126378167}
+{"doors": true, "end": 17, "prefix_max": [0.0625, 0.0]}
+{"doors": true, "end": 33, "prefix_max": [0.1767578125, 0.0]}
+{"doors": true, "end": 49, "prefix_max": [0.1767578125, 0.0]}
+{"doors": true, "end": 65, "prefix_max": [0.28125, 0.0]}
+{"doors": true, "end": 81, "prefix_max": [0.1748046875, 0.0]}
+{"doors": true, "end": 97, "prefix_max": [0.0, 0.0]}
+{"doors": true, "end": 113, "prefix_max": [0.0, 0.0]}
+87e739b0565c6596e01a5d3dc54884e2a97596fb00b56234db6711578568f361  /mnt/nvme2n1/erikg/k15_bookmarks_C/console
+97dde8b2a93480a5acbe8e23852eeb2dde8eb551e242b92c6360dc63ad37e701  /mnt/nvme2n1/erikg/k15_bookmarks_C/launch.json
+60bf365ab807a13adf29530429b54151e7d2d67f9df8b68c34ac4beb16c1c77a  /mnt/nvme2n1/erikg/k15_bookmarks_C/owner_check
+```
