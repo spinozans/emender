@@ -9,6 +9,7 @@ def historical_hits(read, pattern, stop):
 
 
 class HistoricalPort(BookmarkPort):
+    decision_horizon = None
     intervention = 'none'
     def forward(self, mixer, hidden, ids, session, forced=None, audit=False, stride=16):
         ctx = causal_context(hidden, mixer.ctx).flatten(2)
@@ -31,7 +32,7 @@ class HistoricalPort(BookmarkPort):
             scores = self.slot_bias(chunk) + weight
             output.append(recalled[:, :stop-start])
             assert session.rpc('append ' + raw[start:stop].hex())['visible'] == stop
-            if stop == len(raw):
+            if stop == len(raw) and (self.decision_horizon is None or stop >= self.decision_horizon or stop % stride):
                 break
             h = chunk[0, -1]
             def choose(logits, forced_value):

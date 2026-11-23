@@ -18,3 +18,8 @@ def test_miss_no_echo_paid_extension_and_retirement():
         assert out[:,:32].count_nonzero()==out[:,64:].count_nonzero()==0
         assert len(writes)==2
     finally: s.close()
+
+
+def test_immediate_index_effect_is_local_and_normalized():
+    from experiments.expressivity_tasks.x45_matrix_emender.k15_historical_training import log_distribution
+    z=torch.zeros(1,32,256); event=dict(stop=16,saved_pos=0,calls=[('byte 3',dict(byte=8))]); lp=log_distribution(z,[event]); assert torch.allclose(lp.exp().sum(-1),torch.ones(32)); assert lp[15,8]>lp[15,0] and torch.equal(lp[:15],lp[16:31])
