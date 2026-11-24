@@ -1,0 +1,5 @@
+# A1 benchmark-only compatibility correction
+
+Resident-page numerical gates passed on physical card 0, NVIDIA RTX 6000 Ada, but the first benchmark stopped on the library SDPA comparator: this installed CUDA path refuses an FP32 attention mask with BF16 Q/K/V (`invalid dtype for bias - should match query's dtype`). The archived `receipts/a1-attempt1/` includes the partial table, error and lease release. Do not call this a completed timing grid. The actual Triton kernel accepted the declared fp32 log prior in both precisions.
+
+Before retry: preserve benchmark shape grid, inputs, RNG, samples, numerical tests, bounds and all Triton/reference code. For the SDPA comparator only, provide two labeled BF16 paths: `gather_sdpa_fp32` uses upcast gathered Q/K/V to retain the identical fp32 log prior; `gather_sdpa_native` uses the installed BF16 API and rounds the log prior to BF16. The latter is **not** an identical-logit comparator; include it as a fast library context only and still check its output against the registered tolerance. FP32 needs only the original viable path. Qualification reruns all registered tests. No data fitting or model launch.

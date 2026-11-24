@@ -1,0 +1,5 @@
+# B2 client correction — CPU only
+
+Register before edits/tests. P1: read two newline-terminated JSON reply records, accept only a sole nonnegative integer `send_ns` in the trailer; never merge trailer keys into answer. Malformed responses are terminal; release no spans. Use an unprivileged local fake worker on ordinary pipes for truncated record, missing field, row injection, wrong type and clean success cases. P2: coalesce equal byte keys within each `WorkerRegistry.resolve` call, expand original vote order/multiplicity, submit distinct keys again on a later call. Assert native submissions and expanded spans with a stand-in mount, no archive needed.
+
+Run CPU client tests and existing F6 worker tests, not P100 measurements, hardware gates or model fits. Rehash all pinned binaries; do not rebuild. Preserve historical measurement sources/receipts as evidence, hash corrected sources before running tests, record outcomes in a separate review directory. Document the validated API, historical clocks and limitations in the architecture map.

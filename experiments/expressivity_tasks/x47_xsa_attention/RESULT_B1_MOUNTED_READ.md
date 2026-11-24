@@ -1,0 +1,52 @@
+# B1: a live context and two immutable XSAs feed one residual head
+
+**The mounted read works; single-step P100 lookup is not decoder-speed.** On the registered whole-bank/two-key workload, two repeat one-row requests took **1.389 and 1.433 seconds** from prepared host/state to synchronized residual. P100 alone took **1.368 and 1.413 seconds**. The resident three-source FP32 head took **0.480 ms** median with Triton (gathered SDPA **0.704 ms**). These clocks measure different work. This is a component test, not trained navigation, a model tokens/s measurement or evidence of an NLL improvement.
+
+## What the model received before any optimization
+
+`XSAResidual.init_xsa_attention()` zeros the query projection, preserves nonzero K/V, and installs an identity output projection. For each source the birth vector is the sum of observed or constructed values divided by eligible occurrence count across the requested loci (unit prior per locus occurrence). We deduplicate slots, **not votes**. Fused Triton evaluates each source separately; the mixer adds scaled reads to state. We checked the unchanged module against independently averaged values with context only, F6 only, P100 only, all three, F6 removed, and reordered banks. It sees the same 8-channel ABI after substitution. CPU checked exact scale-zero no-op; device used scales 0.5, 1 and 2. Replacing A by B changes the single-bank output. No archive supplies precomputed neural activations.
+
+Host still chooses the initial patterns, capabilities, source scales, span feature and request schedule. One hardware feedback gate takes the residual's channel 0, chooses between two registered **live** keys, does the native locate and consumes its returned activation. Removing the first read changes the second key ID from 1 to 0. The two second reads happen to have the same mean on this fixture; this is evidence of changed requests, not improved prediction. Single observed two-read walls 1.00 and 284.44 ms include scalar synchronization and first-use effects; not a warm crossover. For K15 or GDN2, project each recurrent block state into the query width, add the projected mixed read before the next state update, and append the observed record's computed activation only after observation. That would require actual width adapters, per-sequence scheduling, training and measurement; neither backbone was edited or timed here.
+
+## Capability matrix
+
+| Mounted source | Exact operation, identity, value | Limits / refusal |
+|---|---|---|
+| context | Persistent `xsa session 16` debug process, visible bounded locate; `(session UUID, generation, watermark, doc, [start,stop))`; supplied 8-channel fixture vectors at match's last byte (not computed by a running backbone) | Up to 8 positions/key; native overflow terminates the session, no truncated page. Append/end/seal invalidate old working sets. Open EOF is not END. Toy binary docs with NUL, 0x1e, 0xff compared to prefix-by-prefix enumeration. No cross-doc continuation read. |
+| F6 | v10/m15/m20 certified synthetic archive; release `search` exact byte-verified matched spans. Two fixture keys agree with independent text enumeration; common planted key refuses. | Supplied 4,096-document fixture, not a general all-byte archive builder. Raw interval >8 refuses even if boundary filtering would have reduced it. |
+| rehearsal P100 | v10/m15/m20; bound index header+directory SHA and CRC, member extents, map/manifest hashes, native verified bytes and per-hit independent XSEP start/end. Correction gate: key 2 returned 2 hits including 1,000,003; key 6 returned 1 including 17,000,000,019. Counts matched their own banked scan entries. | No whole-payload rescan or new Pile windows. Earlier X43 concatenated-stream scan is **not** proof of no-cross semantics in general. Not P100c v6. No trie navigation or serving certification. |
+| Both static providers | One fresh native process per source **batch**, deduplicated hex keys, JSONL addresses, refusal/status on stderr. Python validates & packs contiguous numeric buffers. At the corrected revision the CPU slot-to-span tuple retains namespace, version/schema, doc and relative match span through transfer. The measured revision validated but did not retain the spans. Values depend on verified pattern bytes and doc-relative position. | Not persistent native binary IPC. No dense archive table, continuation value, search cache, wide histogram, structural END feature, MEM chain or external sidecar formats. Trust local immutable mounts for run; stat/directory identity is not a payload hash or adversarial sandbox. |
+| All | Max 8 request rows × 2 loci; success returns all eligible votes (full = returned = row length), empty returns zero. Whole-bank allowlist only. | Partial scope/document exclusion denied before opening/querying. No unfiltered fallback, depth selection or held-out evaluation. This trusted local adapter is not a multi-tenant authorization service. |
+
+## Clocks and resource evidence
+
+Measured source `140495ce6`, [raw phases](receipts/b1-gpu2/bench.jsonl). RTX 6000 Ada, FP32, 8 channels; sequential sources, two keys per bank reused across rows. These are fixed-policy prefill-like rows, not eight independent autoregressive predictions. Host registration/open (including identity checks; context also seeds observations) cost context/F6/P100 **211/98/238 ms** outside request walls. Cache not flushed. First one-row request 2385 ms, first 8-row request 1513 ms; within those, first-use head submits 1013 and 101 ms with a fresh Triton cache at launch. Not isolated compile timings.
+
+| Repeat observations | R=1 | R=8 |
+|---|---:|---:|
+| Direct total ms (two repeats) | 1389, 1433 | 1395, 1385 |
+| Context resolve incl IPC ms (unsealed three-byte tail scan) | 0.36–0.40 | 0.33–0.81 |
+| F6 resolve incl CLI ms | 17.37–17.46 | 17.30–19.72 |
+| P100 resolve incl CLI ms | 1368–1414 | 1364–1373 |
+| Device transfer bytes / synchronized ms | 576 / 0.37–0.39 | 1152 / 0.35–0.36 |
+| Three resident head wall p50 µs, eager / default SDPA / Triton | 961 / 704 / 480 | 1136 / 698 / 474 |
+
+In the one-row repeats native P100 reports **1212–1253 ms inside its native timed region** (millisecond resolution); roughly 156–160 ms remains in the CLI launch/open/teardown/framing path. F6 reports 1 ms in that region. This includes context acquisition, rank/search, per-hit locate, byte verification and output flush; the split is not measured. XSEP validation, result parsing and feature evaluation after native CLI return are included in `resolve_ms`; `pack_ms` then includes slot deduplication, tensor construction and CPU slot checks (three sources together ~0.9–1.3 ms at R=1). Transfer measurements include a sync. Device events enclose head submission, hence can include host idle gaps; **not isolated kernel durations**. Final sync is ~0.004–0.006 ms in warm rows. Separate A1 covers forward/backward resident primitives; no B1 backward, large-collision gradient gate, isolated instruction profile or full LM clock. Resident comparisons use the same real retrieved pages and mixed head; default SDPA dispatch includes its gathers. No exhaustive forced-backend sweep. Host main process peak 1,223,868 KiB (excludes native child RSS); device peak Torch allocations 8,537,088 bytes, not whole-process HBM. XSEP currently expands starts on CPU at mount, not on card.
+
+Lineage: `a8d98603e` protocol, `72805e820` source/tests, `9afe7bf7a` failed CPU gate and correction, `b5486b5cc` first passing receipts, `140495ce6` consumption-time invalidation and feedback gate. [Failed gate](receipts/b1-cpu1/tests.txt): pinned release rejects `session locate` despite source support. Existing debug executable is separately SHA-bound for live only; neither executable rebuilt. Final CPU 7 passed / 10 CUDA cases intentionally skipped, both hardware runs completed with initialized parity checks before reporting repeat costs. No SXGC edits. X43 P100 transfer and C14 leakage belong to other studies; no panel reopened.
+
+**Review correction, CPU only:** the original independent Python P100 check pooled two keys and the numeric page discarded its inverse address map. Protocol `d7d9cdc51`, code/test `0fdaff55d`, [gate receipt](receipts/b1-review-cpu1/tests.txt): 7 passed, 10 device cases skipped. The new checks reconstruct each nonpadding vote from the host span tuple (including repeated slots and the empty row), carry that same tuple through CPU transfer and independently compare each P100 key with its own count and registered offset. This is in-memory provenance, not durable bookmark storage. No new GPU run or timing: device tensor arguments are unchanged; any additional host time/memory for the tuple has not been measured. Historical timing and negative receipts stand unchanged. Live timing covers only the unsealed three-byte fixture; post-seal behavior was exercised by the CPU oracle, not profiled.
+
+From repo root (historical commands, **do not rerun under exhausted two-attempt B1 registration**):
+
+```bash
+D=experiments/expressivity_tasks/x47_xsa_attention
+CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=4 timeout -k 2 100 .venv/bin/python -m pytest -q "$D/test_b1.py" "$D/test_bank_read.py"
+bash "$D/b1_leased.sh" "$D/receipts/b1-gpu2"
+# Internally: scripts/gpu_lease.sh acquire 1 --no-wait; timeout -k 2 172 .venv/bin/python -m experiments.expressivity_tasks.x47_xsa_attention.b1_bench
+# Archive transport: ~/sxgc/xsa/target/release/xsa search INDEX --patterns FROZEN_BATCH_FILE --hex --jsonl --max-occ 8 --corpus SOURCE (30s subprocess timeout)
+```
+
+Lease ledger: both A1 releases preceded B1. Single physical 0 each, never card 7, OMP=4. B1 owner PID/starttime 4189621/553135526, 4191123/553140694; creation→release 1795465367→1795465379 and 1795465419→1795465431; renewed heartbeat and rc=0 each. Ledger empty except `.lock` after both. B1 ≤26 card-s allowing endpoint rounding; A1 ≤28, **X47 ≤54/1800 card-s**. Pre-X47 program bound supplied as ≤6546 s, not independently re-audited. No training or additional card work authorized by this report.
+
+**Next decision:** before a backbone run, instrument the native locator inside a persistent worker on these same two keys (rank/search vs per-hit locate steps vs byte verification, preserve authorization and exact refusal). A persistent endpoint can amortize CLI open, but removing 160 ms does not remove a 1.2 s inner loop. Do not optimize H2D or the read kernel first.
