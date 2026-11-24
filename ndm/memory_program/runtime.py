@@ -319,7 +319,7 @@ class Frame:
         self.requests += len(keys)
         return reader, keys
 
-    def execute(self, inst, h, model, table=None):
+    def execute(self, inst, h, model, table=None, *, get=None):
         """Execute ONE already type-checked non-emit instruction, no candidate plan lookahead."""
         op, a = inst.op, inst.args
         r = self.reg
@@ -355,7 +355,7 @@ class Frame:
                 p.fields + (f,), tuple(row + (row[i] + row[j],) for row in p.keys), p.log_mass, p.value
             )
         if op == "SAVE":
-            v = model.write_values(h, p)
+            v = model.write_values(h, p) if get is None else model.write_values(h, p, get=get)
             out = Page(p.fields, p.keys, p.log_mass, v)
             self.cells[a[1]] = out
             return out
@@ -387,7 +387,7 @@ class Frame:
             if n * m > self.l.rows:
                 raise Refused("pair relation exceeds row budget")
             # All pairs under an explicit cap. Both bindings survive; no equality is asserted.
-            score = model.affinity(p, q, h)
+            score = model.affinity(p, q, h) if get is None else model.affinity(p, q, h, get=get)
             mass = (p.log_mass[:, None] + q.log_mass[None, :] + score).reshape(-1)
             values = model.merge(p.value.repeat_interleave(m, 0), q.value.repeat(n, 1), h)
             return Page(p.fields + q.fields, tuple(x + y for x in p.keys for y in q.keys), mass, values)

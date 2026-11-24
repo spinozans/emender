@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 from math import isfinite
+from time import perf_counter_ns
 
 import torch
 
@@ -45,11 +46,26 @@ class Views:
         return self.cache[id(p)]
 
 
-def predict_many(policy, sessions, hidden, base_logits, *, mode, replay, generator):
+def predict_many(
+    policy,
+    sessions,
+    hidden,
+    base_logits,
+    *,
+    mode,
+    replay,
+    generator,
+    planner=None,
+    on_lookup=None,
+    observer=None,
+):
     batch = len(sessions)
     if not batch or len({s.id for s in sessions}) != batch:
         raise ValueError("one distinct session per batch row")
-    if hidden.shape != (batch, policy.host.in_features) or base_logits.shape != (batch, 256):
+    if hidden.shape != (batch, policy.host.in_features) or base_logits.shape != (
+        batch,
+        256,
+    ):
         raise ValueError("host shape")
     if mode not in ("sample", "greedy"):
         raise ValueError("unknown policy mode")
@@ -59,13 +75,16 @@ def predict_many(policy, sessions, hidden, base_logits, *, mode, replay, generat
     views = [Views(policy) for s in sessions]
     traces = [[] for s in sessions]
     scores = [[] for s in sessions]
+    joint = hidden.new_zeros(batch) if planner is not None else None
+    record_page = getattr(policy, "record_page", None)  # optional fixed-trace diagnostic, not a policy input
     results = [None] * batch
+    chooser = policy if planner is None else planner
     active = list(range(batch))
     step = 0
     while active:
         last = [traces[i][-1].inst.op if traces[i] else None for i in active]
         status = [traces[i][-1].status if traces[i] else "start" for i in active]
-        hs = policy.rebuild(
+        hs = chooser.rebuild(
             [frames[i] for i in active], hidden[active], [views[i] for i in active], last, status, step
         )
         groups = defaultdict(dict)
@@ -75,12 +94,17 @@ def predict_many(policy, sessions, hidden, base_logits, *, mode, replay, generat
         if replay is not None and any(step >= len(replay[i]) for i in active):
             raise ValueError("replay did not emit")
         forced = None if replay is None else [replay[i][step] for i in active]
-        selected = policy.choose_many(
+        selected = chooser.choose_many(
             [frames[i] for i in active], hs, [views[i] for i in active], last, step, mode, forced, generator
         )
+        if joint is not None:
+            joint = joint.index_add(
+                0, torch.as_tensor(active, device=hidden.device), torch.stack([lp for _, lp in selected])
+            )
         for i, (inst, lp) in zip(active, selected, strict=True):
             f = frames[i]
-            scores[i].append(lp)
+            if joint is None:
+                scores[i].append(lp)
             instructions[i] = inst
             if inst.op == "LOOKUP":
                 try:
@@ -88,6 +112,8 @@ def predict_many(policy, sessions, hidden, base_logits, *, mode, replay, generat
                 except Refused as exc:
                     denied[i] = str(exc)
                     continue
+                if observer is not None:
+                    observer.request(f.s, step, inst, reader, f.l.rows, keys)
                 group = (reader, f.l.rows)
                 groups[group].update(dict.fromkeys(keys))
                 routes[i] = (group, keys)
@@ -95,11 +121,38 @@ def predict_many(policy, sessions, hidden, base_logits, *, mode, replay, generat
         # Issue ONLY sampled/greedy reads. Equal text in unrelated capabilities never coalesces.
         for (reader, cap), table in groups.items():
             keys = tuple(table)
+            if on_lookup is not None:
+                begin = perf_counter_ns()
             for pos in range(0, len(keys), reader.batch_limit):
                 chunk = keys[pos : pos + reader.batch_limit]
                 replies = reader.read_many(chunk, cap)
                 table.update(zip(chunk, replies, strict=True))
+            if on_lookup is not None and keys:
+                on_lookup(
+                    reader,
+                    begin,
+                    perf_counter_ns(),
+                    [
+                        (sessions[i].id, ks)
+                        for i, (group, ks) in routes.items()
+                        if group == (reader, cap) and ks
+                    ],
+                )
 
+        emitted = {}
+        if planner is not None:
+            ix = [k for k, i in enumerate(active) if instructions[i].op == "EMIT"]
+            if ix:
+                ids = [active[k] for k in ix]
+                emitted = dict(
+                    zip(
+                        ids,
+                        planner.emit_many(
+                            [frames[i] for i in ids], hs[ix], base_logits[ids], [instructions[i] for i in ids]
+                        ),
+                        strict=True,
+                    )
+                )
         remaining = []
         for i, h in zip(active, hs, strict=True):
             f = frames[i]
@@ -124,11 +177,13 @@ def predict_many(policy, sessions, hidden, base_logits, *, mode, replay, generat
             if inst.op == "EMIT":
                 if replay is not None and step + 1 != len(replay[i]):
                     raise ValueError("instructions after EMIT")
-                logp = policy.emit(inst, f, h, base_logits[i], get)
+                logp = policy.emit(inst, f, h, base_logits[i], get) if planner is None else emitted[i]
                 traces[i].append(Event(inst, "ok", 0, None, None, ()))
+                if observer is not None:
+                    observer.event(f.s, step, traces[i][-1], None, None)
                 results[i] = Decision(
                     logp,
-                    torch.stack(scores[i]).sum(),
+                    torch.stack(scores[i]).sum() if joint is None else joint[i],
                     tuple(traces[i]),
                     f.requests,
                     f.s.id,
@@ -140,9 +195,11 @@ def predict_many(policy, sessions, hidden, base_logits, *, mode, replay, generat
             try:
                 if i in denied:
                     raise Refused(denied[i])
-                p = f.execute(inst, h, policy, table)
+                p = f.execute(inst, h, policy, table, get=get if planner is not None else None)
                 reg = len(f.reg)
                 f.reg.append(p)
+                if record_page is not None:
+                    record_page(f.s, step, reg, p)
                 rows = len(p.keys)
                 if not rows:
                     status = "empty"
@@ -150,10 +207,14 @@ def predict_many(policy, sessions, hidden, base_logits, *, mode, replay, generat
                 # A refusal is observable, consumes the instruction, and creates NO result register.
                 status = "refused: " + str(exc)
             traces[i].append(Event(inst, status, rows, reg, binding, keys))
+            if observer is not None:
+                observer.event(f.s, step, traces[i][-1], p if reg is not None else None, table)
             remaining.append(i)
         active = remaining
         step += 1
     # Commit only after every row successfully emitted. A malformed provider is a hard error.
+    if planner is not None:
+        planner.commit(frames, views)
     for f in frames:
         f.s.cells = f.cells
         f.s.pending = True

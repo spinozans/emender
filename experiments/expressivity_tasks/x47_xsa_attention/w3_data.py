@@ -3,6 +3,7 @@ import argparse
 import gzip
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import struct
@@ -64,13 +65,35 @@ def getwindow(file,d):
 
 
 class Pages:
-    def __init__(self):
+    def __init__(self, *, pinned_fds=None):
+        start = time.perf_counter_ns()
         self.exe_sha=sha(EXE); require((OUT/'binary.sha').read_text().split()[0]==self.exe_sha,'native build mismatch')
         self.desc=ArchiveDescriptor('P100',json.loads((HERE/'b1_mounts.json').read_text())['P100'],NVME)
-        self.proc=subprocess.Popen([EXE,'branch-of',self.desc.index,'--workspace'],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+        self.attest_ns = time.perf_counter_ns() - start
+        self._start_workspace(pinned_fds)
+
+    def _start_workspace(self, pinned_fds):
+        # Both openers reach the same real native launch and protocol check. A retained
+        # descriptor never substitutes an old PID, header, root, or response pipe.
+        start = time.perf_counter_ns()
+        exe, index = EXE, self.desc.index
+        inherited = ()
+        if pinned_fds is not None:
+            exe_fd, index_fd = inherited = tuple(pinned_fds)
+            require(all(os.path.samestat(os.fstat(fd), path.stat()) for fd, path in zip(inherited, (exe, index), strict=True)), 'changed pinned workspace file')
+            exe, index = f'/proc/self/fd/{exe_fd}', f'/proc/self/fd/{index_fd}'
+        self.proc=subprocess.Popen([exe,'branch-of',index,'--workspace'],pass_fds=inherited,stdin=subprocess.PIPE,stdout=subprocess.PIPE)
         try:
-            head=self.recv(16); require(head[:8]==b'W3BP0001','m20 protocol')
-            self.root,self.nodes=struct.unpack('<II',head[8:]); require(0<self.root<=self.nodes==21707038,'wrong tree')
+            # Reject malformed external input as an admission error. Do not expose the
+            # historical benchmark assertion type or publish a partially opened worker.
+            head = self.proc.stdout.read(16)
+            if len(head) != 16 or head[:8] != b'W3BP0001':
+                raise ValueError('invalid m20 workspace header')
+            root, nodes = struct.unpack_from('<II', head, 8)
+            if not 0 < root <= nodes == 21707038:
+                raise ValueError('wrong m20 workspace tree')
+            self.root, self.nodes = root, nodes
+            self.workspace_ns = time.perf_counter_ns() - start
         except BaseException:
             self.close(); raise
 

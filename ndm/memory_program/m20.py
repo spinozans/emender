@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from collections import OrderedDict
 
+import numpy as np
+
 from .runtime import Unavailable, branch_reader
 
 
@@ -81,3 +83,51 @@ class MaterializedBranches:
 
     def reader(self, *, structural_end=False):
         return branch_reader(self.source, self.version, self.histograms, structural_end=structural_end)
+
+
+class TerminalBranches(MaterializedBranches):
+    """Depth-8 W3BP0001 transport: resolve one chosen literal on its own reset S frame.
+
+    Only the prefix diagonal matters. On a missing transition we MUST still inspect its
+    materialized parent's count to discriminate absent from positive-but-unmaterialized.
+    No cache of clients' raw strings; full rows use this one mount's existing bounded LRU.
+    """
+
+    def histograms(self, keys):
+        keys = tuple(keys)
+        if any(type(k) is not bytes for k in keys):
+            raise ValueError("literal bytes required")
+        plans = {}
+        for key in dict.fromkeys(keys):
+            node = self.pages.root
+            depth = 0
+            if key:
+                literal = key[:8]
+                ids = self.pages.suffix(literal)
+                if (
+                    not isinstance(ids, np.ndarray)
+                    or ids.shape != (len(literal), 8)
+                    or ids.dtype != np.dtype("<u4")
+                    or int(ids.max()) > self.pages.nodes
+                ):
+                    raise ValueError("invalid m20 suffix resolver frame")
+                for j, raw in enumerate(ids.diagonal()):
+                    child = int(raw)
+                    if child:
+                        if j != depth or child == self.pages.root:
+                            raise ValueError("inconsistent literal prefix path")
+                        node = child
+                        depth += 1
+            plans[key] = node, depth
+        rows = self._load([node for node, _ in plans.values()])
+        answers = {}
+        for key, (node, depth) in plans.items():
+            h, children = rows[node]
+            if depth == len(key):
+                answers[key] = h
+            else:
+                b = key[depth]
+                if children[b]:
+                    raise ValueError("missing transition contradicts materialized parent")
+                answers[key] = Unavailable("unmaterialized branch") if h[b] else (0,) * 257
+        return [answers[k] for k in keys]

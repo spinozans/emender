@@ -28,7 +28,9 @@ from .workbench_run import check_gpu_owner, dump, sha
 from .workbench_witness import digest_state, require
 
 
-def training_data():
+def training_data(n=4):
+    require(n in (4, 32), "only registered TRAIN batches")
+    ix = slice(4, 8) if n == 4 else slice(0, 32)
     receipts = HERE / "receipts/w3"
     manifest = json.loads((receipts / "train-pages.json").read_text())
     p = receipts / "panels.json"
@@ -48,12 +50,12 @@ def training_data():
     shard = manifest["shards"][0]
     path = OUT / "train" / shard["file"]
     require(sha(path) == shard["sha256"], "shard integrity")
-    selected = panel["panels"]["train"][4:8]
+    selected = panel["panels"]["train"][ix]
     windows = []
     with np.load(path, allow_pickle=False) as z, Path(source["path"]).open("rb") as f:
         raw = z["raw"]
         require(raw.shape == (32, 2049) and raw.dtype == np.uint8, "raw geometry")
-        for row, x in zip(selected, raw[4:8], strict=True):
+        for row, x in zip(selected, raw[ix], strict=True):
             w = getwindow(f, row)
             require(w == bytes(x) and row["offset"] >= 100_600_000_000, "window/source mismatch")
             windows.append(w[:129])
@@ -62,7 +64,11 @@ def training_data():
         windows,
         manifest,
         dict(
-            documents=selected, train_rows=[4, 5, 6, 7], panel=sha(p), manifest=MAN_SHA, shard=shard["sha256"]
+            documents=selected,
+            train_rows=list(range(ix.start, ix.stop)),
+            panel=sha(p),
+            manifest=MAN_SHA,
+            shard=shard["sha256"],
         ),
     )
 
@@ -90,10 +96,23 @@ class TimedPolicy(MemoryPolicy):
         return self.timed("emit", super().emit, *a)
 
 
-def measured(reader, stats):
+def measured(reader, stats, dispatch=None):
     tag = f"{reader.source}/{reader.operation}"
 
     def fetch(keys, cap):
+        if dispatch is not None:
+            dispatch.append(
+                (
+                    (
+                        reader.source,
+                        reader.version,
+                        reader.operation,
+                        reader.watermark() if reader.watermark else None,
+                    ),
+                    cap,
+                    keys,
+                )
+            )
         t = clock()
         rows = reader.read_many(keys, cap)
         s = stats[tag]
@@ -192,6 +211,74 @@ def activity(results):
     )
 
 
+def mount_batch(
+    stack,
+    model,
+    selected,
+    manifest,
+    stat,
+    live_wall,
+    limits,
+    progress,
+    dispatch=None,
+    *,
+    bank_type=MaterializedBranches,
+    pages_factory=Pages,
+):
+    pages = pages_factory()
+    stack.callback(pages.close)
+    require((pages.exe_sha, pages.desc.version) == (manifest["exe_sha"], manifest["mount"]), "mount identity")
+    bank = bank_type("P100", pages.desc.version, pages, scope="whole")
+    record, sessions, lives = bind_program_readers(
+        stack, model, selected, pages.desc, bank, stat, live_wall, limits, progress, dispatch
+    )
+    return pages, bank, record, sessions, lives
+
+
+def bind_program_readers(
+    stack, model, selected, desc, bank, stat, live_wall, limits, progress, dispatch=None
+):
+    """Fresh value encoder, positional worker and private live clients; no prior session or payload reuse."""
+    conf = json.loads((HERE / "b1_mounts.json").read_text())["P100"]
+
+    def encode_text(pieces):
+        return mean_byte_values(pieces, model.embed.weight)
+
+    record = ArchiveRecords(desc, conf["files"][1], scope="whole", encode=encode_text, branches=bank)
+    stack.callback(record.close)
+
+    def wrap(r):
+        return measured(r, stat, dispatch)
+
+    shared = [wrap(r) for r in (bank.reader(), *record.readers())]
+    sessions = []
+    lives = []
+    for j, row in enumerate(selected):
+        live = LiveRecords(row["doc"], row["start"], encode=encode_text)
+        stack.callback(live.close)
+        lives.append(live)
+
+        def advance(k, live=live, j=j):
+            t = clock()
+            live.advance(k)
+            live_wall["append_ns"] += clock() - t
+            scored = len(live.data) - 1
+            if j == len(selected) - 1 and scored and not scored % 32:
+                progress("sampling", len(selected) * scored)
+
+        sessions.append(
+            Session(
+                shared + [wrap(r) for r in live.readers()],
+                limits,
+                advance,
+                document=row["doc"],
+                start=row["start"],
+                session_id=live.id,
+            )
+        )
+    return record, sessions, lives
+
+
 def profile(run):
     require(
         os.environ.get("OMP_NUM_THREADS") == "4" and platform.node() == "lambda01", "registered host/threads"
@@ -226,44 +313,9 @@ def profile(run):
 
     progress("setup", 0)
     with ExitStack() as stack:
-        pages = Pages()
-        stack.callback(pages.close)
-        require(
-            (pages.exe_sha, pages.desc.version) == (manifest["exe_sha"], manifest["mount"]), "mount identity"
+        pages, bank, record, sessions, lives = mount_batch(
+            stack, model, selected, manifest, stat, live_wall, limits, progress
         )
-        bank = MaterializedBranches("P100", pages.desc.version, pages, scope="whole")
-        conf = json.loads((HERE / "b1_mounts.json").read_text())["P100"]
-        encode_text = lambda pieces: mean_byte_values(pieces, model.embed.weight)
-        record = ArchiveRecords(
-            pages.desc, conf["files"][1], scope="whole", encode=encode_text, branches=bank
-        )
-        stack.callback(record.close)
-        shared = [measured(r, stat) for r in (bank.reader(), *record.readers())]
-        sessions = []
-        lives = []
-        for j, row in enumerate(selected):
-            live = LiveRecords(row["doc"], row["start"], encode=encode_text)
-            stack.callback(live.close)
-            lives.append(live)
-
-            def advance(k, live=live, j=j):
-                t = clock()
-                live.advance(k)
-                live_wall["append_ns"] += clock() - t
-                scored = len(live.data) - 1
-                if j == 3 and scored and not scored % 32:
-                    progress("sampling", 4 * scored)
-
-            sessions.append(
-                Session(
-                    shared + [measured(r, stat) for r in live.readers()],
-                    limits,
-                    advance,
-                    document=row["doc"],
-                    start=row["start"],
-                    session_id=live.id,
-                )
-            )
         identity = dict(
             host=platform.node(),
             torch=str(torch.__version__),

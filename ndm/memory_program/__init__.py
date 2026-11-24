@@ -3,6 +3,7 @@
 from .machine import Decision, Event, episode_objective
 from .m20 import MaterializedBranches
 from .policy import MemoryPolicy
+from .packed import PackedMemoryPolicy
 from .training import BatchResult, teacher_force
 from .runtime import Field, Hit, Instruction, Limits, Reader, Session, Span, Unavailable, branch_reader
 
@@ -17,6 +18,7 @@ __all__ = [
     "Limits",
     "MaterializedBranches",
     "MemoryPolicy",
+    "PackedMemoryPolicy",
     "Reader",
     "Session",
     "Span",

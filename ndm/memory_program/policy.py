@@ -229,14 +229,15 @@ class MemoryPolicy(nn.Module):
     def merge(self, a, b, h):
         return a + b + self.fuse(torch.cat([a, b, h.expand(len(a), -1)], 1))
 
-    def affinity(self, p, q, h):
-        x = self.view(p).rows
-        y = self.view(q).rows
+    def affinity(self, p, q, h, *, get=None):
+        view = self.view if get is None else get
+        x = view(p).rows
+        y = view(q).rows
         left = self.pair_query(torch.cat([x, h.expand(len(x), -1)], 1))
         return (left @ self.pair_key(y).T).float() / math.sqrt(self.dim)
 
-    def write_values(self, h, page):
-        rows = self.view(page).rows
+    def write_values(self, h, page, *, get=None):
+        rows = (self.view if get is None else get)(page).rows
         return page.value + self.writer(torch.cat([rows, h.expand(len(rows), -1)], 1)).tanh()
 
     def emit(self, inst, frame, h, base, get):
@@ -257,9 +258,26 @@ class MemoryPolicy(nn.Module):
         mix = self.mix(torch.cat([h, read])).float().squeeze(0)
         return torch.logaddexp(F.logsigmoid(-mix) + neural, F.logsigmoid(mix) + log_mem)
 
-    def forward(self, sessions, hidden, base_logits, *, mode="greedy", replay=None, generator=None):
+    def forward(
+        self,
+        sessions,
+        hidden,
+        base_logits,
+        *,
+        mode="greedy",
+        replay=None,
+        generator=None,
+        observer=None,
+    ):
         from .machine import predict_many
 
         return predict_many(
-            self, sessions, hidden, base_logits, mode=mode, replay=replay, generator=generator
+            self,
+            sessions,
+            hidden,
+            base_logits,
+            mode=mode,
+            replay=replay,
+            generator=generator,
+            observer=observer,
         )

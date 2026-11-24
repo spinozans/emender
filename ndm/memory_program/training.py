@@ -26,9 +26,11 @@ def teacher_force(
     *,
     mode="sample",
     generator=None,
+    replay=None,
     key_price=0.0,
     instruction_price=0.0,
     baseline=0.0,
+    observer=None,
 ):
     """One verified raw-byte window and fresh session per document. No padding/cross-doc packing.
 
@@ -36,14 +38,30 @@ def teacher_force(
     mounting application is responsible for verifying document boundaries and source hashes.
     The backbone can be batched by input length; learned memory addresses CANNOT be prefilled
     that way. Baseline is a fixed pre-episode cost baseline here (e.g. from earlier batches).
+    mode='replay' executes an exact recorded trace for a parity/counterfactual check. It never
+    returns an on-policy training objective.
     """
     n = len(windows)
-    if mode not in ("sample", "greedy") or not n or len(sessions) != n or len({s.id for s in sessions}) != n:
+    if (
+        mode not in ("sample", "greedy", "replay")
+        or not n
+        or len(sessions) != n
+        or len({s.id for s in sessions}) != n
+    ):
         raise ValueError("invalid document batch")
     if any(s.visible or s.pending or any(p is not None for p in s.cells) for s in sessions):
         raise ValueError("fresh document sessions required")
     if any(not isinstance(w, bytes) or len(w) < 2 for w in windows):
         raise ValueError("window must contain raw inputs and targets")
+    if (mode == "replay") != (replay is not None) or (
+        replay is not None
+        and (
+            len(replay) != n
+            or any(len(trace) != len(w) - 1 for trace, w in zip(replay, windows, strict=True))
+        )
+    ):
+        raise ValueError("replay requires an exact per-document instruction trace for every target")
+    predict = policy.batch_runner() if hasattr(policy, "batch_runner") else policy
     device = policy.embed.weight.device
     by_length = defaultdict(list)
     hidden = {}
@@ -64,16 +82,23 @@ def teacher_force(
         s.observe(w[:1])
     for t in range(max(by_length)):
         ids = [i for i, w in enumerate(windows) if t + 1 < len(w)]
-        ds = policy(
+        ds = predict(
             [sessions[i] for i in ids],
             torch.stack([hidden[i][t] for i in ids]),
             torch.stack([logits[i][t] for i in ids]),
-            mode=mode,
+            mode="greedy" if replay is not None else mode,
             generator=generator,
+            **({"replay": [replay[i][t] for i in ids]} if replay is not None else {}),
+            **({"observer": observer} if observer is not None else {}),
         )
-        for i, d in zip(ids, ds, strict=True):
-            y = windows[i][t + 1]
-            losses[i].append(-d.log_probs[y])
+        ys = [windows[i][t + 1] for i in ids]
+        if hasattr(policy, "batch_runner"):
+            labels = torch.as_tensor(ys, device=device)
+            nll = -torch.stack([d.log_probs for d in ds]).gather(1, labels[:, None])[:, 0]
+        else:
+            nll = [-d.log_probs[y] for d, y in zip(ds, ys, strict=True)]
+        for i, d, y, loss in zip(ids, ds, ys, nll, strict=True):
+            losses[i].append(loss)
             traces[i].append(d)
             sessions[i].observe(bytes([y]))  # score first, advance transcript/live watermark second
     losses = [torch.stack(row) for row in losses]

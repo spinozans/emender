@@ -1,5 +1,6 @@
 """Trusted local whole-mount adapter. Callers own namespace admission, not native ACLs."""
 import json
+import os
 import struct
 import subprocess
 from time import perf_counter_ns as clock
@@ -39,11 +40,20 @@ class WorkerRegistry:
 
 
 class PositionalWorker:
-    def __init__(self, descriptor, executable):
+    def __init__(self, descriptor, executable, *, pinned_fds=None):
         self.desc = descriptor
         self.name, self.version = descriptor.name, descriptor.version
         t = clock()
-        self.proc = subprocess.Popen([executable,'positional-worker',descriptor.index,descriptor.text],
+        paths = (executable, descriptor.index, descriptor.text)
+        inherited = () if pinned_fds is None else tuple(pinned_fds)
+        if pinned_fds is not None:
+            if (len(inherited) != 3 or len(set(inherited)) != 3 or not all(
+                os.path.samestat(os.fstat(fd), os.stat(path)) for fd, path in zip(inherited, paths, strict=True)
+            )):
+                raise ValueError('wrong pinned positional inputs')
+            paths = tuple(f'/proc/self/fd/{fd}' for fd in inherited)
+        exe, index, text = paths
+        self.proc = subprocess.Popen([exe, 'positional-worker', index, text], pass_fds=inherited,
                                      stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         try:
             ready_line = self.proc.stdout.readline()

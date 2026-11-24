@@ -10,16 +10,17 @@ from .policy import ARITY
 from .runtime import Instruction, OPS
 
 
-def pick_many(scores, lengths, mode, forced, rng):
+def pick_many(scores, lengths, mode, forced, rng, *, already_masked=False):
     """Normalize each row over its valid prefix. One return to the host per dependent choice."""
     if scores.size(1) == 1:
         return [0] * len(lengths), scores[:, 0].float() * 0
-    length = torch.as_tensor(lengths, device=scores.device)
-    lp = (
-        scores.float()
-        .masked_fill(torch.arange(scores.size(1), device=scores.device) >= length[:, None], -torch.inf)
-        .log_softmax(1)
-    )
+    logits = scores.float()
+    if not already_masked:
+        length = torch.as_tensor(lengths, device=scores.device)
+        logits = logits.masked_fill(
+            torch.arange(scores.size(1), device=scores.device) >= length[:, None], -torch.inf
+        )
+    lp = logits.log_softmax(1)
     if forced is not None:
         js = forced
         idx = torch.as_tensor(js, device=lp.device)

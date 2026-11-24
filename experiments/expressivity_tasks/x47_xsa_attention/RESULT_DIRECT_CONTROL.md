@@ -1,0 +1,19 @@
+# T9: a direct-retrieval training control, 1.42× faster with the same questions grouped
+
+**The direct control qualified. Use grouped archive queries for this B32 CPU workload.** This model is neither the bare byte host nor P2 with an instruction forced at each byte. A 17,604-parameter head learns trust over the full-support host prediction, the longest usable P100 suffix histogram, this document's observed-follower histogram, and the latest follower of its longest supported nonempty suffix. There is no learned navigation, delayed neural write, positional walk or relation. Unlike the earlier fixed-weight serving `direct` bypass, the trust head trains. Unlike W3, it uses the retained 150M host features, not a C14 hidden state or a workspace of historical hidden/child features.
+
+| Fresh direct-head step on 4,096 TRAIN targets | Serial A / B | Grouped A / B |
+|---|---:|---:|
+| Wall to update after setup (s) | 4.210 / 4.089 | **2.895 / 2.947** |
+| Archive portion (s) | 3.204 / 3.063 | 1.902 / 1.917 |
+| Lifecycle inside worker (s) | 4.679 / 4.569 | 3.404 / 3.418 |
+| Full subprocess incl interpreter/attestation (s) | 13.148 / 12.844 | 11.642 / 11.896 |
+| Main + native core-s in measured region | 8.85 / 9.33 | 5.95 / 6.16 |
+| Physical histogram calls / submitted keys | 5,608 / 5,608 | 458 / 5,587 |
+| Native page RPCs / full rows returned | 31,178 / 31,178 | **2,322 / 31,321** |
+
+**Why it sped up:** the 32 clients still asked **5,608 logical questions per pass**. Each chooses its next, shorter suffix only after its current probe fails to supply a byte distribution. Batching those already-chosen questions avoided round trips, not row transfer: measured `R` request+response wire bytes **96,308,842 serial vs 96,605,574 grouped**. Mean grouped wall .704× serial; peak process high-water ratio 1.000 (1,276.8 MiB each, includes upstream startup costs, not a differential head allocation). Both passed the registered .90 and 1.20 gates. Cache was separately cold in each process, bounded to 256 pages. No disk/cache purge or end-to-end generation claim.
+
+**What was verified:** separate native suffix-ID/selected-histogram queries and literal local prefix scans agreed on 20 true frontiers. Across the four ABBA fresh processes all 32 per-document evidence hashes, all 256-byte vectors, gate weights, per-position losses, first adjoints, updated parameters and AdamW state matched bitwise. Three full comparisons checked 3,418,431 tensor elements. Each update followed 128 B32 scoring calls, score before append. Largest unit-mass error 3.58e−7. Of 5,608 probes, 1,506 were **unavailable** (not evidence of absence), six absent, zero END-only and 4,096 selected; END never votes. P100 depth eight on 2,904 positions. Latest nonempty local follower was available on 3,129. Local states consumed 4,128 observed bytes and made 20,160 causal count increments; all reset. Initial mixture TRAIN NLL 1.625099 is diagnostic only: **not** a held-out score or a matched-quality ranking against an already-updated P2, W3 or a bare host. No optimization of the direct recipe on validation data.
+
+[Implementation](../../../ndm/memory_program/direct.py) · [registration](DIRECT_CONTROL_PROTOCOL.md) `f67d6a0a3` · frozen `4f63ca2cb`, 114 CPU gates · [offline audit](receipts/memory-program-t9/verified.json). `proc_7a3c` rc=0 after ~59 s (50.844 s inside driver). **16,384 scored computations, 4,096 distinct TRAIN positions, four disposable one-step direct-head updates, zero P2/host updates, 0 card-s.** T4's historical feature production is not included in these CPU rates. X47 remains **≤1324/1800**, 476 s remaining. Only public receipts persisted, no query tables, features, numeric snapshots or weights in git. Recheck with `CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=4 .venv/bin/python -m experiments.expressivity_tasks.x47_xsa_attention.direct_control_verify`.

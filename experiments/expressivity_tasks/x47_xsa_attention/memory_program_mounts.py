@@ -35,12 +35,18 @@ class ArchiveRecords:
         try:
             self.f = self.stack.enter_context(desc.text.open("rb", buffering=0))
             self.verify()
-            self.worker = PositionalWorker(desc, EXE)
-            self.stack.callback(self.worker.close)
+            self._prepare_position()
         except BaseException:
             self.stack.close()
             raise
         self.values = SpanValues(desc.name, desc.version, self.bounds, self.read, scope=scope, encode=encode)
+
+    def _prepare_position(self):
+        self.worker = PositionalWorker(self.desc, EXE)
+        self.stack.callback(self.worker.close)
+
+    def _positions(self, unresolved):
+        return self.worker.request(unresolved)
 
     def verify(self):
         stat = os.fstat(self.f.fileno())
@@ -57,6 +63,17 @@ class ArchiveRecords:
             self.verify()
         finally:
             self.stack.close()
+
+    def _retire_owned(self):
+        """Last use by a revocable facade which never lent the raw reader/worker/descriptor."""
+        try:
+            self.close()
+        finally:
+            # SpanValues' bound methods point back to this adapter. Do not make a cyclic
+            # collection (or the lifetime of a tombstone) responsible for large CPU tables.
+            self.values = self.branches = self.desc = None
+            if self.worker is not None:
+                self.worker.desc = None
 
     def bounds(self, d):
         starts = self.desc.starts
@@ -90,7 +107,7 @@ class ArchiveRecords:
                     self.stats["certified_overcap"] += 1
         active = [i for i in active if out[i] is None]
         if active:
-            spans, rec = self.worker.request([keys[i] for i in active])
+            spans, rec = self._positions([keys[i] for i in active])
             self.stats["worker_batches"] += 1
             self.stats["worker_keys"] += len(active)
             self.stats["validated_ns"] += rec["validated_ns"]
@@ -133,15 +150,21 @@ class LiveRecords:
     """Exactly one open native document. Mirror only observed bytes for span values and validation."""
 
     def __init__(self, document, start, *, encode=None):
-        self.document, self.start = document, start
         self.native = Live()
+        self._bind(document, start, self.native.session_id, lambda: self.native.visible, encode)
+
+    def _bind(self, document, start, session_id, watermark, encode):
+        self.document, self.start = document, start
         self.data = bytearray()
         self.stats = Counter()
-        self.id = self.native.session_id
-        self.binding = dict(session_id=self.id, watermark=lambda: self.native.visible)
+        self.id = session_id
+        self.binding = dict(session_id=self.id, watermark=watermark)
         self.values = SpanValues(
             "tape", self.id, self.bounds, self.read, scope="whole", encode=encode, **self.binding
         )
+
+    def _query_native(self):
+        return self.native
 
     def close(self):
         self.native.close()
@@ -165,7 +188,7 @@ class LiveRecords:
         if not 0 < len(k) <= DEPTH:
             return Unavailable("live branch depth")
         self.stats["branch_rpcs"] += 1
-        return self.native.branch(k)
+        return self._query_native().branch(k)
 
     def locate(self, keys, cap):
         rows = []
@@ -182,7 +205,7 @@ class LiveRecords:
                     rows.append(Unavailable("live occurrence row budget"))
                     continue
             self.stats["locate_rpcs"] += 1
-            reply = self.native._rpc(f"locate {k.hex()} 0 {n} {limit}")
+            reply = self._query_native()._rpc(f"locate {k.hex()} 0 {n} {limit}")
             pos = reply["positions"]
             if not (
                 isinstance(pos, list)

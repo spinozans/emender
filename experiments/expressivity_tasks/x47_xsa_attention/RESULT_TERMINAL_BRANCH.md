@@ -1,0 +1,19 @@
+# T10: fetch the decisive m20 row for direct retrieval, not by default for the sampled program
+
+**The same archive question can have a much cheaper wire representation.** For short, chosen literal keys, [`TerminalBranches`](../../../ndm/memory_program/m20.py) sends the literal (at most eight bytes, on its own reset native `S` frame). Only the prefix diagonal is interpreted. A fully materialized key needs its terminal row. On a missing edge, the provider fetches the deepest materialized **parent** row: zero edge mass certifies absence; positive mass without a child means unavailable. For longer keys the ninth byte is tested at the depth-eight parent. END is separate. Only these decisive rows are fetched by `R`. No joined client texts, changed index, cached live replies, alternative-branch vote or native code change.
+
+| Per 4,096 targets | Grouped direct reference | Grouped direct terminal | Sampled P2 reference | Sampled P2 terminal |
+|---|---:|---:|---:|---:|
+| Actual `S` frames | 0 | 5,587 | 0 | 907 |
+| Actual `R` frames / rows | 2,322 / 31,321 | 455 / 4,731 | 1,276 / 2,168 | 255 / 559 |
+| Wire incl all keys, replies, headers and opening handshake | 96.606 MB | **15.924 MB** | 6.693 MB | **1.843 MB** |
+| Complete wall to update after setup | 2.911 / 2.867 s | **1.832 / 1.830 s** | 11.225 s | 11.474 s |
+| m20 process peak RSS (worst) | 921.5 MiB | 927.0 MiB | 358.6 MiB | **563.8 MiB** |
+
+For direct, the sum of `S` and `R` **frame counts increased**, but much less data crossed the pipe and far fewer full count/child rows were unpacked in Python. Archive wall fell from 1.867–1.884 to .810–.820 s. Mean whole update wall **.634×**, wire **.165×**, worst main/native RSS ratios 1.000/1.006. Pass: prefer this optional supplier for the tested T9 grouped direct control. Interpreter-inclusive subprocesses were 11.79–11.94 vs 10.69–11.14 s; this is not a 1.58× fresh-process speedup or a generated-byte service measurement.
+
+For sampled P2, semantic/update parity also passed. The sampled policy still submitted 2,854 logical keys and incurred 99,152 actual positional LF steps; no walk was subtracted. But cutting the m20 bytes did not cut total wall (terminal/reference **1.022×**, one pair), and worker peak RSS ratio **1.572 > 1.20**. The native suffix resolver traverses the mapped trie and maintains its bounded transition cache. We did not isolate why its resident set increased; do not attribute the increase to one allocation or call it a leak. **Leave the sampled provider on page traversal.** Small-wire or small-parent RSS alone would miss this veto.
+
+**Evidence.** 133 distinct natural/special/long keys compared cold and warm: complete 257-bin rows, exact empties and unavailable statuses agreed. Full direct predictions, gate weights, per-doc logical evidence, gradients, AdamW state and updated parameters matched T9. Both fresh sampled passes matched all T5 strict checks, per-doc executed actions/operands, native dispatch and first adjoints. Four in-family fresh reference contrasts compared 5,627,088 tensor elements with zero differing bits. Six ordinary one-step runs on **4,096 distinct TRAIN positions** (24,576 target computations, four direct steps, two full-program steps, zero host steps). **0 card-s**, X47 still **≤1324/1800**, 476 s remain. No quality test, 2B run or serving promotion. `proc_2ab7` rc=0 after ~98 s; 89.50 s inside driver.
+
+[Protocol](TERMINAL_BRANCH_PROTOCOL.md) `a18668eb8`, gated `0183ef035`, 120 CPU tests. [Wire and price audit](receipts/memory-program-t10/verified.json) · [oracle](receipts/memory-program-t10/oracle.json). Recheck: `CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=4 .venv/bin/python -m experiments.expressivity_tasks.x47_xsa_attention.terminal_branch_verify`. Only public work/hashes/costs, not raw tensors, query traces or weights, retained in git.
