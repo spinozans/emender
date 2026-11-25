@@ -28,7 +28,17 @@ def train(job):
     return train_admitted(job, enter(job), progress, binding)
 
 
-def train_admitted(job, ctx, progress, bind_fn, check_birth=None, check_first=None):
+def train_admitted(
+    job,
+    ctx,
+    progress,
+    bind_fn,
+    check_birth=None,
+    check_first=None,
+    *,
+    stream_factory=None,
+    origin=None,
+):
     d, ref, t0 = ctx["folder"], ctx["ref"], ctx["t0"]
     check(job.kind == "train", "not a TRAIN job")
     arm, seed = job.arms, job.seed
@@ -37,8 +47,8 @@ def train_admitted(job, ctx, progress, bind_fn, check_birth=None, check_first=No
         return (monotonic_ns() - t0) * 1e-9
 
     c0 = cpu_seconds()
-    stream = TrainStream()
-    host, head = cpu_origin(seed, arm)
+    stream = (TrainStream if stream_factory is None else stream_factory)()
+    host, head = (cpu_origin if origin is None else origin)(seed, arm)
     birth = dict(
         host=state_digest(host.state_dict()),
         literal=state_digest(getattr(head, "literal", head).state_dict()),

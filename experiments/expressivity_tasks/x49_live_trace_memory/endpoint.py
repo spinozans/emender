@@ -11,6 +11,7 @@ from ..x48_muon_continuation.data import check, sha, write_json
 from ..x48_muon_continuation.train import flush_dir
 from .literal import HORIZONS
 from .trace import TraceHead
+from .write_head import WriteHead
 
 
 def state_digest(obj):
@@ -85,17 +86,45 @@ def sync(device):
         torch.cuda.synchronize(device)
 
 
+def short_cells(arm, full):
+    check(
+        arm in ("B", "P", "L") and type(full) is bool,
+        "unknown short predictor/endpoint",
+    )
+    if not full:
+        return [(4096, "none")]
+    return (
+        [(h, "none") for h in HORIZONS]
+        + [(4096, "literal")]
+        + ([(4096, "inner")] if arm == "L" else [])
+    )
+
+
 @torch.inference_mode()
-def score_window(host, head, word, *, arm, seed, document, width=256, stratify=False):
+def score_window(
+    host,
+    head,
+    word,
+    *,
+    arm,
+    seed,
+    document,
+    width=256,
+    stratify=False,
+    short_full_dose=None,
+):
     """One source, frozen weights. Full prefill ONCE. Common visit=0, independent memory horizons.
 
     Returns per-document aggregate sums/work/timing, not activations, targets or scratch records.
     This kernel is not authority to open evaluation text. No host state is returned or kept.
     """
+    short = short_full_dose is not None
     check(
         type(word) is bytes
-        and len(word) == 4097
-        and arm in ("A", "B", "F", "C")
+        and (2 <= len(word) <= 4096 if short else len(word) == 4097)
+        and (arm in ("B", "P", "L") if short else arm in ("A", "B", "F", "C"))
+        and isinstance(head, WriteHead) == (arm in ("P", "L"))
+        and (not isinstance(head, WriteHead) or head.arm == arm)
         and not host.training
         and not head.training
         and isinstance(head, TraceHead) == (arm in ("F", "C"))
@@ -126,13 +155,28 @@ def score_window(host, head, word, *, arm, seed, document, width=256, stratify=F
         cells.append((4096, "literal"))
     if arm in ("F", "C"):
         cells.append((4096, "trace"))
+    if short:
+        cells = short_cells(arm, short_full_dose)
     rows = []
     for horizon, sham in cells:
         tic = perf_counter()
         work = {}
         ages = {} if stratify else None
-        inspect = horizon == 4096 and arm != "A"
-        if isinstance(head, TraceHead):
+        inspect = horizon == 4096 and arm != "A" and short_full_dose is not False
+        if isinstance(head, WriteHead):
+            lp = head(
+                input_bytes,
+                h,
+                z,
+                mode=arm,
+                horizon=horizon,
+                inner_sham=sham == "inner",
+                outer_sham=sham == "literal",
+                inspect_rotation=inspect,
+                work=work,
+                age_out=ages,
+            )
+        elif isinstance(head, TraceHead):
             lp = head(
                 input_bytes,
                 h,

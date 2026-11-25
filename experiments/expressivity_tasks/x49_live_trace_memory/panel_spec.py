@@ -56,18 +56,19 @@ def binding(ref, arm, seed):
     )
 
 
-def choose(history, budget):
+def choose(history, budget, *, shared_s=SHARED_S):
+    check(math.isfinite(shared_s) and shared_s >= 0, "invalid shared preparation")
     check(
         [m["step"] for m in history] == list(range(32, 1025, 32))
         and all(math.isfinite(m["wall_s"]) and m["wall_s"] > 0 for m in history)
         and all(a["wall_s"] < b["wall_s"] for a, b in zip(history, history[1:])),
         "invalid milestone clock",
     )
-    admitted = [x for x in history if x["wall_s"] + SHARED_S <= budget]
+    admitted = [x for x in history if x["wall_s"] + shared_s <= budget]
     if not admitted:
         return None  # inconclusive, never invent an earlier endpoint
     m = admitted[-1]
-    wall = m["wall_s"] + SHARED_S
+    wall = m["wall_s"] + shared_s
     return dict(
         step=m["step"],
         targets=m["step"] * T,
@@ -77,7 +78,7 @@ def choose(history, budget):
     )
 
 
-def common_wall(runs, *, pairs=PAIRS, name=training):
+def common_wall(runs, *, pairs=PAIRS, name=training, shared_s=SHARED_S):
     out = {}
     for cand, control in pairs:
         pair = cand + ":" + control
@@ -92,8 +93,11 @@ def common_wall(runs, *, pairs=PAIRS, name=training):
                 ),
                 "terminal wall predates checkpoint",
             )
-            budget = min(t["wall_s"] for t in selected.values()) + SHARED_S
-            picks = {k: choose(o["milestones"], budget) for k, o in selected.items()}
+            budget = min(t["wall_s"] for t in selected.values()) + shared_s
+            picks = {
+                k: choose(o["milestones"], budget, shared_s=shared_s)
+                for k, o in selected.items()
+            }
             out[pair][str(seed)] = dict(
                 budget_s=budget,
                 selected=picks,

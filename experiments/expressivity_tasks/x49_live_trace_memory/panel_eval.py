@@ -52,6 +52,32 @@ def checked_eval_window(raw, row, split):
     return w.inputs + w.targets[-1:]
 
 
+def checked_short_document(raw, row):
+    check(
+        row["split"] == "final_test"
+        and row["start"] == 0
+        and row["doc"] == row["offset"]
+        and 2 <= len(raw) == row["length"] <= T
+        and int(row["sha256"], 16) % 100 == 1,
+        "not a registered short final document",
+    )
+    windows = DocumentWindows(T).windows(
+        raw,
+        dict(source_index=row["doc"], split="valid", sha256=row["sha256"]),
+        split="valid",
+    )
+    w = next(windows)
+    check(
+        next(windows, None) is None
+        and w.document == row["doc"]
+        and w.start == 0
+        and w.inputs == raw[:-1]
+        and w.targets == raw[1:],
+        "wrong short shift or truncated tail",
+    )
+    return raw
+
+
 def _v2_descriptor(job, frozen):
     from .panel import licensed_split
 
@@ -90,7 +116,11 @@ def _v2_descriptor(job, frozen):
 
 def _documents(job, frozen):
     """This is the only panel raw source open: accept no caller-selected rows or paths."""
-    if job.name == "r-final":
+    if job.name == "w-final":
+        from .write_panel import fresh_descriptor
+
+        folder, src, rows = fresh_descriptor(job, frozen)
+    elif job.name == "r-final":
         from .relative_panel import fresh_descriptor
 
         folder, src, rows = fresh_descriptor(job, frozen)
@@ -114,8 +144,11 @@ def _documents(job, frozen):
     with open(src["path"], "rb", buffering=0) as f:
         verify(f)
         for row in rows:
-            w = checked_eval_window(
-                os.pread(f.fileno(), row["length"], row["offset"]), row, split
+            raw = os.pread(f.fileno(), row["length"], row["offset"])
+            w = (
+                checked_short_document(raw, row)
+                if job.name == "w-final"
+                else checked_eval_window(raw, row, split)
             )
             windows.append((row["doc"], row["sha256"], w))
             nread += row["length"]
@@ -160,7 +193,7 @@ def evaluate(job):
     return evaluate_admitted(job, enter(job), _documents, progress, resolve)
 
 
-def evaluate_admitted(job, ctx, documents, progress, resolve):
+def evaluate_admitted(job, ctx, documents, progress, resolve, *, origin=None):
     d = ctx["folder"]
     f = d / "frozen.json"
     start = load(d / "start.json")
@@ -189,6 +222,7 @@ def evaluate_admitted(job, ctx, documents, progress, resolve):
         ),
     )
     n = 0
+    total_targets = 0
     endpoint_receipts = {}
     for key, e in sorted(plan["endpoints"].items()):
         k, s, i = e["arm"], e["seed"], e["step"]
@@ -204,7 +238,7 @@ def evaluate_admitted(job, ctx, documents, progress, resolve):
             p.stat().st_size == e["bytes"] and sha(p) == e["sha256"],
             "weights changed since freeze",
         )
-        host, head = cpu_origin(s, k)
+        host, head = (cpu_origin if origin is None else origin)(s, k)
         ck = torch.load(p, map_location="cpu", mmap=True, weights_only=True)
         check(
             set(ck) == {"binding", "step", "host", "head"}
@@ -226,11 +260,19 @@ def evaluate_admitted(job, ctx, documents, progress, resolve):
         log.touch(mode=0o600, exist_ok=False)
         for doc, h, w in windows:
             data = score_window(
-                host, head, w, arm=inference_arm, seed=s, document=doc, stratify=True
+                host,
+                head,
+                w,
+                arm=inference_arm,
+                seed=s,
+                document=doc,
+                stratify=True,
+                **({"short_full_dose": i == STEPS} if job.name == "w-final" else {}),
             )
             append(log, dict(document_sha=h, **data))
             n += 1
-            progress(d, n, n * T)
+            total_targets += len(w) - 1
+            progress(d, n, total_targets)
         endpoint_receipts[key] = dict(
             scores_sha=sha(log),
             checkpoint_sha=e["sha256"],
@@ -239,11 +281,20 @@ def evaluate_admitted(job, ctx, documents, progress, resolve):
         )
         del host, head
         torch.cuda.empty_cache()
-    check(n == plan["units"], "incomplete frozen split")
+    check(
+        n == plan["units"]
+        and total_targets
+        == (
+            plan["targets_per_endpoint"] * len(endpoint_receipts)
+            if job.name == "w-final"
+            else n * T
+        ),
+        "incomplete frozen split",
+    )
     return dict(
         kind=job.kind,
         units=n,
-        targets=n * T,
+        targets=total_targets,
         freeze_sha=sha(f),
         stream_sha=sha(d / "stream.json"),
         endpoints=endpoint_receipts,

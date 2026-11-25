@@ -4,7 +4,9 @@ set -euo pipefail
 umask 077
 cd "$(git rev-parse --show-toplevel)"
 j=${1:?job}; cap=${2:?cap}; [[ $cap =~ ^[0-9]+$ ]]; py=$PWD/.venv/bin/python
-if [[ $j =~ ^(R-490[123]|r-final)$ ]]; then
+if [[ $j =~ ^(w[BPL]-490[123]|w-final)$ ]]; then
+  d=output/x49-live/write-panel-1/$j; m=experiments.expressivity_tasks.x49_live_trace_memory.write_run
+elif [[ $j =~ ^(R-490[123]|r-final)$ ]]; then
   d=output/x49-live/relative-panel-1/$j; m=experiments.expressivity_tasks.x49_live_trace_memory.relative_run
 else
   [[ $j =~ ^([ABFC]-490[123]|cal-(AB|FC)|final)$ ]]; d=output/x49-live/natural-panel-v2/$j; m=experiments.expressivity_tasks.x49_live_trace_memory.panel

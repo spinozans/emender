@@ -347,12 +347,15 @@ def dispatch_one(job, root, ref, freeze):
     )
 
 
-def witness(job, *, root=None):
+def witness(job, *, root=None, targets_for=None):
     d = (ROOT if root is None else root) / job.name
     start = load(d / "start.json")
     la = load(d / "launch.json")
     pid = la["pid"]
     birth = la["start"]
+    expected_targets = (
+        (lambda n: n * T) if targets_for is None else targets_for(job, d, start)
+    )
     last = 0
     renewed = False
     while not (d / "released").exists():
@@ -385,7 +388,7 @@ def witness(job, *, root=None):
                         )
                         == (pid, birth, i["gpu"], "1", "1")
                         and n <= start["units"]
-                        and prog["scored_targets"] == n * T,
+                        and prog["scored_targets"] == expected_targets(n),
                         "foreign progress/owner",
                     )
                     if (
@@ -421,8 +424,10 @@ def witness(job, *, root=None):
             and (d / "complete.json").is_file()
             and not (d / "watch-ack").exists()
         ):
+            term = load(d / "complete.json")
             check(
-                load(d / "complete.json")["units"] == last, "terminal exposure mismatch"
+                term["units"] == last and term["targets"] == expected_targets(last),
+                "terminal exposure mismatch",
             )
             (d / "watch-ack").write_text(
                 "renewal and terminal actual work independently observed\n"
@@ -501,6 +506,14 @@ def partial(job, *, root=None):
                 complete_recovery_step=cursor, complete_recovery_sha=ck["sha256"]
             )
         out["known_uncheckpointed_updates"] = max(0, last - cursor)
+    else:
+        # Record the raw-access boundary and the last acknowledged real work; a partial
+        # is not a license to rerun even an already-open, not-yet-scored final.
+        out["source_open_attempted"] = (d / "source-open-attempted").exists()
+        out["stream_prepared"] = (d / "stream.json").is_file()
+        out["last_progress"] = (
+            load(d / "progress.json") if (d / "progress.json").is_file() else None
+        )
     return out
 
 
@@ -511,7 +524,7 @@ def drive():
     run_schedule(ROOT, authority(), JOBS, MOD, TOTAL, finish)
 
 
-def run_schedule(root, ref, jobs, mod, total, finish):
+def run_schedule(root, ref, jobs, mod, total, finish, *, targets_for=None):
     info = load(root / "driver.json")
     check(
         os.getppid() == 1
@@ -526,7 +539,7 @@ def run_schedule(root, ref, jobs, mod, total, finish):
             check(not ticket.exists(), "job already ticketed")
             write_json(ticket, dict(job=job.name, ref=ref, t0=time.monotonic_ns()))
             subprocess.run([PY, "-m", mod, "one", "--job", job.name], check=True)
-            charges[job.name] = witness(job, root=root)
+            charges[job.name] = witness(job, root=root, targets_for=targets_for)
         check(
             sum(c["upper_card_s"] for c in charges.values()) <= total, "panel over cap"
         )

@@ -93,6 +93,9 @@ def contrasts(table, wall):
 
 
 def read_stage(root, name, rows, *, job=None):
+    """Closed receipts only. Fixed-length legacy tables store means; W tables store NLL SUMS for ratio inference."""
+    short = name == "w-final"
+    total_targets = sum(r["length"] - 1 for r in rows) if short else len(rows) * T
     d = root / name
     p = load(d / "frozen.json")
     c = load(d / "complete.json")
@@ -114,6 +117,18 @@ def read_stage(root, name, rows, *, job=None):
         "stage not complete and released",
     )
     check(set(c["endpoints"]) == set(p["endpoints"]), "missing evaluation endpoint")
+    if short:
+        check(
+            p["targets_per_endpoint"] == total_targets
+            and c["targets"] == total_targets * len(p["endpoints"])
+            and all(
+                2 <= r["length"] <= 4096
+                and r["split"] == "final_test"
+                and r["start"] == 0
+                for r in rows
+            ),
+            "incorrect short-document lengths",
+        )
     table = {}
     stats = {}
     for key, endpoint in p["endpoints"].items():
@@ -136,12 +151,18 @@ def read_stage(root, name, rows, *, job=None):
             + ([(T, "literal")] if arm != "A" else [])
             + ([(T, "trace")] if arm in ("F", "C", "R") else [])
         )
+        length_stats = {}
+        if short:
+            from .endpoint import short_cells
+
+            cells = short_cells(arm, endpoint["step"] == STEPS)
         for row, line in zip(rows, f.read_text().splitlines(), strict=True):
+            count = row["length"] - 1 if short else T
             obj = json.loads(line)
             check(
                 row["sha256"] == obj["document_sha"]
                 and obj["host_prefills"] == 1
-                and obj["host_tokens"] == T
+                and obj["host_tokens"] == count
                 and [(x["horizon"], x["sham"]) for x in obj["cells"]] == cells,
                 "wrong target/endpoint pairing",
             )
@@ -151,12 +172,31 @@ def read_stage(root, name, rows, *, job=None):
                 v = x["nll_sum"]
                 w = x["work"]
                 check(
-                    x["targets"] == T
+                    x["targets"] == count
                     and 0 <= v < float("inf")
-                    and w["literal_hits"] + w["literal_misses"] == T,
+                    and w["literal_hits"] + w["literal_misses"] == count,
                     "wrong eval denominator",
                 )
-                scores.setdefault(cell, []).append(v / T)
+                scores.setdefault(cell, []).append(v if short else v / T)
+                if short:
+                    band = (
+                        "1_to_15"
+                        if count < 16
+                        else "16_to_127"
+                        if count < 128
+                        else "128_to_1023"
+                        if count < 1024
+                        else "1024_to_4095"
+                    )
+                    length_stats.setdefault(cell, {}).setdefault(
+                        band, Counter()
+                    ).update(
+                        documents=1,
+                        targets=count,
+                        nll_sum=v,
+                        double_hit_documents=int(w.get("linked_uses", 0) > 0),
+                        literal_hit_documents=int(w["literal_hits"] > 0),
+                    )
                 work.setdefault(cell, Counter()).update(w)
                 head_s[cell] += x["head_score_s"]
                 ds = strata.setdefault(cell, {})
@@ -165,13 +205,15 @@ def read_stage(root, name, rows, *, job=None):
                     == (
                         {"literal", "private"}
                         if arm in ("F", "C", "R")
+                        else {"literal", "linked"}
+                        if arm in ("P", "L")
                         else {"literal"}
                     ),
                     "missing age strata",
                 )
                 for src, groups in x["strata"].items():
                     check(
-                        sum(y["targets"] for y in groups.values()) == T
+                        sum(y["targets"] for y in groups.values()) == count
                         and isclose(
                             sum(y["nll_sum"] for y in groups.values()),
                             v,
@@ -189,8 +231,13 @@ def read_stage(root, name, rows, *, job=None):
             decode_diagnostic=r["decode_probe"],
             cells={
                 str(h) + ":" + sh: dict(
-                    all_byte_nll=float(table[key][h, sh].mean()),
-                    targets=len(rows) * T,
+                    all_byte_nll=float(
+                        table[key][h, sh].sum() / total_targets
+                        if short
+                        else table[key][h, sh].mean()
+                    ),
+                    targets=total_targets,
+                    **({"by_document_length": length_stats[h, sh]} if short else {}),
                     work=work[h, sh],
                     strata=strata[h, sh],
                     head_wall_s=head_s[h, sh],

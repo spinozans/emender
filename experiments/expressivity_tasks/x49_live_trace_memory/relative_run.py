@@ -2,18 +2,15 @@
 
 from __future__ import annotations
 
-import argparse
 from functools import partial
 import json
 import os
 import re
-import shutil
 import subprocess
 import time
 
 from ..x48_muon_continuation.data import ROOT as REPO, check, load, sha, write_json
-from ..x48_muon_continuation.lease import launch
-from . import panel as p, relative_panel as r
+from . import followup_loop as loop, panel as p, relative_panel as r
 from .meter import HERE, MODULE, PY
 from .panels import OUT
 from .relative_data import BASE, SPEC, RESERVATION, metadata
@@ -135,30 +132,8 @@ def authority():
     return ref
 
 
-def pre(job):
-    ref = authority()
-    p.prior(job, root=r.ROOT, jobs=r.JOBS, total=r.TOTAL)
-    return ref
-
-
 def admit(job):
-    ref = pre(job)
-    d = r.ROOT / job.name
-    start = load(d / "start.json")
-    ticket = load(r.ROOT / (job.name + ".ticket.json"))
-    check(
-        ticket["job"] == job.name
-        and ticket["ref"] == ref
-        and ticket["t0"] == start["t0"]
-        and start["kind"] == job.kind
-        and start["cap_s"] == job.cap
-        and start["ref"] == ref
-        and start["name"] == job.name
-        and not (d / "released").exists()
-        and not (r.ROOT / "stop.json").exists(),
-        "unlicensed or closed R job",
-    )
-    return d, ref, start
+    return loop.admit(job, r, authority)
 
 
 def inside(job):
@@ -179,71 +154,11 @@ def inside(job):
         )
     else:
         out = evaluate_admitted(job, ctx, _documents, progress, r.resolve)
-    write_json(d / "complete.json", out)
-    for _ in range(40):
-        if (d / "watch-ack").is_file():
-            return
-        time.sleep(0.2)
-    raise RuntimeError("no independent R completion acknowledgment")
+    loop.complete(d, out)
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument(
-        "phase",
-        choices=[
-            "qualify",
-            "check",
-            "launch",
-            "observe",
-            "drive",
-            "one",
-            "prelease",
-            "inside",
-        ],
-    )
-    ap.add_argument("--job", choices=list(r.JOBS))
-    a = ap.parse_args()
-    os.umask(0o077)
-    os.chdir(REPO)
-    job = r.JOBS.get(a.job)
-    check(
-        (job is not None) == (a.phase in ("one", "prelease", "inside")),
-        "invalid R job selector",
-    )
-    if a.phase == "inside":
-        return inside(job)
-    p.cpu()
-    if a.phase == "qualify":
-        print(json.dumps(qualification()))
-        return
-    if a.phase == "observe":
-        p.observe(r.ROOT, r.JOBS)
-        return
-    if a.phase == "prelease":
-        admit(job)
-        print(job.cap)
-        return
-    if a.phase == "one":
-        p.dispatch_one(job, r.ROOT, pre(job), r.freeze)
-        return
-    ref = authority()
-    if a.phase == "drive":
-        for _ in range(50):
-            if os.getppid() == 1 and (r.ROOT / "driver.json").is_file():
-                break
-            time.sleep(0.1)
-        p.run_schedule(r.ROOT, ref, r.JOBS, MOD, r.TOTAL, r.finish)
-        return
-    check(
-        not r.ROOT.exists() and shutil.disk_usage(OUT).free >= 80 << 30,
-        "R already admitted or insufficient disk",
-    )
-    if a.phase == "check":
-        print(ref)
-        return
-    r.ROOT.mkdir(mode=0o700)
-    print(launch([PY, "-m", MOD, "drive"], r.ROOT / "console", r.ROOT / "driver.json"))
+    loop.cli(r, MOD, authority, qualification, inside, 80)
 
 
 if __name__ == "__main__":

@@ -14,6 +14,7 @@ from ..x48_muon_continuation.data import ROOT, check, sha
 from ..x48_muon_continuation.learning import hybrid, factor
 from .panels import SEEDS, T
 from .values import LiveValueHead
+from .write_head import WriteHead
 from .trace import TraceHead, objective as trace_objective
 
 ORIGIN = "cf7337b520958056a648e4f78a939ded3ed5a4d1bc8f871d8a900d64464b1357"
@@ -45,6 +46,9 @@ def head_groups(model):
             aux |= policy
         else:
             frozen = policy
+    if isinstance(model, WriteHead):
+        mu = {"literal." + n for n in mu} | {"inner.weight", "out.weight"}
+        aux = {"literal." + n for n in aux} | {"inner.bias", "out.bias"}
     params = dict(model.named_parameters())
     check(
         set(params) == mu | aux | frozen and not mu & aux,
@@ -135,7 +139,8 @@ def step(host, head, opts, word, *, mode, index, width=256, seed=None, document=
     check(
         type(word) is bytes
         and 2 <= len(word) <= T + 1
-        and mode in ("A", "B", "F", "C", "R")
+        and mode in ("A", "B", "F", "C", "R", "P", "L")
+        and isinstance(head, WriteHead) == (mode in ("P", "L"))
         and isinstance(head, TraceHead) == (mode in ("F", "C", "R"))
         and (not isinstance(head, TraceHead) or head.learned == (mode != "F"))
         and type(index) is int

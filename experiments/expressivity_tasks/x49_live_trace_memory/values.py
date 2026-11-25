@@ -84,6 +84,10 @@ class LiveValueHead(nn.Module):
             payload = self.writer(torch.cat((hidden[query], code), -1)).tanh()
         else:
             payload = written[donor]
+        return self.answer(base, hidden, f, query, code, payload)
+
+    def answer(self, base, hidden, f, query, code, payload):
+        """The same outer B readout for all matched writer variants."""
         features = torch.cat(
             (hidden[query], payload, code, f[0][query], f[1][query, 1]), -1
         )
