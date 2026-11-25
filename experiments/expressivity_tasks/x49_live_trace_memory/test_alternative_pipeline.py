@@ -1,4 +1,4 @@
-"""V one-shot lifecycle and negative gates. Invented temporary raw file; no natural text or CUDA."""
+"""Single-use post-U lifecycles and negative gates on invented data only."""
 
 from copy import deepcopy
 from hashlib import sha256
@@ -18,7 +18,9 @@ from experiments.expressivity_tasks.x49_live_trace_memory import (
     alternative_run as run,
     alternative_analysis as ana,
     alternative_report as report,
-    alternative_fit as fit,
+    fit_phase,
+    literal_mark_report,
+    local_u,
 )
 from experiments.expressivity_tasks.x49_live_trace_memory.panels import SEEDS, T, select
 from experiments.expressivity_tasks.x49_live_trace_memory.test_surprise_pipeline import (
@@ -29,14 +31,17 @@ from experiments.expressivity_tasks.x49_live_trace_memory.test_surprise_pipeline
 )
 
 
-def fake(tmp, mp):
+def fake(tmp, mp, name="V"):
+    data, p, run = fit_phase.incumbent(name)
     mp.setenv("OPENBLAS_NUM_THREADS", "1")
-    book = invented(tmp, mp, data=data, p=p, run=run, schema="x49-v-native-train")
+    book = invented(
+        tmp, mp, data=data, p=p, run=run, schema=f"x49-{name.lower()}-native-train"
+    )
     calls = fake_endpoints(tmp, mp)
-    original = p.local_u.contract
+    original = local_u.contract
     beta = {s: original(s)[1] for s in SEEDS}
     mp.setattr(
-        p.local_u, "contract", lambda s: (sha256(str(s).encode()).hexdigest(), beta[s])
+        local_u, "contract", lambda s: (sha256(str(s).encode()).hexdigest(), beta[s])
     )
     return book, calls
 
@@ -74,10 +79,12 @@ def test_next_full_train_block_excludes_both_u_roles_and_short_final():
         data.next_block(records, pre, dict(roles, probe=rank[6:9]), short, 6, end)
 
 
+@pytest.mark.parametrize("name", ["V", "LS"])
 def test_prepare_is_fit_only_reader_rejects_other_study_and_early_probe(
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch, name
 ):
-    book, _ = fake(tmp_path, monkeypatch)
+    data, p, _ = fit_phase.incumbent(name)
+    book, _ = fake(tmp_path, monkeypatch, name)
     pre = os.pread
     reads = []
 
@@ -93,11 +100,11 @@ def test_prepare_is_fit_only_reader_rejects_other_study_and_early_probe(
     )
     expected = [x["offset"] for x in book["roles"]["fit"]]
     assert reads == expected and r["probe_documents_opened"] == 0
-    with pytest.raises(ValueError, match="no separate V"):
+    with pytest.raises(ValueError, match=f"no separate {name}"):
         data.extract("probe", job=p.JOB, fit_sha="0" * 64)
     with pytest.raises(ValueError, match="unlicensed PROBE"):
         data.extract("probe", job=p.old.JOB, fit_sha="0" * 64)
-    with pytest.raises(ValueError, match="wrong V reader"):
+    with pytest.raises(ValueError, match=f"wrong {name} reader"):
         data.fit_windows(p.old.JOB)
     with pytest.raises(ValueError, match="prepare-only"):
         data.extract("fit")
@@ -157,10 +164,13 @@ def test_exact_u_bindings_and_conjunctive_v_decision(tmp_path, monkeypatch):
     assert not ana.decision(cs)["warrants_separate_confirmation"]
 
 
+@pytest.mark.parametrize("name", ["V", "LS"])
 def test_all_seed_freeze_before_probe_and_multiplicity_cholesky_closure(
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch, name
 ):
-    book, calls = fake(tmp_path, monkeypatch)
+    data, p, run = fit_phase.incumbent(name)
+    publish = report.report if name == "V" else literal_mark_report.report
+    book, calls = fake(tmp_path, monkeypatch, name)
     data.prepare()
     d = p.ROOT / p.JOB.name
     d.mkdir(parents=True)
@@ -218,8 +228,9 @@ def test_all_seed_freeze_before_probe_and_multiplicity_cholesky_closure(
             write_json(d / "live.json", o)
 
     monkeypatch.setattr(run, "model", model)
+    score_document = run.document
     monkeypatch.setattr(
-        run, "document", lambda *args, **kw: fit.document(*args, **kw, width=8)
+        run, "document", lambda *args, **kw: score_document(*args, **kw, width=8)
     )
     monkeypatch.setattr(run.panel, "progress", prog)
     pre = os.pread
@@ -248,7 +259,7 @@ def test_all_seed_freeze_before_probe_and_multiplicity_cholesky_closure(
         f = d / "fit-4902.json"
         orig = f.read_bytes()
         bad = json.loads(orig)
-        bad["state"]["beta"]["K"][3] += 1
+        bad["state"]["beta"]["K" if name == "V" else "S"][3] += 1
         write_json(f, bad)
         with pytest.raises(ValueError, match="inconsistent"):
             data.extract("probe", job=p.JOB, fit_sha=dig)
@@ -264,6 +275,7 @@ def test_all_seed_freeze_before_probe_and_multiplicity_cholesky_closure(
         and not (d / "probe/windows.u8").exists()
         and z["targets"] == 15 * T
         and z["neural_updates"] == 0
+        and z["fitted_readouts"] == (9 if name == "V" else 15)
     )
     write_json(d / "complete.json", z)
     charge = dict(
@@ -299,17 +311,26 @@ def test_all_seed_freeze_before_probe_and_multiplicity_cholesky_closure(
         ),
     )
     write_json(run.AUTH, dict(p.expected("fixture"), operator_note="fixture"))
-    r = report.report()
+    r = publish()
     assert (
         r["cost"]["witnessed_fit_boundary"] == 6
         and r["verified"]["independent_paired_bootstrap"]
         and r["u_beta"] == initial["u_beta"]
         and len(r["verified"]["independent_cholesky_residuals"]) == 3
         and set(r["stages"]["probe"]["contrasts"])
-        == {"V:D", "V:K", "V:U", "D:U", "K:D"}
+        == (
+            {"V:D", "V:K", "V:U", "D:U", "K:D"}
+            if name == "V"
+            else {"J:T", "J:S", "H:T", "T:N", "H:N", "S:T", "J:H", "T:U", "J:U"}
+        )
     )
     assert r["stages"]["probe"]["real_targets_per_seed"] == 3 * T and r["u_refits"] == 0
     path = d / "probe-4901.jsonl"
     path.write_bytes(path.read_bytes().replace(b'"seconds"', b'"seconds" ', 1))
-    with pytest.raises(ValueError, match="foreign V probe journal"):
-        report.report()
+    if name == "LS":
+        assert r["verified"]["independent_pooled_mark_correlations"] and all(
+            len(row) == 5
+            for row in r["verified"]["independent_cholesky_residuals"].values()
+        )
+    with pytest.raises(ValueError, match=f"foreign {name} probe journal"):
+        publish()

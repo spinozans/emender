@@ -168,8 +168,12 @@ def _fields(head, word, hidden, logits, *, controls):
 
 
 def checked_beta(arm, coefficients):
+    return checked_vector(DIMS, arm, coefficients)
+
+
+def checked_vector(dims, arm, coefficients):
     beta = torch.as_tensor(coefficients, dtype=torch.float64, device="cpu")
-    if arm not in DIMS or beta.shape != (DIMS[arm],) or not beta.isfinite().all():
+    if arm not in dims or beta.shape != (dims[arm],) or not beta.isfinite().all():
         raise ValueError("invalid fitted calibration coefficients")
     return beta
 
@@ -178,9 +182,17 @@ def checked_beta(arm, coefficients):
 def response(packet, arm, coefficients):
     """One complete 256-way FP64 answer at every frontier, with B's original log mass."""
     beta = checked_beta(arm, coefficients)
+    if arm not in packet.phi:
+        raise ValueError("readout fields not built")
+    return copy_response(packet, packet.phi[arm], beta)
+
+
+@torch.inference_mode()
+def copy_response(packet, features, beta):
+    """Shared mass-preserving change to the candidate log odds on B's actual hit rows."""
     q = packet.query
     v = packet.margin
-    dl = packet.phi[arm] @ beta
+    dl = features @ beta
     shift = _softplus(v + dl) - _softplus(v)
     out = packet.base.double()
     out[q] -= shift[:, None]

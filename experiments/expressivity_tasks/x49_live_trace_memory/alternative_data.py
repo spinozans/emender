@@ -43,7 +43,8 @@ def next_block(records, pre, roles, short, quota, size):
     )
 
 
-def selection():
+def selection_context():
+    """V descriptor, manifest and pre-V exclusions (no historical payloads)."""
     r = checked_spec()
     b, records, pre, roles = final.selection_context()
     check(
@@ -60,7 +61,7 @@ def selection():
         records, pre, roles, short, sum(N.values()), b["source"]["size"]
     )
     check(len(ex) == 42171 and supply == 23955, "wrong unspent TRAIN supply for V")
-    return dict(
+    book = dict(
         schema="x49-v-native-train",
         spec=SPEC,
         confirmation_sha=local_u.CONFIRMATION,
@@ -73,6 +74,11 @@ def selection():
         eligible_train=supply,
         roles={"fit": rows[: N["fit"]], "probe": rows[N["fit"] :]},
     )
+    return book, records, ex
+
+
+def selection():
+    return selection_context()[0]
 
 
 def checked_roles(book):

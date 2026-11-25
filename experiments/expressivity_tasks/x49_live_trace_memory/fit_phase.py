@@ -1,4 +1,4 @@
-"""Closed dispatch for the registered local U/V FIT→freeze→PROBE campaigns.
+"""Closed dispatch for the registered local U/V/LS FIT→freeze→PROBE campaigns.
 
 No caller supplies a data root, authorization object, raw reader, fit boundary or model path.
 Each label has independent source, data, job, freeze and admission receipts.
@@ -18,6 +18,18 @@ def study(name):
             alternative_panel as panel,
             alternative_run as run,
         )
+    elif name == "LS":
+        from . import (
+            literal_mark_data as data,
+            literal_mark_panel as panel,
+            literal_mark_run as run,
+        )
     else:
         raise ValueError("unknown two-phase study")
     return data, panel, run
+
+
+def incumbent(name):
+    if name not in ("V", "LS"):
+        raise ValueError("not a post-U study")
+    return study(name)

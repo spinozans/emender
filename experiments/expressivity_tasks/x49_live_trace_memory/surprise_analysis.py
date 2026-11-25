@@ -25,11 +25,28 @@ def summarize(role, logs, hashes, *, short_targets=None):
         and (not final or all(type(v) is int and 1 <= v < T for v in sizes)),
         "invalid short lengths",
     )
+    return copy_summary(
+        role,
+        logs,
+        hashes,
+        sizes,
+        arms=ARMS,
+        pairs=PAIRS,
+        seed=4908 if final else 4907,
+        responses="NUS",
+    )
+
+
+def copy_summary(
+    role, logs, hashes, sizes, *, arms, pairs, seed, responses, extra_clocks=()
+):
+    """Shared conservation, support and paired reductions for predictors that adjust only copy odds."""
+    n = len(hashes)
     nt = sum(sizes)
     scored = role != "fit"
     check(
         role in ("fit", "probe", "final_test")
-        and n == len(set(hashes))
+        and n == len(set(hashes)) == len(sizes)
         and n > 0
         and set(logs) == set(SEEDS),
         "incomplete U population",
@@ -37,7 +54,7 @@ def summarize(role, logs, hashes, *, short_targets=None):
     totals = {}
     support = {}
     clock = Counter()
-    losses = np.zeros((len(SEEDS), n, len(ARMS))) if scored else None
+    losses = np.zeros((len(SEEDS), n, len(arms))) if scored else None
     for si, s in enumerate(SEEDS):
         work = Counter()
         docs = Counter()
@@ -96,17 +113,21 @@ def summarize(role, logs, hashes, *, short_targets=None):
                 ),
                 "literal geometry/byte depends on seed",
             )
-            needed = {
-                "prefill_s",
-                "base_B_s",
-                "shared_current_s",
-                "shared_US_mark_build_s",
-                "U_mark_read_s",
-                "S_rotation_and_mark_read_s",
-            } | (
-                {"fit_statistics_s"}
-                if role == "fit"
-                else {"response_" + a + "_s" for a in "NUS"}
+            needed = (
+                {
+                    "prefill_s",
+                    "base_B_s",
+                    "shared_current_s",
+                    "shared_US_mark_build_s",
+                    "U_mark_read_s",
+                    "S_rotation_and_mark_read_s",
+                }
+                | set(extra_clocks)
+                | (
+                    {"fit_statistics_s"}
+                    if role == "fit"
+                    else {"response_" + a + "_s" for a in responses}
+                )
             )
             check(
                 set(secs) == needed
@@ -132,11 +153,11 @@ def summarize(role, logs, hashes, *, short_targets=None):
             if scored:
                 z = x["nll_sums"]
                 check(
-                    set(z) == set(ARMS)
+                    set(z) == set(arms)
                     and all(isfinite(v) and v >= 0 for v in z.values()),
                     "invalid U all-byte sums",
                 )
-                losses[si, i, :] = [z[a] for a in ARMS]
+                losses[si, i, :] = [z[a] for a in arms]
         totals[str(s)] = dict(work)
         support[str(s)] = dict(docs)
     report = dict(
@@ -150,7 +171,7 @@ def summarize(role, logs, hashes, *, short_targets=None):
     )
     if losses is None:
         return report
-    report.update(paired_table(losses, sizes, ARMS, PAIRS, 4908 if final else 4907))
+    report.update(paired_table(losses, sizes, arms, pairs, seed))
     return report
 
 
@@ -298,7 +319,7 @@ def analyze(root, *, study="U"):
     check(
         initial == p.plan(initial["ref"], hash_weights=False)
         and z["neural_updates"] == 0
-        and z["fitted_readouts"] == 9,
+        and z["fitted_readouts"] == len(p.DIMS) * len(SEEDS),
         "foreign endpoints or fit count",
     )
     readouts = data.bound(d / "fit-frozen.json", z["fit_freeze_sha"])
@@ -326,9 +347,12 @@ def analyze(root, *, study="U"):
         reduce = summarize
         parent = dict(q_result_sha=data.Q_RESULT)
     else:
-        from .alternative_analysis import summarize as reduce
-
+        if study == "V":
+            from .alternative_analysis import summarize as reduce
+        else:
+            from .literal_mark_analysis import summarize as reduce
         parent = dict(
+            **({"v_result_sha": initial["v_result_sha"]} if study == "LS" else {}),
             u_confirmation_sha=initial["u_confirmation_sha"],
             u_beta=initial["u_beta"],
             u_refits=initial["u_refits"],

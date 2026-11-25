@@ -17,7 +17,40 @@ REF = "bcff5643047683b575f984504620a59dae6b17a2"
 PUBLIC = "31f8e868142e53c8c2d819d6c91e8b8eb7dbdb1f"
 
 
-def check_fits(folder, readouts, *, dims=None, fit_documents=None):
+def checked_ridge_solutions(m, r, original, cholesky):
+    """LS: certify both FP64 solves by backward error and a ridge-based distance bound.
+
+    Correlated columns can make an elementwise relative tolerance inappropriate for a small
+    coefficient. For SPD M, ||x-y||₂ <= (||Mx-r||₂ + ||My-r||₂) / lambda_min(M).
+    Measure residuals in extended precision to avoid cancellation in the audit itself.
+    """
+    d = len(r)
+    eps = np.finfo(np.float64).eps
+    eig = np.linalg.eigvalsh(m)
+    check(
+        np.all(np.isfinite(eig)) and eig[0] >= p.RIDGE - 4 * d * eps * eig[-1],
+        "missing positive ridge in audited system",
+    )
+    a, b = np.longdouble(m), np.longdouble(r)
+
+    def norm(x):
+        return np.sqrt(np.sum(x * x, dtype=np.longdouble))
+
+    caps = []
+    for v in (original, cholesky):
+        x = np.longdouble(v)
+        # A small dense factorization and two triangular solves: use a dimension-scaled
+        # FP64 backward-error criterion, independent of empirical coefficient differences.
+        cap = 8 * d * eps * (eig[-1] * norm(x) + norm(b))
+        check(norm(a @ x - b) <= cap, "inaccurate independent ridge solve")
+        caps.append(cap)
+    check(
+        norm(np.longdouble(original) - np.longdouble(cholesky)) * eig[0] <= sum(caps),
+        "inconsistent independent ridge solutions",
+    )
+
+
+def check_fits(folder, readouts, *, dims=None, fit_documents=None, conditioned=False):
     """Independent positive-definite solve by Cholesky, from pre-probe moments only."""
     dims = p.DIMS if dims is None else dims
     fit_documents = data.N["fit"] if fit_documents is None else fit_documents
@@ -40,7 +73,10 @@ def check_fits(folder, readouts, *, dims=None, fit_documents=None):
             chol = np.linalg.cholesky(m)
             beta = np.linalg.solve(chol.T, np.linalg.solve(chol, rhs / n))
             orig = np.asarray(fit["beta"][arm])
-            np.testing.assert_allclose(orig, beta, rtol=1e-12, atol=2e-14)
+            if conditioned:
+                checked_ridge_solutions(m, rhs / n, orig, beta)
+            else:
+                np.testing.assert_allclose(orig, beta, rtol=1e-12, atol=2e-14)
             result[k][arm] = float(np.linalg.norm(m @ orig - rhs / n, ord=np.inf))
     return result
 
@@ -56,6 +92,11 @@ def check_bootstrap(folder, stats, hashes, *, short_targets=None, study="U"):
 
         check(not final, "no V final licensed")
         seed = 4909
+    elif study == "LS":
+        from .literal_mark_analysis import ARMS, PAIRS
+
+        check(not final, "no LS final licensed")
+        seed = 4910
     else:
         check(study == "U", "unknown bootstrap")
         ARMS, PAIRS = ana.ARMS, ana.PAIRS

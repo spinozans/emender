@@ -4,41 +4,47 @@ from __future__ import annotations
 import json
 import os
 from ..x48_muon_continuation.data import check, load, sha
-from . import (
-    alternative_panel as p,
-    alternative_data as data,
-    alternative_analysis as analysis,
-    alternative_run as run,
-)
+from . import alternative_panel
+from .fit_phase import incumbent as phase
 from .panel import cpu
 from .surprise_report import check_fits, check_bootstrap
 from .panels import SEEDS
 
 
-def report():
+def report(*, study="V"):
     cpu()
-    check(os.getenv("OPENBLAS_NUM_THREADS") == "1", "one BLAS thread for the V audit")
+    data, p, run = phase(study)
+    if study == "V":
+        from . import alternative_analysis as analysis
+    else:
+        from . import literal_mark_analysis as analysis
+    check(
+        os.getenv("OPENBLAS_NUM_THREADS") == "1",
+        f"one BLAS thread for the {study} audit",
+    )
     root = p.ROOT
     d = root / p.JOB.name
     done = load(root / "done.json")
     check(
         done["complete"] is True and sha(root / "charged.json") == done["charges_sha"],
-        "unbound V ledger",
+        f"unbound {study} ledger",
     )
     r = data.bound(root / "summary.json", done["summary_sha"])
-    check(r == analysis.analyze(root), "V closure not reproducible")
+    check(r == analysis.analyze(root), f"{study} closure not reproducible")
     p.validate(load(run.AUTH), r["ref"])
     initial = data.bound(d / "frozen.json", r["freeze_sha"])
     check(
         initial == p.plan(r["ref"], hash_weights=True),
-        "different V model bytes, incumbent or data",
+        f"different {study} model bytes, incumbent or data",
     )
     sealed = data.bound(d / "fit-frozen.json", r["fit_freeze_sha"])
-    residual = check_fits(d, sealed, dims=p.DIMS, fit_documents=data.N["fit"])
+    residual = check_fits(
+        d, sealed, dims=p.DIMS, fit_documents=data.N["fit"], conditioned=study == "LS"
+    )
     book = data.bound(data.BASE / "reservation.json", r["data"]["rows_sha"])
     roles = data.checked_roles(book)
     check_bootstrap(
-        d, r["stages"]["probe"], [x["sha256"] for x in roles["probe"]], study="V"
+        d, r["stages"]["probe"], [x["sha256"] for x in roles["probe"]], study=study
     )
     prep = data.bound(data.BASE / "prepared.json", r["data"]["prepared_sha"])
     check(
@@ -46,7 +52,7 @@ def report():
         and prep["probe_documents_opened"] == 0
         and prep["qualified_ref"] == r["ref"]
         and not (d / "probe/windows.u8").exists(),
-        "changed V role boundary",
+        f"changed {study} role boundary",
     )
     return dict(
         **r,
@@ -85,7 +91,7 @@ def report():
 if __name__ == "__main__":
     os.umask(0o077)
     z = report()
-    out = p.ROOT.parent / "alternative-result-1.json"
+    out = alternative_panel.ROOT.parent / "alternative-result-1.json"
     with out.open("x") as f:
         json.dump(z, f, sort_keys=True, indent=2, allow_nan=False)
         f.write("\n")
