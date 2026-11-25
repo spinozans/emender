@@ -4,7 +4,7 @@
 
 **Completed natural result:** [Final report](RESULT.md) · [verified aggregate](receipts/panel_result.json). B beat A by .001124 nats/byte at full dose and .003125 at matched training time on the 128-document final; value-only shuffling hurt. B is the local baseline. The registered learned-key C lost to fixed-key F. All 15 leases released, ≤14,022 card-s. Do not reopen the panel. The formal Lux rule returned no nominee; no remote launch.
 
-**Follow-up:** [X49-R prospective protocol](RELATIVE.md): change only the learned private keys' credit baseline, use the closed B/F/C training trajectories as controls, and reserve a fresh document-disjoint test. Neither the old final nor the old campaign is reopened.
+**Completed follow-up:** [X49-R result](RESULT_RELATIVE.md) · [protocol](RELATIVE.md). On 137 fresh documents the key-credit repair recovered .17460 nats/byte over C but still lost .01660 to fixed keys F and .01589 to B. All three seeds and the matched-wall results agreed. All four leases released, ≤4,536 incremental card-s. Use B; neither consumed test set is available for tuning or reuse.
 
 **Data gate:** [v1 refused: 110 clean calibration documents for 128 required](DATA_STOP_V1.md). No reservation, corpus read, learner or evaluation result under v1. [V2 amendment](DATA_V2.md), prospective 2026-11-25 UTC: reserve the complete set of 110 eligible calibration documents for stage checks only. No change to TRAIN, final, exclusions or gates. V2 first froze its reservation and prepared TRAIN only ([data receipt](DATA_RESULT_V2.md)). All 12 natural training runs and both calibration stages have since completed. See the [calibration results and key-credit diagnostic](STAGE_CHECK.md); that report uses no final scores.
 
