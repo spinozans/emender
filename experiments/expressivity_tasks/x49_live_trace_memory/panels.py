@@ -27,7 +27,14 @@ from ..x48_muon_continuation.data import (
 )
 
 T = 4096
-N = {"train": 1024, "calibration": 128, "final_test": 128}
+N = {
+    "train": 1024,
+    "calibration": 128,
+    "final_test": 128,
+}  # v1: retained refusal, never silently reduced
+V2_QUOTAS = dict(N, calibration=110)
+V2_ELIGIBLE = {"train": 26515, "calibration": 110, "final_test": 265}
+V2_SPEC = "da46df371ab55994ac22ad9c0711de664b461eb9aaeea378d689d77910036a27"
 SEEDS = (4901, 4902, 4903)
 OUT = ROOT / "output/x49-live"
 X43R = FLAG.parent
@@ -222,7 +229,69 @@ def select(records, excluded, quotas, source_size):
     return chosen, counts
 
 
-def reserve_data():
+def protocol_quotas(protocol):
+    if protocol == "v1":
+        return N.copy()
+    check(
+        protocol == "v2" and sha(Path(__file__).with_name("DATA_V2.md")) == V2_SPEC,
+        "unknown or changed data protocol",
+    )
+    return V2_QUOTAS.copy()
+
+
+def verify_selection(rows, excluded, panels, quotas, counts):
+    """Independent set-first witness: content deduplication before rank, no corpus payload."""
+    check(set(panels) == set(quotas) == set(counts), "split set mismatch")
+    chosen = set()
+    for split, n in quotas.items():
+        first = {}
+        for r in rows:
+            h = r["sha256"]
+            if (
+                r["split"] == split
+                and r["byte_length"] >= T + 1
+                and r["byte_offset"] >= MIN_OFFSET
+                and h not in excluded
+            ):
+                first.setdefault(
+                    h, r
+                )  # source order already validated strictly increasing
+        ranked = sorted(
+            first,
+            key=lambda h: (
+                hashlib.sha256(b"x49-live-v1:" + h.encode("ascii")).digest(),
+                h,
+            ),
+        )
+        check(
+            len(first) == counts[split]
+            and [r["sha256"] for r in panels[split]] == ranked[:n]
+            and len(panels[split]) == n,
+            "rank or quota witness mismatch",
+        )
+        for r in panels[split]:
+            h = r["sha256"]
+            d = first[h]
+            j = T * (int(h[16:32], 16) % ((d["byte_length"] - 1) // T))
+            check(
+                r
+                == dict(
+                    doc=d["document"],
+                    offset=d["byte_offset"],
+                    length=d["byte_length"],
+                    sha256=h,
+                    start=j,
+                    split=split,
+                )
+                and h not in chosen,
+                "overlapping or unbound selected window",
+            )
+            chosen.add(h)
+    check(not chosen & excluded, "historical membership selected")
+
+
+def reserve_data(protocol="v1"):
+    quotas = protocol_quotas(protocol)
     regpath, manpath = FLAG / "registration.json", FLAG / "documents.jsonl.gz"
     check(sha(regpath) == REG_SHA and sha(manpath) == MAN_SHA, "wrong flagship stream")
     reg = json.loads(regpath.read_bytes())
@@ -237,9 +306,17 @@ def reserve_data():
     excluded, registry = prior_sets()
     extra = early_panels(rows)
     excluded.update(extra)
-    panels, counts = select(rows, excluded, N, reg["source"]["size"])
+    panels, counts = select(rows, excluded, quotas, reg["source"]["size"])
+    if protocol == "v2":
+        check(counts == V2_ELIGIBLE, "v2 eligible membership counts changed")
+        verify_selection(rows, excluded, panels, quotas, counts)
     return dict(
-        schema="x49-v1",
+        **(
+            dict(amendment_sha=V2_SPEC, excluded_sha=fingerprint(sorted(excluded)))
+            if protocol == "v2"
+            else {}
+        ),
+        schema="x49-" + protocol,
         manifest_sha=MAN_SHA,
         registration_sha=REG_SHA,
         source=reg["source"],
@@ -251,10 +328,17 @@ def reserve_data():
     )
 
 
-def freeze(root=OUT):
+def data_dir(root, protocol):
+    protocol_quotas(protocol)
+    return root / "v2" if protocol == "v2" else root
+
+
+def freeze(root=OUT, *, protocol="v1"):
+    root = data_dir(root, protocol)
     root.mkdir(exist_ok=True, parents=True, mode=0o700)
     p = root / "reservation.json"
-    reservation = reserve_data()
+    check(not p.exists(), "reservation already exists")
+    reservation = reserve_data(protocol)
     with p.open("x") as f:
         os.fchmod(f.fileno(), 0o600)
         json.dump(reservation, f, sort_keys=True)
@@ -264,7 +348,7 @@ def freeze(root=OUT):
     return dict(
         reservation_sha=sha(p),
         eligible=reservation["eligible"],
-        reserved=N,
+        reserved=protocol_quotas(protocol),
         excluded_unique=reservation["excluded_unique"],
         payloads_opened=0,
     )
@@ -304,10 +388,13 @@ def order(rows, seed):
     )
 
 
-def extract_train(root=OUT):
+def extract_train(root=OUT, *, protocol="v1"):
+    root = data_dir(root, protocol)
     p = root / "reservation.json"
     reservation = json.loads(p.read_bytes())
-    check(reservation == reserve_data(), "reservation mismatch before source open")
+    check(
+        reservation == reserve_data(protocol), "reservation mismatch before source open"
+    )
     final = root / "train"
     tmp = root / "train.preparing"
     check(not final.exists(), "TRAIN stream already exists")
@@ -340,7 +427,7 @@ def extract_train(root=OUT):
         os.fsync(out.fileno())
     write_json(tmp / "hashes.json", identity)
     result = dict(
-        schema="x49-train-v1",
+        schema="x49-train-" + protocol,
         reservation_sha=sha(p),
         raw_sha=sha(tmp / "windows.u8"),
         shifts_sha=sha(tmp / "hashes.json"),
@@ -358,6 +445,12 @@ def extract_train(root=OUT):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("phase", choices=["reserve", "train"])
+    ap.add_argument(
+        "--protocol",
+        choices=["v1", "v2"],
+        default="v1",
+        help="v1 remains the original 128-calibration protocol",
+    )
     a = ap.parse_args()
     check(
         os.getenv("CUDA_VISIBLE_DEVICES") == "" and not os.getenv("GPU_LEASE_HELD"),
@@ -366,6 +459,7 @@ if __name__ == "__main__":
     os.umask(0o077)
     print(
         json.dumps(
-            (freeze if a.phase == "reserve" else extract_train)(), sort_keys=True
+            (freeze if a.phase == "reserve" else extract_train)(protocol=a.protocol),
+            sort_keys=True,
         )
     )
