@@ -117,9 +117,22 @@ class TraceHead(nn.Module):
         visit,
         horizon=4096,
         wrong_binding=False,
+        literal_sham=False,
+        inspect_rotation=False,
+        work=None,
     ):
         # Both arms retain B's full literal answer. No gold addresses or external targets accepted.
-        lp = self.literal(word, hidden, logits, mode="B", horizon=horizon)
+        if wrong_binding and literal_sham:
+            raise ValueError("change exactly one binding at a time")
+        lp = self.literal(
+            word,
+            hidden,
+            logits,
+            mode="rotated" if literal_sham else "B",
+            horizon=horizon,
+            work=work,
+            inspect_rotation=inspect_rotation,
+        )
         ids = torch.tensor(list(word), dtype=torch.long, device=hidden.device)
         tag, wl = choices(
             ids[:-1],
@@ -151,9 +164,11 @@ class TraceHead(nn.Module):
                     rotate_trace(word, t, j, horizon)
                     for t, j in zip(at, src, strict=True)
                 ]
-                if wrong_binding
+                if wrong_binding or inspect_rotation
                 else src
             )
+            if not wrong_binding:
+                donors = src
             changed = sum(j != k for j, k in zip(src, donors, strict=True))
             idx = torch.tensor(src, dtype=torch.long)
             val = bank[torch.tensor(donors, dtype=torch.long) - 1]
@@ -164,6 +179,18 @@ class TraceHead(nn.Module):
                 1, keepdim=True
             )
             lp = lp.index_copy(0, q, old + (corr - dz))
+        if work is not None:
+            work.update(
+                private_queries=len(query),
+                private_writes=len(tag),
+                private_hits=len(at),
+                private_misses=len(query) - len(at),
+                private_distinct_keys=len(set(tag)),
+                private_collisions=len(tag) - len(set(tag)),
+                private_age_gt128=sum(t - rows[t] > 128 for t in at),
+                private_age_gt1024=sum(t - rows[t] > 1024 for t in at),
+                private_payloads_reassigned=changed,
+            )
         return Rollout(lp, wl, ql, tag, query, rows, horizon, changed)
 
 

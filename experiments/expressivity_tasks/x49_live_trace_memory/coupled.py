@@ -171,18 +171,13 @@ def step(host, head, opts, word, *, mode, index, width=256, seed=None, document=
             document=document,
             visit=index,
             horizon=4096,
+            work=work,
         )
         loss, nll = trace_objective(
             roll, torch.tensor(list(word[1:]), dtype=torch.long), learned=head.learned
         )
-        work = dict(
-            private_queries=len(roll.queried),
-            private_writes=len(roll.filed),
-            private_hits=sum(j is not None for j in roll.source),
-            private_collisions=len(roll.filed) - len(set(roll.filed)),
-        )
     else:
-        lp = head(inputs, h[0], logits[0], mode=mode, horizon=4096)
+        lp = head(inputs, h[0], logits[0], mode=mode, horizon=4096, work=work)
         # Target-specific gather happens only after the head has returned every byte probability.
         loss = nll = F.nll_loss(lp, torch.tensor(list(word[1:]), dtype=torch.long))
     tx.backward(loss)

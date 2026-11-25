@@ -2,38 +2,11 @@
 
 from __future__ import annotations
 
-from math import log1p
-
 import torch
 from torch import nn
 
 from ndm.memory_program.direct import DirectTrust
-from .literal import literal_plan, rotated_payload_index
-
-
-def _features(word, rows, device):
-    """Same feature channels as DirectTrust: no archive mounted, local histogram and latest byte."""
-    n = len(rows)
-    stats = torch.zeros(n, 11, dtype=torch.float32)
-    proposals = torch.zeros(n, 3, 256, dtype=torch.float32)
-    valid = torch.zeros(n, 3, dtype=torch.bool)
-    for t, hit in enumerate(rows):
-        if hit.latest is None:
-            continue
-        ids, counts = zip(*hit.counts, strict=True)
-        total = sum(counts)
-        proposals[t, 1, list(ids)] = torch.tensor(counts, dtype=torch.float32) / total
-        proposals[t, 2, word[hit.latest]] = 1
-        valid[t, 1:] = True
-        stats[t, 7:] = torch.tensor(
-            (
-                hit.depth / 8,
-                log1p(total) / 8,
-                max(counts) / total,
-                log1p(t - hit.latest) / 8,
-            )
-        )
-    return tuple(x.to(device) for x in (stats, proposals, valid))
+from .compact import evidence
 
 
 class LiveValueHead(nn.Module):
@@ -49,7 +22,17 @@ class LiveValueHead(nn.Module):
         nn.init.zeros_(self.delta.weight)
         nn.init.zeros_(self.delta.bias)
 
-    def forward(self, word, hidden, logits, *, mode, horizon=4096):
+    def forward(
+        self,
+        word,
+        hidden,
+        logits,
+        *,
+        mode,
+        horizon=4096,
+        work=None,
+        inspect_rotation=False,
+    ):
         """word contains inputs only. A caller may score shifted targets AFTER this returns.
 
         `rotated` uses B's weights with a causal, byte- and age-bin-preserving wrong binding.
@@ -57,7 +40,6 @@ class LiveValueHead(nn.Module):
         """
         if mode not in ("A", "B", "rotated"):
             raise ValueError("unknown literal value mode")
-        rows = literal_plan(word, horizon)
         if hidden.shape != (len(word), self.direct.host_dim) or logits.shape != (
             len(word),
             256,
@@ -66,7 +48,19 @@ class LiveValueHead(nn.Module):
                 "one aligned host row and 256 logits per observed byte required"
             )
         dev = hidden.device
-        f = _features(word, rows, dev)
+        f, query, source, donor, counts = evidence(
+            word,
+            horizon,
+            device=dev,
+            rotate=mode == "rotated",
+            inspect_rotation=inspect_rotation,
+        )
+        if work is not None:
+            work.update(
+                counts,
+                literal_value_writes=0 if mode == "A" else len(word),
+                literal_value_reads=0 if mode == "A" else len(query),
+            )
         base, _ = self.direct(hidden, logits, f)
         ids = torch.tensor(list(word), dtype=torch.long, device=dev)
         # B actually writes the value when observing j; the batched map is positionwise,
@@ -76,26 +70,12 @@ class LiveValueHead(nn.Module):
             if mode == "A"
             else self.writer(torch.cat((hidden, self.byte(ids)), -1)).tanh()
         )
-        at = [t for t, r in enumerate(rows) if r.latest is not None]
-        if not at:
+        if not len(query):
             return base
-        query = torch.tensor(at, dtype=torch.long, device=dev)
-        source = torch.tensor(
-            [rows[t].latest for t in at], dtype=torch.long, device=dev
-        )
         code = self.byte(ids[source])
         if mode == "A":
             payload = self.writer(torch.cat((hidden[query], code), -1)).tanh()
         else:
-            donor = (
-                source
-                if mode == "B"
-                else torch.tensor(
-                    [rotated_payload_index(word, t, rows[t], horizon) for t in at],
-                    dtype=torch.long,
-                    device=dev,
-                )
-            )
             payload = written[donor]
         features = torch.cat(
             (hidden[query], payload, code, f[0][query], f[1][query, 1]), -1

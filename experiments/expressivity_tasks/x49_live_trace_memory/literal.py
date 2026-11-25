@@ -39,7 +39,7 @@ def check_window(observed: bytes, horizon: int) -> None:
         raise ValueError("unregistered history horizon")
 
 
-def literal_plan(observed: bytes, horizon: int) -> tuple[Match, ...]:
+def literal_rows(observed: bytes, horizon: int):
     """Exact overlap counts. Insert j only when its follower is at least MIN_AGE old.
 
     A lookup evicts occurrences whose *key start* passed the window's left boundary.
@@ -48,7 +48,6 @@ def literal_plan(observed: bytes, horizon: int) -> tuple[Match, ...]:
     """
     check_window(observed, horizon)
     by_key: dict[bytes, _Bucket] = {}
-    rows = []
     for t in range(len(observed)):
         j = t - MIN_AGE
         lo = max(0, t + 1 - horizon)
@@ -72,11 +71,15 @@ def literal_plan(observed: bytes, horizon: int) -> tuple[Match, ...]:
                 if not b.counts[x]:
                     del b.counts[x]
             if b.js:
-                rows.append(Match(d, b.js[-1], tuple(sorted(b.counts.items()))))
+                yield Match(d, b.js[-1], tuple(sorted(b.counts.items())))
                 break
         else:
-            rows.append(MISS)
-    return tuple(rows)
+            yield MISS
+
+
+def literal_plan(observed: bytes, horizon: int) -> tuple[Match, ...]:
+    """Inspectable reference layout used by the prefix and native checks."""
+    return tuple(literal_rows(observed, horizon))
 
 
 def rotated_payload_index(observed: bytes, t: int, hit: Match, horizon: int) -> int:

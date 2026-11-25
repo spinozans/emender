@@ -2,6 +2,8 @@
 
 Prospective series, 2026-11-24. Decision: nominate a **live-context memory** candidate for an OLCF Lux feasibility study, or report no candidate. This is not a cluster submission. The subject is a byte LM, not retrieval from a larger training corpus. No archive in the primary experiments. The [live-session result](../x43_fork_resolved/RESULT_SESSION_NEURAL.md) motivates the address; [W3](../x47_xsa_attention/RESULT_W3_NATURAL.md) didn't isolate the vector from its stored byte; [X48](../x48_muon_continuation/RESULT.md) favored a strong direct read over optional programs in 128-target windows. None tests the contrasts below.
 
+**Prospective amendment, 2026-11-25 UTC:** [DATA_V2.md](DATA_V2.md) replaces only the calibration quota for v2 (all 110 eligible documents, stage checks only). V1 below remains as registered and refused. All other rules, in particular the 128-document final and the numerical nomination gates, are unchanged.
+
 ## What varies
 
 Use the same retained 150M GDN2 and trained direct head (X48 direct step 1024, SHA-256 `cf7337b520958056a648e4f78a939ded3ed5a4d1bc8f871d8a900d64464b1357`). Keep the host, document-local follower distribution, and latest observed follower. Mask the unavailable archive expert identically in all arms; no archive requests or archive-derived features. Learn corrections on top of direct, never instead of direct. Train both backbone and head. Absolute scores from X48, older Emender or a Transformer are not controls.
