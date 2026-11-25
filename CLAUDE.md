@@ -5,6 +5,10 @@ WorksGood (`wg`) service, dispatcher, workers, or completion/review machinery.
 Keep implementation and Frontier debugging single-threaded unless the operator
 explicitly requests otherwise.
 
+## Active X49 live-context research mandate
+
+For work on searchable computation traces, first read the [X49 charter](experiments/expressivity_tasks/x49_live_trace_memory/CHARTER.md), then its linked plan and status. The live context is primary; the archive is optional. Continue eligible work after checkpoints and compactions without waiting for another prompt. Respect operator interjections, numerical spending limits, held-out gates and source-only publication.
+
 ## Frontier development environment
 
 Before running Python, pytest, native builds, or Slurm submission preflight on

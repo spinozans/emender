@@ -1,6 +1,6 @@
 # X49: searchable live context and private neural writes
 
-[Experimental plan, arms, dose, controls, stop rules and Lux nomination](PLAN.md).
+[Canonical objective and autonomous operating mandate](CHARTER.md) · [Registered arms, dose, controls, stop rules and Lux nomination](PLAN.md).
 
 **Status:** Stage 0 started after public plan `45226903077c18443ad6cc06c6949a25b15159f0`. The first A/B causal-address and delayed-value checks passed on CPU. No X49 natural training, held-out scoring, GPU lease or Lux job. See [X48](../x48_muon_continuation/RESULT.md) for the starting point and [XSA memory system](../../../docs/XSA_MEMORY_SYSTEM.md) for the distinction between byte evidence, logical addresses and neural values.
 

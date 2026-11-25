@@ -1,0 +1,21 @@
+# X49 research charter — searchable, writable live context
+
+**Canonical objective (operator-directed).** Find out whether a causal model can leave useful computations for its future self, find them in its **own growing context**, and use them to predict unseen external bytes better at a defensible cost. We want candidates worth *considering* for scale-up on OLCF Lux, or an informative no-candidate result. We are not trying to win by mounting a bigger archive, demonstrating op execution, or accumulating kernel/serving benchmarks.
+
+### What is memory here?
+
+1. **Observed text** is the real document prefix. Live XSA supplies a string-based address: earlier occurrences, counts and their observed continuations. At a frontier, predict first, append the real next byte second.
+2. **A computed trace** is private work the model actually did at an earlier frontier. A byte address can bind a learned vector. The model can also file its own searchable symbolic keys and later query them to recover values even when the literal strings differ. Keys, source-bound positions, observed bytes and neural values are different things. No scratch symbol becomes a text observation, target or free extra training exposure. The primary source is the live window; a read-only archive is a later, optional extension.
+3. **The claim to earn** is useful recall, not just changing a gradient or executing SAVE. A strong recurrent host and direct retrieval are the incumbent. The idea need not require a Transformer and is not already a demonstrated Emender/K15 advantage. A generic host adapter is a means, not a requirement to prove a universal plug-in before testing one good model.
+
+### How this series resolves it
+
+The [registered plan](PLAN.md) is the authority on arms, data, numerical thresholds, budgets and stop rules. First compare **A** (current computation with the retrieved text) with **B** (same addresses and bytes, earlier neural write). Then compare **C** (learned private filing/query keys) with **F** (fixed keys with matched capacity, workload and initial stochasticity), B and A. A B null alone does not veto C. Three paired seeds, long within-document histories, held-out all-byte loss, correct vs wrong binding, horizon interventions, and matched exposure **and elapsed cost** decide nomination. Do not promote a synthetic fixture, a hit-only result, TRAIN loss, or a projected throughput. Do not rewrite the gates in this charter.
+
+### Operating mandate and recovery after compaction
+
+The operator authorized continuous, single-session autonomous work on this series and may steer or stop it at any time. A milestone is a **checkpoint, not a permission prompt**. Give short factual updates and carry on with the next eligible implementation, test, run or audit. When a managed job is the dependency, use its real completion notification; do not manufacture keepalive work. Do not imply a job is active without a fresh check. Stop at a real decision/authorization boundary, exhausted work or a terminal result; continue other in-scope work if a single lane is blocked.
+
+On resumption, read **this charter → [plan](PLAN.md) → [status and reproduction notes](README.md)**. Verify actual private artifacts, live jobs, lease PID/start time and checkpoint cursors before acting. Resume the first incomplete eligible stage; never duplicate a launch. Keep the plan unchanged across compactions: amendments must be prospective, dated, reasoned and published before the affected outcome is read. Preserve refusals, failures, negative results and incomplete trajectories. Only explicit changes from the operator or a recorded prospective amendment change the objective or protocol.
+
+The research mandate is not a fictitious running GPU lease, an unlimited spending authorization or a Lux allocation. X49 does not inherit X47/X48 funds. Record the numeric ceiling before paid local work and follow the broker/detachment rules in [AGENTS.md](../../../AGENTS.md). Lux nomination does not authorize remote submission. Maintain the reviewed source/docs-only fast-forward on `origin/main`; keep private research ancestry, corpus/windows, private keys/addresses, tensors, checkpoints, raw scores and logs off the public branch.
