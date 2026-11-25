@@ -139,14 +139,20 @@ def _queries(z):
     return old_guess, old_guess[1:] + bytes([int(z[-1].argmax())])
 
 
+@dataclass(slots=True, frozen=True)
+class _Error:
+    shared: et._Shared
+    counts: old.Packed
+    query_tape: bytes
+    history_fields: eh.Packet
+    lp: torch.Tensor
+    work: dict
+    seconds: dict
+
+
 @torch.inference_mode()
-def fields(head, observed, h, z, jb, eb, writer, *, mode, anchors=None):
-    """One actual frozen ERROR response. Optional comparison anchors are (U,HISTORY) coefficients."""
+def _shared_error(head, observed, h, z, jb, eb, writer):
     check_window(observed, 4096)
-    if mode not in ("MARG", "PAIR", "panel") or (
-        anchors is not None and (mode != "panel" or len(anchors) != 2)
-    ):
-        raise ValueError("unknown PC mode or comparison anchors on chosen path")
     start = perf_counter()
     base, w, s = et._shared(head, observed, h, z, jb, writer)
     tic = perf_counter()
@@ -168,16 +174,40 @@ def fields(head, observed, h, z, jb, eb, writer, *, mode, anchors=None):
     s["error_fields_response_s"] = perf_counter() - tic
     s["shared_posthost_ERROR_s"] = perf_counter() - start
     w.update({"error_" + k: v for k, v in (tab.work | ew).items()})
+    return _Error(base, tab, q, ep, err, w, s)
+
+
+def _anchors(shared, ub, hb):
+    b = shared.shared
+    return dict(
+        ERROR=shared.lp,
+        B=b.packet.base.double(),
+        U=u.response(b.packet, "U", ub),
+        J=b.lp,
+        HISTORY=eh.response(shared.history_fields, "HISTORY", hb),
+    )
+
+
+@torch.inference_mode()
+def fields(head, observed, h, z, jb, eb, writer, *, mode, anchors=None):
+    """One actual frozen ERROR response. Optional comparison anchors are (U,HISTORY) coefficients."""
+    if mode not in ("MARG", "PAIR", "panel") or (
+        anchors is not None and (mode != "panel" or len(anchors) != 2)
+    ):
+        raise ValueError("unknown PC mode or comparison anchors on chosen path")
+    common = _shared_error(head, observed, h, z, jb, eb, writer)
+    base, tab, q, err, w, s = (
+        common.shared,
+        common.counts,
+        common.query_tape,
+        common.lp,
+        common.work,
+        common.seconds,
+    )
     lp = {"ERROR": err}
     if anchors is not None:
         tic = perf_counter()
-        ub, hb = anchors
-        lp.update(
-            B=base.packet.base.double(),
-            U=u.response(base.packet, "U", ub),
-            J=base.lp,
-            HISTORY=eh.response(ep, "HISTORY", hb),
-        )
+        lp = _anchors(common, *anchors)
         s["other_anchors_s"] = perf_counter() - tic
     tic = perf_counter()
     m = _marginal(tab, q)

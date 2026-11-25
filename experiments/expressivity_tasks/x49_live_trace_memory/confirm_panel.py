@@ -75,6 +75,7 @@ def expected(ref, *, study="UC"):
             "UC": "x49-u-frozen-native-short-confirmation-v1",
             "JT": "x49-jt-fixed-short-calibration-v1",
             "ET": "x49-et-locked-short-error-histories-v1",
+            "PT": "x49-pt-locked-short-correction-pairs-v1",
         }[study],
         ref=ref,
         spec=dat.SPEC,

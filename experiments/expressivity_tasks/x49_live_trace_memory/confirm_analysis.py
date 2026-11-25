@@ -116,9 +116,11 @@ def analyze(root, *, study="UC"):
         else dict(
             **p.lineage(),
             **{
-                (
-                    "eh_fit_freeze_sha" if study == "ET" else "ls_fit_freeze_sha"
-                ): data.FIT_SHA
+                {
+                    "JT": "ls_fit_freeze_sha",
+                    "ET": "eh_fit_freeze_sha",
+                    "PT": "pc_fit_freeze_sha",
+                }[study]: data.FIT_SHA
             },
             predictor_freeze_sha=z["freeze_sha"],
         )
@@ -128,6 +130,7 @@ def analyze(root, *, study="UC"):
             "UC": "new whole short native final, frozen W-B predictors and U coefficients, no refit",
             "JT": "new whole short native calibration, locked B/U/H/J, no fitting and no native final access",
             "ET": "new whole short native calibration, locked earlier error histories, no fitting or native final access",
+            "PT": "remaining whole short native calibration, locked correction pairs and key-blind prefix reader; no fitting or native final access",
         }[study],
         ref=initial["ref"],
         spec=data.SPEC,

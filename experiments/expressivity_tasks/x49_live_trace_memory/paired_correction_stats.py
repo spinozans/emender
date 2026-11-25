@@ -70,27 +70,23 @@ SAME = {
 }
 
 
-def checked_row(role, r):
-    w = r["work"]
+def checked_pair_work(w, length, right):
+    """The same causal ERROR margins and exact-margin pair control for full or short input."""
     hit = w["literal_hits"]
     active = w["matched_query_rows"]
     old = w["error_active_rows"]
     h = w["matched_mistake_uses"]
     entries = w["marginal_entries"]
-    right = r["candidate_correct"]
-    probe = role == "probe"
     check(
-        role in ("fit", "probe")
-        and r["targets"] == T
-        and r["host_prefills"] == 1
-        and ("nll_sums" in r) == probe
+        type(length) is int
+        and 1 <= length <= T
         and all(type(v) is int and v >= 0 for v in w.values())
         and type(right) is int
         and 0 <= right <= hit,
         "wrong PC exposure, counters or phase",
     )
-    visits = sum(T - d for d in DEPTHS)
-    admit = visits - len(DEPTHS) * MIN_AGE
+    visits = sum(max(0, length - d) for d in DEPTHS)
+    admit = sum(max(0, length - MIN_AGE - d) for d in DEPTHS)
     check(
         hit + w["literal_misses"]
         == w["literal_queries"]
@@ -100,7 +96,7 @@ def checked_row(role, r):
         == w["text_order_zero_updates"]
         == w["mark_storage_bytes"]
         == w["text_mark_storage_bytes"]
-        == T
+        == length
         and hit == w["U_mark_reads"] == w["literal_value_reads"] == w["error_hits"]
         and w["literal_payloads_reassigned"] == 0
         and "S_mark_reads" not in w
@@ -108,8 +104,8 @@ def checked_row(role, r):
         == w["arrivals_encoded"]
         == w["text_arrivals_encoded"]
         == w["mark_norms_from_current"] + w["mark_norms_extra"]
-        == T - 1
-        and w["wrongs_written"] <= T - 1
+        == length - 1
+        and w["wrongs_written"] <= length - 1
         and visits
         == w["text_context_lookups"]
         == w["text_context_updates"]
@@ -123,7 +119,7 @@ def checked_row(role, r):
         == w["error_committed_records"] + w["error_peak_keys"]
         and w["error_peak_cells"] <= 2 * w["error_committed_records"]
         and active <= old <= hit
-        and old <= w["error_older_occurrence_uses"] <= T * old
+        and old <= w["error_older_occurrence_uses"] <= length * old
         and active
         <= h
         <= w["error_older_mistake_uses"]
@@ -138,10 +134,7 @@ def checked_row(role, r):
         == w["error_packed_feature_entries"]
         <= 256 * old
         and w["error_fp64_feature_bytes"] == 48 * w["error_packed_cells"]
-        and w["error_packed_bytes"] == 5 * T + 24 * w["error_packed_cells"]
-        and w["marginal_feature_bytes"] == 8 * entries
-        and w["pair_feature_bytes"] == 16 * entries
-        and w["panel_feature_bytes"] == 24 * entries,
+        and w["error_packed_bytes"] == 5 * length + 24 * w["error_packed_cells"],
         "wrong PC selected-key geometry, marginal support or feature sizes",
     )
     for k in ("pair", "shuf"):
@@ -160,7 +153,7 @@ def checked_row(role, r):
             <= e["peak_pair_cells"]
             <= e["mistake_commits"]
             and active <= e["packed_cells"] <= min(h, entries - active)
-            and e["packed_bytes"] == 5 * T + 6 * e["packed_cells"],
+            and e["packed_bytes"] == 5 * length + 6 * e["packed_cells"],
             "wrong PC sparse conditional table or sample size",
         )
     attempts = w["shuf_attempted_exchanges"]
@@ -181,6 +174,28 @@ def checked_row(role, r):
         <= active
         and changed <= w["true_nonmarginal_rows"] + w["shuf_nonmarginal_rows"],
         "incorrect PC exchange or changed conditional support",
+    )
+
+
+def checked_row(role, r):
+    w = r["work"]
+    entries = w["marginal_entries"]
+    active = w["matched_query_rows"]
+    changed = w["changed_conditional_rows"]
+    probe = role == "probe"
+    check(
+        role in ("fit", "probe")
+        and r["targets"] == T
+        and r["host_prefills"] == 1
+        and ("nll_sums" in r) == probe,
+        "wrong PC exposure, counters or phase",
+    )
+    checked_pair_work(w, T, r["candidate_correct"])
+    check(
+        w["marginal_feature_bytes"] == 8 * entries
+        and w["pair_feature_bytes"] == 16 * entries
+        and w["panel_feature_bytes"] == 24 * entries,
+        "wrong PC feature sizes",
     )
     sec = r["seconds"]
     needed = CLOCKS | (

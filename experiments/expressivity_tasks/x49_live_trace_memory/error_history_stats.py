@@ -236,11 +236,17 @@ def full_summary(
     arms,
     pairs,
     boot,
+    sizes=None,
 ):
-    """Reduce paired full-window journals without treating seed replicates as new documents."""
+    """Reduce complete document windows; sizes (when supplied) are actual shifted target counts."""
     n = len(hashes)
+    sizes = [T] * n if sizes is None else sizes
     check(
-        n and n == len(set(hashes)) and set(logs) == set(SEEDS), "unpaired EH documents"
+        n
+        and n == len(sizes) == len(set(hashes))
+        and set(logs) == set(SEEDS)
+        and all(type(v) is int and 1 <= v <= T for v in sizes),
+        "unpaired history documents or exposure",
     )
     scored = role == "probe"
     loss = np.empty((len(SEEDS), n, len(arms))) if scored else None
@@ -258,6 +264,7 @@ def full_summary(
             right = r["candidate_correct"]
             check(
                 r["document_sha"] == h
+                and r["targets"] == sizes[i]
                 and right == ref["candidate_correct"]
                 and all(
                     v == ref["work"][k]
@@ -278,7 +285,7 @@ def full_summary(
         peaks[k] = {v: max(r["work"][v] for r in logs[s]) for v in peaks_to_keep}
     z = dict(
         paired_documents=n,
-        real_targets_per_seed=n * T,
+        real_targets_per_seed=sum(sizes),
         work_by_seed=work,
         documents_with_support_by_seed=docs,
         peak_per_window_by_seed=peaks,
@@ -287,7 +294,7 @@ def full_summary(
         },
     )
     if scored:
-        z.update(common.paired_table(loss, [T] * n, arms, pairs, boot))
+        z.update(common.paired_table(loss, sizes, arms, pairs, boot))
     return z
 
 

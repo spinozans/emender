@@ -23,6 +23,13 @@ def study(name):
             error_transfer_run as run,
             error_transfer_analysis as analysis,
         )
+    elif name == "PT":
+        from . import (
+            correction_transfer_data as data,
+            correction_transfer_panel as panel,
+            correction_transfer_run as run,
+            correction_transfer_analysis as analysis,
+        )
     else:
         raise ValueError("unknown frozen short-document study")
     return data, panel, run, analysis

@@ -117,7 +117,11 @@ def _v2_descriptor(job, frozen):
 
 def _documents(job, frozen):
     """This is the only panel raw source open: accept no caller-selected rows or paths."""
-    if job.name == "et-short-cal":
+    if job.name == "pt-short-cal":
+        from .correction_transfer_panel import fresh_descriptor
+
+        folder, src, rows = fresh_descriptor(job, frozen)
+    elif job.name == "et-short-cal":
         from .error_transfer_panel import fresh_descriptor
 
         folder, src, rows = fresh_descriptor(job, frozen)
@@ -160,7 +164,14 @@ def _documents(job, frozen):
             raw = os.pread(f.fileno(), row["length"], row["offset"])
             w = (
                 checked_short_document(raw, row, split=split)
-                if job.name in ("w-final", "uc-final", "jt-short-cal", "et-short-cal")
+                if job.name
+                in (
+                    "w-final",
+                    "uc-final",
+                    "jt-short-cal",
+                    "et-short-cal",
+                    "pt-short-cal",
+                )
                 else checked_eval_window(raw, row, split)
             )
             windows.append((row["doc"], row["sha256"], w))
