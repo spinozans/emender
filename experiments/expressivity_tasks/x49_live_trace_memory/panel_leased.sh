@@ -3,7 +3,12 @@
 set -euo pipefail
 umask 077
 cd "$(git rev-parse --show-toplevel)"
-j=${1:?job}; cap=${2:?cap}; [[ $j =~ ^([ABFC]-490[123]|cal-(AB|FC)|final)$ && $cap =~ ^[0-9]+$ ]]; d=output/x49-live/natural-panel-v2/$j; py=$PWD/.venv/bin/python; m=experiments.expressivity_tasks.x49_live_trace_memory.panel
+j=${1:?job}; cap=${2:?cap}; [[ $cap =~ ^[0-9]+$ ]]; py=$PWD/.venv/bin/python
+if [[ $j =~ ^(R-490[123]|r-final)$ ]]; then
+  d=output/x49-live/relative-panel-1/$j; m=experiments.expressivity_tasks.x49_live_trace_memory.relative_run
+else
+  [[ $j =~ ^([ABFC]-490[123]|cal-(AB|FC)|final)$ ]]; d=output/x49-live/natural-panel-v2/$j; m=experiments.expressivity_tasks.x49_live_trace_memory.panel
+fi
 [[ $(hostname) == lambda01 && -z ${GPU_LEASE_HELD:-} && -d $d && ! -e $d/initial && ! -e $d/released ]]
 for _ in {1..50}; do grep -q '^PPid:[[:space:]]*1$' /proc/$$/status && break; sleep .1; done
 grep -q '^PPid:[[:space:]]*1$' /proc/$$/status; start=$(awk '{sub(/.*\) /, ""); print $20}' /proc/$$/stat)

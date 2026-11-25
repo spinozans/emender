@@ -138,17 +138,20 @@ def authority():
     return ref
 
 
-def prior(job):
+def prior(job, *, root=None, jobs=None, total=None):
+    root = ROOT if root is None else root
+    jobs = JOBS if jobs is None else jobs
+    total = TOTAL if total is None else total
     spent = 0
     remaining = 0
     seen = False
-    for k in JOBS.values():
+    for k in jobs.values():
         if k == job:
             seen = True
         if seen:
             remaining += int(k.kind == "train")
             continue
-        d = ROOT / k.name
+        d = root / k.name
         c = load(d / "charge.json")
         end = fields(d / "released")
         ini = fields(d / "initial")
@@ -174,7 +177,7 @@ def prior(job):
         spent += c["upper_card_s"]
     check(
         seen
-        and spent + job.cap <= TOTAL
+        and spent + job.cap <= total
         and shutil.disk_usage(OUT).free >= (16 << 30) + remaining * (21 << 30),
         "remaining budget or disk inadequate",
     )
@@ -195,14 +198,16 @@ def admit(job):
     return d, ref, start
 
 
-def progress(d, n, targets):
-    driver = load(ROOT / "driver.json")
+def progress(d, n, targets, *, root=None):
+    root = ROOT if root is None else root
+    driver = load(root / "driver.json")
     st = procstat(driver["pid"])
     check(
         st
         and st[19] == driver["start"]
         and st[0] != "Z"
-        and not (ROOT / "stop.json").exists(),
+        and st[1] == "1"
+        and not (root / "stop.json").exists(),
         "lost detached supervisor; retain partial and release",
     )
     write_json(
@@ -211,10 +216,13 @@ def progress(d, n, targets):
 
 
 def enter(job):
+    return enter_admitted(job, *admit(job))
+
+
+def enter_admitted(job, d, ref, start):
     import torch
     from ..x47_xsa_attention.workbench_run import check_gpu_owner
 
-    d, ref, start = admit(job)
     check(not (d / "identity.json").exists(), "worker already entered this lease")
     owner = check_gpu_owner()
     actual = fields(d / "initial")
@@ -274,7 +282,10 @@ def enter(job):
 
 def licensed_split(job):
     # Even the low-level raw evaluation reader must be this stage's admitted live worker.
-    d, ref, start = admit(job)
+    return licensed_admitted_split(job, *admit(job))
+
+
+def licensed_admitted_split(job, d, ref, start):
     ident = load(d / "identity.json")
     from ..x47_xsa_attention.workbench_run import check_gpu_owner
 
@@ -295,12 +306,18 @@ def licensed_split(job):
 
 
 def one(job):
+    from .panel_freeze import freeze
+
     cpu()
     ref = authority()
     prior(job)
-    driver = load(ROOT / "driver.json")
+    dispatch_one(job, ROOT, ref, freeze)
+
+
+def dispatch_one(job, root, ref, freeze):
+    driver = load(root / "driver.json")
     parent = os.getppid()
-    ticket = load(ROOT / (job.name + ".ticket.json"))
+    ticket = load(root / (job.name + ".ticket.json"))
     check(
         parent == driver["pid"]
         and procstat(parent)[19] == driver["start"]
@@ -309,7 +326,7 @@ def one(job):
         and 0 < ticket["t0"] <= time.monotonic_ns(),
         "missing live driver admission ticket",
     )
-    d = ROOT / job.name
+    d = root / job.name
     d.mkdir()
     start = dict(
         name=job.name,
@@ -320,8 +337,6 @@ def one(job):
         units=1024,
     )
     if job.kind != "train":
-        from .panel_freeze import freeze
-
         start["freeze_sha"] = freeze(job, ref)
         start["units"] = load(d / "frozen.json")["units"]
     write_json(d / "start.json", start)
@@ -332,8 +347,8 @@ def one(job):
     )
 
 
-def witness(job):
-    d = ROOT / job.name
+def witness(job, *, root=None):
+    d = (ROOT if root is None else root) / job.name
     start = load(d / "start.json")
     la = load(d / "launch.json")
     pid = la["pid"]
@@ -441,11 +456,11 @@ def witness(job):
     return out
 
 
-def partial(job):
+def partial(job, *, root=None):
     """Report independently readable artifacts only. Absence of accounting is unknown, not free."""
     if job is None:
         return {}
-    d = ROOT / job.name
+    d = (ROOT if root is None else root) / job.name
     out = dict(
         upper_card_s=None,
         complete_recovery_step=None,
@@ -490,9 +505,14 @@ def partial(job):
 
 
 def drive():
+    from .panel_analysis import finish
+
     cpu()
-    ref = authority()
-    info = load(ROOT / "driver.json")
+    run_schedule(ROOT, authority(), JOBS, MOD, TOTAL, finish)
+
+
+def run_schedule(root, ref, jobs, mod, total, finish):
+    info = load(root / "driver.json")
     check(
         os.getppid() == 1
         and (info["pid"], info["start"]) == (os.getpid(), procstat(os.getpid())[19]),
@@ -501,25 +521,23 @@ def drive():
     charges = {}
     job = None
     try:
-        for job in JOBS.values():
-            ticket = ROOT / (job.name + ".ticket.json")
+        for job in jobs.values():
+            ticket = root / (job.name + ".ticket.json")
             check(not ticket.exists(), "job already ticketed")
             write_json(ticket, dict(job=job.name, ref=ref, t0=time.monotonic_ns()))
-            subprocess.run([PY, "-m", MOD, "one", "--job", job.name], check=True)
-            charges[job.name] = witness(job)
+            subprocess.run([PY, "-m", mod, "one", "--job", job.name], check=True)
+            charges[job.name] = witness(job, root=root)
         check(
-            sum(c["upper_card_s"] for c in charges.values()) <= TOTAL, "panel over cap"
+            sum(c["upper_card_s"] for c in charges.values()) <= total, "panel over cap"
         )
-        write_json(ROOT / "charged.json", charges)
-        from .panel_analysis import finish
-
-        finish(ROOT)
+        write_json(root / "charged.json", charges)
+        finish(root)
         write_json(
-            ROOT / "done.json",
+            root / "done.json",
             dict(
                 complete=True,
-                charges_sha=sha(ROOT / "charged.json"),
-                summary_sha=sha(ROOT / "summary.json"),
+                charges_sha=sha(root / "charged.json"),
+                summary_sha=sha(root / "summary.json"),
                 driver_and_short_parents_cpu_s=sum(
                     u.ru_utime + u.ru_stime
                     for u in (
@@ -531,11 +549,11 @@ def drive():
         )
     except BaseException as e:
         try:
-            retained = partial(job)
+            retained = partial(job, root=root)
         except Exception as error:
             retained = dict(unverified=str(error))
         write_json(
-            ROOT / "stop.json",
+            root / "stop.json",
             dict(
                 job=job.name if job else None,
                 error=repr(e),
@@ -616,13 +634,17 @@ def main():
             time.sleep(0.1)
         drive()
         return
+    observe(ROOT, JOBS)
+
+
+def observe(root, jobs):
     # Read-only observer; loss of the attended session cannot kill the driver, owner or its witness.
     cpu()
-    la = load(ROOT / "driver.json")
+    la = load(root / "driver.json")
     seen = set()
-    while not (ROOT / "done.json").exists():
+    while not (root / "done.json").exists():
         check(
-            not (ROOT / "stop.json").exists(),
+            not (root / "stop.json").exists(),
             "panel stopped; inspect retained receipts",
         )
         st = procstat(la["pid"])
@@ -630,14 +652,14 @@ def main():
             st and st[19] == la["start"] and st[0] != "Z",
             "driver exited; inspect durable status",
         )
-        for j in JOBS:
+        for j in jobs:
             for f in ("live.json", "charge.json"):
-                p = ROOT / j / f
+                p = root / j / f
                 if p.is_file() and p not in seen:
                     seen.add(p)
                     print(j, f, load(p), flush=True)
         time.sleep(2.0)
-    print(load(ROOT / "done.json"))
+    print(load(root / "done.json"))
 
 
 if __name__ == "__main__":

@@ -86,6 +86,7 @@ class Rollout:
     source: tuple
     horizon: int
     rotated_count: int
+    literal_lp: torch.Tensor | None = None  # R only, computed before any private action
 
 
 class TraceHead(nn.Module):
@@ -119,6 +120,7 @@ class TraceHead(nn.Module):
         wrong_binding=False,
         literal_sham=False,
         inspect_rotation=False,
+        retain_literal=False,
         work=None,
         age_out=None,
     ):
@@ -135,6 +137,7 @@ class TraceHead(nn.Module):
             age_out=age_out,
             inspect_rotation=inspect_rotation,
         )
+        literal_lp = lp.detach() if retain_literal else None
         ids = torch.tensor(list(word), dtype=torch.long, device=hidden.device)
         tag, wl = choices(
             ids[:-1],
@@ -198,7 +201,7 @@ class TraceHead(nn.Module):
                 private_age_gt1024=sum(t - rows[t] > 1024 for t in at),
                 private_payloads_reassigned=changed,
             )
-        return Rollout(lp, wl, ql, tag, query, rows, horizon, changed)
+        return Rollout(lp, wl, ql, tag, query, rows, horizon, changed, literal_lp)
 
 
 def objective(result: Rollout, targets, *, learned):

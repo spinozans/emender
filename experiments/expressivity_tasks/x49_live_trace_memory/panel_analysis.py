@@ -10,10 +10,10 @@ from .panel_spec import ROOT, SEEDS, STEPS, T, JOBS, PAIRS, OUT, check, training
 from .train_stream import V2_IDENTITY
 
 
-def summarize(delta, draw):
+def summarize(delta, draw, *, n=128):
     x = np.asarray(delta, dtype=np.float64)
     check(
-        x.shape == (3, 128) and np.isfinite(x).all(),
+        x.shape == (3, n) and draw.shape[1] == n and np.isfinite(x).all(),
         "need three paired seeds and all final documents",
     )
     v = x.mean(axis=0)
@@ -92,12 +92,12 @@ def contrasts(table, wall):
     )
 
 
-def read_stage(root, name, rows):
+def read_stage(root, name, rows, *, job=None):
     d = root / name
     p = load(d / "frozen.json")
     c = load(d / "complete.json")
     paid = load(d / "charge.json")
-    job = JOBS[name]
+    job = JOBS[name] if job is None else job
     check(
         p["split"] == job.kind
         and p["job"] == name
@@ -134,7 +134,7 @@ def read_stage(root, name, rows):
         cells = (
             [(128, "none"), (1024, "none"), (T, "none")]
             + ([(T, "literal")] if arm != "A" else [])
-            + ([(T, "trace")] if arm in "FC" else [])
+            + ([(T, "trace")] if arm in ("F", "C", "R") else [])
         )
         for row, line in zip(rows, f.read_text().splitlines(), strict=True):
             obj = json.loads(line)
@@ -162,7 +162,11 @@ def read_stage(root, name, rows):
                 ds = strata.setdefault(cell, {})
                 check(
                     set(x["strata"])
-                    == ({"literal", "private"} if arm in "FC" else {"literal"}),
+                    == (
+                        {"literal", "private"}
+                        if arm in ("F", "C", "R")
+                        else {"literal"}
+                    ),
                     "missing age strata",
                 )
                 for src, groups in x["strata"].items():

@@ -77,13 +77,13 @@ def choose(history, budget):
     )
 
 
-def common_wall(runs):
+def common_wall(runs, *, pairs=PAIRS, name=training):
     out = {}
-    for cand, control in PAIRS:
+    for cand, control in pairs:
         pair = cand + ":" + control
         out[pair] = {}
         for seed in SEEDS:
-            selected = {k: runs[training(k, seed)] for k in (cand, control)}
+            selected = {k: runs[name(k, seed)] for k in (cand, control)}
             check(
                 all(
                     math.isfinite(t["wall_s"])

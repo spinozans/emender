@@ -71,7 +71,9 @@ def cpu_origin(seed, arm="B"):
     from ..x47_xsa_attention.host_vjp_bench import Packet, CHUNK_SHA
     from ..x47_xsa_attention.large_host_bench import identity, EXTERNAL
 
-    check(seed in SEEDS and arm in ("A", "B", "F", "C"), "unregistered seed or arm")
+    check(
+        seed in SEEDS and arm in ("A", "B", "F", "C", "R"), "unregistered seed or arm"
+    )
     ident = identity()
     check(
         sha(EXTERNAL / "lit_gpt/gdn2_ops/chunk_gdn2.py") == CHUNK_SHA,
@@ -112,8 +114,8 @@ def cpu_origin(seed, arm="B"):
         )
         torch.manual_seed(seed)
         head = LiveValueHead(head)
-        if arm in ("F", "C"):
-            head = TraceHead(head, learned=arm == "C")
+        if arm in ("F", "C", "R"):
+            head = TraceHead(head, learned=arm != "F")
     check(
         sum(p.numel() for p in host.parameters()) == 149855670
         and all(p.device.type == "cpu" for p in host.parameters()),
@@ -133,9 +135,9 @@ def step(host, head, opts, word, *, mode, index, width=256, seed=None, document=
     check(
         type(word) is bytes
         and 2 <= len(word) <= T + 1
-        and mode in ("A", "B", "F", "C")
-        and isinstance(head, TraceHead) == (mode in ("F", "C"))
-        and (mode not in ("F", "C") or head.learned == (mode == "C"))
+        and mode in ("A", "B", "F", "C", "R")
+        and isinstance(head, TraceHead) == (mode in ("F", "C", "R"))
+        and (not isinstance(head, TraceHead) or head.learned == (mode != "F"))
         and type(index) is int
         and 1 <= index <= 1024,
         "invalid X49 update",
@@ -162,7 +164,7 @@ def step(host, head, opts, word, *, mode, index, width=256, seed=None, document=
     work = dict(
         private_queries=0, private_writes=0, private_hits=0, private_collisions=0
     )
-    if mode in ("F", "C"):
+    if mode in ("F", "C", "R"):
         roll = head(
             inputs,
             h[0],
@@ -172,10 +174,15 @@ def step(host, head, opts, word, *, mode, index, width=256, seed=None, document=
             visit=index,
             horizon=4096,
             work=work,
+            retain_literal=mode == "R",
         )
-        loss, nll = trace_objective(
-            roll, torch.tensor(list(word[1:]), dtype=torch.long), learned=head.learned
-        )
+        targets = torch.tensor(list(word[1:]), dtype=torch.long)
+        if mode == "R":
+            from .posthoc_credit_control import relative_objective
+
+            loss, nll = relative_objective(roll, roll.literal_lp, targets)
+        else:
+            loss, nll = trace_objective(roll, targets, learned=head.learned)
     else:
         lp = head(inputs, h[0], logits[0], mode=mode, horizon=4096, work=work)
         # Target-specific gather happens only after the head has returned every byte probability.

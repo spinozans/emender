@@ -19,9 +19,12 @@ from .train_stream import V2_IDENTITY
 
 def read_training(root, arm, seed, ref):
     d = root / training(arm, seed)
+    return read_bound_training(d, binding(ref, arm, seed), JOBS[d.name].cap)
+
+
+def read_bound_training(d, b, cap):
     complete = load(d / "complete.json")
     paid = load(d / "charge.json")
-    b = binding(ref, arm, seed)
     check(
         complete["binding"] == b
         and complete["kind"] == "train"
@@ -30,7 +33,7 @@ def read_training(root, arm, seed, ref):
         and paid["rc"] == 0
         and paid["witnessed_units"] == STEPS
         and paid["renewed"]
-        and 0 < paid["upper_card_s"] <= JOBS[d.name].cap
+        and 0 < paid["upper_card_s"] <= cap
         and paid["complete_sha"] == sha(d / "complete.json"),
         "incomplete or foreign training trajectory",
     )

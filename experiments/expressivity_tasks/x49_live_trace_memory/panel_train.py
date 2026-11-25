@@ -25,7 +25,10 @@ def append(path, event):
 def train(job):
     from .panel import enter, progress
 
-    ctx = enter(job)
+    return train_admitted(job, enter(job), progress, binding)
+
+
+def train_admitted(job, ctx, progress, bind_fn, check_birth=None, check_first=None):
     d, ref, t0 = ctx["folder"], ctx["ref"], ctx["t0"]
     check(job.kind == "train", "not a TRAIN job")
     arm, seed = job.arms, job.seed
@@ -41,11 +44,13 @@ def train(job):
         literal=state_digest(getattr(head, "literal", head).state_dict()),
         head=state_digest(head.state_dict()),
     )
+    if check_birth is not None:
+        check_birth(birth)
     host = host.to("cuda")
     torch.set_num_threads(4)
     opts, routing = optimizers(host, head)
     check(all(not o.state and not o.aux.state for o in opts), "fresh moments required")
-    bind = binding(ref, arm, seed)
+    bind = bind_fn(ref, arm, seed)
     write_json(
         d / "start-state.json",
         dict(binding=bind, birth=birth, groups=routing, setup_wall_s=wall()),
@@ -65,6 +70,8 @@ def train(job):
         for k, v in r["work"].items():
             work[k] = work.get(k, 0) + v
         append(d / "steps.jsonl", r)
+        if i == 1 and check_first is not None:
+            check_first(r)
         if i % 32 == 0:
             check(
                 shutil.disk_usage(d).free >= 4 << 30, "insufficient atomic write space"

@@ -52,7 +52,7 @@ def checked_eval_window(raw, row, split):
     return w.inputs + w.targets[-1:]
 
 
-def _documents(job, frozen):
+def _v2_descriptor(job, frozen):
     from .panel import licensed_split
 
     check(
@@ -85,7 +85,18 @@ def _documents(job, frozen):
         ),
         "refuse source open",
     )
-    src = r["source"]
+    return ROOT / job.name, r["source"], rows
+
+
+def _documents(job, frozen):
+    """This is the only panel raw source open: accept no caller-selected rows or paths."""
+    if job.name == "r-final":
+        from .relative_panel import fresh_descriptor
+
+        folder, src, rows = fresh_descriptor(job, frozen)
+    else:
+        folder, src, rows = _v2_descriptor(job, frozen)
+    split = job.kind
     windows = []
     nread = 0
 
@@ -97,14 +108,14 @@ def _documents(job, frozen):
             "changed evaluation source descriptor",
         )
 
-    (ROOT / job.name / "source-open-attempted").touch(
+    (folder / "source-open-attempted").touch(
         mode=0o600, exist_ok=False
     )  # single use, including refusal/partial
     with open(src["path"], "rb", buffering=0) as f:
         verify(f)
         for row in rows:
             w = checked_eval_window(
-                os.pread(f.fileno(), row["length"], row["offset"]), row, job.kind
+                os.pread(f.fileno(), row["length"], row["offset"]), row, split
             )
             windows.append((row["doc"], row["sha256"], w))
             nread += row["length"]
@@ -143,7 +154,13 @@ def decode_probe(host, head, arm, seed):
 def evaluate(job):
     from .panel import enter, progress
 
-    ctx = enter(job)
+    def resolve(k, s, i, ref):
+        return ROOT / training(k, s) / f"weights-{i:04d}.pt", binding(ref, k, s)
+
+    return evaluate_admitted(job, enter(job), _documents, progress, resolve)
+
+
+def evaluate_admitted(job, ctx, documents, progress, resolve):
     d = ctx["folder"]
     f = d / "frozen.json"
     start = load(d / "start.json")
@@ -157,7 +174,7 @@ def evaluate(job):
     )
     c0 = cpu_seconds()
     tic = perf_counter()
-    windows, nread = _documents(job, plan)
+    windows, nread = documents(job, plan)
     prep = perf_counter() - tic
     write_json(
         d / "stream.json",
@@ -175,14 +192,14 @@ def evaluate(job):
     endpoint_receipts = {}
     for key, e in sorted(plan["endpoints"].items()):
         k, s, i = e["arm"], e["seed"], e["step"]
+        p, expected = resolve(k, s, i, ctx["ref"])
         check(
-            key == f"{training(k, s)}@{i}"
+            key == f"{k}-{s}@{i}"
             and 1 <= i <= STEPS
             and i % 32 == 0
-            and e["binding"] == binding(ctx["ref"], k, s),
+            and e["binding"] == expected,
             "foreign analysis endpoint",
         )
-        p = ROOT / training(k, s) / f"weights-{i:04d}.pt"
         check(
             p.stat().st_size == e["bytes"] and sha(p) == e["sha256"],
             "weights changed since freeze",
@@ -201,12 +218,15 @@ def evaluate(job):
         host = host.eval().to("cuda")
         head.eval()
         torch.set_num_threads(4)
-        probe = decode_probe(host, head, k, s)
+        # R changes training credit only. Its frozen prediction path is exactly C's;
+        # checkpoint/source identities above and in the log key remain R, never C.
+        inference_arm = "C" if k == "R" else k
+        probe = decode_probe(host, head, inference_arm, s)
         log = d / (key + ".jsonl")
         log.touch(mode=0o600, exist_ok=False)
         for doc, h, w in windows:
             data = score_window(
-                host, head, w, arm=k, seed=s, document=doc, stratify=True
+                host, head, w, arm=inference_arm, seed=s, document=doc, stratify=True
             )
             append(log, dict(document_sha=h, **data))
             n += 1
