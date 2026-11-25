@@ -78,6 +78,27 @@ class RidgeMoments:
         )
 
 
+class SparseMoments(RidgeMoments):
+    """Multiclass Fisher moments at the incoming distribution; absent coordinates have zero features."""
+
+    @torch.inference_mode()
+    def add(self, packet, targets):
+        y, right = _labels(packet, targets)
+        n = len(y)
+        tic = perf_counter()
+        row, p = packet.row, packet.prob
+        chosen = packet.symbol == y[row]
+        for arm, d in self.dims.items():
+            x = packet.features(arm)
+            px = p[:, None] * x
+            mu = torch.zeros((n, d), dtype=torch.float64).index_add_(0, row, px)
+            self.rhs[arm] += (x[chosen].sum(0) - mu.sum(0)).numpy()
+            self.gram[arm] += (x.T @ px - mu.T @ mu).numpy()
+        self.targets += n
+        self.documents += 1
+        return int(right.sum()), perf_counter() - tic
+
+
 class Moments(RidgeMoments):
     dims = DIMS
     common_arm = "N"

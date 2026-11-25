@@ -343,8 +343,10 @@ def analyze(root, *, study="U"):
         == [(r["sha256"], r["start"]) for r in roles["probe"]],
         f"unbound {study} probe shifts",
     )
-    if study in ("DR", "RB", "EH"):
-        if study == "EH":
+    if study in ("DR", "RB", "EH", "PC"):
+        if study == "PC":
+            from .paired_correction_stats import summarize as reduce
+        elif study == "EH":
             from .error_history_stats import summarize as reduce
         elif study == "RB":
             from .residual_stats import summarize as reduce
@@ -373,6 +375,23 @@ def analyze(root, *, study="U"):
                         "qualification_sha",
                         "fit_dimensions",
                         "swap_fit",
+                    )
+                }
+            )
+        if study == "PC":
+            parent.update(
+                {
+                    k: initial[k]
+                    for k in (
+                        "et_result_sha",
+                        "et_close_sha",
+                        "eh_result_sha",
+                        "eh_fit_freeze_sha",
+                        "qualification_sha",
+                        "fit_dimensions",
+                        "swap_fit",
+                        "error_refits",
+                        "history_refits",
                     )
                 }
             )

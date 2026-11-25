@@ -23,6 +23,7 @@ from experiments.expressivity_tasks.x49_live_trace_memory import (
     decode_report,
     residual_report,
     error_history_report,
+    paired_correction_report,
     test_joint_reader as native_fixture,
     local_u,
 )
@@ -47,6 +48,28 @@ def fake(tmp, mp, name="V"):
     calls = fake_endpoints(tmp, mp)
     original = local_u.contract
     beta = {s: original(s)[1] for s in SEEDS}
+    if name == "PC":
+
+        def contract(s):
+            i = SEEDS.index(s) + 1
+            return sha256(str(s).encode()).hexdigest(), {
+                k: [i * 0.1] * d
+                for k, d in dict(U=4, J=5, COUNT=2, HISTORY=5, ERROR=6, SHIFT=6).items()
+            }
+
+        mp.setattr(data.earlier, "contract", contract)
+        mp.setattr(
+            data,
+            "checked_spec",
+            lambda: dict(
+                predictors={
+                    str(s): dict(checkpoint=contract(s)[0], beta=contract(s)[1])
+                    for s in SEEDS
+                },
+                writer_binary_sha=p.jt.lineage()["writer_binary_sha"],
+            ),
+        )
+        mp.setattr(p, "qualification_sha", lambda ref: "f" * 64)
     if name in ("DR", "RB", "EH"):
         drp = p if name == "DR" else p.dr
         jbeta = {s: run.joint.contract(s)[1] for s in SEEDS}
@@ -135,7 +158,7 @@ def test_next_full_train_block_excludes_both_u_roles_and_short_final():
         data.next_block(records, pre, dict(roles, probe=rank[6:9]), short, 6, end)
 
 
-@pytest.mark.parametrize("name", ["V", "LS", "DR", "RB", "EH"])
+@pytest.mark.parametrize("name", ["V", "LS", "DR", "RB", "EH", "PC"])
 def test_prepare_is_fit_only_reader_rejects_other_study_and_early_probe(
     tmp_path, monkeypatch, name
 ):
@@ -220,7 +243,7 @@ def test_exact_u_bindings_and_conjunctive_v_decision(tmp_path, monkeypatch):
     assert not ana.decision(cs)["warrants_separate_confirmation"]
 
 
-@pytest.mark.parametrize("name", ["V", "LS", "DR", "RB", "EH"])
+@pytest.mark.parametrize("name", ["V", "LS", "DR", "RB", "EH", "PC"])
 def test_all_seed_freeze_before_probe_and_multiplicity_cholesky_closure(
     tmp_path, monkeypatch, name, request
 ):
@@ -231,8 +254,9 @@ def test_all_seed_freeze_before_probe_and_multiplicity_cholesky_closure(
         "DR": decode_report.report,
         "RB": residual_report.report,
         "EH": error_history_report.report,
+        "PC": paired_correction_report.report,
     }[name]
-    if name in ("DR", "RB", "EH"):
+    if name in ("DR", "RB", "EH", "PC"):
         writer = request.getfixturevalue("binary")[-1]
         monkeypatch.setattr(run.joint, "_writer", lambda: writer)
     book, calls = fake(tmp_path, monkeypatch, name)
@@ -328,7 +352,9 @@ def test_all_seed_freeze_before_probe_and_multiplicity_cholesky_closure(
             f.write_bytes((d / f"{name.lower()}-tables-4901.npz").read_bytes())
         else:
             bad = json.loads(orig)
-            bad["state"]["beta"][{"V": "K", "LS": "S", "EH": "ERROR"}[name]][3] += 1
+            bad["state"]["beta"][
+                {"V": "K", "LS": "S", "EH": "ERROR", "PC": "PAIR"}[name]
+            ][-1] += 1
             write_json(f, bad)
         with pytest.raises(
             ValueError,
@@ -347,7 +373,8 @@ def test_all_seed_freeze_before_probe_and_multiplicity_cholesky_closure(
         and not (d / "probe/windows.u8").exists()
         and z["targets"] == 15 * T
         and z["neural_updates"] == 0
-        and z["fitted_readouts"] == {"V": 9, "LS": 15, "DR": 3, "RB": 3, "EH": 12}[name]
+        and z["fitted_readouts"]
+        == {"V": 9, "LS": 15, "DR": 3, "RB": 3, "EH": 12, "PC": 9}[name]
     )
     write_json(d / "complete.json", z)
     charge = dict(
@@ -401,6 +428,19 @@ def test_all_seed_freeze_before_probe_and_multiplicity_cholesky_closure(
             "V": {"V:D", "V:K", "V:U", "D:U", "K:D"},
             "LS": {"J:T", "J:S", "H:T", "T:N", "H:N", "S:T", "J:H", "T:U", "J:U"},
             "DR": {"D:P", "D:S", "J:P", "J:D", "D:U", "D:B", "J:U", "U:B", "S:P"},
+            "PC": {
+                "PAIR:MARG",
+                "PAIR:SHUF",
+                "PAIR:SWAP",
+                "PAIR:ERROR",
+                "MARG:ERROR",
+                "SHUF:MARG",
+                "PAIR:J",
+                "ERROR:HISTORY",
+                "HISTORY:J",
+                "J:U",
+                "U:B",
+            },
             "EH": {
                 "ERROR:HISTORY",
                 "ERROR:SHIFT",
@@ -464,6 +504,15 @@ def test_all_seed_freeze_before_probe_and_multiplicity_cholesky_closure(
             and r["j_refits"] == 0
             and all(set(e) == set(p.DIMS) for e in r["beta"].values())
             and "SWAP" not in p.DIMS
+        )
+    if name == "PC":
+        assert (
+            r["verified"]["independent_conditional_support_peaks_and_cost"]
+            and r["swap_fit"] == "PAIR"
+            and r["history_refits"] == r["error_refits"] == 0
+            and all(
+                set(entry) == {"MARG", "PAIR", "SHUF"} for entry in r["beta"].values()
+            )
         )
     if name == "LS":
         assert r["verified"]["independent_pooled_mark_correlations"] and all(

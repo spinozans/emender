@@ -6,11 +6,11 @@ from math import isfinite
 import numpy as np
 import torch
 from .error_history import ARMS, DIMS, fields, response
-from .surprise_fit import RidgeMoments, _labels
+from .surprise_fit import SparseMoments, _labels
 from .endpoint import frozen_prefill
 
 
-class Moments(RidgeMoments):
+class Moments(SparseMoments):
     dims = DIMS
     common_arm = "COUNT"
 
@@ -32,23 +32,6 @@ class Moments(RidgeMoments):
             ):
                 raise ValueError("different HISTORY features or exposure in EH fits")
         return z
-
-    @torch.inference_mode()
-    def add(self, packet, targets):
-        y, right = _labels(packet, targets)
-        n = len(y)
-        tic = perf_counter()
-        row, p = packet.row, packet.prob
-        chosen = packet.symbol == y[row]
-        for arm in DIMS:
-            x = packet.features(arm)
-            px = p[:, None] * x
-            mu = torch.zeros((n, DIMS[arm]), dtype=torch.float64).index_add_(0, row, px)
-            self.rhs[arm] += (x[chosen].sum(0) - mu.sum(0)).numpy()
-            self.gram[arm] += (x.T @ px - mu.T @ mu).numpy()
-        self.targets += n
-        self.documents += 1
-        return int(right.sum()), perf_counter() - tic
 
 
 @torch.inference_mode()

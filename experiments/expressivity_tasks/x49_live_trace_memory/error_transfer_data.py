@@ -49,7 +49,8 @@ def spent_context(meta):
     return book, records, pre | old
 
 
-def selection():
+def selection_context():
+    """Reproduce the ET descriptor and pre-ET exclusions, without opening payload data."""
     meta = parent()["data"]
     book, records, ex = spent_context(meta)
     j = dr.checked_spec()
@@ -63,7 +64,7 @@ def selection():
         (len(ex), n, nt) == (44472, 558, 810074),
         "wrong ET short supply or historical exclusions",
     )
-    return dict(
+    descriptor = dict(
         spec=SPEC,
         eh_result_sha=reader.PUBLIC,
         eh_rows_sha=meta["rows_sha"],
@@ -76,6 +77,11 @@ def selection():
         eligible_targets=nt,
         rows=rows,
     )
+    return descriptor, records, ex, book
+
+
+def selection():
+    return selection_context()[0]
 
 
 def checked_rows(book):

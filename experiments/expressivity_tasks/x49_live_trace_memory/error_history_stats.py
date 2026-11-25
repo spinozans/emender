@@ -198,13 +198,52 @@ def support(w, right):
     )
 
 
+SAME = {
+    "pool_hits",
+    "pool_active_rows",
+    "pool_key_admissions",
+    "pool_committed_records",
+    "pool_peak_keys",
+    "pool_older_occurrence_uses",
+    "mark_norms_from_current",
+}
+
+
 def summarize(role, logs, hashes):
+    return full_summary(
+        role,
+        logs,
+        hashes,
+        validator=checked_row,
+        support_counts=support,
+        peaks_to_keep=PEAKS,
+        same=SAME,
+        arms=ARMS,
+        pairs=PAIRS,
+        boot=BOOT,
+    )
+
+
+def full_summary(
+    role,
+    logs,
+    hashes,
+    *,
+    validator,
+    support_counts,
+    peaks_to_keep,
+    same,
+    arms,
+    pairs,
+    boot,
+):
+    """Reduce paired full-window journals without treating seed replicates as new documents."""
     n = len(hashes)
     check(
         n and n == len(set(hashes)) and set(logs) == set(SEEDS), "unpaired EH documents"
     )
     scored = role == "probe"
-    loss = np.empty((len(SEEDS), n, len(ARMS))) if scored else None
+    loss = np.empty((len(SEEDS), n, len(arms))) if scored else None
     secs = Counter()
     work = {}
     docs = {}
@@ -213,7 +252,7 @@ def summarize(role, logs, hashes):
         total = Counter()
         sup = Counter()
         for i, (h, r) in enumerate(zip(hashes, logs[s], strict=True)):
-            checked_row(role, r)
+            validator(role, r)
             w = r["work"]
             ref = logs[SEEDS[0]][i]
             right = r["candidate_correct"]
@@ -223,30 +262,20 @@ def summarize(role, logs, hashes):
                 and all(
                     v == ref["work"][k]
                     for k, v in w.items()
-                    if k.startswith(("text_", "literal_"))
-                    or k
-                    in (
-                        "pool_hits",
-                        "pool_active_rows",
-                        "pool_key_admissions",
-                        "pool_committed_records",
-                        "pool_peak_keys",
-                        "pool_older_occurrence_uses",
-                        "mark_norms_from_current",
-                    )
+                    if k.startswith(("text_", "literal_")) or k in same
                 ),
                 "foreign EH document or changed literal geometry",
             )
             total.update(w)
             total.update(candidate_correct=right)
-            sup.update({k: int(bool(v)) for k, v in support(w, right).items()})
+            sup.update({k: int(bool(v)) for k, v in support_counts(w, right).items()})
             secs.update(r["seconds"])
             if scored:
-                loss[si, i] = [r["nll_sums"][k] for k in ARMS]
+                loss[si, i] = [r["nll_sums"][k] for k in arms]
         k = str(s)
         work[k] = dict(total)
         docs[k] = dict(sup)
-        peaks[k] = {v: max(r["work"][v] for r in logs[s]) for v in PEAKS}
+        peaks[k] = {v: max(r["work"][v] for r in logs[s]) for v in peaks_to_keep}
     z = dict(
         paired_documents=n,
         real_targets_per_seed=n * T,
@@ -258,7 +287,7 @@ def summarize(role, logs, hashes):
         },
     )
     if scored:
-        z.update(common.paired_table(loss, [T] * n, ARMS, PAIRS, BOOT))
+        z.update(common.paired_table(loss, [T] * n, arms, pairs, boot))
     return z
 
 

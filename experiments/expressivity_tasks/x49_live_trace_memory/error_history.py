@@ -143,7 +143,11 @@ def fields(head, word, h, z, jb, writer, *, ub=None):
 def response(packet, arm, coefficients):
     k = "ERROR" if arm == "SWAP" else arm
     beta = u.checked_vector(DIMS, k, coefficients)
-    x = packet.features(arm)
+    return _tilt(packet, packet.features(arm), beta)
+
+
+def _tilt(packet, x, beta):
+    """Apply validated sparse score columns without changing the incoming row log mass."""
     base = packet.base
     out = base.clone()
     at = packet.active
