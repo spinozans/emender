@@ -22,6 +22,7 @@ from experiments.expressivity_tasks.x49_live_trace_memory import (
     literal_mark_report,
     decode_report,
     residual_report,
+    error_history_report,
     test_joint_reader as native_fixture,
     local_u,
 )
@@ -46,7 +47,7 @@ def fake(tmp, mp, name="V"):
     calls = fake_endpoints(tmp, mp)
     original = local_u.contract
     beta = {s: original(s)[1] for s in SEEDS}
-    if name in ("DR", "RB"):
+    if name in ("DR", "RB", "EH"):
         drp = p if name == "DR" else p.dr
         jbeta = {s: run.joint.contract(s)[1] for s in SEEDS}
 
@@ -83,6 +84,18 @@ def fake(tmp, mp, name="V"):
             )
 
             fake_residual_parent(tmp, mp, ck, coeff)
+        if name == "EH":
+            mp.setattr(
+                data,
+                "checked_spec",
+                lambda: dict(
+                    checkpoints={str(s): ck(s) for s in SEEDS},
+                    u_beta={str(s): coeff(s)["U"] for s in SEEDS},
+                    j_beta={str(s): coeff(s)["J"] for s in SEEDS},
+                    writer_binary_sha=drp.jt.lineage()["writer_binary_sha"],
+                ),
+            )
+            mp.setattr(p, "qualification_sha", lambda ref: "f" * 64)
     mp.setattr(
         local_u, "contract", lambda s: (sha256(str(s).encode()).hexdigest(), beta[s])
     )
@@ -122,7 +135,7 @@ def test_next_full_train_block_excludes_both_u_roles_and_short_final():
         data.next_block(records, pre, dict(roles, probe=rank[6:9]), short, 6, end)
 
 
-@pytest.mark.parametrize("name", ["V", "LS", "DR", "RB"])
+@pytest.mark.parametrize("name", ["V", "LS", "DR", "RB", "EH"])
 def test_prepare_is_fit_only_reader_rejects_other_study_and_early_probe(
     tmp_path, monkeypatch, name
 ):
@@ -207,7 +220,7 @@ def test_exact_u_bindings_and_conjunctive_v_decision(tmp_path, monkeypatch):
     assert not ana.decision(cs)["warrants_separate_confirmation"]
 
 
-@pytest.mark.parametrize("name", ["V", "LS", "DR", "RB"])
+@pytest.mark.parametrize("name", ["V", "LS", "DR", "RB", "EH"])
 def test_all_seed_freeze_before_probe_and_multiplicity_cholesky_closure(
     tmp_path, monkeypatch, name, request
 ):
@@ -217,8 +230,9 @@ def test_all_seed_freeze_before_probe_and_multiplicity_cholesky_closure(
         "LS": literal_mark_report.report,
         "DR": decode_report.report,
         "RB": residual_report.report,
+        "EH": error_history_report.report,
     }[name]
-    if name in ("DR", "RB"):
+    if name in ("DR", "RB", "EH"):
         writer = request.getfixturevalue("binary")[-1]
         monkeypatch.setattr(run.joint, "_writer", lambda: writer)
     book, calls = fake(tmp_path, monkeypatch, name)
@@ -314,7 +328,7 @@ def test_all_seed_freeze_before_probe_and_multiplicity_cholesky_closure(
             f.write_bytes((d / f"{name.lower()}-tables-4901.npz").read_bytes())
         else:
             bad = json.loads(orig)
-            bad["state"]["beta"]["K" if name == "V" else "S"][3] += 1
+            bad["state"]["beta"][{"V": "K", "LS": "S", "EH": "ERROR"}[name]][3] += 1
             write_json(f, bad)
         with pytest.raises(
             ValueError,
@@ -333,7 +347,7 @@ def test_all_seed_freeze_before_probe_and_multiplicity_cholesky_closure(
         and not (d / "probe/windows.u8").exists()
         and z["targets"] == 15 * T
         and z["neural_updates"] == 0
-        and z["fitted_readouts"] == {"V": 9, "LS": 15, "DR": 3, "RB": 3}[name]
+        and z["fitted_readouts"] == {"V": 9, "LS": 15, "DR": 3, "RB": 3, "EH": 12}[name]
     )
     write_json(d / "complete.json", z)
     charge = dict(
@@ -387,6 +401,19 @@ def test_all_seed_freeze_before_probe_and_multiplicity_cholesky_closure(
             "V": {"V:D", "V:K", "V:U", "D:U", "K:D"},
             "LS": {"J:T", "J:S", "H:T", "T:N", "H:N", "S:T", "J:H", "T:U", "J:U"},
             "DR": {"D:P", "D:S", "J:P", "J:D", "D:U", "D:B", "J:U", "U:B", "S:P"},
+            "EH": {
+                "ERROR:HISTORY",
+                "ERROR:SHIFT",
+                "ERROR:SWAP",
+                "ERROR:J",
+                "HISTORY:COUNT",
+                "HISTORY:J",
+                "COUNT:J",
+                "SHIFT:HISTORY",
+                "ERROR:U",
+                "J:U",
+                "U:B",
+            },
             "RB": {
                 "R:D",
                 "R:G",
@@ -429,6 +456,14 @@ def test_all_seed_freeze_before_probe_and_multiplicity_cholesky_closure(
             and x["fit_writes"] == 2 * (T - 1)
             and x["synthetic"]["one_write_standalone_R_equal"]
             for x in r["decoders"].values()
+        )
+    if name == "EH":
+        assert (
+            r["verified"]["independent_histogram_support_and_peak"]
+            and r["j_beta"] == initial["j_beta"]
+            and r["j_refits"] == 0
+            and all(set(e) == set(p.DIMS) for e in r["beta"].values())
+            and "SWAP" not in p.DIMS
         )
     if name == "LS":
         assert r["verified"]["independent_pooled_mark_correlations"] and all(

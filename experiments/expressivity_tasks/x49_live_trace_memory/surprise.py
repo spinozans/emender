@@ -65,12 +65,12 @@ class Fields:
 
 def fields(head, word, hidden, logits):
     """Registered N/U/S comparison, including the wrong-mark intervention."""
-    return _fields(head, word, hidden, logits, controls=True)
+    return _fields_and_tape(head, word, hidden, logits, controls=True)[0]
 
 
 def bound_fields(head, word, hidden, logits):
     """U only: no sham search/read and no alternative response. All addresses are B's outputs."""
-    return _fields(head, word, hidden, logits, controls=False)
+    return _fields_and_tape(head, word, hidden, logits, controls=False)[0]
 
 
 def _rotation(word, query, latest, depth):
@@ -89,7 +89,7 @@ def _rotation(word, query, latest, depth):
 
 
 @torch.inference_mode()
-def _fields(head, word, hidden, logits, *, controls):
+def _fields_and_tape(head, word, hidden, logits, *, controls):
     """Build all required inputs before the caller gets access to the loss/fit seam."""
     if (
         type(head) is not LiveValueHead
@@ -164,7 +164,7 @@ def _fields(head, word, hidden, logits, *, controls):
         U_mark_reads=len(u),
         U_read_code_saturated=int((u == 255).sum()),
     )
-    return Fields(base, q, c, v, features, work, clock, j, depth)
+    return Fields(base, q, c, v, features, work, clock, j, depth), tape
 
 
 def checked_beta(arm, coefficients):

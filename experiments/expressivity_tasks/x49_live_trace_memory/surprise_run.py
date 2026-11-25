@@ -143,6 +143,37 @@ def checked_gate(check_source, name, spec, gates):
     return ref
 
 
+def check_public_qualification(name, ref, spec, head_audit):
+    """The stopped-on-error reader may only open a new role after its exact public gate."""
+    check(name in ("residual-byte", "error-history"), "unknown publication gate")
+    pub = (OUT / (name + "-qualified-public-ref")).read_text().strip()
+    check(
+        re.fullmatch("[a-f0-9]{40}", pub) is not None,
+        "invalid public qualification ref",
+    )
+    subprocess.run(
+        ["git", "merge-base", "--is-ancestor", pub, "refs/remotes/origin/main"],
+        cwd=REPO,
+        check=True,
+    )
+    path = (
+        "experiments/expressivity_tasks/x49_live_trace_memory/receipts/"
+        + name.replace("-", "_")
+        + "_cpu_qualification.json"
+    )
+    ev = json.loads(
+        subprocess.check_output(["git", "show", pub + ":" + path], cwd=REPO)
+    )
+    check(
+        ev["qualified_local_source"] == ref
+        and ev["spec_sha256"] == spec
+        and ev["head_audit"] == head_audit
+        and ev["private_pass_receipt_sha256"]
+        == sha(OUT / (f"qualify-{name}-" + ref) / "passed.json"),
+        "unpublished or altered CPU qualification",
+    )
+
+
 def authority():
     check(AUTH.is_file(), "no separate U fit/probe budget")
     check(shutil.disk_usage(OUT).free >= 32 << 30, "insufficient U disk")

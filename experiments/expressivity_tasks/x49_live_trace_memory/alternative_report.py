@@ -14,7 +14,9 @@ from .panels import SEEDS
 def report(*, study="V"):
     cpu()
     data, p, run = phase(study)
-    if study == "RB":
+    if study == "EH":
+        from . import error_history_stats as analysis
+    elif study == "RB":
         from . import residual_stats as analysis
     elif study == "DR":
         from . import decode_stats as analysis
@@ -60,7 +62,7 @@ def report(*, study="V"):
                 sealed,
                 dims=p.DIMS,
                 fit_documents=data.N["fit"],
-                conditioned=study == "LS",
+                conditioned=study in ("LS", "EH"),
             )
         )
     book = data.bound(data.BASE / "reservation.json", r["data"]["rows_sha"])

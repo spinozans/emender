@@ -1,11 +1,9 @@
 """One RB FIT/PROBE job. Qualification binds the actual head axes before any RB preparation."""
 
-import json
 import shutil
-import subprocess
 from time import perf_counter
 import torch
-from ..x48_muon_continuation.data import ROOT as REPO, check, load, sha
+from ..x48_muon_continuation.data import check, load, sha
 from . import (
     residual_byte as rb,
     residual_codec as codec,
@@ -74,35 +72,7 @@ def checked_fixture_ref():
     axes = p.checked_axes(ref, w, c)
     # The public, source-only qualification includes the axis hash per checkpoint.
     # No changing these between qualification, selection and the leased inference worker.
-    pub = (OUT / "residual-byte-qualified-public-ref").read_text().strip()
-    check(
-        len(pub) == 40 and f"{int(pub, 16):040x}" == pub,
-        "invalid public RB qualification ref",
-    )
-    subprocess.run(
-        ["git", "merge-base", "--is-ancestor", pub, "refs/remotes/origin/main"],
-        cwd=REPO,
-        check=True,
-    )
-    ev = json.loads(
-        subprocess.check_output(
-            [
-                "git",
-                "show",
-                pub
-                + ":experiments/expressivity_tasks/x49_live_trace_memory/receipts/residual_byte_cpu_qualification.json",
-            ],
-            cwd=REPO,
-        )
-    )
-    check(
-        ev["qualified_local_source"] == ref
-        and ev["spec_sha256"] == data.SPEC
-        and ev["head_audit"] == axes
-        and ev["private_pass_receipt_sha256"]
-        == sha(OUT / ("qualify-residual-byte-" + ref) / "passed.json"),
-        "unpublished or altered RB axis qualification",
-    )
+    prior.check_public_qualification("residual-byte", ref, data.SPEC, axes)
     return ref
 
 

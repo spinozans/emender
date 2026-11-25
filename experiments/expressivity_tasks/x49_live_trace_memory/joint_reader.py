@@ -50,11 +50,16 @@ def branch(p, observed, beta, writer):
     start = perf_counter()
     tape, work = writer(observed)
     write_s = perf_counter() - start
+    return _from_tape(p, tape, beta), work, write_s
+
+
+@torch.inference_mode()
+def _from_tape(p, tape, beta):
     hfeat = p.phi["U"]
     tc = tape[p.latest].double()[:, None] / 64
     # J = (three current fields, true literal mark, true neural mark). U isn't scored.
     phi = torch.cat((hfeat[:, :3], tc, hfeat[:, 3:]), dim=1)
-    return u.copy_response(p, phi, u.checked_vector(ls.DIMS, "J", beta)), work, write_s
+    return u.copy_response(p, phi, u.checked_vector(ls.DIMS, "J", beta))
 
 
 def _writer():

@@ -40,7 +40,8 @@ def next_block(book, records, pre, quota):
     )
 
 
-def selection():
+def selection_context():
+    """Reproduce the spent RB descriptors, manifest and pre-RB exclusions; no text."""
     r = checked_spec()
     b, records, pre = dr.selection_context()
     check(
@@ -50,7 +51,7 @@ def selection():
     )
     rows, ex, supply = next_block(b, records, pre, sum(N.values()))
     check(len(ex) == 43704 and supply == 22803, "incorrect clean RB supply")
-    return dict(
+    descriptor = dict(
         schema="x49-rb-native-train",
         spec=SPEC,
         dr_result_sha=DR_RESULT,
@@ -62,6 +63,11 @@ def selection():
         excluded_sha=fingerprint(sorted(ex)),
         roles=dict(fit=rows[: N["fit"]], probe=rows[N["fit"] :]),
     )
+    return descriptor, records, ex
+
+
+def selection():
+    return selection_context()[0]
 
 
 def checked_roles(book):
