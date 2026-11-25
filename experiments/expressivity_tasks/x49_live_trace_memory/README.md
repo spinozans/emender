@@ -8,7 +8,7 @@
 
 **Closed: [remembering the model's earlier forecast helped beyond remembering text counts](RESULT_LITERAL_SURPRISE.md)** · [X49-LS protocol](LITERAL_SURPRISE.md) · [aggregate](receipts/literal_surprise_result.json). On 128 disjoint native TRAIN probe documents the two notes together beat the text note alone by .003674 nats/byte, text plus a wrong-occurrence neural note by .003236, and the confirmed neural-only reader U by .002046. All three checkpoints agreed. The text note cost 21.50 ms to build per full window versus 0.52 ms for the neural note from available host outputs. This warrants separate no-refit confirmation, not replacing U yet. One lease released, ≤300 incremental card-s; no final opened or reserved by LS.
 
-**Next: [make the frozen two-note reader cheaper without changing its predictions](JOINT_READER.md).** CPU-only exact implementation and synthetic timing before a separate quality confirmation. No new data or lease.
+**Closed engineering check: [same two-note predictor, cheaper count writer](RESULT_JOINT_READER.md).** Exact marks and 256-score parity on synthetic tests; 0.29–2.77 ms to build a 4K count tape, 7.39–59.21× faster in paired trials than the Python writer. These are writer-only CPU measurements, not end-to-end speed or new language-model evidence. No natural data or lease.
 
 **Completed natural result:** [Final report](RESULT.md) · [verified aggregate](receipts/panel_result.json). B beat A by .001124 nats/byte at full dose and .003125 at matched training time on the 128-document final; value-only shuffling hurt. B is the local baseline. The registered learned-key C lost to fixed-key F. All 15 leases released, ≤14,022 card-s. Do not reopen the panel. The formal Lux rule returned no nominee; no remote launch.
 
