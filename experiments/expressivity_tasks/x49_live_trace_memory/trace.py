@@ -120,6 +120,7 @@ class TraceHead(nn.Module):
         literal_sham=False,
         inspect_rotation=False,
         work=None,
+        age_out=None,
     ):
         # Both arms retain B's full literal answer. No gold addresses or external targets accepted.
         if wrong_binding and literal_sham:
@@ -131,6 +132,7 @@ class TraceHead(nn.Module):
             mode="rotated" if literal_sham else "B",
             horizon=horizon,
             work=work,
+            age_out=age_out,
             inspect_rotation=inspect_rotation,
         )
         ids = torch.tensor(list(word), dtype=torch.long, device=hidden.device)
@@ -153,6 +155,11 @@ class TraceHead(nn.Module):
             role="query",
         )
         rows = lookup(tag, query, horizon)
+        if age_out is not None:
+            age_out["private"] = torch.tensor(
+                [0 if j is None else t - j for t, j in enumerate(rows)],
+                dtype=torch.long,
+            )
         bank = self.value(torch.cat((hidden[1:], self.literal.byte(ids[1:])), 1)).tanh()
         at = [t for t, j in enumerate(rows) if j is not None]
         changed = 0

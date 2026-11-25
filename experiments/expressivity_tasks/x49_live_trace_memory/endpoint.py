@@ -86,7 +86,7 @@ def sync(device):
 
 
 @torch.inference_mode()
-def score_window(host, head, word, *, arm, seed, document, width=256):
+def score_window(host, head, word, *, arm, seed, document, width=256, stratify=False):
     """One source, frozen weights. Full prefill ONCE. Common visit=0, independent memory horizons.
 
     Returns per-document aggregate sums/work/timing, not activations, targets or scratch records.
@@ -130,6 +130,7 @@ def score_window(host, head, word, *, arm, seed, document, width=256):
     for horizon, sham in cells:
         tic = perf_counter()
         work = {}
+        ages = {} if stratify else None
         inspect = horizon == 4096 and arm != "A"
         if isinstance(head, TraceHead):
             lp = head(
@@ -144,6 +145,7 @@ def score_window(host, head, word, *, arm, seed, document, width=256):
                 literal_sham=sham == "literal",
                 inspect_rotation=inspect,
                 work=work,
+                age_out=ages,
             ).lp
         else:
             lp = head(
@@ -154,10 +156,30 @@ def score_window(host, head, word, *, arm, seed, document, width=256):
                 horizon=horizon,
                 inspect_rotation=inspect,
                 work=work,
+                age_out=ages,
             )
         # Expose the shift ONLY to the scoring seam; every real byte, no mask on misses.
         ys = torch.tensor(list(word[1:]), dtype=torch.long)
-        total = F.nll_loss(lp, ys, reduction="none").double().sum().item()
+        losses = F.nll_loss(lp, ys, reduction="none").double()
+        total = losses.sum().item()
+        strata = {}
+        for source, age in (ages or {}).items():
+            groups = {
+                name: dict(targets=int(mask.sum()), nll_sum=losses[mask].sum().item())
+                for name, mask in [
+                    ("miss", age == 0),
+                    ("16_to_128", (age >= 16) & (age <= 128)),
+                    ("129_to_1024", (age > 128) & (age <= 1024)),
+                    ("over_1024", age > 1024),
+                ]
+            }
+            check(
+                sum(x["targets"] for x in groups.values()) == len(ys)
+                and groups["miss"]["targets"] == work[source + "_misses"]
+                and abs(sum(x["nll_sum"] for x in groups.values()) - total) < 1e-8,
+                "age strata do not partition all targets",
+            )
+            strata[source] = groups
         check(
             lp.shape == (len(ys), 256)
             and 0 <= total < float("inf")
@@ -171,6 +193,7 @@ def score_window(host, head, word, *, arm, seed, document, width=256):
                 targets=len(ys),
                 nll_sum=total,
                 work=work,
+                strata=strata,
                 head_score_s=perf_counter() - tic,
             )
         )

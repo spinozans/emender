@@ -32,6 +32,7 @@ class LiveValueHead(nn.Module):
         horizon=4096,
         work=None,
         inspect_rotation=False,
+        age_out=None,
     ):
         """word contains inputs only. A caller may score shifted targets AFTER this returns.
 
@@ -55,6 +56,12 @@ class LiveValueHead(nn.Module):
             rotate=mode == "rotated",
             inspect_rotation=inspect_rotation,
         )
+        if (
+            age_out is not None
+        ):  # output diagnostics only; never read to select a record
+            ages = torch.zeros(len(word), dtype=torch.long, device=dev)
+            ages[query] = query - source
+            age_out["literal"] = ages
         if work is not None:
             work.update(
                 counts,
