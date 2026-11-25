@@ -145,7 +145,10 @@ def checked_gate(check_source, name, spec, gates):
 
 def check_public_qualification(name, ref, spec, head_audit):
     """The stopped-on-error reader may only open a new role after its exact public gate."""
-    check(name in ("residual-byte", "error-history"), "unknown publication gate")
+    check(
+        name in ("residual-byte", "error-history", "error-transfer"),
+        "unknown publication gate",
+    )
     pub = (OUT / (name + "-qualified-public-ref")).read_text().strip()
     check(
         re.fullmatch("[a-f0-9]{40}", pub) is not None,

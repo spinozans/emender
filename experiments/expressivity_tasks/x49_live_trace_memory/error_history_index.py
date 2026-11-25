@@ -187,6 +187,26 @@ def true_counts(word, literal, neural, guess):
     return _scan(word, add, 5)
 
 
+def history_counts(word, literal, neural, missed):
+    """ET's HISTORY-only path: keep four fields at observed followers, no guessed symbol bins."""
+    _check(word, literal, neural, missed)
+    if any(b > 1 for b in missed):
+        raise ValueError("expected mistake flags, not guessed bytes")
+
+    def add(s, j):
+        c = word[j]
+        v = s.cells.get(c)
+        if v is None:
+            v = s.cells[c] = [0, 0, 0, 0]
+        v[0] += 1
+        v[1] += literal[j]
+        v[2] += neural[j]
+        v[3] += missed[j]
+        s.mistakes += missed[j]
+
+    return _scan(word, add, 4)
+
+
 def displaced_counts(word, neural, guess):
     """Separate diagnostic pass. Standalone true counts never call it or build a donor map."""
     alt = _donors(word, neural, guess)

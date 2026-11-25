@@ -97,6 +97,11 @@ def check_bootstrap(folder, stats, hashes, *, short_targets=None, study="U"):
 
         check(not final, "no LS final licensed")
         seed = 4910
+    elif study == "ET":
+        from .error_transfer_stats import ARMS, PAIRS
+
+        check(final, "ET requires actual whole short calibration exposure")
+        seed = 4916
     elif study == "EH":
         from .error_history_stats import ARMS, PAIRS
 
@@ -148,7 +153,7 @@ def check_bootstrap(folder, stats, hashes, *, short_targets=None, study="U"):
                 == support[seed]["changed_code"],
                 "incorrect V proposal support",
             )
-        elif study in ("DR", "JT", "RB", "EH"):
+        elif study in ("DR", "JT", "RB", "EH", "ET"):
             check(
                 sum(x["candidate_correct"] for x in rows) == work["candidate_correct"]
                 and sum(x["work"]["literal_hits"] > 0 for x in rows)

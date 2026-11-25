@@ -71,9 +71,11 @@ def expected(ref, *, study="UC"):
     z = p.plan(ref, hash_weights=False)
     parent = {"u_result_sha": dat.RESULT} if study == "UC" else p.lineage()
     return dict(
-        scope="x49-u-frozen-native-short-confirmation-v1"
-        if study == "UC"
-        else "x49-jt-fixed-short-calibration-v1",
+        scope={
+            "UC": "x49-u-frozen-native-short-confirmation-v1",
+            "JT": "x49-jt-fixed-short-calibration-v1",
+            "ET": "x49-et-locked-short-error-histories-v1",
+        }[study],
         ref=ref,
         spec=dat.SPEC,
         **parent,

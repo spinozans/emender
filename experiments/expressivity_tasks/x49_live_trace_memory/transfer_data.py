@@ -122,8 +122,13 @@ def selection():
 
 
 def checked_rows(book):
+    return checked_short_calibration(book, spec=SPEC, lo=MIN_OFFSET, goal=GOAL)
+
+
+def checked_short_calibration(book, *, spec, lo, goal):
+    """Check whole documents/rank/dose. Each caller binds its own registered block."""
     rows = book["rows"]
-    check(book["spec"] == SPEC and rows, "incorrect JT reservation")
+    check(book["spec"] == spec and rows, "incorrect short calibration reservation")
     seen = set()
     ids = set()
     order = []
@@ -137,7 +142,7 @@ def checked_rows(book):
             and f"{int(h, 16):064x}" == h
             and int(h, 16) % 100 == 0
             and type(n) is type(off) is int
-            and off == x["doc"] >= MIN_OFFSET
+            and off == x["doc"] >= lo
             and off + n <= book["source"]["size"]
             and 2 <= n <= T
             and x["start"] == 0
@@ -151,7 +156,7 @@ def checked_rows(book):
     total = sum(x["length"] - 1 for x in rows)
     check(
         order == sorted(order)
-        and total >= GOAL > total - rows[-1]["length"] + 1
+        and total >= goal > total - rows[-1]["length"] + 1
         and book["eligible_documents"] >= len(rows)
         and book["eligible_targets"] >= total,
         "incorrect JT rank crossing",

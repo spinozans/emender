@@ -75,7 +75,9 @@ binary = joint_fixture.binary
 
 def fixture(tmp, mp, name="UC"):
     data, p, run, _ = short_phase.study(name)
-    source_panel = p.prior if name == "UC" else p.ls
+    source_panel = (
+        p.prior if name == "UC" else (p.reader.panel if name == "ET" else p.ls)
+    )
     mp.setenv("CUDA_VISIBLE_DEVICES", "")
     mp.delenv("GPU_LEASE_HELD", raising=False)
     mp.setattr(data, "BASE", tmp / "reserved")
@@ -151,14 +153,53 @@ def fixture(tmp, mp, name="UC"):
     d = source_panel.ROOT / source_panel.JOB.name
     d.mkdir(parents=True)
     sealed = d / "fit-frozen.json"
+    extra = {}
+    if name == "ET":
+        parent.update(
+            u_beta={k: [0.01, 0.02, 0.03, 0.04] for k in beta},
+            j_beta={k: [0.01, 0.02, 0.03, 0.04, 0.05] for k in beta},
+            data=dict(fit_identity_sha="invented-fit"),
+            fit_dimensions=dict(p.DIMS),
+            swap_fit="ERROR",
+        )
+        mp.setattr(
+            p.reader.local_u,
+            "contract",
+            lambda s: (files[str(s)], tuple(parent["u_beta"][str(s)])),
+        )
+        mp.setattr(
+            p.reader.joint,
+            "contract",
+            lambda s: (files[str(s)], tuple(parent["j_beta"][str(s)])),
+        )
+        mp.setattr(p.reader, "parent", lambda: parent)
+        spec = data.eh.SPEC
+        write_json(
+            d / "frozen.json",
+            dict(
+                spec=spec,
+                endpoints={k: dict(sha256=h) for k, h in files.items()},
+                **{
+                    k: parent[k]
+                    for k in ("u_beta", "j_beta", "data", "fit_dimensions", "swap_fit")
+                },
+            ),
+        )
+        parent["freeze_sha"] = sha(d / "frozen.json")
+        extra = dict(fit_identity_sha="invented-fit", fit_units=768)
+    else:
+        spec = data.u.SPEC if name == "UC" else data.ls.SPEC
     write_json(
         sealed,
         dict(
-            plan_sha="fixture-base",
-            spec=data.u.SPEC if name == "UC" else data.ls.SPEC,
+            plan_sha=parent["freeze_sha"],
+            spec=spec,
             seeds={k: dict(beta=b, checkpoint_sha=files[k]) for k, b in beta.items()},
+            **extra,
         ),
     )
+    if name == "ET":
+        mp.setattr(p.reader, "FIT", sha(sealed))
     mp.setattr(data, "FIT_SHA", sha(sealed))
     mp.setattr(data, "parent", lambda: parent)
 
@@ -174,7 +215,7 @@ def fixture(tmp, mp, name="UC"):
     return book, parent, calls
 
 
-@pytest.mark.parametrize("name", ["UC", "JT"])
+@pytest.mark.parametrize("name", ["UC", "JT", "ET"])
 def test_metadata_only_same_fits_exact_weights_and_no_early_open(
     tmp_path, monkeypatch, name
 ):
@@ -187,7 +228,7 @@ def test_metadata_only_same_fits_exact_weights_and_no_early_open(
     with pytest.raises(FileExistsError):
         data.reserve()
     with pytest.raises(
-        ValueError, match="separate short" if name == "UC" else "separate JT"
+        ValueError, match="separate short" if name == "UC" else "separate " + name
     ):
         _documents(p.JOB, {})
     d = p.ROOT / p.JOB.name
@@ -215,8 +256,10 @@ def test_metadata_only_same_fits_exact_weights_and_no_early_open(
         p.freeze(p.JOB, "fixture")
     assert not (d / "frozen.json").exists()
     path.write_bytes(b"4902")
-    parent["beta"]["4902"]["S" if name == "UC" else "J"][3] += 0.01
-    with pytest.raises(ValueError, match="coefficient mismatch"):
+    parent["beta"]["4902"][{"UC": "S", "JT": "J", "ET": "ERROR"}[name]][3] += 0.01
+    with pytest.raises(
+        ValueError, match="foreign ET" if name == "ET" else "coefficient mismatch"
+    ):
         p.freeze(p.JOB, "fixture")
     assert not reads and not (d / "source-open-attempted").exists()
     bad = deepcopy(book)
@@ -228,7 +271,7 @@ def test_metadata_only_same_fits_exact_weights_and_no_early_open(
         else "short calibration membership",
     ):
         data.checked_rows(bad)
-    if name == "JT":
+    if name in ("JT", "ET"):
         bad = deepcopy(book)
         bad["rows"][0]["split"] = "final_test"
         with pytest.raises(ValueError, match="calibration membership"):
@@ -237,15 +280,15 @@ def test_metadata_only_same_fits_exact_weights_and_no_early_open(
             p.fresh_descriptor(p.old.JOB, {})
 
 
-@pytest.mark.parametrize("name", ["UC", "JT"])
+@pytest.mark.parametrize("name", ["UC", "JT", "ET"])
 def test_full_invented_frozen_evaluation_shape_guard_real_target_witness_and_closure(
     tmp_path, monkeypatch, name, request
 ):
     data, p, run, ana = short_phase.study(name)
     book, parent, calls = fixture(tmp_path, monkeypatch, name)
-    if name == "JT":
+    if name in ("JT", "ET"):
         _, _, writer = request.getfixturevalue("binary")
-        monkeypatch.setattr(p.joint, "_writer", lambda: writer)
+        monkeypatch.setattr(run.joint, "_writer", lambda: writer)
         monkeypatch.setattr(run, "WIDTH", 8)
     r = data.reserve()
     d = p.ROOT / p.JOB.name
@@ -388,10 +431,24 @@ def test_full_invented_frozen_evaluation_shape_guard_real_target_witness_and_clo
         if name == "UC"
         else dict(
             U=parent["u_beta"]["4901"],
+            J=parent["j_beta"]["4901"],
+            **parent["beta"]["4901"],
+        )
+        if name == "ET"
+        else dict(
+            U=parent["u_beta"]["4901"],
             H=parent["beta"]["4901"]["H"],
             J=parent["beta"]["4901"]["J"],
         )
     )
+    if name == "ET":
+        assert (
+            out["verified"]["independent_branch_cost_and_support"]
+            and out["eh_fit_freeze_sha"] == data.FIT_SHA
+            and out["swap_fit"] == "ERROR"
+            and len(out["analysis"]["contrasts"]) == 11
+            and out["bootstrap"]["seed"] == 4916
+        )
     if name == "JT":
         assert (
             out["verified"]["independent_branch_cost_reduction"]

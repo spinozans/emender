@@ -51,30 +51,26 @@ PEAKS = (
 )
 
 
-def checked_row(role, row):
-    w = row["work"]
+def checked_history_work(w, length, right, *, tape_bytes, written, mistakes):
     hit = w["literal_hits"]
     a = w["pool_active_rows"]
-    visits = sum(T - d for d in DEPTHS)
-    admit = sum(T - MIN_AGE - d for d in DEPTHS)
+    visits = sum(max(0, length - d) for d in DEPTHS)
+    admit = sum(max(0, length - MIN_AGE - d) for d in DEPTHS)
     n = w["packed_feature_entries"]
-    scored = role == "probe"
     check(
-        role in ("fit", "probe")
-        and row["targets"] == T
-        and row["host_prefills"] == 1
-        and ("nll_sums" in row) == scored
-        and type(row["candidate_correct"]) is int
-        and 0 <= row["candidate_correct"] <= hit
+        type(length) is int
+        and 1 <= length <= T
+        and type(right) is int
+        and 0 <= right <= hit
         and all(type(v) is int and v >= 0 for v in w.values()),
         "wrong EH exposure, counters or phase",
     )
     check(
-        T
+        length
         == hit + w["literal_misses"]
         == w["literal_queries"]
         == w["literal_value_writes"]
-        == w["guess_tape_bytes"]
+        == tape_bytes
         == w["text_mark_storage_bytes"]
         == w["mark_storage_bytes"]
         == w["text_order_zero_updates"]
@@ -85,11 +81,11 @@ def checked_row(role, row):
         == w["U_mark_reads"]
         and w["literal_payloads_reassigned"] == 0
         and "S_mark_reads" not in w
-        and w["guesses_written"]
+        and written
         == w["text_arrivals_encoded"]
         == w["arrivals_encoded"]
         == w["mark_norms_extra"] + w["mark_norms_from_current"]
-        == T - 1
+        == length - 1
         and w["text_context_updates"]
         == w["text_context_lookups"]
         == visits
@@ -116,13 +112,13 @@ def checked_row(role, row):
         and w["pool_peak_cells"] <= 2 * w["pool_committed_records"]
         and w["shift_peak_cells"] <= w["shift_committed_records"]
         and a <= hit
-        and a <= w["pool_older_occurrence_uses"] <= a * (T - MIN_AGE - 1)
+        and a <= w["pool_older_occurrence_uses"] <= a * max(0, length - MIN_AGE - 1)
         and w["shift_older_mistake_uses"] <= w["pool_older_occurrence_uses"],
         "sham changed older occurrence geometry",
     )
-    m = w["wrong_guesses_written"]
+    m = mistakes
     check(
-        w["shift_mistakes_written"] == m <= T - 1
+        w["shift_mistakes_written"] == m <= length - 1
         and m == w["shift_peak_donor_keys"] + w["shift_donor_slots_written"]
         and w["shift_different_guesses_written"] <= w["shift_donor_slots_written"]
         and w["changed_histogram_rows"] <= min(a, w["shift_older_changed_uses"])
@@ -137,9 +133,30 @@ def checked_row(role, row):
         a <= pc <= n <= pc + sc
         and sc <= n <= 256 * a
         and w["fp64_feature_bytes"] == n * 7 * 8
-        and w["pool_packed_bytes"] == 5 * T + 24 * pc
-        and w["shift_packed_bytes"] == 5 * T + 8 * sc,
+        and w["pool_packed_bytes"] == 5 * length + 24 * pc
+        and w["shift_packed_bytes"] == 5 * length + 8 * sc,
         "incorrect EH packed or feature size",
+    )
+
+
+def checked_row(role, row):
+    scored = role == "probe"
+    w = row["work"]
+    a = w["pool_active_rows"]
+    check(
+        role in ("fit", "probe")
+        and row["targets"] == T
+        and row["host_prefills"] == 1
+        and ("nll_sums" in row) == scored,
+        "wrong EH exposure, counters or phase",
+    )
+    checked_history_work(
+        w,
+        T,
+        row["candidate_correct"],
+        tape_bytes=w["guess_tape_bytes"],
+        written=w["guesses_written"],
+        mistakes=w["wrong_guesses_written"],
     )
     times = row["seconds"]
     check(

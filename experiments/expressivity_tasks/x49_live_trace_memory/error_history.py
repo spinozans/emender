@@ -31,7 +31,7 @@ class Packet:
     seconds: dict
 
     def features(self, arm):
-        if arm in ("COUNT", "HISTORY", "ERROR"):
+        if arm in ("COUNT", "HISTORY", "ERROR") and self.x.shape[1] >= DIMS[arm]:
             return self.x[:, : DIMS[arm]]
         if arm in ("SHIFT", "SWAP") and self.x.shape[1] == 7:
             return torch.cat((self.x[:, :5], self.x[:, -1:]), dim=1)
@@ -79,8 +79,9 @@ def _columns(base, tab, other, work):
         r[:, 1] / (64 * n),
         r[:, 2] / (64 * n),
         r[:, 3] / n,
-        -r[:, 4] / n,
     ]
+    if counts.shape[1] >= 5:  # four counters on ET's HISTORY-only path
+        cols.append(-r[:, 4] / n)
     if other is not None:
         cols.append(-r[:, 5] / n)
     x = torch.stack(cols, dim=1)

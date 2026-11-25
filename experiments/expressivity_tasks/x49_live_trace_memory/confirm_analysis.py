@@ -115,14 +115,20 @@ def analyze(root, *, study="UC"):
         if study == "UC"
         else dict(
             **p.lineage(),
-            ls_fit_freeze_sha=data.FIT_SHA,
+            **{
+                (
+                    "eh_fit_freeze_sha" if study == "ET" else "ls_fit_freeze_sha"
+                ): data.FIT_SHA
+            },
             predictor_freeze_sha=z["freeze_sha"],
         )
     )
     return dict(
-        scope="new whole short native final, frozen W-B predictors and U coefficients, no refit"
-        if study == "UC"
-        else "new whole short native calibration, locked B/U/H/J, no fitting and no native final access",
+        scope={
+            "UC": "new whole short native final, frozen W-B predictors and U coefficients, no refit",
+            "JT": "new whole short native calibration, locked B/U/H/J, no fitting and no native final access",
+            "ET": "new whole short native calibration, locked earlier error histories, no fitting or native final access",
+        }[study],
         ref=initial["ref"],
         spec=data.SPEC,
         **parent,
@@ -176,7 +182,7 @@ def report(*, study="UC"):
         r["analysis"],
         [x["sha256"] for x in rows],
         short_targets=[x["length"] - 1 for x in rows],
-        study="U" if study == "UC" else "JT",
+        study="U" if study == "UC" else study,
     )
     reserved = data.u.bound(data.BASE / "reserved.json", r["data"]["reserved_sha"])
     check(

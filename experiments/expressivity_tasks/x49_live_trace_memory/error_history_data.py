@@ -39,7 +39,8 @@ def next_block(book, records, pre, quota):
     )
 
 
-def selection():
+def selection_context():
+    """Rebuild EH descriptors and pre-EH exclusions for a later study; no corpus read."""
     r = checked_spec()
     book, records, pre = rb.selection_context()
     m = r["data"]
@@ -50,7 +51,7 @@ def selection():
     )
     rows, ex, supply = next_block(book, records, pre, sum(N.values()))
     check((len(ex), supply) == (44088, 22419), "wrong EH exclusions or TRAIN supply")
-    return dict(
+    descriptor = dict(
         schema="x49-eh-native-train",
         spec=SPEC,
         rb_result_sha=RB_RESULT,
@@ -62,6 +63,11 @@ def selection():
         excluded_sha=fingerprint(sorted(ex)),
         roles=dict(fit=rows[: N["fit"]], probe=rows[N["fit"] :]),
     )
+    return descriptor, records, ex
+
+
+def selection():
+    return selection_context()[0]
 
 
 def checked_roles(book):
