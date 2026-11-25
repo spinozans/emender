@@ -10,7 +10,7 @@
 
 **Closed engineering check: [same two-note predictor, cheaper count writer](RESULT_JOINT_READER.md).** Exact marks and 256-score parity on synthetic tests; 0.29–2.77 ms to build a 4K count tape, 7.39–59.21× faster in paired trials than the Python writer. These are writer-only CPU measurements, not end-to-end speed or new language-model evidence. No natural data or lease.
 
-**Next question: [does the unchanged two-note reader still help on shorter documents, and what does it cost?](JOINT_TRANSFER.md)** One locked no-fit comparison with U and its equally refitted neural-only control. Use only new native short calibration documents, not the remaining short finals. No new default or scale claim.
+**Replicated candidate: [the frozen two-note rule also helped on 381 new short documents](RESULT_JOINT_TRANSFER.md)** · [protocol](JOINT_TRANSFER.md) · [aggregate](receipts/joint_transfer_result.json). J beat the original U by .000969 nats/byte [.000686,.001254] and the matched neural-only fit H by .000997 [.000726,.001275], positive at every checkpoint without refitting. About 0.58 extra seconds per million targets (0.62% on the shared-prefill path estimate). Native calibration, not final; U remains the native-final-confirmed reader. One lease released, ≤176 incremental card-s.
 
 **Completed natural result:** [Final report](RESULT.md) · [verified aggregate](receipts/panel_result.json). B beat A by .001124 nats/byte at full dose and .003125 at matched training time on the 128-document final; value-only shuffling hurt. B is the local baseline. The registered learned-key C lost to fixed-key F. All 15 leases released, ≤14,022 card-s. Do not reopen the panel. The formal Lux rule returned no nominee; no remote launch.
 
