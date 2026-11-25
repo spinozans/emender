@@ -194,7 +194,14 @@ def evaluate(job, ctx, *, study="U"):
             log = d / f"{role}-{seed}.jsonl"
             log.touch(mode=0o600, exist_ok=False)
             mom = runner.Moments() if role == "fit" else None
-            beta = None if role == "fit" else frozen["seeds"][key]["beta"]
+            beta = None
+            if role == "probe":
+                entry = frozen["seeds"][key]
+                beta = (
+                    runner.load_decoder(d, seed, entry)
+                    if study == "DR"
+                    else entry["beta"]
+                )
             for h, word in wins:
                 x = runner.document(m, c, word, fit=mom, beta=beta, **options)
                 check(
@@ -212,8 +219,12 @@ def evaluate(job, ctx, *, study="U"):
             )
             if role == "fit":
                 tic = monotonic()
-                state = mom.freeze()
-                cost[f"solve_{seed}_s"] = monotonic() - tic
+                if study == "DR":
+                    state, times = runner.finish_fit(d, seed, mom, m, c, options)
+                    cost.update({f"{k}_{seed}_s": v for k, v in times.items()})
+                else:
+                    state = mom.freeze()
+                    cost[f"solve_{seed}_s"] = monotonic() - tic
                 write_json(
                     d / f"fit-{seed}.json",
                     dict(

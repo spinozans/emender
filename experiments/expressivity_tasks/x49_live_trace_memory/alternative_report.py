@@ -14,7 +14,9 @@ from .panels import SEEDS
 def report(*, study="V"):
     cpu()
     data, p, run = phase(study)
-    if study == "V":
+    if study == "DR":
+        from . import decode_stats as analysis
+    elif study == "V":
         from . import alternative_analysis as analysis
     else:
         from . import literal_mark_analysis as analysis
@@ -38,9 +40,24 @@ def report(*, study="V"):
         f"different {study} model bytes, incumbent or data",
     )
     sealed = data.bound(d / "fit-frozen.json", r["fit_freeze_sha"])
-    residual = check_fits(
-        d, sealed, dims=p.DIMS, fit_documents=data.N["fit"], conditioned=study == "LS"
-    )
+    if study == "DR":
+        from .decode_store import independent
+
+        audits = dict(
+            independent_decoder_checks={
+                str(s): independent(d, s, sealed["seeds"][str(s)]) for s in SEEDS
+            }
+        )
+    else:
+        audits = dict(
+            independent_cholesky_residuals=check_fits(
+                d,
+                sealed,
+                dims=p.DIMS,
+                fit_documents=data.N["fit"],
+                conditioned=study == "LS",
+            )
+        )
     book = data.bound(data.BASE / "reservation.json", r["data"]["rows_sha"])
     roles = data.checked_roles(book)
     check_bootstrap(
@@ -80,7 +97,7 @@ def report(*, study="V"):
             done_sha=sha(root / "done.json"),
             charges_sha=done["charges_sha"],
             summary_sha=done["summary_sha"],
-            independent_cholesky_residuals=residual,
+            **audits,
             independent_paired_bootstrap=True,
             actual_weight_bytes_rehashed=3,
             driver_and_short_parents_cpu_s=done["driver_and_short_parents_cpu_s"],

@@ -86,7 +86,8 @@ def choose(records, excluded, size, goal, lo):
     raise AssertionError("crossing not found")
 
 
-def selection():
+def selection_context():
+    """Verified JT descriptor, manifest and pre-LS context for future exclusion checks. No text."""
     r = parent()
     b, records, pre = ls.selection_context()
     check(
@@ -101,7 +102,7 @@ def selection():
     )
     ex = pre | old
     rows, n, nt = choose(records, ex, b["source"]["size"], GOAL, MIN_OFFSET)
-    return dict(
+    descriptor = dict(
         spec=SPEC,
         ls_result_sha=RESULT,
         ls_rows_sha=r["data"]["rows_sha"],
@@ -113,6 +114,11 @@ def selection():
         eligible_targets=nt,
         rows=rows,
     )
+    return descriptor, records, pre, b
+
+
+def selection():
+    return selection_context()[0]
 
 
 def checked_rows(book):

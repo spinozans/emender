@@ -20,6 +20,8 @@ from experiments.expressivity_tasks.x49_live_trace_memory import (
     alternative_report as report,
     fit_phase,
     literal_mark_report,
+    decode_report,
+    test_joint_reader as native_fixture,
     local_u,
 )
 from experiments.expressivity_tasks.x49_live_trace_memory.panels import SEEDS, T, select
@@ -31,6 +33,9 @@ from experiments.expressivity_tasks.x49_live_trace_memory.test_surprise_pipeline
 )
 
 
+binary = native_fixture.binary
+
+
 def fake(tmp, mp, name="V"):
     data, p, run = fit_phase.incumbent(name)
     mp.setenv("OPENBLAS_NUM_THREADS", "1")
@@ -40,6 +45,36 @@ def fake(tmp, mp, name="V"):
     calls = fake_endpoints(tmp, mp)
     original = local_u.contract
     beta = {s: original(s)[1] for s in SEEDS}
+    if name == "DR":
+        jbeta = {s: run.joint.contract(s)[1] for s in SEEDS}
+
+        def coeff(s):
+            return dict(U=list(beta[s]), J=list(jbeta[s]), H=[0] * 4)
+
+        def ck(s):
+            return sha256(str(s).encode()).hexdigest()
+
+        mp.setattr(run.joint, "contract", lambda s: (ck(s), jbeta[s]))
+        mp.setattr(
+            data,
+            "checked_spec",
+            lambda: dict(
+                predictors={
+                    str(s): dict(checkpoint=ck(s), beta=coeff(s)) for s in SEEDS
+                }
+            ),
+        )
+        mp.setattr(
+            p.jt,
+            "endpoints",
+            lambda *, hash_weights: {
+                str(s): dict(
+                    weights=p.old.checkpoint(s, hash_weights=hash_weights)[1],
+                    beta=coeff(s),
+                )
+                for s in SEEDS
+            },
+        )
     mp.setattr(
         local_u, "contract", lambda s: (sha256(str(s).encode()).hexdigest(), beta[s])
     )
@@ -79,7 +114,7 @@ def test_next_full_train_block_excludes_both_u_roles_and_short_final():
         data.next_block(records, pre, dict(roles, probe=rank[6:9]), short, 6, end)
 
 
-@pytest.mark.parametrize("name", ["V", "LS"])
+@pytest.mark.parametrize("name", ["V", "LS", "DR"])
 def test_prepare_is_fit_only_reader_rejects_other_study_and_early_probe(
     tmp_path, monkeypatch, name
 ):
@@ -164,12 +199,19 @@ def test_exact_u_bindings_and_conjunctive_v_decision(tmp_path, monkeypatch):
     assert not ana.decision(cs)["warrants_separate_confirmation"]
 
 
-@pytest.mark.parametrize("name", ["V", "LS"])
+@pytest.mark.parametrize("name", ["V", "LS", "DR"])
 def test_all_seed_freeze_before_probe_and_multiplicity_cholesky_closure(
-    tmp_path, monkeypatch, name
+    tmp_path, monkeypatch, name, request
 ):
     data, p, run = fit_phase.incumbent(name)
-    publish = report.report if name == "V" else literal_mark_report.report
+    publish = {
+        "V": report.report,
+        "LS": literal_mark_report.report,
+        "DR": decode_report.report,
+    }[name]
+    if name == "DR":
+        writer = request.getfixturevalue("binary")[-1]
+        monkeypatch.setattr(run.joint, "_writer", lambda: writer)
     book, calls = fake(tmp_path, monkeypatch, name)
     data.prepare()
     d = p.ROOT / p.JOB.name
@@ -256,12 +298,18 @@ def test_all_seed_freeze_before_probe_and_multiplicity_cholesky_closure(
         with pytest.raises(ValueError, match="lacks witnessed"):
             data.extract("probe", job=p.JOB, fit_sha=dig)
         tmp.rename(live)
-        f = d / "fit-4902.json"
+        f = d / ("dr-tables-4902.npz" if name == "DR" else "fit-4902.json")
         orig = f.read_bytes()
-        bad = json.loads(orig)
-        bad["state"]["beta"]["K" if name == "V" else "S"][3] += 1
-        write_json(f, bad)
-        with pytest.raises(ValueError, match="inconsistent"):
+        if name == "DR":
+            f.write_bytes((d / "dr-tables-4901.npz").read_bytes())
+        else:
+            bad = json.loads(orig)
+            bad["state"]["beta"]["K" if name == "V" else "S"][3] += 1
+            write_json(f, bad)
+        with pytest.raises(
+            ValueError,
+            match="changed DR array bytes" if name == "DR" else "inconsistent",
+        ):
             data.extract("probe", job=p.JOB, fit_sha=dig)
         f.write_bytes(orig)
         assert not seen and not (d / "raw-probe-open-attempted").exists()
@@ -275,7 +323,7 @@ def test_all_seed_freeze_before_probe_and_multiplicity_cholesky_closure(
         and not (d / "probe/windows.u8").exists()
         and z["targets"] == 15 * T
         and z["neural_updates"] == 0
-        and z["fitted_readouts"] == (9 if name == "V" else 15)
+        and z["fitted_readouts"] == {"V": 9, "LS": 15, "DR": 3}[name]
     )
     write_json(d / "complete.json", z)
     charge = dict(
@@ -316,17 +364,36 @@ def test_all_seed_freeze_before_probe_and_multiplicity_cholesky_closure(
         r["cost"]["witnessed_fit_boundary"] == 6
         and r["verified"]["independent_paired_bootstrap"]
         and r["u_beta"] == initial["u_beta"]
-        and len(r["verified"]["independent_cholesky_residuals"]) == 3
-        and set(r["stages"]["probe"]["contrasts"])
-        == (
-            {"V:D", "V:K", "V:U", "D:U", "K:D"}
-            if name == "V"
-            else {"J:T", "J:S", "H:T", "T:N", "H:N", "S:T", "J:H", "T:U", "J:U"}
+        and len(
+            r["verified"][
+                "independent_decoder_checks"
+                if name == "DR"
+                else "independent_cholesky_residuals"
+            ]
         )
+        == 3
+        and set(r["stages"]["probe"]["contrasts"])
+        == {
+            "V": {"V:D", "V:K", "V:U", "D:U", "K:D"},
+            "LS": {"J:T", "J:S", "H:T", "T:N", "H:N", "S:T", "J:H", "T:U", "J:U"},
+            "DR": {"D:P", "D:S", "J:P", "J:D", "D:U", "D:B", "J:U", "U:B", "S:P"},
+        }[name]
     )
     assert r["stages"]["probe"]["real_targets_per_seed"] == 3 * T and r["u_refits"] == 0
     path = d / "probe-4901.jsonl"
     path.write_bytes(path.read_bytes().replace(b'"seconds"', b'"seconds" ', 1))
+    if name == "DR":
+        assert (
+            r["verified"]["independent_MSE_denominator"]
+            and r["j_beta"] == initial["j_beta"]
+            and r["j_refits"] == 0
+        )
+        assert all(
+            x["table_bytes"] == 100352
+            and x["fit_writes"] == 2 * (T - 1)
+            and x["synthetic"]["all_256_teacher_disabled_D_equal"]
+            for x in r["decoders"].values()
+        )
     if name == "LS":
         assert r["verified"]["independent_pooled_mark_correlations"] and all(
             len(row) == 5

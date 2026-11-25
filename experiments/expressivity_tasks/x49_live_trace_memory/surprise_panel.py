@@ -186,11 +186,13 @@ def readout_map(d, initial, *, study="U"):
             and all(p.fit_row_ok(x) for x in logs),
             "foreign fit receipts",
         )
-        p.checked_fit(z["state"])
+        if study == "DR":
+            entry = p.fitted_entry(d, s, z["state"], logs)
+        else:
+            p.checked_fit(z["state"])
+            entry = dict(beta=z["state"]["beta"])
         out[str(s)] = dict(
-            receipt_sha=digest(raw),
-            checkpoint_sha=z["checkpoint_sha"],
-            beta=z["state"]["beta"],
+            receipt_sha=digest(raw), checkpoint_sha=z["checkpoint_sha"], **entry
         )
     return dict(
         schema=f"x49-{study.lower()}-fitted-readouts",
