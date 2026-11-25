@@ -515,7 +515,17 @@ def partial(job, *, root=None):
         # Record the raw-access boundary and the last acknowledged real work; a partial
         # is not a license to rerun even an already-open, not-yet-scored final.
         out["source_open_attempted"] = (d / "source-open-attempted").exists()
-        out["stream_prepared"] = (d / "stream.json").is_file()
+        if job.kind == "fit_then_probe":
+            f = d / "fit-frozen.json"
+            probe = d / "probe/identity.json"
+            out.update(
+                fit_stream_open_attempted=out["source_open_attempted"],
+                fit_freeze_sha=sha(f) if f.is_file() else None,
+                probe_raw_open_attempted=(d / "raw-probe-open-attempted").exists(),
+                probe_stream_sha=sha(probe) if probe.is_file() else None,
+            )
+        else:
+            out["stream_prepared"] = (d / "stream.json").is_file()
         out["last_progress"] = (
             load(d / "progress.json") if (d / "progress.json").is_file() else None
         )

@@ -64,7 +64,8 @@ def select_new(records, *, base_ex, prior, quota, size):
     return panels["train"], ex, counts["train"]
 
 
-def selection():
+def parent_context():
+    """Verified metadata and exclusions before W; never opens a historical window."""
     checked_spec()
     check(sha(wd.ROWS) == W_ROWS_SHA, "foreign W membership")
     w = load(wd.ROWS)
@@ -81,6 +82,11 @@ def selection():
         len(ex) == 39916 and fingerprint(sorted(ex)) == w["excluded_sha"],
         "historical membership mismatch",
     )
+    return records, ex, w
+
+
+def selection():
+    records, ex, w = parent_context()
     rows, ex, left = select_new(
         records, base_ex=ex, prior=w["panels"], quota=N, size=w["source"]["size"]
     )
@@ -236,12 +242,18 @@ def metadata():
 
 
 def verify_payload(rows, ident, shifts, data):
+    return verified_windows(rows, ident, shifts, data, N)
+
+
+def verified_windows(rows, ident, shifts, data, count):
     check(
-        len(rows) == len(shifts) == ident["count"] == N
-        and len(data) == N * (T + 1)
+        len(rows) == len(shifts) == ident["count"] == count
+        and len(data) == count * (T + 1)
         and digest(data) == ident["raw_sha"]
-        and len(set(r["sha256"] for r in rows)) == len({r["doc"] for r in rows}) == N,
-        "truncated, duplicate or foreign Q stream",
+        and len(set(r["sha256"] for r in rows))
+        == len({r["doc"] for r in rows})
+        == count,
+        "truncated, duplicate or foreign TRAIN stream",
     )
     out = []
     for i, (r, h) in enumerate(zip(rows, shifts, strict=True)):

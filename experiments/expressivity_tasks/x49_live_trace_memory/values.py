@@ -33,6 +33,7 @@ class LiveValueHead(nn.Module):
         work=None,
         inspect_rotation=False,
         age_out=None,
+        hit_out=None,
     ):
         """word contains inputs only. A caller may score shifted targets AFTER this returns.
 
@@ -56,6 +57,13 @@ class LiveValueHead(nn.Module):
             rotate=mode == "rotated",
             inspect_rotation=inspect_rotation,
         )
+        if hit_out is not None:
+            # Output only: expose exactly the routes B actually uses, never accept addresses.
+            if mode != "B" or type(hit_out) is not dict or hit_out:
+                raise ValueError("only an empty B hit output is supported")
+            hit_out.update(
+                query=query, latest=source, depth=(8 * f[0][query, 7]).long()
+            )
         if (
             age_out is not None
         ):  # output diagnostics only; never read to select a record

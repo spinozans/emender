@@ -39,8 +39,6 @@ def source():
 
 
 def qualification():
-    from .endpoint import state_digest
-
     p.cpu()
     ref = source()
     tic = monotonic()
@@ -76,6 +74,29 @@ def qualification():
         and obj[1]["work"]["matched_frontiers"] == 654,
         "incomplete Q gate",
     )
+    states = strict_cpu_states()
+    check(
+        not torch.cuda.is_initialized() and source() == ref,
+        "device initialized or source changed during Q qualification",
+    )
+    z = dict(
+        scope="Q synthetic + strict frozen W-B CPU loads; no diagnostic windows read",
+        ref=ref,
+        spec=data.SPEC,
+        passed=GATES,
+        log_sha=sha(f),
+        states=states,
+        natural_Q_windows_read=0,
+        wall_s=monotonic() - tic,
+    )
+    write_json(d / "passed.json", z)
+    return z
+
+
+def strict_cpu_states():
+    from .endpoint import state_digest
+
+    p.cpu()
     states = {}
     for seed in SEEDS:
         _, e = q.checkpoint(seed, hash_weights=False)
@@ -94,22 +115,7 @@ def qualification():
             head=state_digest(c.state_dict()),
         )
         del m, c
-    check(
-        not torch.cuda.is_initialized() and source() == ref,
-        "device initialized or source changed during Q qualification",
-    )
-    z = dict(
-        scope="Q synthetic + strict frozen W-B CPU loads; no diagnostic windows read",
-        ref=ref,
-        spec=data.SPEC,
-        passed=GATES,
-        log_sha=sha(f),
-        states=states,
-        natural_Q_windows_read=0,
-        wall_s=monotonic() - tic,
-    )
-    write_json(d / "passed.json", z)
-    return z
+    return states
 
 
 def checked_fixture_ref():
