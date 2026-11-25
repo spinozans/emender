@@ -14,10 +14,20 @@ ARMS = "BNUS"
 PAIRS = (("U", "N"), ("U", "S"), ("U", "B"), ("N", "B"), ("S", "N"))
 
 
-def summarize(role, logs, hashes):
+def summarize(role, logs, hashes, *, short_targets=None):
     n = len(hashes)
+    final = role == "final_test"
+    check(final == (short_targets is not None), "need actual final target counts")
+    sizes = [T] * n if not final else list(short_targets)
     check(
-        role in ("fit", "probe")
+        len(sizes) == n
+        and (not final or all(type(v) is int and 1 <= v < T for v in sizes)),
+        "invalid short lengths",
+    )
+    nt = sum(sizes)
+    scored = role != "fit"
+    check(
+        role in ("fit", "probe", "final_test")
         and n == len(set(hashes))
         and n > 0
         and set(logs) == set(SEEDS),
@@ -26,11 +36,12 @@ def summarize(role, logs, hashes):
     totals = {}
     support = {}
     clock = Counter()
-    losses = np.zeros((len(SEEDS), n, len(ARMS))) if role == "probe" else None
+    losses = np.zeros((len(SEEDS), n, len(ARMS))) if scored else None
     for si, s in enumerate(SEEDS):
         work = Counter()
         docs = Counter()
         for i, (h, x) in enumerate(zip(hashes, logs[s], strict=True)):
+            length = sizes[i]
             w = x["work"]
             hit = w["literal_hits"]
             miss = w["literal_misses"]
@@ -38,28 +49,28 @@ def summarize(role, logs, hashes):
             secs = x["seconds"]
             check(
                 x["document_sha"] == h
-                and x["targets"] == T
+                and x["targets"] == length
                 and x["host_prefills"] == 1
-                and ("nll_sums" in x) == (role == "probe"),
+                and ("nll_sums" in x) == scored,
                 "wrong U role or pairing",
             )
             check(
                 all(type(v) is int and v >= 0 for v in w.values())
                 and type(right) is int
                 and 0 <= right <= hit
-                and hit + miss == T
+                and hit + miss == length
                 and w["literal_queries"]
                 == w["literal_value_writes"]
                 == w["mark_storage_bytes"]
-                == T
+                == length
                 and w["literal_value_reads"]
                 == w["U_mark_reads"]
                 == w["S_mark_reads"]
                 == hit
                 and w["arrivals_encoded"]
                 == w["mark_norms_from_current"] + w["mark_norms_extra"]
-                == T - 1
-                and w["marks_saturated"] <= T - 1
+                == length - 1
+                and w["marks_saturated"] <= length - 1
                 and max(
                     w[k]
                     for k in (
@@ -117,7 +128,7 @@ def summarize(role, logs, hashes):
                     ).items()
                 }
             )
-            if role == "probe":
+            if scored:
                 z = x["nll_sums"]
                 check(
                     set(z) == set(ARMS)
@@ -129,7 +140,7 @@ def summarize(role, logs, hashes):
         support[str(s)] = dict(docs)
     report = dict(
         paired_documents=n,
-        real_targets_per_seed=n * T,
+        real_targets_per_seed=nt,
         work_by_seed=totals,
         documents_with_support_by_seed=support,
         mean_seconds_per_seed_document={
@@ -138,12 +149,12 @@ def summarize(role, logs, hashes):
     )
     if losses is None:
         return report
-    ix = np.random.default_rng(4907).integers(0, n, size=(10000, n))
-    den = np.full(n, T)[ix].sum(1)
+    ix = np.random.default_rng(4908 if final else 4907).integers(0, n, size=(10000, n))
+    den = np.asarray(sizes, dtype=np.int64)[ix].sum(1)
     report["policies"] = {
         a: dict(
-            nats_per_byte=float(losses[:, :, i].mean() / T),
-            by_seed=(losses[:, :, i].sum(1) / (n * T)).tolist(),
+            nats_per_byte=float(losses[:, :, i].mean() / (nt / n)),
+            by_seed=(losses[:, :, i].sum(1) / nt).tolist(),
         )
         for i, a in enumerate(ARMS)
     }
@@ -152,14 +163,21 @@ def summarize(role, logs, hashes):
         dt = losses[:, :, ARMS.index(b)] - losses[:, :, ARMS.index(a)]
         bootstrap = dt.mean(0)[ix].sum(1) / den
         report["contrasts"][a + ":" + b] = dict(
-            gain=float(dt.sum() / (n * T * len(SEEDS))),
-            by_seed=(dt.sum(1) / (n * T)).tolist(),
+            gain=float(dt.sum() / (nt * len(SEEDS))),
+            by_seed=(dt.sum(1) / nt).tolist(),
             ci95=np.quantile(bootstrap, [0.025, 0.975], method="linear").tolist(),
         )
     return report
 
 
 def cost(d, z, charge):
+    n = p.units()
+    return stage_cost(
+        d, z, charge, p.JOB, n, n * T, fit_boundary=len(SEEDS) * data.N["fit"]
+    )
+
+
+def stage_cost(d, z, charge, job, n, targets, *, fit_boundary=None):
     ini, after, last, end = (
         fields(d / k) for k in ("initial", "after", "last", "released")
     )
@@ -169,14 +187,12 @@ def cost(d, z, charge):
     live = load(d / "live.json")
     obs = list(map(json.loads, (d / "survival.jsonl").read_bytes().splitlines()))
     pr = load(d / "progress.json")
-    n = p.units()
-    nfit = len(SEEDS) * data.N["fit"]
     check(
-        start["name"] == ident["job"] == charge["job"] == p.JOB.name
+        start["name"] == ident["job"] == charge["job"] == job.name
         and ident["ref"] == start["ref"]
-        and z["kind"] == start["kind"] == p.JOB.kind
+        and z["kind"] == start["kind"] == job.kind
         and charge["complete_sha"] == sha(d / "complete.json")
-        and start["cap_s"] == p.TOTAL
+        and start["cap_s"] == job.cap
         and charge["renewed"]
         and (d / "watch-ack").is_file(),
         "invalid U terminal receipt",
@@ -200,7 +216,7 @@ def cost(d, z, charge):
     )
     check(
         live in obs
-        and any(x["units"] == nfit for x in obs)
+        and (fit_boundary is None or any(x["units"] == fit_boundary for x in obs))
         and 0 < obs[0]["units"]
         and all(
             a["units"] < b["units"] and int(a["heartbeat"]) <= int(b["heartbeat"])
@@ -211,15 +227,15 @@ def cost(d, z, charge):
         == charge["witnessed_units"]
         == start["units"]
         == n
-        and pr == dict(pid=ident["trainer"], units=n, scored_targets=n * T)
-        and z["targets"] == n * T,
+        and pr == dict(pid=ident["trainer"], units=n, scored_targets=targets)
+        and z["targets"] == targets,
         "incomplete actual FIT/PROBE progress",
     )
     check(
         0
         < charge["upper_card_s"]
         == int(end["released_epoch"]) - int(ini["created"]) + 1
-        <= p.TOTAL
+        <= job.cap
         and int(end["rc"]) == charge["rc"] == 0
         and isclose(
             charge["inclusive_wall_s"],
@@ -239,7 +255,7 @@ def cost(d, z, charge):
         peak_RSS_KiB=z["process_RSS_peak_KiB"],
         stage_seconds=z["stage_seconds"],
         progress_observations=len(obs),
-        witnessed_fit_boundary=nfit,
+        witnessed_fit_boundary=fit_boundary,
         terminal_units=n,
         device=ident["device"],
         torch=ident["torch"],

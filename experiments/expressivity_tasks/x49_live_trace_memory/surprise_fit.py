@@ -104,14 +104,24 @@ def score(packet, coefficients, targets):
     return dict(candidate_correct=int(correct.sum()), nll_sums=sums, seconds=times)
 
 
-@torch.inference_mode()
 def document(host, head, word, *, fit=None, beta=None, width=256):
+    if type(word) is not bytes or len(word) != 4097:
+        raise ValueError("need one fully shifted document window")
+    return _document(host, head, word, fit, beta, width)
+
+
+def short_frozen_document(host, head, word, *, beta, width=256):
+    if type(word) is not bytes or not 2 <= len(word) <= 4096 or beta is None:
+        raise ValueError("one whole short document and frozen coefficients required")
+    return _document(host, head, word, None, beta, width)
+
+
+@torch.inference_mode()
+def _document(host, head, word, fit, beta, width):
     if (fit is None) == (beta is None) or (
         fit is not None and not isinstance(fit, Moments)
     ):
         raise ValueError("choose exactly one of FIT or frozen PROBE")
-    if type(word) is not bytes or len(word) != 4097:
-        raise ValueError("need one fully shifted document window")
     inputs = word[:-1]
     h, z, prefill = frozen_prefill(host, inputs, width)
     p = fields(head, inputs, h, z)

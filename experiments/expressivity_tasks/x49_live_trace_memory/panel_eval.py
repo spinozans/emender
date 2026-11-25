@@ -116,7 +116,11 @@ def _v2_descriptor(job, frozen):
 
 def _documents(job, frozen):
     """This is the only panel raw source open: accept no caller-selected rows or paths."""
-    if job.name == "w-final":
+    if job.name == "uc-final":
+        from .confirm_panel import fresh_descriptor
+
+        folder, src, rows = fresh_descriptor(job, frozen)
+    elif job.name == "w-final":
         from .write_panel import fresh_descriptor
 
         folder, src, rows = fresh_descriptor(job, frozen)
@@ -147,7 +151,7 @@ def _documents(job, frozen):
             raw = os.pread(f.fileno(), row["length"], row["offset"])
             w = (
                 checked_short_document(raw, row)
-                if job.name == "w-final"
+                if job.name in ("w-final", "uc-final")
                 else checked_eval_window(raw, row, split)
             )
             windows.append((row["doc"], row["sha256"], w))

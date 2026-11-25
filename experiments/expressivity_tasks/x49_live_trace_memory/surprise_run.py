@@ -37,9 +37,19 @@ def source():
 
 
 def qualification():
+    return qualify_frozen(
+        source,
+        "surprise",
+        data.SPEC,
+        GATES,
+        "U synthetic FIT/PROBE lifecycle and frozen real CPU strict loads; no U data",
+    )
+
+
+def qualify_frozen(check_source, name, spec, gates, scope):
     panel.cpu()
-    ref = source()
-    d = OUT / ("qualify-surprise-" + ref)
+    ref = check_source()
+    d = OUT / ("qualify-" + name + "-" + ref)
     d.mkdir()
     f = d / "gate.log"
     tic = monotonic()
@@ -64,7 +74,7 @@ def qualification():
     text = f.read_text()
     native = [json.loads(s) for s in text.splitlines() if s.startswith("{")]
     check(
-        re.findall(r"=+ (\d+) passed in [^\n]+ =+", text) == [str(GATES)]
+        re.findall(r"=+ (\d+) passed in [^\n]+ =+", text) == [str(gates)]
         and len(native) == 1
         and native[0]["work"]["matched_frontiers"] == 654,
         "incomplete U gate",
@@ -79,14 +89,14 @@ def qualification():
         states == old["states"]
         and {s: x["checkpoint"] for s, x in states.items()} == parent["checkpoints"]
         and not torch.cuda.is_initialized()
-        and source() == ref,
+        and check_source() == ref,
         "unbound W-B CPU states",
     )
     z = dict(
-        scope="U synthetic FIT/PROBE lifecycle and frozen real CPU strict loads; no U data",
+        scope=scope,
         ref=ref,
-        spec=data.SPEC,
-        passed=GATES,
+        spec=spec,
+        passed=gates,
         log_sha=sha(f),
         states=states,
         natural_windows_opened=0,
@@ -97,13 +107,17 @@ def qualification():
 
 
 def checked_fixture_ref():
-    ref = source()
-    d = OUT / ("qualify-surprise-" + ref)
+    return checked_gate(source, "surprise", data.SPEC, GATES)
+
+
+def checked_gate(check_source, name, spec, gates):
+    ref = check_source()
+    d = OUT / ("qualify-" + name + "-" + ref)
     z = load(d / "passed.json")
     check(
         z["ref"] == ref
-        and z["spec"] == data.SPEC
-        and z["passed"] == GATES
+        and z["spec"] == spec
+        and z["passed"] == gates
         and z["log_sha"] == sha(d / "gate.log")
         and z["natural_windows_opened"] == 0
         and all(

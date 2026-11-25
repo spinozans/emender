@@ -43,22 +43,31 @@ def check_fits(folder, readouts):
     return result
 
 
-def check_bootstrap(folder, stats, hashes):
+def check_bootstrap(folder, stats, hashes, *, short_targets=None):
     # Convert sampled document indices to multiplicities. Resample each arm's *absolute*
     # loss sum per seed, divide by that draw's target count, then take contrasts and average seeds.
     n = len(hashes)
-    inds = np.random.default_rng(4907).integers(0, n, size=(10000, n))
+    final = short_targets is not None
+    counts = short_targets if final else [p.T] * n
+    inds = np.random.default_rng(4908 if final else 4907).integers(
+        0, n, size=(10000, n)
+    )
     mul = np.asarray([np.bincount(row, minlength=n) for row in inds], dtype=np.float64)
     check(np.all(mul.sum(1) == n), "lost bootstrap mass")
     sums = {k: [] for k in ana.ARMS}
     draw = {k: [] for k in ana.ARMS}
     support = stats["documents_with_support_by_seed"]
     for s in p.SEEDS:
-        _, rows = p.journal(folder / f"probe-{s}.jsonl", hashes)
+        _, rows = p.journal(
+            folder / (f"{s}.jsonl" if final else f"probe-{s}.jsonl"),
+            hashes,
+            sizes=counts,
+        )
         nt = np.asarray([x["targets"] for x in rows])
         den = mul @ nt
         check(
-            nt.sum() == stats["real_targets_per_seed"] == n * p.T, "incorrect exposure"
+            nt.sum() == stats["real_targets_per_seed"] == sum(counts),
+            "incorrect exposure",
         )
         seed = str(s)
         work = stats["work_by_seed"][seed]

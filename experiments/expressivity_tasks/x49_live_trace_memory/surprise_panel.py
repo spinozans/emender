@@ -97,13 +97,18 @@ def freeze(job, ref):
     return sha(f)
 
 
-def journal(path, hs):
+def journal(path, hs, *, sizes=None):
+    counts = [T] * len(hs) if sizes is None else sizes
     raw = path.read_bytes()
     rows = list(map(json.loads, raw.splitlines()))
     check(
         [x["document_sha"] for x in rows] == hs
         and len(set(hs)) == len(hs)
-        and all(x["host_prefills"] == 1 and x["targets"] == T for x in rows),
+        and len(counts) == len(hs)
+        and all(
+            x["host_prefills"] == 1 and x["targets"] == n
+            for x, n in zip(rows, counts, strict=True)
+        ),
         "U document order, exposure or prefill mismatch",
     )
     return digest(raw), rows

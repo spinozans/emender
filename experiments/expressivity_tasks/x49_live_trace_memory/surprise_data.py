@@ -30,7 +30,8 @@ def bound(path, expected):
     return json.loads(raw)
 
 
-def selection():
+def selection_context():
+    """Reconstruct U and its earlier exclusions from metadata; never load a payload."""
     result = checked_spec()
     qr = bound(q.BASE / "reservation.json", result["data"]["rows_sha"])
     records, ex, w = q.parent_context()
@@ -57,7 +58,7 @@ def selection():
         supply == left - q.N and len(excluded) == len(pre_q) + q.N,
         "incorrect U exclusions",
     )
-    return dict(
+    book = dict(
         schema="x49-u-native-train",
         spec=SPEC,
         q_rows_sha=result["data"]["rows_sha"],
@@ -68,6 +69,11 @@ def selection():
         excluded_sha=fingerprint(sorted(excluded)),
         roles=dict(fit=rows[: N["fit"]], probe=rows[N["fit"] :]),
     )
+    return book, records, excluded, w
+
+
+def selection():
+    return selection_context()[0]
 
 
 def checked_roles(book):

@@ -4,7 +4,9 @@ set -euo pipefail
 umask 077
 cd "$(git rev-parse --show-toplevel)"
 j=${1:?job}; cap=${2:?cap}; [[ $cap =~ ^[0-9]+$ ]]; py=$PWD/.venv/bin/python
-if [[ $j == u-fit-probe ]]; then
+if [[ $j == uc-final ]]; then
+  d=output/x49-live/confirm-panel-1/$j; m=experiments.expressivity_tasks.x49_live_trace_memory.confirm_run; export OPENBLAS_NUM_THREADS=1
+elif [[ $j == u-fit-probe ]]; then
   d=output/x49-live/surprise-probe-1/$j; m=experiments.expressivity_tasks.x49_live_trace_memory.surprise_run; export OPENBLAS_NUM_THREADS=1
 elif [[ $j == q-probe ]]; then
   d=output/x49-live/query-probe-1/$j; m=experiments.expressivity_tasks.x49_live_trace_memory.query_run
