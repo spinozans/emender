@@ -2,6 +2,8 @@
 
 [Canonical objective and autonomous operating mandate](CHARTER.md) · [Registered arms, dose, controls, stop rules and Lux nomination](PLAN.md).
 
+**Local recommendation: [the frozen U surprise record passed its native held-out confirmation](RESULT_SURPRISE_CONFIRMATION.md)** · [prospective rule](SURPRISE_CONFIRMATION.md) · [aggregate](receipts/surprise_confirmation_result.json). On 342 new whole documents (525,209 real targets per seed), correctly bound arrival surprise lowered loss by .002800 nats/byte over current confidence, .002637 over the fitted wrong-occurrence control, and .003261 over B. All seeds agreed and all three paired intervals excluded zero. Use the existing U coefficients with their three matched W-B checkpoints; retain B as baseline. No refit, no Lux nomination. One confirmation lease released, ≤185 card-s.
+
 **Completed natural result:** [Final report](RESULT.md) · [verified aggregate](receipts/panel_result.json). B beat A by .001124 nats/byte at full dose and .003125 at matched training time on the 128-document final; value-only shuffling hurt. B is the local baseline. The registered learned-key C lost to fixed-key F. All 15 leases released, ≤14,022 card-s. Do not reopen the panel. The formal Lux rule returned no nominee; no remote launch.
 
 **Completed follow-up:** [X49-R result](RESULT_RELATIVE.md) · [protocol](RELATIVE.md). On 137 fresh documents the key-credit repair recovered .17460 nats/byte over C but still lost .01660 to fixed keys F and .01589 to B. All three seeds and the matched-wall results agreed. All four leases released, ≤4,536 incremental card-s. Use B; neither consumed test set is available for tuning or reuse.
