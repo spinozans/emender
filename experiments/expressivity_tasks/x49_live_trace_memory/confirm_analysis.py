@@ -3,8 +3,9 @@
 from __future__ import annotations
 import json
 from ..x48_muon_continuation.data import check, load, sha
-from . import confirm_panel as p, confirm_data as data, surprise_analysis as u
+from . import surprise_analysis as u
 from .panels import SEEDS, fingerprint
+from .short_phase import study as phase
 
 
 def decision(stats):
@@ -22,7 +23,8 @@ def decision(stats):
     )
 
 
-def analyze(root):
+def analyze(root, *, study="UC"):
+    data, p, _, analysis = phase(study)
     check(
         root == p.ROOT and not (root / "stop.json").exists(), "foreign or partial final"
     )
@@ -80,7 +82,11 @@ def analyze(root):
             == dict(scores_sha=h, endpoint_id=fingerprint(initial["endpoints"][k])),
             "foreign scored endpoint",
         )
-    stats = u.summarize("final_test", logs, hs, short_targets=sizes)
+    stats = (
+        u.summarize("final_test", logs, hs, short_targets=sizes)
+        if study == "UC"
+        else analysis.summarize(logs, hs, sizes)
+    )
     bands = {}
     for lo, hi in [(1, 15), (16, 127), (128, 1023), (1024, 4095)]:
         run = [x for x in logs[SEEDS[0]] if lo <= x["targets"] <= hi]
@@ -100,13 +106,26 @@ def analyze(root):
         ),
         "lost miss or length band",
     )
+    parent = (
+        dict(
+            u_result_sha=data.RESULT,
+            u_fit_freeze_sha=data.FIT_SHA,
+            final_freeze_sha=z["freeze_sha"],
+        )
+        if study == "UC"
+        else dict(
+            **p.lineage(),
+            ls_fit_freeze_sha=data.FIT_SHA,
+            predictor_freeze_sha=z["freeze_sha"],
+        )
+    )
     return dict(
-        scope="new whole short native final, frozen W-B predictors and U coefficients, no refit",
+        scope="new whole short native final, frozen W-B predictors and U coefficients, no refit"
+        if study == "UC"
+        else "new whole short native calibration, locked B/U/H/J, no fitting and no native final access",
         ref=initial["ref"],
         spec=data.SPEC,
-        u_result_sha=data.RESULT,
-        u_fit_freeze_sha=data.FIT_SHA,
-        final_freeze_sha=z["freeze_sha"],
+        **parent,
         shape_check_sha=z["shape_sha"],
         data=m,
         source_bytes=stream["source_bytes"],
@@ -121,12 +140,12 @@ def analyze(root):
         cost=paid,
         analysis=stats,
         by_length_per_seed=bands,
-        decision=decision(stats),
+        decision=analysis.decision(stats),
     )
 
 
-def report():
-    from .confirm_run import AUTH
+def report(*, study="UC"):
+    data, p, run, analysis = phase(study)
     from .panel import cpu
     from .surprise_report import check_bootstrap
 
@@ -139,10 +158,13 @@ def report():
         "terminal final ledger changed",
     )
     r = data.u.bound(root / "summary.json", done["summary_sha"])
-    check(r == analyze(root), "confirmation analysis changed")
-    p.validate(load(AUTH), r["ref"])
+    check(r == analysis.analyze(root), "confirmation analysis changed")
+    p.validate(load(run.AUTH), r["ref"])
     check(
-        data.u.bound(d / "frozen.json", r["final_freeze_sha"])
+        data.u.bound(
+            d / "frozen.json",
+            r["final_freeze_sha" if study == "UC" else "predictor_freeze_sha"],
+        )
         == p.plan(r["ref"], hash_weights=True),
         "final bytes/coefficients changed",
     )
@@ -154,6 +176,7 @@ def report():
         r["analysis"],
         [x["sha256"] for x in rows],
         short_targets=[x["length"] - 1 for x in rows],
+        study="U" if study == "UC" else "JT",
     )
     reserved = data.u.bound(data.BASE / "reserved.json", r["data"]["reserved_sha"])
     check(
@@ -164,10 +187,10 @@ def report():
     return dict(
         **r,
         metadata_reservation=reserved,
-        authority_sha=sha(AUTH),
+        authority_sha=sha(run.AUTH),
         bootstrap=dict(
             joint_document_draws=10000,
-            seed=4908,
+            seed=4908 if study == "UC" else analysis.BOOT,
             interval="linear percentile, actual drawn target totals",
         ),
         verified=dict(

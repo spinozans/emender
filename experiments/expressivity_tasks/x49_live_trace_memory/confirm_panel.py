@@ -9,6 +9,7 @@ from . import confirm_data as data, surprise_panel as prior
 from .panels import OUT, T, SEEDS, fingerprint
 from .panel_spec import Job
 from .surprise import checked_beta, DIMS
+from .short_phase import study as phase
 
 ROOT = OUT / "confirm-panel-1"
 TOTAL = 1200
@@ -44,76 +45,87 @@ def endpoints(*, hash_weights):
     return out
 
 
-def plan(ref, *, hash_weights):
-    m = data.metadata(ref)
+def plan(ref, *, hash_weights, study="UC"):
+    dat, p, _, _ = phase(study)
+    m = dat.metadata(ref)
+    parent = {"u_result_sha": dat.RESULT} if study == "UC" else p.lineage()
     return dict(
         ref=ref,
-        job=JOB.name,
-        kind=JOB.kind,
-        spec=data.SPEC,
-        u_result_sha=data.RESULT,
-        fit_freeze_sha=data.FIT_SHA,
+        job=p.JOB.name,
+        kind=p.JOB.kind,
+        spec=dat.SPEC,
+        **parent,
+        fit_freeze_sha=dat.FIT_SHA,
         history=T,
         new_fits=0,
         neural_updates=0,
         data=m,
         units=m["documents"] * len(SEEDS),
         targets_per_endpoint=m["targets"],
-        endpoints=endpoints(hash_weights=hash_weights),
+        endpoints=p.endpoints(hash_weights=hash_weights),
     )
 
 
-def expected(ref):
-    z = plan(ref, hash_weights=False)
+def expected(ref, *, study="UC"):
+    dat, p, _, _ = phase(study)
+    z = p.plan(ref, hash_weights=False)
+    parent = {"u_result_sha": dat.RESULT} if study == "UC" else p.lineage()
     return dict(
-        scope="x49-u-frozen-native-short-confirmation-v1",
+        scope="x49-u-frozen-native-short-confirmation-v1"
+        if study == "UC"
+        else "x49-jt-fixed-short-calibration-v1",
         ref=ref,
-        spec=data.SPEC,
-        u_result_sha=data.RESULT,
-        fit_freeze_sha=data.FIT_SHA,
+        spec=dat.SPEC,
+        **parent,
+        fit_freeze_sha=dat.FIT_SHA,
         data=z["data"],
         units=z["units"],
         checkpoint_and_beta_id=fingerprint(z["endpoints"]),
         new_fits=0,
         neural_updates=0,
-        split="new_native_short_final",
+        split="new_native_short_final"
+        if study == "UC"
+        else "new_native_short_calibration_no_fitting",
         local_gpus=1,
         max_acquisitions=1,
-        total_card_seconds=TOTAL,
-        job_caps={JOB.name: TOTAL},
+        total_card_seconds=p.TOTAL,
+        job_caps={p.JOB.name: p.TOTAL},
         retries=0,
         remote=False,
     )
 
 
-def validate(a, ref):
-    e = expected(ref)
+def validate(a, ref, *, study="UC"):
+    _, p, _, _ = phase(study)
+    e = p.expected(ref)
     check(
         type(a) is dict
         and set(a) == set(e) | {"operator_note"}
         and isinstance(a["operator_note"], str)
         and a["operator_note"].strip()
         and fingerprint({k: a[k] for k in e}) == fingerprint(e),
-        "wrong confirmation authority",
+        f"wrong {study} confirmation authority",
     )
 
 
-def freeze(job, ref):
-    f = ROOT / JOB.name / "frozen.json"
-    check(job == JOB and not f.exists(), "foreign/repeated confirmation freeze")
-    write_json(f, plan(ref, hash_weights=True))
+def freeze(job, ref, *, study="UC"):
+    _, p, _, _ = phase(study)
+    f = p.ROOT / p.JOB.name / "frozen.json"
+    check(job == p.JOB and not f.exists(), "foreign/repeated confirmation freeze")
+    write_json(f, p.plan(ref, hash_weights=True))
     flush_dir(f.parent)
     return sha(f)
 
 
-def targets_for(job, d, start):
-    z = data.u.bound(d / "frozen.json", start["freeze_sha"])
-    rows, nt = data.checked_rows(
-        data.u.bound(data.BASE / "reservation.json", z["data"]["rows_sha"])
+def targets_for(job, d, start, *, study="UC"):
+    dat, p, _, _ = phase(study)
+    z = dat.u.bound(d / "frozen.json", start["freeze_sha"])
+    rows, nt = dat.checked_rows(
+        dat.u.bound(dat.BASE / "reservation.json", z["data"]["rows_sha"])
     )
     counts = list(accumulate([r["length"] - 1 for r in rows] * len(SEEDS), initial=0))
     check(
-        job == JOB
+        job == p.JOB
         and start["units"] == z["units"] == len(counts) - 1
         and counts[-1] == len(SEEDS) * nt
         and z["targets_per_endpoint"] == nt,
@@ -122,17 +134,17 @@ def targets_for(job, d, start):
     return counts.__getitem__
 
 
-def fresh_descriptor(job, initial):
-    from .confirm_run import admit
+def fresh_descriptor(job, initial, *, study="UC"):
     from .panel import licensed_admitted_split
 
-    check(job == JOB, "wrong short-final reader")
-    d, ref, start = admit(job)
+    dat, p, run, _ = phase(study)
+    check(job == p.JOB, "wrong frozen short reader")
+    d, ref, start = run.admit(job)
     check(
-        d == ROOT / JOB.name
+        d == p.ROOT / p.JOB.name
         and licensed_admitted_split(job, d, ref, start)
         == initial
-        == plan(ref, hash_weights=True),
+        == p.plan(ref, hash_weights=True),
         "unlicensed or changed frozen confirmation",
     )
     check(
@@ -148,14 +160,14 @@ def fresh_descriptor(job, initial):
             trainer=os.getpid(),
             trainer_start=ident["trainer_start"],
             seed=SEEDS[0],
-            lengths=LENGTHS,
+            lengths=p.LENGTHS,
             natural_targets=0,
-            synthetic_prefills=len(LENGTHS),
+            synthetic_prefills=len(p.LENGTHS),
         ),
         "missing bound short device check",
     )
-    book = data.u.bound(data.BASE / "reservation.json", initial["data"]["rows_sha"])
-    rows, nt = data.checked_rows(book)
+    book = dat.u.bound(dat.BASE / "reservation.json", initial["data"]["rows_sha"])
+    rows, nt = dat.checked_rows(book)
     check(nt == initial["targets_per_endpoint"], "wrong raw short-final exposure")
     return d, book["source"], rows
 

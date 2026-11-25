@@ -40,7 +40,8 @@ def next_block(book, records, pre, quota):
     )
 
 
-def selection():
+def selection_context():
+    """Return the LS descriptor with its verified pre-LS exclusions, without reading text."""
     r = checked_spec()
     book, records, pre = v.selection_context()
     check(
@@ -50,7 +51,7 @@ def selection():
     )
     rows, ex, supply = next_block(book, records, pre, sum(N.values()))
     check(len(ex) == 42555 and supply == 23571, "changed LS TRAIN supply")
-    return dict(
+    descriptor = dict(
         schema="x49-ls-native-train",
         spec=SPEC,
         v_result_sha=V_RESULT,
@@ -63,6 +64,12 @@ def selection():
         eligible_train=supply,
         roles={"fit": rows[: N["fit"]], "probe": rows[N["fit"] :]},
     )
+
+    return descriptor, records, ex
+
+
+def selection():
+    return selection_context()[0]
 
 
 def checked_roles(book):

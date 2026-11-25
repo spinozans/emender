@@ -10,6 +10,7 @@ from ..x48_muon_continuation.train import flush_dir
 from . import surprise_data as u
 from .panels import OUT, T, digest, fingerprint, membership
 from .write_data import choose_short
+from .short_phase import study as phase
 
 BASE = OUT / "confirm-data-1"
 SPEC = "b0b5c38827e167d8f80efe4aba05d0995a464841c2e2969a166c8b48340ace46"
@@ -144,25 +145,25 @@ def checked_rows(book):
     return rows, total
 
 
-def reserve():
+def reserve(*, study="UC"):
     from .panel import cpu
-    from .confirm_run import checked_fixture_ref
 
+    dat, _, run, _ = phase(study)
     cpu()
-    ref = checked_fixture_ref()
+    ref = run.checked_fixture_ref()
     os.umask(0o077)
     tic = monotonic()
     c0 = process_time()
-    BASE.mkdir(mode=0o700)
-    book = selection()
-    rows, total = checked_rows(book)
-    f = BASE / "reservation.json"
+    dat.BASE.mkdir(mode=0o700)
+    book = dat.selection()
+    rows, total = dat.checked_rows(book)
+    f = dat.BASE / "reservation.json"
     write_json(f, book)
-    flush_dir(BASE)
+    flush_dir(dat.BASE)
     h = sha(f)
-    check(u.bound(f, h) == selection(), "reservation did not rederive")
+    check(u.bound(f, h) == dat.selection(), "reservation did not rederive")
     z = dict(
-        spec=SPEC,
+        spec=dat.SPEC,
         ref=ref,
         rows_sha=h,
         documents=len(rows),
@@ -173,18 +174,19 @@ def reserve():
         wall_s=monotonic() - tic,
         cpu_s=process_time() - c0,
     )
-    write_json(BASE / "reserved.json", z)
+    write_json(dat.BASE / "reserved.json", z)
     return z
 
 
-def metadata(ref):
-    parent()
-    raw = (BASE / "reserved.json").read_bytes()
+def metadata(ref, *, study="UC"):
+    dat, _, _, _ = phase(study)
+    dat.parent()
+    raw = (dat.BASE / "reserved.json").read_bytes()
     z = json.loads(raw)
-    book = u.bound(BASE / "reservation.json", z["rows_sha"])
-    rows, total = checked_rows(book)
+    book = u.bound(dat.BASE / "reservation.json", z["rows_sha"])
+    rows, total = dat.checked_rows(book)
     check(
-        z["spec"] == SPEC
+        z["spec"] == dat.SPEC
         and z["ref"] == ref
         and z["payload_documents_opened"] == 0
         and (z["documents"], z["targets"]) == (len(rows), total),

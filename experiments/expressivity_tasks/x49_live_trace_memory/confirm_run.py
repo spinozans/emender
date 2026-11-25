@@ -20,6 +20,7 @@ from .panels import OUT, SEEDS, digest, fingerprint
 from .panel_eval import _documents
 from .panel_train import append
 from .surprise_fit import short_frozen_document
+from .short_phase import study as phase
 
 MOD = MODULE + ".confirm_run"
 AUTH = OUT / "confirm-authorization-1.json"
@@ -91,7 +92,14 @@ def check_shapes(d, plan_sha, host, head, beta):
     )
 
 
-def evaluate(job, ctx):
+def scorer(seed, e):
+    return lambda host, head, word, rank: short_frozen_document(
+        host, head, word, beta=e["beta"]
+    )
+
+
+def evaluate(job, ctx, *, study="UC"):
+    data, p, runner, _ = phase(study)
     d = ctx["folder"]
     h = load(d / "start.json")["freeze_sha"]
     plan = data.u.bound(d / "frozen.json", h)
@@ -112,10 +120,11 @@ def evaluate(job, ctx):
         e = plan["endpoints"][k]
         tic = monotonic()
         host, head = u.model(seed, e["weights"])
+        one = runner.scorer(seed, e)
         cost["load_" + k + "_s"] = monotonic() - tic
         if seed == SEEDS[0]:
             tic = monotonic()
-            check_shapes(d, h, host, head, e["beta"])
+            runner.check_shapes(d, h, host, head, e["beta"])
             cost["synthetic_short_shapes_s"] = monotonic() - tic
             tic = monotonic()
             wins, nread = _documents(job, plan)
@@ -149,8 +158,8 @@ def evaluate(job, ctx):
             cost["final_stream_s"] = monotonic() - tic
         f = d / f"{seed}.jsonl"
         f.touch(mode=0o600, exist_ok=False)
-        for _, doc, w in wins:
-            x = short_frozen_document(host, head, w, beta=e["beta"])
+        for i, (_, doc, w) in enumerate(wins):
+            x = one(host, head, w, i)
             check(
                 x["host_prefills"] == 1 and x["targets"] == len(w) - 1,
                 "lost short input or target",

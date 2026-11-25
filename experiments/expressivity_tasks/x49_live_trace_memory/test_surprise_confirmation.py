@@ -13,11 +13,12 @@ from experiments.expressivity_tasks.x48_muon_continuation.data import (
 )
 from experiments.expressivity_tasks.x49_live_trace_memory import (
     confirm_data as data,
-    confirm_panel as p,
-    confirm_run as run,
     confirm_analysis as ana,
     surprise_fit as fit,
+    short_phase,
+    test_joint_reader as joint_fixture,
 )
+from experiments.expressivity_tasks.x49_live_trace_memory.panel_eval import _documents
 from experiments.expressivity_tasks.x49_live_trace_memory.panels import SEEDS, digest
 from experiments.expressivity_tasks.x49_live_trace_memory.write_data import choose_short
 from experiments.expressivity_tasks.x49_live_trace_memory.test_coupled import Tiny
@@ -69,13 +70,18 @@ def test_short_rank_suffix_dedup_and_minimal_crossing():
         data.next_short(records, spent, old, nt + 1, lo=0)
 
 
-def fixture(tmp, mp):
+binary = joint_fixture.binary
+
+
+def fixture(tmp, mp, name="UC"):
+    data, p, run, _ = short_phase.study(name)
+    source_panel = p.prior if name == "UC" else p.ls
     mp.setenv("CUDA_VISIBLE_DEVICES", "")
     mp.delenv("GPU_LEASE_HELD", raising=False)
     mp.setattr(data, "BASE", tmp / "reserved")
     mp.setattr(data, "MIN_OFFSET", 0)
     mp.setattr(p, "ROOT", tmp / "run")
-    mp.setattr(p.prior, "ROOT", tmp / "prior")
+    mp.setattr(source_panel, "ROOT", tmp / "prior")
     mp.setattr(run, "AUTH", tmp / "authority")
     mp.setattr(run, "checked_fixture_ref", lambda: "fixture")
     src = tmp / "raw"
@@ -88,7 +94,7 @@ def fixture(tmp, mp):
                 i += 1
                 word = (unit * (n // len(unit) + 2))[: n + 1]
                 h = digest(word)
-                if int(h, 16) % 100 == 1:
+                if int(h, 16) % 100 == (1 if name == "UC" else 0):
                     break
             off = f.tell()
             f.write(word)
@@ -97,13 +103,17 @@ def fixture(tmp, mp):
                     doc=off,
                     offset=off,
                     start=0,
-                    split="final_test",
+                    split=p.JOB.kind,
                     length=n + 1,
                     sha256=h,
                 )
             )
     st = src.stat()
-    rows.sort(key=lambda r: digest(b"x49-w-short-v1:" + r["sha256"].encode()))
+    rows.sort(
+        key=lambda r: digest(b"x49-w-short-v1:" + r["sha256"].encode())
+        if name == "UC"
+        else data.rank(r["sha256"])
+    )
     mp.setattr(data, "GOAL", sum(p.LENGTHS))
     book = dict(
         spec=data.SPEC,
@@ -112,6 +122,7 @@ def fixture(tmp, mp):
         ),
         excluded_unique=99,
         eligible_documents=7,
+        eligible_targets=sum(p.LENGTHS) + 100,
         rows=rows,
     )
     mp.setattr(data, "selection", lambda: deepcopy(book))
@@ -127,14 +138,24 @@ def fixture(tmp, mp):
             a: (np.arange(d) * 0.1 + s * 0.00001).tolist() for a, d in p.DIMS.items()
         }
     parent = dict(beta=beta, freeze_sha="fixture-base", checkpoints=files)
-    d = p.prior.ROOT / p.prior.JOB.name
+    if name == "JT":
+        parent["u_beta"] = {k: [0.2, -0.4, 0.1, int(k) * 0.00002] for k in beta}
+        mp.setattr(
+            p.local_u,
+            "contract",
+            lambda s: (files[str(s)], tuple(parent["u_beta"][str(s)])),
+        )
+        mp.setattr(
+            p.joint, "contract", lambda s: (files[str(s)], tuple(beta[str(s)]["J"]))
+        )
+    d = source_panel.ROOT / source_panel.JOB.name
     d.mkdir(parents=True)
     sealed = d / "fit-frozen.json"
     write_json(
         sealed,
         dict(
             plan_sha="fixture-base",
-            spec=data.u.SPEC,
+            spec=data.u.SPEC if name == "UC" else data.ls.SPEC,
             seeds={k: dict(beta=b, checkpoint_sha=files[k]) for k, b in beta.items()},
         ),
     )
@@ -153,16 +174,22 @@ def fixture(tmp, mp):
     return book, parent, calls
 
 
-def test_metadata_only_same_fits_exact_weights_and_no_early_open(tmp_path, monkeypatch):
-    book, parent, calls = fixture(tmp_path, monkeypatch)
+@pytest.mark.parametrize("name", ["UC", "JT"])
+def test_metadata_only_same_fits_exact_weights_and_no_early_open(
+    tmp_path, monkeypatch, name
+):
+    data, p, run, _ = short_phase.study(name)
+    book, parent, calls = fixture(tmp_path, monkeypatch, name)
     reads = []
     monkeypatch.setattr(os, "pread", lambda *args: reads.append(args))
     r = data.reserve()
     assert r["payload_documents_opened"] == 0 and not reads and r["documents"] == 5
     with pytest.raises(FileExistsError):
         data.reserve()
-    with pytest.raises(ValueError, match="separate short"):
-        run._documents(p.JOB, {})
+    with pytest.raises(
+        ValueError, match="separate short" if name == "UC" else "separate JT"
+    ):
+        _documents(p.JOB, {})
     d = p.ROOT / p.JOB.name
     d.mkdir(parents=True)
     a = dict(p.expected("fixture"), operator_note="fixture only")
@@ -188,20 +215,38 @@ def test_metadata_only_same_fits_exact_weights_and_no_early_open(tmp_path, monke
         p.freeze(p.JOB, "fixture")
     assert not (d / "frozen.json").exists()
     path.write_bytes(b"4902")
-    parent["beta"]["4902"]["S"][3] += 0.01
+    parent["beta"]["4902"]["S" if name == "UC" else "J"][3] += 0.01
     with pytest.raises(ValueError, match="coefficient mismatch"):
         p.freeze(p.JOB, "fixture")
     assert not reads and not (d / "source-open-attempted").exists()
     bad = deepcopy(book)
     bad["rows"][0]["start"] = 1
-    with pytest.raises(ValueError, match="short final membership"):
+    with pytest.raises(
+        ValueError,
+        match="short final membership"
+        if name == "UC"
+        else "short calibration membership",
+    ):
         data.checked_rows(bad)
+    if name == "JT":
+        bad = deepcopy(book)
+        bad["rows"][0]["split"] = "final_test"
+        with pytest.raises(ValueError, match="calibration membership"):
+            data.checked_rows(bad)
+        with pytest.raises(ValueError, match="wrong frozen short reader"):
+            p.fresh_descriptor(p.old.JOB, {})
 
 
+@pytest.mark.parametrize("name", ["UC", "JT"])
 def test_full_invented_frozen_evaluation_shape_guard_real_target_witness_and_closure(
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch, name, request
 ):
-    book, parent, calls = fixture(tmp_path, monkeypatch)
+    data, p, run, ana = short_phase.study(name)
+    book, parent, calls = fixture(tmp_path, monkeypatch, name)
+    if name == "JT":
+        _, _, writer = request.getfixturevalue("binary")
+        monkeypatch.setattr(p.joint, "_writer", lambda: writer)
+        monkeypatch.setattr(run, "WIDTH", 8)
     r = data.reserve()
     d = p.ROOT / p.JOB.name
     d.mkdir(parents=True)
@@ -232,7 +277,7 @@ def test_full_invented_frozen_evaluation_shape_guard_real_target_witness_and_clo
 
     monkeypatch.setattr(os, "pread", pread)
     with pytest.raises(ValueError, match="missing short device check"):
-        run._documents(p.JOB, initial)
+        _documents(p.JOB, initial)
     assert not (d / "source-open-attempted").exists() and not seen
     expected = p.targets_for(p.JOB, d, start)
     lens = [v["length"] - 1 for v in book["rows"]]
@@ -276,12 +321,14 @@ def test_full_invented_frozen_evaluation_shape_guard_real_target_witness_and_clo
         if n == 2:
             write_json(d / "live.json", o)
 
-    monkeypatch.setattr(run.u, "model", model)
-    monkeypatch.setattr(
-        run,
-        "short_frozen_document",
-        lambda *args, beta: fit.short_frozen_document(*args, beta=beta, width=8),
-    )
+    # Both studies share the frozen host loader; only their no-fit readers differ.
+    monkeypatch.setattr(short_phase.study("UC")[2].u, "model", model)
+    if name == "UC":
+        monkeypatch.setattr(
+            run,
+            "short_frozen_document",
+            lambda *args, beta: fit.short_frozen_document(*args, beta=beta, width=8),
+        )
     monkeypatch.setattr(run.panel, "progress", prog)
     z = run.evaluate(p.JOB, dict(ref="fixture", folder=d))
     assert (
@@ -334,12 +381,25 @@ def test_full_invented_frozen_evaluation_shape_guard_real_target_witness_and_clo
         == dict(documents=1, real_targets=1, hits=0, misses=1)
         and out["verified"]["independent_paired_bootstrap"]
     )
-    assert (
-        out["cost"]["witnessed_fit_boundary"] is None
-        and out["predictors"]["4901"]["beta"] == parent["beta"]["4901"]
+    assert out["cost"]["witnessed_fit_boundary"] is None and out["predictors"]["4901"][
+        "beta"
+    ] == (
+        parent["beta"]["4901"]
+        if name == "UC"
+        else dict(
+            U=parent["u_beta"]["4901"],
+            H=parent["beta"]["4901"]["H"],
+            J=parent["beta"]["4901"]["J"],
+        )
     )
+    if name == "JT":
+        assert (
+            out["verified"]["independent_branch_cost_reduction"]
+            and set(out["analysis"]["contrasts"]) == {"J:U", "J:H", "J:B", "U:B", "H:U"}
+            and out["writer_cost_sha"] == data.COST_SHA
+        )
     with pytest.raises(FileExistsError):
-        run._documents(p.JOB, initial)
+        _documents(p.JOB, initial)
     path = d / "4903.jsonl"
     path.write_bytes(
         path.read_bytes().replace(b'"document_sha"', b'"document_sha" ', 1)

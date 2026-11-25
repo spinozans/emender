@@ -52,14 +52,15 @@ def checked_eval_window(raw, row, split):
     return w.inputs + w.targets[-1:]
 
 
-def checked_short_document(raw, row):
+def checked_short_document(raw, row, *, split="final_test"):
     check(
-        row["split"] == "final_test"
+        split in ("calibration", "final_test")
+        and row["split"] == split
         and row["start"] == 0
         and row["doc"] == row["offset"]
         and 2 <= len(raw) == row["length"] <= T
-        and int(row["sha256"], 16) % 100 == 1,
-        "not a registered short final document",
+        and int(row["sha256"], 16) % 100 == {"final_test": 1, "calibration": 0}[split],
+        f"not a registered short {split} document",
     )
     windows = DocumentWindows(T).windows(
         raw,
@@ -116,7 +117,11 @@ def _v2_descriptor(job, frozen):
 
 def _documents(job, frozen):
     """This is the only panel raw source open: accept no caller-selected rows or paths."""
-    if job.name == "uc-final":
+    if job.name == "jt-short-cal":
+        from .transfer_panel import fresh_descriptor
+
+        folder, src, rows = fresh_descriptor(job, frozen)
+    elif job.name == "uc-final":
         from .confirm_panel import fresh_descriptor
 
         folder, src, rows = fresh_descriptor(job, frozen)
@@ -150,8 +155,8 @@ def _documents(job, frozen):
         for row in rows:
             raw = os.pread(f.fileno(), row["length"], row["offset"])
             w = (
-                checked_short_document(raw, row)
-                if job.name in ("w-final", "uc-final")
+                checked_short_document(raw, row, split=split)
+                if job.name in ("w-final", "uc-final", "jt-short-cal")
                 else checked_eval_window(raw, row, split)
             )
             windows.append((row["doc"], row["sha256"], w))

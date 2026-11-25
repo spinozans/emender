@@ -97,6 +97,11 @@ def check_bootstrap(folder, stats, hashes, *, short_targets=None, study="U"):
 
         check(not final, "no LS final licensed")
         seed = 4910
+    elif study == "JT":
+        from .transfer_stats import ARMS, PAIRS
+
+        check(final, "JT requires whole short calibration target counts")
+        seed = 4912
     else:
         check(study == "U", "unknown bootstrap")
         ARMS, PAIRS = ana.ARMS, ana.PAIRS
@@ -127,6 +132,13 @@ def check_bootstrap(folder, stats, hashes, *, short_targets=None, study="U"):
                 and sum(x["work"]["K_codes_changed"] > 0 for x in rows)
                 == support[seed]["changed_code"],
                 "incorrect V proposal support",
+            )
+        elif study == "JT":
+            check(
+                sum(x["candidate_correct"] for x in rows) == work["candidate_correct"]
+                and sum(x["work"]["literal_hits"] > 0 for x in rows)
+                == support[seed]["hits"],
+                "incorrect JT candidate support",
             )
         else:
             check(

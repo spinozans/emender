@@ -4,6 +4,7 @@ from __future__ import annotations
 from hashlib import sha256
 import json
 from pathlib import Path
+from time import perf_counter
 import torch
 from . import literal_mark as ls, local_u, native_text, surprise as u
 from .endpoint import frozen_prefill
@@ -40,12 +41,20 @@ def contract(seed):
 def _predict(host, head, beta, observed, width, writer):
     h, z, _ = frozen_prefill(host, observed, width)
     p = u.bound_fields(head, observed, h, z)
-    tape, _ = writer(observed)
+    return branch(p, observed, beta, writer)[0]
+
+
+@torch.inference_mode()
+def branch(p, observed, beta, writer):
+    """J alone after the common bound-only packet. Subclock includes the entire native call."""
+    start = perf_counter()
+    tape, work = writer(observed)
+    write_s = perf_counter() - start
     hfeat = p.phi["U"]
     tc = tape[p.latest].double()[:, None] / 64
     # J = (three current fields, true literal mark, true neural mark). U isn't scored.
     phi = torch.cat((hfeat[:, :3], tc, hfeat[:, 3:]), dim=1)
-    return u.copy_response(p, phi, u.checked_vector(ls.DIMS, "J", beta))
+    return u.copy_response(p, phi, u.checked_vector(ls.DIMS, "J", beta)), work, write_s
 
 
 def _writer():

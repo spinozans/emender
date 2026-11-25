@@ -47,7 +47,7 @@ def qualification():
     )
 
 
-def qualify_frozen(check_source, name, spec, gates, scope):
+def qualify_frozen(check_source, name, spec, gates, scope, *, writer_build=None):
     panel.cpu()
     ref = check_source()
     d = OUT / ("qualify-" + name + "-" + ref)
@@ -55,6 +55,8 @@ def qualify_frozen(check_source, name, spec, gates, scope):
     f = d / "gate.log"
     tic = monotonic()
     env = dict(os.environ, OMP_NUM_THREADS="4", PYTEST_ADDOPTS="")
+    if writer_build is not None:
+        env["X49_JOINT_TEST_BUILD"] = str(writer_build.resolve())
     torch.set_num_threads(4)
     with f.open("xb") as out:
         for cmd in (
