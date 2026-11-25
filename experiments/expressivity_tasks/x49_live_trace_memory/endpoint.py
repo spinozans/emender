@@ -86,6 +86,35 @@ def sync(device):
         torch.cuda.synchronize(device)
 
 
+@torch.inference_mode()
+def frozen_prefill(host, input_bytes, width):
+    """One fresh full host packet. Only observed inputs cross this seam; caller owns no persistent state."""
+    check(
+        not host.training
+        and type(input_bytes) is bytes
+        and 1 <= len(input_bytes) <= 4096,
+        "invalid frozen prefill",
+    )
+    dev = next(host.parameters()).device
+    if dev.type == "cuda":
+        from ..x47_xsa_attention.workbench_run import check_gpu_owner
+
+        check_gpu_owner()
+    sync(dev)
+    t0 = perf_counter()
+    ids = torch.tensor([list(input_bytes)], dtype=torch.long, device=dev)
+    p = host(ids).to("cpu")
+    sync(dev)
+    check(
+        p.shape == (1, len(input_bytes), width + 256)
+        and p.dtype == torch.float32
+        and p.isfinite().all(),
+        "invalid eval host packet",
+    )
+    h, z = p[0].split((width, 256), dim=-1)
+    return h, z, perf_counter() - t0
+
+
 def short_cells(arm, full):
     check(
         arm in ("B", "P", "L") and type(full) is bool,
@@ -131,25 +160,8 @@ def score_window(
         and (not isinstance(head, TraceHead) or head.learned == (arm == "C")),
         "one full window, frozen correctly bound eval-mode predictor required",
     )
-    dev = next(host.parameters()).device
-    if dev.type == "cuda":
-        from ..x47_xsa_attention.workbench_run import check_gpu_owner
-
-        check_gpu_owner()
-    sync(dev)
-    t0 = perf_counter()
     input_bytes = word[:-1]
-    ids = torch.tensor([list(input_bytes)], dtype=torch.long, device=dev)
-    p = host(ids).to("cpu")
-    sync(dev)
-    check(
-        p.shape == (1, len(input_bytes), width + 256)
-        and p.dtype == torch.float32
-        and p.isfinite().all(),
-        "invalid eval host packet",
-    )
-    h, z = p[0].split((width, 256), dim=-1)
-    prefill = perf_counter() - t0
+    h, z, prefill = frozen_prefill(host, input_bytes, width)
     cells = [(v, "none") for v in HORIZONS]
     if arm != "A":
         cells.append((4096, "literal"))

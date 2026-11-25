@@ -286,13 +286,18 @@ def licensed_split(job):
 
 
 def licensed_admitted_split(job, d, ref, start):
+    check(job.kind in ("calibration", "final_test"), "evaluation scope not licensed")
+    return licensed_admitted_reader(job, d, ref, start)
+
+
+def licensed_admitted_reader(job, d, ref, start):
+    """Bind a reader to the current trainer, owner and frozen plan, after campaign-specific admission."""
     ident = load(d / "identity.json")
     from ..x47_xsa_attention.workbench_run import check_gpu_owner
 
     cur = check_gpu_owner()
     check(
-        job.kind in ("calibration", "final_test")
-        and ident["job"] == job.name
+        ident["job"] == job.name
         and ident["ref"] == ref
         and (ident["trainer"], ident["trainer_start"])
         == (os.getpid(), procstat(os.getpid())[19])
