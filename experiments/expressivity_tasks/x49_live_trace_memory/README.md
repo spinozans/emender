@@ -2,7 +2,9 @@
 
 [Canonical objective and autonomous operating mandate](CHARTER.md) · [Registered arms, dose, controls, stop rules and Lux nomination](PLAN.md).
 
-**Status:** Stage 0 started after public plan `45226903077c18443ad6cc06c6949a25b15159f0`. The first A/B causal-address and delayed-value checks passed on CPU. No X49 natural training, held-out scoring, GPU lease or Lux job. See [X48](../x48_muon_continuation/RESULT.md) for the starting point and [XSA memory system](../../../docs/XSA_MEMORY_SYSTEM.md) for the distinction between byte evidence, logical addresses and neural values.
+**Data gate:** [v1 refused: 110 clean calibration documents for 128 required](DATA_STOP_V1.md). No reservation, corpus read, learner or evaluation result under v1. Host/trace qualification continues independently.
+
+**Implementation:** Stage 0 started after public plan `45226903077c18443ad6cc06c6949a25b15159f0`. The first A/B causal-address and delayed-value checks passed on CPU. No X49 natural training, held-out scoring, GPU lease or Lux job. See [X48](../x48_muon_continuation/RESULT.md) for the starting point and [XSA memory system](../../../docs/XSA_MEMORY_SYSTEM.md) for the distinction between byte evidence, logical addresses and neural values.
 
 ## Stage 0a — what we have actually checked
 
@@ -18,6 +20,6 @@ python -m pytest -q experiments/expressivity_tasks/x49_live_trace_memory/test_li
 python -m experiments.expressivity_tasks.x49_live_trace_memory.native_check
 ```
 
-11 tests passed (7 new, 4 direct regressions). The second command needs the registered `xsa` session executable (SHA-256 `fbc436aac93190368bbed637a5f69cca0fa5848fc81a311e60c4ebe1b4d3bf50`); no weights or natural data. **Next:** close the private exclusion/split manifest, couple A/B to the retained host, verify checkpoint replay and bound the cost before the paid panel. F/C trace learning and the Lux gates remain prospective.
+11 tests passed (7 new, 4 direct regressions). The second command needs the registered `xsa` session executable (SHA-256 `fbc436aac93190368bbed637a5f69cca0fa5848fc81a311e60c4ebe1b4d3bf50`); no weights or natural data. The v1 split reservation subsequently refused (above); do not retry it unchanged. Couple A/B to the retained host, verify checkpoint replay and bound the cost before any paid panel. F/C trace learning and the Lux gates remain prospective.
 
 This directory is for source, tests and short reports. Use private `output/x49-live/` for local manifests, checkpoints, traces and logs. The public source snapshot does not distribute Pile, SXGC binaries, GDN2 weights, or private experiment receipts.
