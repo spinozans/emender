@@ -9,6 +9,7 @@ from ..x47_xsa_attention.w3_launch import fields
 from ..x48_muon_continuation.data import check, load, sha
 from . import surprise_data as data, surprise_panel as p
 from .panels import SEEDS, T
+from .surprise_panel import journal
 
 ARMS = "BNUS"
 PAIRS = (("U", "N"), ("U", "S"), ("U", "B"), ("N", "B"), ("S", "N"))
@@ -149,18 +150,32 @@ def summarize(role, logs, hashes, *, short_targets=None):
     )
     if losses is None:
         return report
-    ix = np.random.default_rng(4908 if final else 4907).integers(0, n, size=(10000, n))
+    report.update(paired_table(losses, sizes, ARMS, PAIRS, 4908 if final else 4907))
+    return report
+
+
+def paired_table(losses, sizes, arms, pairs, seed):
+    n, nt = len(sizes), sum(sizes)
+    check(
+        n > 0
+        and all(x > 0 for x in sizes)
+        and losses.shape == (len(SEEDS), n, len(arms))
+        and np.isfinite(losses).all(),
+        "bad paired-document loss tensor",
+    )
+    report = {}
+    ix = np.random.default_rng(seed).integers(0, n, size=(10000, n))
     den = np.asarray(sizes, dtype=np.int64)[ix].sum(1)
     report["policies"] = {
         a: dict(
             nats_per_byte=float(losses[:, :, i].mean() / (nt / n)),
             by_seed=(losses[:, :, i].sum(1) / nt).tolist(),
         )
-        for i, a in enumerate(ARMS)
+        for i, a in enumerate(arms)
     }
     report["contrasts"] = {}
-    for a, b in PAIRS:
-        dt = losses[:, :, ARMS.index(b)] - losses[:, :, ARMS.index(a)]
+    for a, b in pairs:
+        dt = losses[:, :, arms.index(b)] - losses[:, :, arms.index(a)]
         bootstrap = dt.mean(0)[ix].sum(1) / den
         report["contrasts"][a + ":" + b] = dict(
             gain=float(dt.sum() / (nt * len(SEEDS))),
@@ -195,7 +210,7 @@ def stage_cost(d, z, charge, job, n, targets, *, fit_boundary=None):
         and start["cap_s"] == job.cap
         and charge["renewed"]
         and (d / "watch-ack").is_file(),
-        "invalid U terminal receipt",
+        f"invalid {job.name} terminal receipt",
     )
     check(
         ini["adopted"] == "1"
@@ -212,7 +227,7 @@ def stage_cost(d, z, charge, job, n, targets, *, fit_boundary=None):
             and o["trainer_start"] == ident["trainer_start"]
             for o in obs
         ),
-        "foreign detached U witness",
+        f"foreign detached {job.name} witness",
     )
     check(
         live in obs
@@ -243,7 +258,7 @@ def stage_cost(d, z, charge, job, n, targets, *, fit_boundary=None):
             rel_tol=0,
             abs_tol=1e-12,
         ),
-        "unverified U release/charge",
+        f"unverified {job.name} release/charge",
     )
     return dict(
         upper_card_s=charge["upper_card_s"],
@@ -264,13 +279,21 @@ def stage_cost(d, z, charge, job, n, targets, *, fit_boundary=None):
     )
 
 
-def analyze(root):
-    check(root == p.ROOT and not (root / "stop.json").exists(), "wrong U closure")
+def analyze(root, *, study="U"):
+    from .fit_phase import study as phase
+
+    data, p, _ = phase(study)
+    check(
+        root == p.ROOT and not (root / "stop.json").exists(), f"wrong {study} closure"
+    )
     d = root / p.JOB.name
     z = load(d / "complete.json")
     charge = load(d / "charge.json")
-    check(load(root / "charged.json") == {p.JOB.name: charge}, "wrong U ledger")
-    paid = cost(d, z, charge)
+    check(load(root / "charged.json") == {p.JOB.name: charge}, f"wrong {study} ledger")
+    n = p.units()
+    paid = stage_cost(
+        d, z, charge, p.JOB, n, n * T, fit_boundary=len(SEEDS) * data.N["fit"]
+    )
     initial = data.bound(d / "frozen.json", z["freeze_sha"])
     check(
         initial == p.plan(initial["ref"], hash_weights=False)
@@ -291,21 +314,32 @@ def analyze(root):
         and probe["targets"] == T * data.N["probe"]
         and probe["source_bytes"] == sum(r["length"] for r in roles["probe"])
         and probe["spec"] == data.SPEC,
-        "foreign probe stream",
+        f"foreign {study} probe stream",
     )
     hs = data.bound(d / "probe/shifts.json", probe["shifts_sha"])
     check(
         [(x["document_sha"], x["start"]) for x in hs]
         == [(r["sha256"], r["start"]) for r in roles["probe"]],
-        "unbound U probe shifts",
+        f"unbound {study} probe shifts",
     )
+    if study == "U":
+        reduce = summarize
+        parent = dict(q_result_sha=data.Q_RESULT)
+    else:
+        from .alternative_analysis import summarize as reduce
+
+        parent = dict(
+            u_confirmation_sha=initial["u_confirmation_sha"],
+            u_beta=initial["u_beta"],
+            u_refits=initial["u_refits"],
+        )
     stats = {}
     for role, rows in roles.items():
         hashes = [r["sha256"] for r in rows]
         logs = {}
         for s in SEEDS:
             key = str(s)
-            dig, logs[s] = p.journal(d / f"{role}-{s}.jsonl", hashes)
+            dig, logs[s] = journal(d / f"{role}-{s}.jsonl", hashes)
             if role == "probe":
                 check(
                     z["probes"][key]
@@ -317,14 +351,14 @@ def analyze(root):
                         fit_freeze_sha=z["fit_freeze_sha"],
                         windows=len(rows),
                     ),
-                    "foreign U probe journal",
+                    f"foreign {study} probe journal",
                 )
-        stats[role] = summarize(role, logs, hashes)
+        stats[role] = reduce(role, logs, hashes)
     return dict(
-        scope="X49-U disjoint FIT and PROBE within native TRAIN, not a final",
+        scope=f"X49-{study} disjoint FIT and PROBE within native TRAIN, not a final",
         ref=initial["ref"],
         spec=data.SPEC,
-        q_result_sha=data.Q_RESULT,
+        **parent,
         checkpoints={s: e["sha256"] for s, e in initial["endpoints"].items()},
         data=initial["data"],
         freeze_sha=z["freeze_sha"],

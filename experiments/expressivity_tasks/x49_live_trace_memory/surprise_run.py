@@ -19,9 +19,10 @@ from . import (
     surprise_data as data,
 )
 from .meter import MODULE, PY, HERE
+from .fit_phase import study as phase
 from .panels import OUT, T, SEEDS
 from .panel_train import append
-from .surprise_fit import Moments, document
+from .surprise_fit import Moments as Moments, document as document
 
 MOD = MODULE + ".surprise_run"
 AUTH = OUT / "surprise-authorization-1.json"
@@ -150,7 +151,12 @@ def model(seed, endpoint):
     return m.to("cuda"), c
 
 
-def evaluate(job, ctx):
+def document_options(plan, seed):
+    return {}  # U learns its own readouts, starting at ordinary B.
+
+
+def evaluate(job, ctx, *, study="U"):
+    data, p, runner = phase(study)
     d = ctx["folder"]
     plan_sha = load(d / "start.json")["freeze_sha"]
     plan = data.bound(d / "frozen.json", plan_sha)
@@ -160,7 +166,7 @@ def evaluate(job, ctx):
         and plan["units"] == p.units()
         and plan["neural_updates"] == 0
         and plan["horizon"] == T,
-        "invalid U setup",
+        f"invalid {study} setup",
     )
     cost = {}
     c0 = cpu_seconds()
@@ -175,20 +181,24 @@ def evaluate(job, ctx):
         else:
             _, wins, frozen = data.extract("probe", job=job, fit_sha=fit_sha)
         cost[role + "_stream_s"] = monotonic() - tic
-        check(len(wins) == data.N[role], "incomplete U stream")
+        check(len(wins) == data.N[role], f"incomplete {study} stream")
         for seed in SEEDS:
             key = str(seed)
             e = plan["endpoints"][key]
             tic = monotonic()
-            m, c = model(seed, e)
+            options = runner.document_options(plan, seed)
+            m, c = runner.model(seed, e)
             cost[f"{role}_{seed}_model_s"] = monotonic() - tic
             log = d / f"{role}-{seed}.jsonl"
             log.touch(mode=0o600, exist_ok=False)
-            mom = Moments() if role == "fit" else None
+            mom = runner.Moments() if role == "fit" else None
             beta = None if role == "fit" else frozen["seeds"][key]["beta"]
             for h, word in wins:
-                x = document(m, c, word, fit=mom, beta=beta)
-                check(x["targets"] == T and x["host_prefills"] == 1, "wrong U exposure")
+                x = runner.document(m, c, word, fit=mom, beta=beta, **options)
+                check(
+                    x["targets"] == T and x["host_prefills"] == 1,
+                    f"wrong {study} exposure",
+                )
                 append(log, dict(document_sha=h, **x))
                 progress += 1
                 panel.progress(d, progress, progress * T, root=p.ROOT)
@@ -219,7 +229,7 @@ def evaluate(job, ctx):
             tic = monotonic()
             fit_sha = p.freeze_readouts(d, plan)
             cost["fit_freeze_s"] = monotonic() - tic
-    check(progress == plan["units"], "missing U work")
+    check(progress == plan["units"], f"missing {study} work")
     return dict(
         kind=job.kind,
         units=progress,

@@ -92,7 +92,7 @@ def test_rank_after_all_prior_blocks_and_whole_document_exclusion(
         data.selection()
 
 
-def invented(tmp, monkeypatch):
+def invented(tmp, monkeypatch, *, data=data, p=p, run=run, schema="x49-u-native-train"):
     monkeypatch.setenv("CUDA_VISIBLE_DEVICES", "")
     monkeypatch.delenv("GPU_LEASE_HELD", raising=False)
     monkeypatch.setattr(data, "N", dict(fit=2, probe=3))
@@ -128,7 +128,7 @@ def invented(tmp, monkeypatch):
     rows.sort(key=lambda r: digest(b"x49-live-v1:" + r["sha256"].encode()))
     st = src.stat()
     book = dict(
-        schema="x49-u-native-train",
+        schema=schema,
         spec=data.SPEC,
         source=dict(
             path=str(src), size=st.st_size, mtime_ns=st.st_mtime_ns, inode=st.st_ino

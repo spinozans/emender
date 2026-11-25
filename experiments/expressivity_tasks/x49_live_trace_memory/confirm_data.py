@@ -81,7 +81,8 @@ def next_short(records, excluded, spent, goal, *, lo=MIN_OFFSET):
     return rows, n, nt
 
 
-def selection():
+def selection_context():
+    """Rebuild the pre-confirmation metadata context without opening any reserved text."""
     r = parent()
     book, records, pre, w = u.selection_context()
     check(
@@ -93,7 +94,7 @@ def selection():
     ex = pre | previous
     rows, n, nt = next_short(records, ex, w["panels"]["final_test"], GOAL)
     check((n, nt) == (663, 1002290) and len(ex) == 41829, "changed confirmation supply")
-    return dict(
+    descriptor = dict(
         spec=SPEC,
         u_rows_sha=r["data"]["rows_sha"],
         source=book["source"],
@@ -104,6 +105,11 @@ def selection():
         eligible_targets=nt,
         rows=rows,
     )
+    return descriptor, records, pre, book["roles"]
+
+
+def selection():
+    return selection_context()[0]
 
 
 def checked_rows(book):

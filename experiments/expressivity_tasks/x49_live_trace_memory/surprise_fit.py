@@ -17,38 +17,24 @@ def _labels(packet, targets):
     return ys, ys[packet.query] == packet.candidate
 
 
-class Moments:
-    """Within a seed, only 3 small Gram matrices, 3 vectors and exposure counts survive each FIT document."""
+class RidgeMoments:
+    """One all-target FP64 ridge step. Subclasses supply the registered conditional score moments."""
+
+    dims: dict[str, int]
+    common_arm: str
 
     def __init__(self):
         self.documents = 0
         self.targets = 0
-        self.gram = {k: np.zeros((d, d), np.float64) for k, d in DIMS.items()}
-        self.rhs = {k: np.zeros(d, np.float64) for k, d in DIMS.items()}
-
-    def add(self, packet, targets):
-        start = perf_counter()
-        _, correct = _labels(packet, targets)
-        v = packet.margin
-        pos = torch.sigmoid(v)
-        neg = torch.sigmoid(-v)
-        res = torch.where(correct, neg, -pos)
-        curv = pos * neg
-        for k, phi in packet.phi.items():
-            self.rhs[k] += (phi.T @ res).numpy()
-            self.gram[k] += (phi.T @ (curv[:, None] * phi)).numpy()
-        self.documents += 1
-        self.targets += len(targets)
-        return dict(
-            candidate_correct=int(correct.sum()),
-            fit_statistics_s=perf_counter() - start,
-        )
+        self.gram = {k: np.zeros((d, d), np.float64) for k, d in self.dims.items()}
+        self.rhs = {k: np.zeros(d, np.float64) for k, d in self.dims.items()}
 
     def freeze(self):
         if self.targets <= 0 or self.documents <= 0:
             raise ValueError("no fit population")
         beta = {}
-        for k, d in DIMS.items():
+        nc = self.dims[self.common_arm]
+        for k, d in self.dims.items():
             m = self.gram[k] / self.targets
             r = self.rhs[k] / self.targets
             if not (
@@ -59,10 +45,16 @@ class Moments:
                 raise ValueError("invalid score moments")
             if not (
                 np.allclose(
-                    m[:3, :3], self.gram["N"] / self.targets, atol=1e-13, rtol=1e-13
+                    m[:nc, :nc],
+                    self.gram[self.common_arm] / self.targets,
+                    atol=1e-13,
+                    rtol=1e-13,
                 )
                 and np.allclose(
-                    r[:3], self.rhs["N"] / self.targets, atol=1e-13, rtol=1e-13
+                    r[:nc],
+                    self.rhs[self.common_arm] / self.targets,
+                    atol=1e-13,
+                    rtol=1e-13,
                 )
             ):
                 raise ValueError("mismatched current features or fit exposures")
@@ -83,6 +75,29 @@ class Moments:
             gram={k: x.tolist() for k, x in self.gram.items()},
             rhs={k: x.tolist() for k, x in self.rhs.items()},
             beta=beta,
+        )
+
+
+class Moments(RidgeMoments):
+    dims = DIMS
+    common_arm = "N"
+
+    def add(self, packet, targets):
+        start = perf_counter()
+        _, correct = _labels(packet, targets)
+        v = packet.margin
+        pos = torch.sigmoid(v)
+        neg = torch.sigmoid(-v)
+        res = torch.where(correct, neg, -pos)
+        curv = pos * neg
+        for k, phi in packet.phi.items():
+            self.rhs[k] += (phi.T @ res).numpy()
+            self.gram[k] += (phi.T @ (curv[:, None] * phi)).numpy()
+        self.documents += 1
+        self.targets += len(targets)
+        return dict(
+            candidate_correct=int(correct.sum()),
+            fit_statistics_s=perf_counter() - start,
         )
 
 

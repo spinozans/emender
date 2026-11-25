@@ -10,6 +10,7 @@ from ..x48_muon_continuation.train import flush_dir
 from . import surprise_data as data, query_panel as q
 from .panels import SEEDS, T, OUT, fingerprint, digest
 from .panel_spec import Job
+from .fit_phase import study as phase
 from .surprise_fit import Moments, RIDGE
 from .surprise import DIMS
 
@@ -115,17 +116,22 @@ def journal(path, hs, *, sizes=None):
 
 
 def checked_fit(state):
+    return stored_fit(state, Moments, data.N["fit"])
+
+
+def stored_fit(state, cls, documents):
+    dims = cls.dims
     check(
-        state["documents"] == data.N["fit"]
-        and state["targets"] == T * data.N["fit"]
+        state["documents"] == documents
+        and state["targets"] == T * documents
         and state["ridge"] == RIDGE
-        and set(state["gram"]) == set(state["rhs"]) == set(state["beta"]) == set(DIMS),
-        "incomplete U fit",
+        and set(state["gram"]) == set(state["rhs"]) == set(state["beta"]) == set(dims),
+        "incomplete fitted system",
     )
-    a = Moments()
+    a = cls()
     a.documents = state["documents"]
     a.targets = state["targets"]
-    for k, dim in DIMS.items():
+    for k, dim in dims.items():
         g = np.asarray(state["gram"][k], np.float64)
         r = np.asarray(state["rhs"][k], np.float64)
         b = np.asarray(state["beta"][k], np.float64)
@@ -142,21 +148,28 @@ def checked_fit(state):
     check(
         all(
             np.allclose(val["beta"][k], state["beta"][k], rtol=1e-12, atol=1e-14)
-            for k in DIMS
+            for k in dims
         ),
         "coefficients inconsistent with FIT moments",
     )
 
 
-def readout_map(d, initial):
+def fit_row_ok(x):
+    return (
+        "nll_sums" not in x and 0 <= x["candidate_correct"] <= x["work"]["literal_hits"]
+    )
+
+
+def readout_map(d, initial, *, study="U"):
+    dat, p, _ = phase(study)
     f = d / "frozen.json"
     check(
         load(f) == initial and sha(f) == load(d / "start.json")["freeze_sha"],
         "foreign initial predictor freeze",
     )
     out = {}
-    roles = data.checked_roles(
-        data.bound(data.BASE / "reservation.json", initial["data"]["rows_sha"])
+    roles = dat.checked_roles(
+        dat.bound(dat.BASE / "reservation.json", initial["data"]["rows_sha"])
     )
     hs = [r["sha256"] for r in roles["fit"]]
     for s in SEEDS:
@@ -170,22 +183,18 @@ def readout_map(d, initial):
             and z["plan_sha"] == sha(f)
             and z["journal_sha"] == dig
             and z["fit_identity_sha"] == initial["data"]["fit_identity_sha"]
-            and all(
-                "nll_sums" not in x
-                and 0 <= x["candidate_correct"] <= x["work"]["literal_hits"]
-                for x in logs
-            ),
+            and all(p.fit_row_ok(x) for x in logs),
             "foreign fit receipts",
         )
-        checked_fit(z["state"])
+        p.checked_fit(z["state"])
         out[str(s)] = dict(
             receipt_sha=digest(raw),
             checkpoint_sha=z["checkpoint_sha"],
             beta=z["state"]["beta"],
         )
     return dict(
-        schema="x49-u-fitted-readouts",
-        spec=data.SPEC,
+        schema=f"x49-{study.lower()}-fitted-readouts",
+        spec=dat.SPEC,
         plan_sha=sha(f),
         fit_identity_sha=initial["data"]["fit_identity_sha"],
         fit_units=len(SEEDS) * len(hs),
@@ -193,12 +202,12 @@ def readout_map(d, initial):
     )
 
 
-def _fit_boundary(d):
+def _fit_boundary(d, dat, study):
     check(
         (d / "progress.json").is_file() and (d / "identity.json").is_file(),
-        "no completed U FIT boundary",
+        f"no completed {study} FIT boundary",
     )
-    n = len(SEEDS) * data.N["fit"]
+    n = len(SEEDS) * dat.N["fit"]
     pr = load(d / "progress.json")
     ident = load(d / "identity.json")
     check(
@@ -206,7 +215,7 @@ def _fit_boundary(d):
         and ident["trainer"] == pr["pid"]
         and (d / "source-open-attempted").is_file()
         and not (d / "raw-probe-open-attempted").exists(),
-        "incomplete or repeated U transition",
+        f"incomplete or repeated {study} transition",
     )
     return n
 
@@ -230,11 +239,12 @@ def _witnessed(d, n):
     )
 
 
-def freeze_readouts(d, initial):
+def freeze_readouts(d, initial, *, study="U"):
+    dat, p, _ = phase(study)
     f = d / "fit-frozen.json"
-    n = _fit_boundary(d)
+    n = _fit_boundary(d, dat, study)
     check(not f.exists(), "fit map already frozen")
-    out = readout_map(d, initial)
+    out = p.readout_map(d, initial)
     limit = monotonic() + 10
     while not _witnessed(d, n):
         check(monotonic() < limit, "no independent terminal FIT witness")
@@ -244,11 +254,12 @@ def freeze_readouts(d, initial):
     return sha(f)
 
 
-def checked_readouts(d, initial, fit_sha):
-    n = _fit_boundary(d)
+def checked_readouts(d, initial, fit_sha, *, study="U"):
+    dat, p, _ = phase(study)
+    n = _fit_boundary(d, dat, study)
     check(_witnessed(d, n), "PROBE lacks witnessed fit completion")
     z = data.bound(d / "fit-frozen.json", fit_sha)
-    check(z == readout_map(d, initial), "changed readouts or incomplete fit freeze")
+    check(z == p.readout_map(d, initial), "changed readouts or incomplete fit freeze")
     return z
 
 

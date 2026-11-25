@@ -17,8 +17,10 @@ REF = "bcff5643047683b575f984504620a59dae6b17a2"
 PUBLIC = "31f8e868142e53c8c2d819d6c91e8b8eb7dbdb1f"
 
 
-def check_fits(folder, readouts):
+def check_fits(folder, readouts, *, dims=None, fit_documents=None):
     """Independent positive-definite solve by Cholesky, from pre-probe moments only."""
+    dims = p.DIMS if dims is None else dims
+    fit_documents = data.N["fit"] if fit_documents is None else fit_documents
     result = {}
     for s in p.SEEDS:
         k = str(s)
@@ -27,11 +29,11 @@ def check_fits(folder, readouts):
         check(fit["beta"] == sealed["beta"], "wrong U coefficients")
         n = fit["targets"]
         check(
-            n == data.N["fit"] * p.T and fit["documents"] == data.N["fit"],
+            n == fit_documents * p.T and fit["documents"] == fit_documents,
             "wrong U fit denominator",
         )
         result[k] = {}
-        for arm, d in p.DIMS.items():
+        for arm, d in dims.items():
             gram = np.asarray(fit["gram"][arm])
             rhs = np.asarray(fit["rhs"][arm])
             m = (gram + gram.T) / (2 * n) + p.RIDGE * np.eye(d)
@@ -43,19 +45,26 @@ def check_fits(folder, readouts):
     return result
 
 
-def check_bootstrap(folder, stats, hashes, *, short_targets=None):
+def check_bootstrap(folder, stats, hashes, *, short_targets=None, study="U"):
     # Convert sampled document indices to multiplicities. Resample each arm's *absolute*
     # loss sum per seed, divide by that draw's target count, then take contrasts and average seeds.
     n = len(hashes)
     final = short_targets is not None
     counts = short_targets if final else [p.T] * n
-    inds = np.random.default_rng(4908 if final else 4907).integers(
-        0, n, size=(10000, n)
-    )
+    if study == "V":
+        from .alternative_analysis import ARMS, PAIRS
+
+        check(not final, "no V final licensed")
+        seed = 4909
+    else:
+        check(study == "U", "unknown bootstrap")
+        ARMS, PAIRS = ana.ARMS, ana.PAIRS
+        seed = 4908 if final else 4907
+    inds = np.random.default_rng(seed).integers(0, n, size=(10000, n))
     mul = np.asarray([np.bincount(row, minlength=n) for row in inds], dtype=np.float64)
     check(np.all(mul.sum(1) == n), "lost bootstrap mass")
-    sums = {k: [] for k in ana.ARMS}
-    draw = {k: [] for k in ana.ARMS}
+    sums = {k: [] for k in ARMS}
+    draw = {k: [] for k in ARMS}
     support = stats["documents_with_support_by_seed"]
     for s in p.SEEDS:
         _, rows = p.journal(
@@ -71,24 +80,32 @@ def check_bootstrap(folder, stats, hashes, *, short_targets=None):
         )
         seed = str(s)
         work = stats["work_by_seed"][seed]
-        check(
-            sum(x["candidate_correct"] for x in rows) == work["candidate_correct"]
-            and sum(x["work"]["S_codes_changed"] > 0 for x in rows)
-            == support[seed]["changed_code"],
-            "incorrect mark support",
-        )
-        for a in ana.ARMS:
+        if study == "V":
+            check(
+                sum(x["outcomes"]["copy_correct"] for x in rows) == work["copy_correct"]
+                and sum(x["work"]["K_codes_changed"] > 0 for x in rows)
+                == support[seed]["changed_code"],
+                "incorrect V proposal support",
+            )
+        else:
+            check(
+                sum(x["candidate_correct"] for x in rows) == work["candidate_correct"]
+                and sum(x["work"]["S_codes_changed"] > 0 for x in rows)
+                == support[seed]["changed_code"],
+                "incorrect mark support",
+            )
+        for a in ARMS:
             v = np.asarray([x["nll_sums"][a] for x in rows])
             sums[a].append(float(v.sum() / nt.sum()))
             draw[a].append((mul @ v) / den)
-    for a in ana.ARMS:
+    for a in ARMS:
         r = stats["policies"][a]
         np.testing.assert_allclose(r["by_seed"], sums[a], atol=5e-14, rtol=0)
         check(
             isclose(r["nats_per_byte"], np.mean(sums[a]), abs_tol=5e-14, rel_tol=0),
             "absolute NLL mismatch",
         )
-    for a, b in ana.PAIRS:
+    for a, b in PAIRS:
         r = stats["contrasts"][a + ":" + b]
         ds = np.subtract(sums[b], sums[a])
         boots = np.subtract(draw[b], draw[a]).mean(0)

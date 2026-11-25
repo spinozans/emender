@@ -59,11 +59,38 @@ class Fields:
     phi: dict[str, torch.Tensor]
     work: dict
     seconds: dict
+    latest: torch.Tensor
+    depth: torch.Tensor
+
+
+def fields(head, word, hidden, logits):
+    """Registered N/U/S comparison, including the wrong-mark intervention."""
+    return _fields(head, word, hidden, logits, controls=True)
+
+
+def bound_fields(head, word, hidden, logits):
+    """U only: no sham search/read and no alternative response. All addresses are B's outputs."""
+    return _fields(head, word, hidden, logits, controls=False)
+
+
+def _rotation(word, query, latest, depth):
+    donor = torch.tensor(
+        [
+            rotated_payload_index(word, t, Match(d, j, ()), HORIZON)
+            for t, d, j in zip(
+                query.tolist(), depth.tolist(), latest.tolist(), strict=True
+            )
+        ],
+        dtype=torch.long,
+    )
+    if not ((donor > 0) & (donor <= query - 16)).all():
+        raise ValueError("invalid rotated donor")
+    return donor
 
 
 @torch.inference_mode()
-def fields(head, word, hidden, logits):
-    """Build every predictor's inputs before the caller gets access to the loss/fit seam."""
+def _fields(head, word, hidden, logits, *, controls):
+    """Build all required inputs before the caller gets access to the loss/fit seam."""
     if (
         type(head) is not LiveValueHead
         or head.training
@@ -109,23 +136,23 @@ def fields(head, word, hidden, logits):
     u = tape[j]
     up = torch.cat((phi, (u.double() / 64)[:, None]), dim=1)
     clock["U_mark_read_s"] = perf_counter() - t0
-    t0 = perf_counter()
-    donor = torch.tensor(
-        [
-            rotated_payload_index(word, t, Match(d, s, ()), HORIZON)
-            for t, d, s in zip(q.tolist(), depth.tolist(), j.tolist(), strict=True)
-        ],
-        dtype=torch.long,
-    )
-    s = tape[donor]
-    sp = torch.cat((phi, (s.double() / 64)[:, None]), dim=1)
-    clock["S_rotation_and_mark_read_s"] = perf_counter() - t0
-    if (
-        not torch.equal(ids[donor], c)
-        or not ((donor > 0) & (donor <= q - 16)).all()
-        or reused + extra != len(ids) - 1
-    ):
-        raise ValueError("unmatched forecast mark")
+    features = {"U": up}
+    if controls:
+        t0 = perf_counter()
+        donor = _rotation(word, q, j, depth)
+        s = tape[donor]
+        features.update(N=phi, S=torch.cat((phi, (s.double() / 64)[:, None]), dim=1))
+        clock["S_rotation_and_mark_read_s"] = perf_counter() - t0
+        if not torch.equal(ids[donor], c):
+            raise ValueError("unmatched forecast mark")
+        work.update(
+            S_mark_reads=len(s),
+            S_read_code_saturated=int((s == 255).sum()),
+            S_slots_displaced=int((donor != j).sum()),
+            S_codes_changed=int((s != u).sum()),
+        )
+    if reused + extra != len(ids) - 1:
+        raise ValueError("lost arrival normalization")
     work.update(
         mark_storage_bytes=tape.nbytes,
         arrivals_encoded=len(ids) - 1,
@@ -135,13 +162,9 @@ def fields(head, word, hidden, logits):
         B_candidate_code_saturated=int((bcode == 255).sum()),
         now_candidate_code_saturated=int((now == 255).sum()),
         U_mark_reads=len(u),
-        S_mark_reads=len(s),
         U_read_code_saturated=int((u == 255).sum()),
-        S_read_code_saturated=int((s == 255).sum()),
-        S_slots_displaced=int((donor != j).sum()),
-        S_codes_changed=int((s != u).sum()),
     )
-    return Fields(base, q, c, v, {"N": phi, "U": up, "S": sp}, work, clock)
+    return Fields(base, q, c, v, features, work, clock, j, depth)
 
 
 def checked_beta(arm, coefficients):
