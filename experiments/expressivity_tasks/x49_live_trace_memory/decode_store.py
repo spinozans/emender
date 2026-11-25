@@ -31,16 +31,16 @@ def store(d, seed, mom, dec):
     )
 
 
-def _load(p, h, types):
-    check(not p.is_symlink() and sha(p) == h, "changed DR array bytes: " + p.name)
+def _load(p, h, types, *, name="DR"):
+    check(not p.is_symlink() and sha(p) == h, f"changed {name} array bytes: " + p.name)
     with np.load(p, allow_pickle=False) as z:
-        check(sorted(z.files) == sorted(types), "wrong DR array set")
+        check(sorted(z.files) == sorted(types), f"wrong {name} array set")
         a = {k: z[k] for k in types}
     for k, (dtype, shape) in types.items():
         x = a[k]
         check(
             x.shape == shape and x.dtype == dtype and np.isfinite(x).all(),
-            "wrong DR array shape/dtype: " + k,
+            f"wrong {name} array shape/dtype: " + k,
         )
     return a
 

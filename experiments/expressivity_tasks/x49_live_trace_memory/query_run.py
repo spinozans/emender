@@ -93,7 +93,7 @@ def qualification():
     return z
 
 
-def strict_cpu_states():
+def strict_cpu_states(*, visit_head=None):
     from .endpoint import state_digest
 
     p.cpu()
@@ -114,6 +114,8 @@ def strict_cpu_states():
             host=state_digest(m.state_dict()),
             head=state_digest(c.state_dict()),
         )
+        if visit_head is not None:
+            visit_head(seed, e, c)
         del m, c
     return states
 

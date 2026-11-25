@@ -343,9 +343,11 @@ def analyze(root, *, study="U"):
         == [(r["sha256"], r["start"]) for r in roles["probe"]],
         f"unbound {study} probe shifts",
     )
-    if study == "DR":
-        from .decode_stats import summarize as reduce
-
+    if study in ("DR", "RB"):
+        if study == "RB":
+            from .residual_stats import summarize as reduce
+        else:
+            from .decode_stats import summarize as reduce
         parent = {
             k: initial[k]
             for k in (
@@ -360,6 +362,19 @@ def analyze(root, *, study="U"):
                 "j_refits",
             )
         }
+        if study == "RB":
+            parent.update(
+                {
+                    k: initial[k]
+                    for k in (
+                        "dr_result_sha",
+                        "dr_fit_seal",
+                        "coarse_sha",
+                        "qualified_axes",
+                        "d_refits",
+                    )
+                }
+            )
     elif study == "U":
         reduce = summarize
         parent = dict(q_result_sha=data.Q_RESULT)
@@ -409,7 +424,7 @@ def analyze(root, *, study="U"):
         probe_source_bytes=probe["source_bytes"],
         **(
             dict(decoders=readouts["seeds"])
-            if study == "DR"
+            if study in ("DR", "RB")
             else dict(beta={s: r["beta"] for s, r in readouts["seeds"].items()})
         ),
         neural_updates=0,

@@ -45,7 +45,8 @@ def next_block(records, pre, roles, cal, quota, size):
     return v.next_block(records, pre, roles, cal, quota, size)
 
 
-def selection():
+def selection_context():
+    """DR descriptors, manifest and prior SHA exclusions, without opening data windows."""
     r = checked_spec()
     book, records, pre, lsbook = jt.selection_context()
     check(
@@ -64,7 +65,7 @@ def selection():
         book["source"]["size"],
     )
     check(len(ex) == 43320 and supply == 23187, "incorrect DR TRAIN supply")
-    return dict(
+    descriptor = dict(
         schema="x49-dr-native-train",
         spec=SPEC,
         jt_result_sha=JT_RESULT,
@@ -77,6 +78,11 @@ def selection():
         excluded_sha=fingerprint(sorted(ex)),
         roles=dict(fit=rows[: N["fit"]], probe=rows[N["fit"] :]),
     )
+    return descriptor, records, ex
+
+
+def selection():
+    return selection_context()[0]
 
 
 def checked_roles(book):

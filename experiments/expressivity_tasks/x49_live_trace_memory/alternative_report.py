@@ -14,7 +14,9 @@ from .panels import SEEDS
 def report(*, study="V"):
     cpu()
     data, p, run = phase(study)
-    if study == "DR":
+    if study == "RB":
+        from . import residual_stats as analysis
+    elif study == "DR":
         from . import decode_stats as analysis
     elif study == "V":
         from . import alternative_analysis as analysis
@@ -40,8 +42,11 @@ def report(*, study="V"):
         f"different {study} model bytes, incumbent or data",
     )
     sealed = data.bound(d / "fit-frozen.json", r["fit_freeze_sha"])
-    if study == "DR":
-        from .decode_store import independent
+    if study in ("DR", "RB"):
+        if study == "RB":
+            from .residual_store import independent
+        else:
+            from .decode_store import independent
 
         audits = dict(
             independent_decoder_checks={
@@ -75,7 +80,7 @@ def report(*, study="V"):
         **r,
         seed_order=list(SEEDS),
         authority_sha=sha(run.AUTH),
-        ridge=p.RIDGE,
+        **(dict(residual_bits=8) if study == "RB" else dict(ridge=p.RIDGE)),
         bootstrap=dict(
             seed=analysis.BOOT, joint_document_draws=10000, interval="linear percentile"
         ),

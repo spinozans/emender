@@ -109,16 +109,20 @@ class Answers:
     squared_error_sums: dict
 
 
-@torch.inference_mode()
-def _answers(host, head, w, decoder, ub, jb, writer, width, *, panel):
-    _check(head, w)
-    if type(decoder) is not Decoder or (ub is None) == panel:
-        raise ValueError("wrong decoder or panel coefficients")
-    jb = u.checked_vector(ls.DIMS, "J", jb)
-    if panel:
-        ub = u.checked_beta("U", ub)
-    h, z, secs = frozen_prefill(host, w, width)
-    times = dict(prefill_s=secs)
+@dataclass(slots=True)
+class Current:
+    features: tuple
+    q: torch.Tensor
+    j: torch.Tensor
+    c: torch.Tensor
+    ids: torch.Tensor
+    embedding: torch.Tensor
+    direct: torch.Tensor
+    now: torch.Tensor
+    norm: torch.Tensor
+
+
+def _current(head, w, h, z, times):
     tic = perf_counter()
     ids = torch.tensor(list(w), dtype=torch.long)
     f, q, j, _, trips = evidence(w, 4096, device=h.device, rotate=False)
@@ -134,11 +138,49 @@ def _answers(host, head, w, decoder, ub, jb, writer, width, *, panel):
     norm = z[q].double().logsumexp(-1)
     now = u.quantize(norm - z[q, c].double()).double() / 64
     times["current_host_field_s"] = perf_counter() - tic
-    text, neural, work = _tapes(w, z, ids, q, norm, writer, times)
+    return Current(f, q, j, c, ids, code, direct, now, norm), trips
+
+
+def _responses(head, h, cur, tc, nc, values, ub, jb, times):
+    ts, ns = tc.double()[:, None] / 64, nc.double()[:, None] / 64
+    scores = {}
+    q, c, direct = cur.q, cur.c, cur.direct
+    for name, val in values.items():
+        tic = perf_counter()
+        raw = (
+            head.answer(direct, h, cur.features, q, cur.embedding, val)
+            if len(q)
+            else direct
+        )
+        times[name + "_head_s"] = perf_counter() - tic
+        tic = perf_counter()
+        joint, original = _trust(
+            raw, q, c, cur.now, ts, ns, ub if name == "B" else None, jb
+        )
+        if name == "B":
+            scores.update(B=raw.double(), U=original, J=joint)
+        else:
+            scores[name] = joint
+        times[name + "_trust_s"] = perf_counter() - tic
+    return scores
+
+
+@torch.inference_mode()
+def _answers(host, head, w, decoder, ub, jb, writer, width, *, panel):
+    _check(head, w)
+    if type(decoder) is not Decoder or (ub is None) == panel:
+        raise ValueError("wrong decoder or panel coefficients")
+    jb = u.checked_vector(ls.DIMS, "J", jb)
+    if panel:
+        ub = u.checked_beta("U", ub)
+    h, z, secs = frozen_prefill(host, w, width)
+    times = dict(prefill_s=secs)
+    cur, trips = _current(head, w, h, z, times)
+    ids, q, j, c, f = cur.ids, cur.q, cur.j, cur.c, cur.features
+    text, neural, work = _tapes(w, z, ids, q, cur.norm, writer, times)
     work.update(trips)
     tic = perf_counter()
     tc, nc = text[j], neural[j]
-    ts, ns = tc.double()[:, None] / 64, nc.double()[:, None] / 64
     times["true_note_reads_s"] = perf_counter() - tic
     values = {}
     work.update(full_value_writes=0, full_value_reads=0, compact_note_pairs_read=len(q))
@@ -170,20 +212,7 @@ def _answers(host, head, w, decoder, ub, jb, writer, width, *, panel):
         tic = perf_counter()
         values["S"] = decoder.read(c, st, sn)
         times["decode_sham_s"] = perf_counter() - tic
-    scores = {}
-    for name, val in values.items():
-        tic = perf_counter()
-        raw = head.answer(direct, h, f, q, code, val) if len(q) else direct
-        times[name + "_head_s"] = perf_counter() - tic
-        tic = perf_counter()
-        joint, original = _trust(
-            raw, q, c, now, ts, ns, ub if name == "B" else None, jb
-        )
-        if name == "B":
-            scores.update(B=raw.double(), U=original, J=joint)
-        else:
-            scores[name] = joint
-        times[name + "_trust_s"] = perf_counter() - tic
+    scores = _responses(head, h, cur, tc, nc, values, ub, jb, times)
     # Teacher diagnostics only AFTER all the answers are available. Not computed by D alone.
     ss = {}
     if panel:
@@ -207,15 +236,19 @@ def panel_answers(host, head, observed, decoder, ub, jb, *, writer, width=256):
 
 
 def score(a, targets):
+    return _score(a, targets, ARMS)
+
+
+def _score(a, targets, arms):
     if (
         type(targets) is not bytes
-        or set(a.scores) != set(ARMS)
+        or set(a.scores) != set(arms)
         or any(v.shape != (len(targets), 256) for v in a.scores.values())
     ):
-        raise ValueError("unaligned six-way score packet")
+        raise ValueError("unaligned all-byte score packet")
     y = torch.tensor(list(targets), dtype=torch.long)
     i = torch.arange(len(y))
-    sums = {arm: float(-a.scores[arm][i, y].sum()) for arm in ARMS}
+    sums = {arm: float(-a.scores[arm][i, y].sum()) for arm in arms}
     if not all(math.isfinite(x) and x >= 0 for x in sums.values()):
         raise ValueError("invalid all-target loss")
     return dict(

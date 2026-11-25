@@ -97,6 +97,11 @@ def check_bootstrap(folder, stats, hashes, *, short_targets=None, study="U"):
 
         check(not final, "no LS final licensed")
         seed = 4910
+    elif study == "RB":
+        from .residual_stats import ARMS, PAIRS
+
+        check(not final, "no RB final licensed")
+        seed = 4914
     elif study == "DR":
         from .decode_stats import ARMS, PAIRS
 
@@ -138,7 +143,7 @@ def check_bootstrap(folder, stats, hashes, *, short_targets=None, study="U"):
                 == support[seed]["changed_code"],
                 "incorrect V proposal support",
             )
-        elif study in ("DR", "JT"):
+        elif study in ("DR", "JT", "RB"):
             check(
                 sum(x["candidate_correct"] for x in rows) == work["candidate_correct"]
                 and sum(x["work"]["literal_hits"] > 0 for x in rows)

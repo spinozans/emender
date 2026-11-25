@@ -106,6 +106,27 @@ def checked_row(role, x):
 
 
 def summarize(role, logs, hashes):
+    return table_summary(
+        role,
+        logs,
+        hashes,
+        check_row=checked_row,
+        arms=ARMS,
+        pairs=PAIRS,
+        seed=BOOT,
+        mse="PDS",
+        geometry=(
+            "displaced_slot",
+            "sham_positions_displaced",
+            "changed_pair",
+            "sham_pairs_changed",
+        ),
+    )
+
+
+def table_summary(role, logs, hashes, *, check_row, arms, pairs, seed, mse, geometry):
+    """Shared target and teacher-component denominators for fixed-table comparisons."""
+    displaced_label, displaced, changed_label, changed = geometry
     n = len(hashes)
     probe = role == "probe"
     check(
@@ -124,14 +145,14 @@ def summarize(role, logs, hashes):
     else:
         stage["teacher_fit_writes_per_seed"] = n * (T - 1)
     clocks = Counter()
-    loss = np.zeros((len(SEEDS), n, len(ARMS))) if probe else None
+    loss = np.zeros((len(SEEDS), n, len(arms))) if probe else None
     for si, s in enumerate(SEEDS):
         k = str(s)
         work = Counter()
         ds = Counter()
         ss = Counter()
         for i, (h, x) in enumerate(zip(hashes, logs[s], strict=True)):
-            checked_row(role, x)
+            check_row(role, x)
             w = x["work"]
             ref = logs[SEEDS[0]][i]
             check(
@@ -166,11 +187,10 @@ def summarize(role, logs, hashes):
                     hits=w["literal_hits"],
                     misses=w["literal_misses"],
                     copy_correct=x["candidate_correct"],
-                    displaced_slot=w["sham_positions_displaced"],
-                    changed_pair=w["sham_pairs_changed"],
+                    **{displaced_label: w[displaced], changed_label: w[changed]},
                 )
                 ss.update(x["squared_error_sums"])
-                loss[si, i, :] = [x["nll_sums"][a] for a in ARMS]
+                loss[si, i, :] = [x["nll_sums"][a] for a in arms]
             ds.update({a: int(v > 0) for a, v in support.items()})
         stage["work_by_seed"][k] = dict(work)
         stage["documents_with_support_by_seed"][k] = dict(ds)
@@ -181,13 +201,13 @@ def summarize(role, logs, hashes):
         if probe:
             stage["hit_component_MSE_by_seed"][k] = {
                 a: ss[a] / work["mse_components"] if work["mse_components"] else None
-                for a in "PDS"
+                for a in mse
             }
     stage["mean_seconds_per_seed_document"] = {
         a: v / (n * len(SEEDS)) for a, v in clocks.items()
     }
     if probe:
-        stage.update(common.paired_table(loss, [T] * n, ARMS, PAIRS, BOOT))
+        stage.update(common.paired_table(loss, [T] * n, arms, pairs, seed))
     return stage
 
 

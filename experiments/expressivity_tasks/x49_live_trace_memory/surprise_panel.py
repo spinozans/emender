@@ -186,7 +186,9 @@ def readout_map(d, initial, *, study="U"):
             and all(p.fit_row_ok(x) for x in logs),
             "foreign fit receipts",
         )
-        if study == "DR":
+        if study == "RB":
+            entry = p.fitted_entry(d, s, z["state"], logs, initial)
+        elif study == "DR":
             entry = p.fitted_entry(d, s, z["state"], logs)
         else:
             p.checked_fit(z["state"])

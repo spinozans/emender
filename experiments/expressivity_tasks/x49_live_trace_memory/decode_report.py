@@ -4,13 +4,23 @@ import json
 import os
 from math import fsum, isclose
 from ..x48_muon_continuation.data import check, sha
-from . import alternative_report as common, decode_panel as p, decode_data as data
+from . import alternative_report as common, decode_panel as p
+from .fit_phase import study as phase
 from .panels import SEEDS
 from .surprise_panel import journal
 
 
 def report():
-    z = common.report(study="DR")
+    return table_report("DR")
+
+
+def table_report(study, *, code_audit=None):
+    check(
+        study in ("DR", "RB") and (code_audit is not None) == (study == "RB"),
+        "wrong decoder audit",
+    )
+    data, p, _ = phase(study)
+    z = common.report(study=study)
     stage = z["stages"]["probe"]
     d = p.ROOT / p.JOB.name
     roles = data.checked_roles(
@@ -33,9 +43,14 @@ def report():
                 ),
                 "wrong DR MSE denominator",
             )
+        if study == "RB":
+            code_audit(rows, z, k, d, s)
+            support, counter = "changed_code", "sham_code_changed"
+        else:
+            support, counter = "changed_pair", "sham_pairs_changed"
         check(
-            stage["documents_with_support_by_seed"][k]["changed_pair"]
-            == sum(r["work"]["sham_pairs_changed"] > 0 for r in rows)
+            stage["documents_with_support_by_seed"][k][support]
+            == sum(r["work"][counter] > 0 for r in rows)
             and z["decoders"][k]["fit_writes"]
             == z["stages"]["fit"]["teacher_fit_writes_per_seed"]
             == len(roles["fit"]) * (p.T - 1),

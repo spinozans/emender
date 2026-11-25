@@ -47,7 +47,9 @@ def qualification():
     )
 
 
-def qualify_frozen(check_source, name, spec, gates, scope, *, writer_build=None):
+def qualify_frozen(
+    check_source, name, spec, gates, scope, *, writer_build=None, head_audit=None
+):
     panel.cpu()
     ref = check_source()
     d = OUT / ("qualify-" + name + "-" + ref)
@@ -82,7 +84,14 @@ def qualify_frozen(check_source, name, spec, gates, scope, *, writer_build=None)
         and native[0]["work"]["matched_frontiers"] == 654,
         "incomplete U gate",
     )
-    states = query_run.strict_cpu_states()
+    extra = {}
+
+    def visit(s, e, c):
+        extra[str(s)] = head_audit(s, e, c)
+
+    states = query_run.strict_cpu_states(
+        visit_head=visit if head_audit is not None else None
+    )
     parent = data.checked_spec()
     old = data.bound(
         OUT / ("qualify-query-" + parent["qualified_source"]) / "passed.json",
@@ -102,6 +111,7 @@ def qualify_frozen(check_source, name, spec, gates, scope, *, writer_build=None)
         passed=gates,
         log_sha=sha(f),
         states=states,
+        **(dict(head_audit=extra) if head_audit is not None else {}),
         natural_windows_opened=0,
         wall_s=monotonic() - tic,
     )
@@ -188,8 +198,12 @@ def evaluate(job, ctx, *, study="U"):
             key = str(seed)
             e = plan["endpoints"][key]
             tic = monotonic()
-            options = runner.document_options(plan, seed)
             m, c = runner.model(seed, e)
+            options = (
+                runner.document_options(plan, seed, c)
+                if study == "RB"
+                else runner.document_options(plan, seed)
+            )
             cost[f"{role}_{seed}_model_s"] = monotonic() - tic
             log = d / f"{role}-{seed}.jsonl"
             log.touch(mode=0o600, exist_ok=False)
@@ -199,7 +213,7 @@ def evaluate(job, ctx, *, study="U"):
                 entry = frozen["seeds"][key]
                 beta = (
                     runner.load_decoder(d, seed, entry)
-                    if study == "DR"
+                    if study in ("DR", "RB")
                     else entry["beta"]
                 )
             for h, word in wins:
@@ -219,7 +233,7 @@ def evaluate(job, ctx, *, study="U"):
             )
             if role == "fit":
                 tic = monotonic()
-                if study == "DR":
+                if study in ("DR", "RB"):
                     state, times = runner.finish_fit(d, seed, mom, m, c, options)
                     cost.update({f"{k}_{seed}_s": v for k, v in times.items()})
                 else:

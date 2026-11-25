@@ -33,13 +33,16 @@ class Decoder:
             raise ValueError("impossible cell means")
 
     def read(self, c, text, neural):
+        return self.raw(c, text, neural).clamp(-1, 1)
+
+    def raw(self, c, text, neural):
         # Discrete lookup, no teacher input. Scale and all arithmetic in FP32, in registered order.
         m = self.m[c]
         b = self.b[c]
         k = self.k[c]
         u0 = (text.float() / 64 - b[:, 0])[:, None]
         u1 = (neural.float() / 64 - b[:, 1])[:, None]
-        return (m + u0 * k[:, 0] + u1 * k[:, 1]).clamp(-1, 1)
+        return m + u0 * k[:, 0] + u1 * k[:, 1]
 
     def arrays(self):
         return {name: getattr(self, name).numpy() for name in ("m", "b", "k")}
