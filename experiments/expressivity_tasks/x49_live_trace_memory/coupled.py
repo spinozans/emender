@@ -213,7 +213,7 @@ def audit_origin():
     check(
         len(r["host"]["muon"]) == 191
         and len(r["host"]["adamw"]) == 406
-        and all(not o.state for o in opts),
+        and all(not o.state and not o.aux.state for o in opts),
         "wrong routing or non-fresh moments",
     )
     return dict(
@@ -221,7 +221,7 @@ def audit_origin():
         host_parameters=sum(p.numel() for p in host.parameters()),
         head_parameters=sum(p.numel() for p in head.parameters()),
         routing={k: {f: len(v) for f, v in g.items()} for k, g in r.items()},
-        optimizer_state_entries=sum(len(o.state) for o in opts),
+        optimizer_state_entries=sum(len(o.state) + len(o.aux.state) for o in opts),
         cuda_initialized=torch.cuda.is_initialized(),
         natural_targets=0,
     )
