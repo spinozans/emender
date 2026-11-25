@@ -10,6 +10,8 @@
 
 **Closed engineering check: [same two-note predictor, cheaper count writer](RESULT_JOINT_READER.md).** Exact marks and 256-score parity on synthetic tests; 0.29–2.77 ms to build a 4K count tape, 7.39–59.21× faster in paired trials than the Python writer. These are writer-only CPU measurements, not end-to-end speed or new language-model evidence. No natural data or lease.
 
+**Next question: [does the unchanged two-note reader still help on shorter documents, and what does it cost?](JOINT_TRANSFER.md)** One locked no-fit comparison with U and its equally refitted neural-only control. Use only new native short calibration documents, not the remaining short finals. No new default or scale claim.
+
 **Completed natural result:** [Final report](RESULT.md) · [verified aggregate](receipts/panel_result.json). B beat A by .001124 nats/byte at full dose and .003125 at matched training time on the 128-document final; value-only shuffling hurt. B is the local baseline. The registered learned-key C lost to fixed-key F. All 15 leases released, ≤14,022 card-s. Do not reopen the panel. The formal Lux rule returned no nominee; no remote launch.
 
 **Completed follow-up:** [X49-R result](RESULT_RELATIVE.md) · [protocol](RELATIVE.md). On 137 fresh documents the key-credit repair recovered .17460 nats/byte over C but still lost .01660 to fixed keys F and .01589 to B. All three seeds and the matched-wall results agreed. All four leases released, ≤4,536 incremental card-s. Use B; neither consumed test set is available for tuning or reuse.
