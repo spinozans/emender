@@ -46,6 +46,8 @@ There is no promise of sublinear exact work for arbitrary keys, values and queri
 
 [Five invented CPU checks](test_corpus_attention_law.py) verify the 100-row mass example and truncation identity, exact suffix-interval summation, and the global background correction for no, partial and full refinement. They check the algebra, **not** how accurate learned features are or how fast a corpus-scale index runs.
 
+The [CPU implementation and qualification](corpus_kernel/README.md) now exercise this on actual token occurrences. The indexed path sums disjoint exact rows and positive tail summaries to avoid cancellation. It is a separate implementation from the registered natural panel.
+
 ## What would demonstrate approximation?
 
 First compute exhaustive attention (tiled if necessary) on a tractable memory with **the same** rows, priors, encodings, query, temperature and masks. Compare `log Z_C`, local/corpus/no-read shares, attention mass on omitted rows, and errors in the weighted read and next-token distribution. For a pure truncation renormalized on retained rows, the total variation distance from full attention **over row IDs** equals the omitted mass `ε`; for values of norm ≤ `B` the read error is at most `2Bε`. Without a bound or estimate of that mass, a top-k list supplies no such certificate. Test high-entropy queries, ties, frequent weak matches, rare anchors, nonlexical matches and empty local memory. Separately ask whether the co-trained approximation improves held-out next-token loss at its measured training and serving price. Those are different tests.
