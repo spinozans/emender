@@ -1,8 +1,10 @@
 # X53 — full token branches versus their first byte
 
-[Protocol](PROTOCOL.md) · [token suffix reference](../token_suffix_fanout/README.md) · [previous sparse-byte result](../x52_sparse_read/RESULT.md)
+[Result](RESULT.md) · [aggregate receipt](receipts/result.json) · [protocol](PROTOCOL.md) · [token suffix reference](../token_suffix_fanout/README.md) · [previous sparse-byte result](../x52_sparse_read/RESULT.md)
 
 The comparison isolates one piece of a lookup: knowing how the candidate tokens **continue** after their first byte. FIRST, LEX and SPELL share the actual query sites, suffix nodes, byte predictor, root backoff and full first-byte probability vector. FIRST gets no lexical evidence until the next lookup; LEX knows general token spellings; SPELL retains the original node's spelling preferences. All programs score ordinary shifted bytes, not token IDs. This uses a new small BUILD-only index, not the byte-indexed P100 container.
+
+**Closed:** SPELL gained .40715 nats/byte over FIRST. General lexical completion accounted for .36690; the original suffix preferences added .04026 beyond LEX. The same lookup sites and first forecasts matched exactly. SPELL took 3.77× FIRST’s CPU evaluation time. This is a fixed-reader quality win, not a speed or scale result.
 
 - `archive.py`: reversible complete-token spelling rule, BUILD byte/lexical counts, private numeric image, suffix-automaton mount and packed response service.
 - `reader.py`: complete causal byte distributions and spelling-prefix range sums. Updating the local spelling prefix does not ask the suffix index for another page.
