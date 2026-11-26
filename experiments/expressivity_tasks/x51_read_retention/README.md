@@ -1,5 +1,7 @@
 # X51 — read for now, or save the answer?
 
+**[Completed result](RESULT.md) · [redacted aggregate](receipts/result.json).** On 1,024 fresh TRAIN-probe documents, making the current read reduced loss from 3.09848 to 1.40494 nats/byte versus the matched small byte-only reader. Keeping earlier answers when training improved on discarding by a further .000087 [.000036,.000137]. But erasing old answers at the *same* fitted KEEP weights had mixed signs and an interval spanning zero. The current lookup was valuable; reliable use of stored answers at inference wasn't established. The lookup cost about 22× the batched CPU evaluation time of the no-read model. Both data roles are spent.
+
 [Prospective test and interpretation](PROTOCOL.md) · [parent: working XSA tape and learned follow-up result](../x50_read_tape/RESULT.md)
 
 The question isn't how often to query. Both reading arms get one identical P100 answer at each real byte. They differ only in whether the *content* of a past answer is still accessible. A third arm never consults the archive. It has a FIT-only unigram prior and can learn from all the observed text. The comparison is for the same small neural reader and training allowance, not an unrestricted byte-only language model.
