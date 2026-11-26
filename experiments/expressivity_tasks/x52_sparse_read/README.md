@@ -1,6 +1,6 @@
 # X52 — one archive read per four bytes
 
-[Registration](PROTOCOL.md) · [previous every-byte study](../x51_read_retention/RESULT.md)
+[Result](RESULT.md) · [compact receipt](receipts/result.json) · [registration](PROTOCOL.md) · [previous every-byte study](../x51_read_retention/RESULT.md)
 
 Question: when no new answer is available, does the reader use a saved answer to predict the next **real byte** better?
 
@@ -9,4 +9,4 @@ Question: when no new answer is available, does the reader use a saved answer to
 - `data.py` and `run.py`: published qualification before allocation, complete spent-rank replay, one opening per data role, hash/seal all fits and obtain the independent process witness before the first probe byte. No GPU or historical weights are needed.
 - `test_sparse.py`: invented suffix request trace, explicit one-frontier tapes, dense parity, gradients, membership/freeze refusals, gap denominators, bootstrap checks.
 
-No quality result follows from the read count. The sparse resolver can require **more native requests** than an every-byte streaming scan, even though it reads fewer answer distributions. Clocks are batched with a shared OS cache, not cold-disk single-user latency.
+**Closed:** erasing history at the same KEEP4 weights hurt gap loss, but KEEP4 vs separately trained DISCARD4 was unresolved. The sparse reader ran 2.82× faster than EVERY on probe and retained only 22.8% of its loss reduction over NONE. No quality result follows from the read count alone. The sparse resolver can require **more native requests** than an every-byte streaming scan, even though it reads fewer answer distributions. Clocks are batched with a shared OS cache, not cold-disk single-user latency.
