@@ -12,7 +12,16 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from .attention import Answer, Local, exhaustive, gaussian_features, indexed, prepare
+from .attention import (
+    Answer,
+    Local,
+    dense,
+    exhaustive,
+    gaussian_features,
+    indexed,
+    prepare,
+)
+from .anchors import proposals
 from .index import tokens
 from .plan import Layout, Plan
 
@@ -67,16 +76,20 @@ class CorpusTokenLM(nn.Module):
 
     def _states(self, ids):
         x = self.embed(ids)
-        length = torch.arange(1, 1 + len(ids), dtype=x.dtype, device=x.device)[:, None]
-        return (x + self.context(x.cumsum(0) / length)).tanh()
+        length = torch.arange(1, 1 + ids.shape[-1], dtype=x.dtype, device=x.device)[
+            :, None
+        ]
+        return (x + self.context(x.cumsum(-2) / length)).tanh()
+
+    def _values(self, successors):
+        return (
+            F.one_hot(successors, self.vocab).to(self.embed.weight.dtype)
+            if self.kind == "pointer"
+            else self.value(self.embed(successors))
+        )
 
     def _rows(self, ids, states):
-        v = (
-            F.one_hot(ids[1:], self.vocab).to(states.dtype)
-            if self.kind == "pointer"
-            else self.value(self.embed(ids[1:]))
-        )
-        return self.key(states[:-1]), v
+        return self.key(states[:-1]), self._values(ids[1:])
 
     def _archive(self, index, enabled=True):
         if self.tokenizer != index.tokenizer:
@@ -105,18 +118,19 @@ class CorpusTokenLM(nn.Module):
         bank,
         *,
         min_match,
+        lookback,
         local,
         corpus,
         allow_skip,
         mode,
         backend,
     ):
-        layout, K, V, b = rows
+        layout, K, _, _ = rows
         live = []
         ls = []
         lv = []
         lengths = []
-        ranges = []
+        prefixes = []
         for source, seq in requests:
             index.check_live(source)
             seq = tokens(seq)
@@ -125,11 +139,7 @@ class CorpusTokenLM(nn.Module):
             ids = self._ids(seq)
             state = self._states(ids)
             live.append(state[-1])
-            ranges.append(
-                [index.frontier(seq).hit_range(min_match)]
-                if corpus and mode == "indexed"
-                else []
-            )
+            prefixes.append(seq)
             if local:
                 a, c = self._rows(ids, state)
                 ls.append(a)
@@ -144,15 +154,26 @@ class CorpusTokenLM(nn.Module):
         ):
             raise ValueError("no supported next-token law; enable the base LM row")
         x = torch.stack(live)
-        q = self.query(x)
         L = (
             Local(
-                torch.cat(ls), torch.cat(lv), q.new_zeros(sum(lengths)), tuple(lengths)
+                torch.cat(ls), torch.cat(lv), x.new_zeros(sum(lengths)), tuple(lengths)
             )
             if local
             else None
         )
+        ranges = (
+            proposals(index, prefixes, min_match=min_match, lookback=lookback)
+            if corpus and mode == "indexed"
+            else [() for _ in prefixes]
+        )
         plan = Plan.build(layout, ranges)
+        return self._read(x, L, rows, bank, plan, corpus, allow_skip, mode, backend)
+
+    def _read(
+        self, x, L, rows, bank, plan, corpus, allow_skip, mode, backend, work=None
+    ):
+        _, K, V, b = rows
+        q = self.query(x)
         # Size offset is an explicit prior for the no-read row, not a post-softmax gate.
         null = None
         if allow_skip:
@@ -162,8 +183,9 @@ class CorpusTokenLM(nn.Module):
                 if self.kind == "pointer"
                 else x.new_zeros((len(x), self.width)),
             )
-        if mode == "exhaustive":
-            ans = exhaustive(q, K, V, b, local=L, null=null, corpus=corpus)
+        if mode in ("dense", "exhaustive"):
+            read = dense if mode == "dense" else exhaustive
+            ans = read(q, K, V, b, local=L, null=null, corpus=corpus)
         elif mode == "indexed":
             ans = indexed(
                 q,
@@ -173,6 +195,7 @@ class CorpusTokenLM(nn.Module):
                 null=null,
                 corpus=corpus,
                 backend=backend,
+                work=work,
             )
         else:
             raise ValueError("unknown read mode")
@@ -189,6 +212,7 @@ class CorpusTokenLM(nn.Module):
         requests,
         *,
         min_match=1,
+        lookback=0,
         local=True,
         corpus=True,
         allow_skip=True,
@@ -202,6 +226,7 @@ class CorpusTokenLM(nn.Module):
             self._archive(index, corpus),
             None,
             min_match=min_match,
+            lookback=lookback,
             local=local,
             corpus=corpus,
             allow_skip=allow_skip,
@@ -227,11 +252,42 @@ class FrozenTokenLM:
         self._bank = prepare(*self._rows, self._model.omega)
 
     @torch.no_grad()
+    def extensions(
+        self,
+        source,
+        prefix,
+        *,
+        min_match=1,
+        lookback=0,
+        local=True,
+        allow_skip=True,
+        backend="torch",
+    ):
+        """Return the prediction plus followable exact MEM evidence at its original attention mass."""
+        from .continuation import refined_cursor
+
+        prefix = tokens(prefix)
+        pred = self.predict(
+            [(source, prefix)],
+            min_match=min_match,
+            lookback=lookback,
+            local=local,
+            allow_skip=allow_skip,
+            backend=backend,
+        )
+        m = self._model
+        q = m.query(m._states(m._ids(prefix))[-1])
+        return pred, refined_cursor(
+            self._index, pred.plan, q, self._bank, pred.attention
+        )
+
+    @torch.no_grad()
     def predict(
         self,
         requests,
         *,
         min_match=1,
+        lookback=0,
         local=True,
         corpus=True,
         allow_skip=True,
@@ -244,6 +300,7 @@ class FrozenTokenLM:
             self._rows,
             self._bank,
             min_match=min_match,
+            lookback=lookback,
             local=local,
             corpus=corpus,
             allow_skip=allow_skip,

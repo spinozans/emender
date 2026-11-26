@@ -8,6 +8,7 @@ uses bounded document offsets, never materializing all prefix strings.
 from collections.abc import Iterable
 from dataclasses import dataclass
 from hashlib import sha256
+from functools import cached_property
 from operator import index as integer
 
 import numpy as np
@@ -127,6 +128,14 @@ class EndpointIndex:
 
     def __len__(self):
         return len(self.order)
+
+    @cached_property
+    def inverse_order(self):
+        """Only internal-anchor alignment needs this document-order -> sorted row map."""
+        rank = np.empty_like(self.order)
+        rank[self.order] = np.arange(len(rank))
+        rank.flags.writeable = False
+        return rank
 
     def check_live(self, name):
         if not isinstance(name, str) or not name or name in self.sources:

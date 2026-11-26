@@ -10,7 +10,8 @@ import math
 import torch
 from torch import Tensor
 
-from .plan import Layout, tiles
+from .plan import Layout
+from .work import bind
 
 
 TILE = 16
@@ -259,7 +260,9 @@ def _merge(q, width, records):
         return Answer(out, zeros, negative[:n], negative.view(n, 3))
     group, peak, z, u = map(torch.cat, zip(*records, strict=True))
     sg_peak = negative.scatter_reduce(0, group, peak, reduce="amax")
-    scale = (peak - sg_peak[group]).exp()
+    scale = (
+        peak - torch.where(sg_peak[group] == -torch.inf, 0.0, sg_peak[group])
+    ).exp()
     den = zeros.flatten().index_add(0, group, scale * z).view(n, 3)
     present = den > 0
     pk = sg_peak.view(n, 3)
@@ -282,7 +285,43 @@ def _merge(q, width, records):
     )
 
 
-def indexed(q, bank, plan, *, local=None, null=None, corpus=True, backend="torch"):
+def dense(q, k, v, b, *, local=None, null=None, corpus=True):
+    """GEMM exact baseline, O(batch × corpus rows) score workspace, no Python scan per query."""
+    _rows(k, v, b)
+    _extra(q, k, v, local, null)
+    records = []
+    ids = torch.arange(len(q), device=q.device)
+    if corpus and len(k):
+        s = (q @ k.T) * q.shape[1] ** -0.5 + b
+        pk = s.detach().amax(-1)
+        w = (s - pk[:, None]).exp()
+        records.append((3 * ids, pk, w.sum(1), w @ v))
+    if local is not None and len(local.keys):
+        counts = torch.tensor(local.lengths, device=q.device)
+        start = counts.cumsum(0) - counts
+        lane = torch.arange(max(local.lengths), device=q.device)
+        live = lane < counts[:, None]
+        j = torch.where(live, start[:, None] + lane, 0)
+        s = (
+            (q[:, None] * local.keys[j]).sum(-1) * q.shape[1] ** -0.5 + local.bias[j]
+        ).masked_fill(~live, -torch.inf)
+        # Zero-length local rows must not set the peak for any valid source.
+        pk = s.detach().amax(-1)
+        safe = torch.where(counts > 0, pk, 0.0)
+        w = (s - safe[:, None]).exp()
+        records.append(
+            (3 * ids + 1, pk, w.sum(1), (w[:, :, None] * local.values[j]).sum(1))
+        )
+    if null is not None:
+        pk = null[0].detach()
+        w = (null[0] - pk).exp()
+        records.append((3 * ids + 2, pk, w, w[:, None] * null[1]))
+    return _merge(q, v.shape[1], records)
+
+
+def indexed(
+    q, bank, plan, *, local=None, null=None, corpus=True, backend="torch", work=None
+):
     """Same reference scores on refined corpus rows and all local rows. No hit-count cap."""
     bank.check()
     k, v, b = bank.keys, bank.values, bank.bias
@@ -297,31 +336,35 @@ def indexed(q, bank, plan, *, local=None, null=None, corpus=True, backend="torch
         raise ValueError("unknown attention backend")
     rec = []
 
-    def run(mode, x, keys, vals, bias, ranges, source):
-        work = tiles(ranges, TILE)
-        if not work:
+    rank = len(bank.omega)
+    lengths = () if local is None else local.lengths
+    if work is None:
+        work = bind(plan, rank, lengths, q.device, tile=TILE)
+    else:
+        work.check(plan, rank, lengths, q.device, TILE)
+
+    def run(mode, x, keys, vals, bias, desc, source):
+        if not len(desc):
             return
-        desc = torch.tensor(work, dtype=torch.long, device=x.device)
         pk, z, u = kernel(mode, x, keys, vals, bias, desc)
         rec.append((desc[:, 0] * 3 + source, pk, z, u))
 
     if corpus:
-        run(0, q, k, v, b, plan.exact, 0)
+        run(0, q, k, v, b, work.exact, 0)
         if plan.edge or plan.nodes:
             phi = log_features(q, bank.omega)
-            run(1, phi, bank.psi, v, b, plan.edge, 0)
-            r = len(bank.omega)
+            run(1, phi, bank.psi, v, b, work.edge, 0)
             run(
                 2,
                 phi,
                 None,
                 bank.node_mean.reshape(-1, v.shape[1]),
                 bank.node_log_z.reshape(-1),
-                ((g, i * r, (i + 1) * r) for g, i in plan.nodes),
+                work.nodes,
                 0,
             )
     if local is not None:
-        run(0, q, local.keys, local.values, local.bias, local.ranges(), 1)
+        run(0, q, local.keys, local.values, local.bias, work.local, 1)
     if null is not None:
         p = null[0].detach()
         den = (null[0] - p).exp()
