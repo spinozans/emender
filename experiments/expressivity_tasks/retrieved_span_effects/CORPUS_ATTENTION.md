@@ -46,7 +46,7 @@ There is no promise of sublinear exact work for arbitrary keys, values and queri
 
 [Five invented CPU checks](test_corpus_attention_law.py) verify the 100-row mass example and truncation identity, exact suffix-interval summation, and the global background correction for no, partial and full refinement. They check the algebra, **not** how accurate learned features are or how fast a corpus-scale index runs.
 
-The [CPU implementation and qualification](corpus_kernel/README.md) now exercise this on actual token occurrences. The indexed path sums disjoint exact rows and positive tail summaries to avoid cancellation. The [Triton port](corpus_kernel/TRITON.md) implements batched interval lookup and tiled read/first backward. Optional internal MEM proposals advance to a within-document boundary aligned to the current frontier before scoring. This is a separate implementation from the registered natural panel.
+The [CPU implementation and qualification](corpus_kernel/README.md) now exercise this on actual token occurrences. The indexed path sums disjoint exact rows and positive tail summaries to avoid cancellation. The [Triton port](corpus_kernel/TRITON.md) implements batched interval lookup and tiled read/first backward. Optional internal MEM proposals advance to a within-document boundary aligned to the current frontier before scoring. The [all-frontier training path](corpus_windows/TRITON.md) shares one current-weight bank across every real shifted prediction in a batch of document windows, including its backward pass. These implementations are separate from the registered natural panel.
 
 ## What would demonstrate approximation?
 

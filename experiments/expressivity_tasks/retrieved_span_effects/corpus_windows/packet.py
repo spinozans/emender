@@ -226,6 +226,12 @@ class Windows:
 
         return loss(self, m, mode, backend, checkpoint_blocks)
 
+    def backward_nll(self, m, *, mode="indexed", backend="torch"):
+        """Accumulate full gradients, one query block at a time, and return detached mean NLL."""
+        from .adjoint import backward_nll
+
+        return backward_nll(self, m, mode, backend)
+
     def predict(self, m, *, mode="indexed", backend="torch"):
         from .training import predict
 

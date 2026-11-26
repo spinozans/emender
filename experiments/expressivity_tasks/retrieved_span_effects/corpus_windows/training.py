@@ -51,14 +51,20 @@ def encode(packet, m, mode, backend):
     a.check(m)
     if mode not in ("dense", "indexed"):
         raise ValueError("unknown corpus law")
-    if backend != "torch":
+    if backend == "torch":
+        mean, leaves, kernel, nll = (
+            prefix_reference,
+            leaf_reference,
+            _torch_tiles,
+            torch_nll,
+        )
+    elif backend == "triton":
+        from .triton_prefix import prefix as mean
+        from .triton_leaf import leaves
+        from ..corpus_kernel.triton_tiles import reduce_tiles as kernel
+        from .triton_nll import nll
+    else:
         raise ValueError("unknown training backend")
-    mean, leaves, kernel, nll = (
-        prefix_reference,
-        leaf_reference,
-        _torch_tiles,
-        torch_nll,
-    )
 
     def states(inp):
         e = m.embed(inp.ids)

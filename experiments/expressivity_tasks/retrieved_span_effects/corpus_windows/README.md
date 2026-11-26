@@ -1,6 +1,6 @@
 # Train every real token frontier against one current-weight corpus bank
 
-This is the many-position training path for the [whole-corpus attention head](../corpus_kernel/README.md), not a new retrieval law. With `S` document windows there are `Q = Σ max(length−1,0)` queries/targets. Build the differentiable corpus bank **once** for those `Q` queries at the current weights. Backpropagate their token-sum NLL divided by `Q`, then update the LM and all learned memory encoders together. No detached/stale learned state is cached between updates.
+This is the many-position training path for the [whole-corpus attention head](../corpus_kernel/README.md), not a new retrieval law. See the [Triton implementation, streamed backward and complete update clocks](TRITON.md). With `S` document windows there are `Q = Σ max(length−1,0)` queries/targets. Build the differentiable corpus bank **once** for those `Q` queries at the current weights. Backpropagate their token-sum NLL divided by `Q`, then update the LM and all learned memory encoders together. No detached/stale learned state is cached between updates.
 
 ```python
 from experiments.expressivity_tasks.retrieved_span_effects.corpus_windows.packet import WindowArchive
