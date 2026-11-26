@@ -97,7 +97,7 @@ def _bscore(
 ):
     a = tl.program_id(0).to(tl.int64)
     fi = tl.program_id(1)
-    i = tl.arange(0, BR)
+    i = tl.program_id(2) * BR + tl.arange(0, BR)
     row = a * L + i
     live = (i < L) & (row < N)
     rr = fi * BF + tl.arange(0, BF)
@@ -140,7 +140,7 @@ def _bvalue(
 ):
     a = tl.program_id(0).to(tl.int64)
     vi = tl.program_id(1)
-    i = tl.arange(0, BR)
+    i = tl.program_id(2) * BR + tl.arange(0, BR)
     row = a * L + i
     live = (i < L) & (row < N)
     j = vi * BV + tl.arange(0, BV)
@@ -156,6 +156,13 @@ def _bvalue(
     tl.store(Dv + row[:, None] * W + j[None, :], grad, live[:, None] & (j < W)[None, :])
 
 
+def row_tile(leaf, *, backward):
+    full = max(16, triton.next_power_of_2(leaf))
+    # Forward normalizes over the full leaf; every backward OUTPUT row is independent
+    # once the full-leaf peak/inverse denominator and mean have been saved.
+    return min(64, full) if backward else full
+
+
 class _Leaves(torch.autograd.Function):
     @staticmethod
     def forward(ctx, p, b, v, leaf):
@@ -164,7 +171,7 @@ class _Leaves(torch.autograd.Function):
         nl = triton.cdiv(n, leaf)
         bf = max(16, min(32, triton.next_power_of_2(r)))
         bv = max(16, min(32, triton.next_power_of_2(w)))
-        args = (n, r, w, leaf, max(16, triton.next_power_of_2(leaf)), bf, bv)
+        args = (n, r, w, leaf, row_tile(leaf, backward=False), bf, bv)
         grid = (nl, triton.cdiv(r, bf), triton.cdiv(w, bv))
         z = p.new_empty((nl, r))
         mu = p.new_empty((nl, r, w))
@@ -172,23 +179,26 @@ class _Leaves(torch.autograd.Function):
         iv = torch.empty_like(z)
         _leaf[grid](p, b, v, z, mu, pk, iv, *args)
         ctx.save_for_backward(p, b, v, pk, iv, mu)
-        ctx.args = args
-        ctx.grid = grid
+        br = row_tile(leaf, backward=True)
+        ctx.args = (n, r, w, leaf, br, bf, bv)
+        ctx.grid = (*grid, triton.cdiv(leaf, br))
         return z, mu
 
     @staticmethod
     @once_differentiable
     def backward(ctx, gz, gu):
         p, b, v, pk, iv, mu = ctx.saved_tensors
-        nl, f, w = ctx.grid
+        nl, f, w, subrows = ctx.grid
         up = gu.contiguous()
         ds = dv = None
         if ctx.needs_input_grad[0] or ctx.needs_input_grad[1]:
             ds = torch.empty_like(p)
-            _bscore[(nl, f)](p, b, v, pk, iv, mu, gz.contiguous(), up, ds, *ctx.args)
+            _bscore[(nl, f, subrows)](
+                p, b, v, pk, iv, mu, gz.contiguous(), up, ds, *ctx.args
+            )
         if ctx.needs_input_grad[2]:
             dv = torch.empty_like(v)
-            _bvalue[(nl, w)](p, b, pk, iv, up, dv, *ctx.args)
+            _bvalue[(nl, w, subrows)](p, b, pk, iv, up, dv, *ctx.args)
         return (
             ds if ctx.needs_input_grad[0] else None,
             ds.sum(1) if ctx.needs_input_grad[1] else None,

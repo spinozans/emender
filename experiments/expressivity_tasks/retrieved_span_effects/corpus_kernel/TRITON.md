@@ -2,6 +2,8 @@
 
 The [CPU kernel and fidelity fixture](README.md) were committed and published first (`10b0a11570a27084c41e21282f5ee2b4e583e98d`). No language data, natural model or GPU was used for this qualification.
 
+The subsequent [real-device result](../CORPUS_DEVICE_RESULT.md) reports eight passing hardware tests and both fixed-bank and full-update clocks. The separate packed-window training meter stopped before timing.
+
 ## What runs where
 
 - `triton_frontier.ResidentIndex` keeps the document-bounded reverse endpoint array on the device. A batched kernel narrows intervals by two binary searches at each observed suffix depth, with 64-bit addresses and explicit document starts. It can return the interval at a depth threshold or the nested intervals at **all** depths. It has no fixed hit count. `TokenArchive.batch(..., locator='triton')` groups identical threshold substrings, returns compact interval boundaries to the CPU, aligns internal matches if asked, and unions/covers disjoint ranges there. This is **not** a GPU suffix-array builder or a zero-transfer routing path. CPU construction and host planning have a cost.

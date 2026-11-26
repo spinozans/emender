@@ -2,6 +2,8 @@
 
 The [CPU reference](README.md) passed before porting (public `29b571b4982207048a8537dcbbf6a4992b272a2f`). Select `pkt = archive.windows(docs, locator='triton', ...)` on an admitted accelerator and `backend='triton'` for training. Integer routes can alternatively be prepared on CPU; neither locator sees future tokens. This is the small token-native static-value head, not a modification to either recurrent host in the natural four-page panel.
 
+**Hardware status:** the [single-use GPU meter](../CORPUS_DEVICE_RESULT.md) stopped on excessive shared memory for the 201-row leaf value gradient (11/12 passed; no timings). The [subrow correction](SUBROW_RESOURCE.md) is CPU-interpreter and offline-compiler checked, not GPU-requalified. The original pre-hardware qualification and clocks below are retained.
+
 ## What changed on the training path
 
 - **Packed prefix scan.** `triton_prefix.py` scans real input embeddings by document/feature tile. The live encoder and archive encoder use the same causal `mean_t = sum_{j≤t} e_j/(t+1)`. Backward scans the other way, accumulating `dmean_t/(t+1)` for each contributing input. No padded states, reads across a document boundary, or full prefix repetition. Standard linear projections remain GEMMs.
