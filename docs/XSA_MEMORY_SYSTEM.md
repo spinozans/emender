@@ -18,7 +18,7 @@ Local engineering decision, starting at Emender `bde68de07`, SXGC `f1eebec`. Thi
 
 **Does token fanout help on real bytes?** [X53 compared full token alternatives with their first-byte projection](../experiments/expressivity_tasks/x53_token_spelling/RESULT.md). A new small document-disjoint BUILD index supplied exactly the same lookups and first forecasts. On 262,144 PROBE bytes the full answer lowered loss by .40715 nats/byte. General lexical completion accounted for .36690; the specific suffix node added .04026 [.03710, .04348] beyond that control. The Python full-page reader copied 4.87× the response bytes and took 3.77× the CPU time of first-byte-only. This tested deterministic byte scoring with causal token boundaries, not learned attention or a tokenized P100.
 
-**Beyond token fanout:** [Retrieved passages as states and state transformations](RETRIEVED_SPAN_EFFECTS.md) separates *which passages match* from *what computation each returns*. It gives a token-native experiment sequence for Emender, GDN‑2 and mixed readers, and a CPU check of the affine merge. The neural quality comparison is proposed, not run.
+**Beyond token fanout:** [Retrieved passages as states and state transformations](RETRIEVED_SPAN_EFFECTS.md) separates *which passages match* from *what computation each returns*. It proposes joint training of the token host, search weights and passage reader for Emender, GDN‑2 and their mixes. There is a CPU check of the affine merge and an [end-to-end learning result on invented tokens](../experiments/expressivity_tasks/retrieved_span_effects/JOINT_RESULT.md); the natural-language comparison has not run.
 
 ## Branch-first navigation and a rewritable working context
 
