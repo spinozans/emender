@@ -6,7 +6,9 @@ There are two different claims to test: **(1)** a learned passage state helps co
 
 **Status.** Changing the facts in an [invented manual](../experiments/expressivity_tasks/retrieved_span_effects/JOINT_RESULT.md) changed the fitted models' answers on 4,096/4,096 queries with the prompts unchanged. Both blank-start and live-seeded readers solved it. The [Triton device check](../experiments/expressivity_tasks/retrieved_span_effects/TRITON_METER_RESULT.md) and [full token-LM step meter](../experiments/expressivity_tasks/retrieved_span_effects/TOKEN_STEP_METER_RESULT.md) qualified a [registered natural-text comparison](../experiments/expressivity_tasks/retrieved_span_effects/NATURAL_PROTOCOL.md) with fresh small GDN‑2/E97 host and reader cores. The meter is a training-speed result, not evidence of better predictions. [X53](../experiments/expressivity_tasks/x53_token_spelling/RESULT.md) measured spelling in a byte count reader, not this neural architecture.
 
-## The generic kernel: maximal exact matches and their corpus extensions
+## Full-corpus attention is the target; MEMs and extensions are an access path
+
+[Corpus attention, with optional local memory](../experiments/expressivity_tasks/retrieved_span_effects/CORPUS_ATTENTION.md) defines the reference: the current query weights **all** eligible memory rows. Each source returns its normalizing mass as well as its value read, so local and external rows can compete in one attention distribution. A MEM need not be a hard eligibility filter for a learned semantic score. The following exact lexical rule is one reference and a way to propose useful rows; it does not by itself approximate an arbitrary dense attention head.
 
 The retrieval object is **not a list of four pages**. Its question at time `t` is **what comes after the actual prefix `x[1:t]`?** Distinguish where evidence can be found from where the answer must align. For direct next-token votes, use maximal exact matches (MEMs) ending **at the live frontier**; an informative internal MEM can help choose or weight the relevant occurrences, but the token after that internal phrase is not automatically a candidate for the next live token.
 
