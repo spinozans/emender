@@ -234,6 +234,8 @@ def watch(job):
             rc=rc,
             release_verified=released,
             renewed_progress=proven,
+            within_window=0 < charged <= a["cap"]
+            and int(end["released_epoch"]) <= a["deadline"],
         ),
     )
     need(
@@ -260,7 +262,9 @@ def monitor(job):
                     name == "charge.json"
                     and get(d / name)["rc"] == 0
                     and get(d / name)["release_verified"]
-                    and get(d / name)["renewed_progress"],
+                    and get(d / name)["renewed_progress"]
+                    and get(d / name)["within_window"]
+                    and (d / "watch-ack").is_file(),
                     "inspect failed closure",
                 )
                 return

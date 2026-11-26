@@ -15,7 +15,7 @@ from .triton_read import dual_edges, merge, terminal, weights
 from .triton_scan import pool, scan
 
 
-@pytest.fixture
+@pytest.fixture(name="device")
 def device():
     if os.getenv("TRITON_INTERPRET") == "1" and os.getenv("CUDA_VISIBLE_DEVICES") == "":
         return "cpu"
