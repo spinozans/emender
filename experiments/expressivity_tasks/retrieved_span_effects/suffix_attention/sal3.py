@@ -34,8 +34,11 @@ SAL1_DATA = ROOT / "output/retrieved-span-effects/sal-1/data"
 SAL2_DATA = ROOT / "output/retrieved-span-effects/sal-2/data"
 CONTAINER = Path("/mnt/nvme2n1/erikg/PILE100-REHEARSAL/pile-head100.sxi2")
 CONTAINER_SHA = "15419c427b5bdc9fb63548901ca6cf83d54f486da890f66faa55021f0a0dc053"
-XSA = Path("/home/erikg/sxgc/xsa/target/release/xsa")
-XSA_SHA = "57fb2d85ed7ab46c22db066741f53180"  # prefix; full sha checked at runtime
+# The serving binary is a pinned private copy: the sxgc tree is live (its
+# build drifted under the campaign once already), so the qualification and
+# every stage run against this frozen artifact, sha-verified at each use.
+XSA = ROOT / "output/retrieved-span-effects/sal-3/tools/xsa"
+XSA_SHA = "8ff46bbf5fd4c1ae416940f1d6f1f613ff69ea364823cb19f22ae545da8d25fc"
 XSA_SHA_FULL = None  # filled by verify_tools()
 CORPUS = Path("/mnt/nvme2n1/erikg/pile.txt")
 # The container's exact text, materialized by the rehearsal build and sealed

@@ -32,10 +32,12 @@ the successor is the transport at 100 GB scale.
   The text is the first 100,000,000,000 bytes of
   `/mnt/nvme2n1/erikg/pile.txt` (the X43 corpus). A fresh full-file
   sha256 is receipted at prep and must equal the BUILD_DONE value.
-- Serving binary: `/home/erikg/sxgc/xsa/target/release/xsa`
-  (sha256 receipted at registration; source `/home/erikg/sxgc` at commit
-  `57ac305a` with the untracked `gates/overlap_wide_fence_core.hpp`
-  recorded — it is not part of the binary's build inputs).
+- Serving binary: the pinned private copy
+  `output/retrieved-span-effects/sal-3/tools/xsa` (sha256
+  `8ff46bbf…8d25fc`, built from `/home/erikg/sxgc` — a live tree whose
+  build drifted once mid-campaign, which is why the artifact is frozen
+  and sha-verified at every use; the cross-build smoke produced
+  byte-identical rows before pinning).
 - Transport: `xsa consult` (CONSULT.md contract): JSONL windows with
   explicit corpus bases, `--left d` spine budget per pass, per-position
   branch histograms under the no-cross law (a match or branch count
