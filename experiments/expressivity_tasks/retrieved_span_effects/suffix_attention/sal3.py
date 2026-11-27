@@ -441,11 +441,15 @@ def depth0_pass(out, jobs=96):
     import bisect
 
     found = {}
-    for p in range(1, len(head)):
+    for p in range(2, len(head)):
         b = head[p - 1]
         if b not in found:
-            i = bisect.bisect_right(starts, p - 1) - 1
-            found[b] = (i, p - starts[i])
+            i = bisect.bisect_right(starts, p) - 1
+            # a document-start position has an empty spine under the
+            # transport's cut law; only in-document positions may host a
+            # single-byte context
+            if p > starts[i]:
+                found[b] = (i, p - starts[i])
         if len(found) == 256:
             break
     need(len(found) == 256, f"only {len(found)} byte values in the head")
@@ -611,6 +615,200 @@ def bind_role(role, jobs=96):
     print(f"{role} bound: {len(zs)} batches sealed")
 
 
+XSA_GATES = Path("/home/erikg/sxgc/gates")
+
+
+def _oracle_query_lines(cands):
+    lines = []
+    for pos, d in cands:
+        lines.append(f"{pos} {d}")
+    return lines
+
+
+def _parse_oracle(path):
+    out = {}
+    for ln in open(path):
+        kv = dict(x.split("=", 1) for x in ln.split() if "=" in x)
+        pairs = {}
+        if kv.get("pairs"):
+            for item in kv["pairs"].split(","):
+                b, c = item.split(":")
+                pairs[int(b)] = int(c)
+        out[(int(kv["off"]), int(kv["clen"]))] = dict(
+            width=int(kv["width"]), eof=int(kv["eof"]), pairs=pairs
+        )
+    return out
+
+
+def qualify(jobs=96):
+    """Transport qualification on the real container, invented positions.
+
+    1. The project's X3 end-to-end gate (no-cross law, boundary-exactness,
+       --exclude-source semantics, docid parity, >=50 brute-forced rows).
+    2. A depth sweep d=1..8 over 64 deterministic archive-document positions
+       vs the no-cross brute-force oracle, per (width, eof, pairs).
+    3. Determinism: a repeated pass must reproduce the same rows sha.
+    4. Depth 0: the 256 single-byte contexts vs the oracle, then the
+       archive's successor marginal and row count.
+    """
+    rebind()
+    sal_settings.cpu()
+    qualified()
+    csha, bsha = verify_tools()
+    work = B3 / "transport-qualification"
+    need(not work.exists(), "transport qualification already run")
+    work.mkdir(mode=0o700, parents=True)
+
+    x3log = work / "x3.log"
+    with x3log.open("wb") as f:
+        p = subprocess.run(
+            [
+                "bash",
+                str(XSA_GATES / "no_cross_x3_consult.sh"),
+                str(CONTAINER),
+                str(CORPUS),
+                str(SEPS),
+                str(work / "x3"),
+                str(jobs),
+            ],
+            cwd=ROOT,
+            stdout=f,
+            stderr=subprocess.STDOUT,
+            timeout=14400,
+        )
+    x3 = x3log.read_text()
+    need(p.returncode == 0 and "X3_RESULT PASS" in x3, "X3 gate failed")
+    x3_result = [ln for ln in x3.splitlines() if ln.startswith("X3_RESULT")][0]
+    x3_spot = [ln for ln in x3.splitlines() if ln.startswith("X3_ORACLE_SPOT_CHECK")][0]
+
+    docs, starts = doc_starts()
+    cands = []
+    for i in range(len(starts) - 1):
+        s, e = int(starts[i]), int(starts[i + 1])
+        if e <= 100_000_000_000 and e - s >= 2048:
+            cands.append((i, s + 1024))
+        if len(cands) == 64:
+            break
+    need(len(cands) == 64, "insufficient qualification documents")
+    qfile = work / "sweep-queries.txt"
+    with qfile.open("w") as f:
+        for i, pos in cands:
+            for d in DEPTHS:
+                f.write(f"{pos} {d}\n")
+
+    rates = {}
+    sweep_shas = {}
+    for d in DEPTHS:
+        w = work / f"sweep-w{d}.jsonl"
+        with w.open("w") as f:
+            for i, pos in cands:
+                f.write(json.dumps(dict(doc=int(i), start=1024, len=1, left=d)) + "\n")
+        out = work / f"sweep-rows{d}.bin"
+        facts = consult_pass("qual", d, "sweep", w, out, jobs=jobs)
+        need(int(facts["positions"]) == 64, "sweep positions")
+        rates[d] = facts["positions_per_s"]
+        sweep_shas[d] = facts["rows_sha256"]
+
+    oracle = work / "nocross_oracle"
+    need(not oracle.exists())
+    subprocess.run(
+        ["gcc", "-O2", "-o", str(oracle), str(XSA_GATES / "nocross_oracle.c")],
+        check=True,
+    )
+    oout = work / "sweep-oracle.out"
+    with oout.open("wb") as f:
+        subprocess.run(
+            [
+                str(oracle),
+                str(SEPS),
+                str(CORPUS),
+                "100000000000",
+                str(qfile),
+            ],
+            stdout=f,
+            check=True,
+            timeout=3600,
+        )
+    want = _parse_oracle(oout)
+    checked = 0
+    for d in DEPTHS:
+        rows = read_rows(work / f"sweep-rows{d}.bin")
+        need(len(rows) == 64, "sweep rows")
+        for j, (i, pos) in enumerate(cands):
+            r = rows[j]
+            wq = want[(pos, d)]
+            got_pairs = {int(b): int(c) for b, c in r["pairs"]}
+            need(
+                r["ctxlen"] == d
+                and not (r["flags"] & 16)
+                and r["width"] == wq["width"]
+                and r["eof"] == wq["eof"]
+                and got_pairs == wq["pairs"],
+                f"depth-sweep mismatch at {pos} d={d}",
+            )
+            checked += 1
+
+    # determinism: repeat one pass, byte-identical rows
+    w = work / "det-w.jsonl"
+    with w.open("w") as f:
+        for i, pos in cands:
+            f.write(json.dumps(dict(doc=int(i), start=1024, len=1, left=4)) + "\n")
+    det = work / "det-rows.bin"
+    facts = consult_pass("qual", 4, "det", w, det, jobs=jobs)
+    need(facts["rows_sha256"] == sweep_shas[4], "determinism mismatch")
+
+    # depth 0: the 256 single-byte contexts vs the oracle, then the marginal
+    d0out = str(work / "depth0.bin")
+    depth0_pass(d0out, jobs=jobs)
+    d0rows = read_rows(d0out)
+    need(len(d0rows) == 256, "depth0 rows")
+    q0 = work / "depth0-queries.txt"
+    with q0.open("w") as f:
+        for r in d0rows:
+            f.write(f"{r['off']} 1\n")
+    o0 = work / "depth0-oracle.out"
+    with o0.open("wb") as f:
+        subprocess.run(
+            [str(oracle), str(SEPS), str(CORPUS), "100000000000", str(q0)],
+            stdout=f,
+            check=True,
+            timeout=3600,
+        )
+    w0 = _parse_oracle(o0)
+    for r in d0rows:
+        wq = w0[(r["off"], 1)]
+        got = {int(b): int(c) for b, c in r["pairs"]}
+        need(
+            r["ctxlen"] == 1
+            and not (r["flags"] & 16)
+            and r["width"] == wq["width"]
+            and r["eof"] == wq["eof"]
+            and got == wq["pairs"],
+            f"depth0 mismatch at {r['off']}",
+        )
+    h0 = np.zeros(256, np.int64)
+    for r in d0rows:
+        h0 += r["hist"]
+    n_rows = int(h0.sum())
+    put(
+        B3 / "transport-qualification.json",
+        dict(
+            container_sha256=csha,
+            binary_sha256=bsha,
+            x3_result=x3_result,
+            x3_spot=x3_spot,
+            sweep_positions=len(cands),
+            sweep_depth_checks=checked,
+            sweep_rates=rates,
+            determinism_sha=sweep_shas[4],
+            depth0_h0=h0.tolist(),
+            depth0_rows=n_rows,
+            oracle_sha256=sha(XSA_GATES / "nocross_oracle.c"),
+        ),
+    )
+    print("transport qualification PASS; law rows:", n_rows)
+
+
 def prepare():
     rebind()
     reserve()
@@ -689,6 +887,8 @@ def main():
         sal_data.extract("probe")
     elif which == "verify-tools":
         print(verify_tools())
+    elif which == "qualify":
+        qualify()
     elif which in ("spawn", "prelease", "check", "watch", "monitor"):
         rebind()
         _gate_cli(sys.argv[1:])
