@@ -202,11 +202,14 @@ def reserve():
         not ({r["sha256"] for r in rows} & {r["sha256"] for r in sal1_rows}),
         "fresh rows overlap SAL-1 roles",
     )
-    arch, scan = archive_rows(book["source"])
+    fresh_hashes = {r["sha256"] for r in rows}
+    arch, scan = archive_rows(
+        book["source"], exclude=blocked2 | fresh_hashes
+    )
     need(
         len(arch) == N2["build"]
         and scan["region_end"] <= ARCHIVE_CAP
-        and not ({r["sha256"] for r in arch} & blocked2),
+        and not ({r["sha256"] for r in arch} & (blocked2 | fresh_hashes)),
         "archive scan mismatch",
     )
     put(
@@ -239,14 +242,19 @@ def reserve():
     print("SAL-2 roles reserved; archive scan ended at byte", scan["region_end"])
 
 
-def archive_rows(source, count=None, cap=None, min_len=None):
+def archive_rows(source, count=None, cap=None, min_len=None, exclude=None):
     """First `count` distinct TRAIN documents (>= min_len) from the start of
     the indexed region, in source order, with the same hash-window rule the
-    chain's select() uses. Returns (rows, scan-receipt)."""
+    chain's select() uses. Documents whose content hash appears in `exclude`
+    (the whole spent chain plus this campaign's fresh rows) are skipped, so
+    no archive document can duplicate a spent or fresh role and the probe
+    stays out of the index by content. Returns (rows, scan-receipt)."""
     count = N2["build"] if count is None else count
     cap = ARCHIVE_CAP if cap is None else cap
     min_len = ARCHIVE_MIN_LEN if min_len is None else min_len
+    exclude = exclude or set()
     rows, seen = [], set()
+    skipped = 0
     pos = 0
     pending = b""
     with open(source["path"], "rb", buffering=0) as f:
@@ -267,7 +275,13 @@ def archive_rows(source, count=None, cap=None, min_len=None):
                 n = len(raw)
                 if n > 1:
                     h = hashlib.sha256(raw).hexdigest()
-                    if int(h, 16) % 100 >= 2 and n >= min_len and h not in seen:
+                    if h in exclude:
+                        skipped += 1
+                    elif (
+                        int(h, 16) % 100 >= 2
+                        and n >= min_len
+                        and h not in seen
+                    ):
                         seen.add(h)
                         j = int(h[16:32], 16) % ((n - 1) // WINDOW_T)
                         rows.append(
@@ -293,6 +307,7 @@ def archive_rows(source, count=None, cap=None, min_len=None):
         last_doc=rows[-1]["doc"],
         last_length=rows[-1]["length"],
         distinct=len(rows),
+        excluded_duplicates=skipped,
         min_length=min_len,
         split_rule="sha256 % 100 in {0: calibration, 1: final_test, >=2: train}",
         window_rule="start = int(sha[16:32],16) % ((length-1)//4096) * 4096",

@@ -153,6 +153,20 @@ def test_archive_rows_selects_trains_in_order(tmp_path):
         sal2.archive_rows(source, count=1)
 
 
+def test_archive_rows_excludes_spent_and_fresh(tmp_path):
+    rng = np.random.default_rng(5)
+    docs = [bytes(rng.integers(65, 91, 4200, dtype=np.uint8)) for _ in range(8)]
+    source = _write_pile(tmp_path, docs)
+    h_all = [hashlib.sha256(x).hexdigest() for x in docs]
+    rows, scan = sal2.archive_rows(
+        source, count=5, exclude=set(h_all[:3])
+    )
+    assert [r["sha256"] for r in rows] == [h for h in h_all[3:] if int(h, 16) % 100 >= 2][:5] or set(
+        r["sha256"] for r in rows
+    ) == set(h_all[3:])
+    assert scan["excluded_duplicates"] == 3
+
+
 def test_archive_rows_cap(tmp_path):
     rng = np.random.default_rng(9)
     docs = [bytes(rng.integers(65, 91, 4200, dtype=np.uint8)) for _ in range(3)]
