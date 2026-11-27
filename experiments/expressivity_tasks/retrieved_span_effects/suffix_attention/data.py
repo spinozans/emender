@@ -19,7 +19,10 @@ def reserve():
 
     ref = qualified()
     cpu()
-    DATA.mkdir(mode=0o700)
+    if DATA.exists():
+        need(not any(DATA.iterdir()), "data directory not empty from an earlier run")
+    else:
+        DATA.mkdir(mode=0o700)
     s52 = s53.p52
     s51 = s52.last
     s50 = s51.parent
