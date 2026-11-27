@@ -233,7 +233,7 @@ def observe():
     )
     s = int(term["released_epoch"]) - int(ini["created"]) + 1
     lock = ROOT / ".wg/gpu_leases" / ini["gpu"]
-    released = not lock.exists() or fields(lock)["pid"] != str(pid)
+    released_ok = not lock.exists() or fields(lock)["pid"] != str(pid)
     ok = 0 < s <= a["cap"] and int(term["released_epoch"]) <= a["deadline"]
     put(
         JOB / f"charge-{a['stage']}.json",
@@ -241,7 +241,7 @@ def observe():
             stage=a["stage"],
             upper_card_s=s,
             rc=int(term["rc"]),
-            release_verified=released,
+            release_verified=released_ok,
             renewed_progress=proven,
             within_stage=ok,
         ),
@@ -262,7 +262,7 @@ def observe():
         (JOB / "meter.json").exists() if stage == "device_check" else ack.exists()
     )
     need(
-        ok and released and proven and int(term["rc"]) == 0 and stage_ok,
+        ok and released_ok and proven and int(term["rc"]) == 0 and stage_ok,
         "failed or partial stage retained",
     )
     print("RELEASE VERIFIED", a["stage"], s, flush=True)

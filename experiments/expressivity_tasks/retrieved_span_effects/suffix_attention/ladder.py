@@ -271,7 +271,7 @@ def moment_statistics(k, v, leaf):
     dev = kc - kc.mean(1, keepdim=True)
     devv = vc - vc.mean(1, keepdim=True)
     level = dict(
-        n=torch.full((L,), float(leaf), dtype=k.dtype),
+        n=torch.full((L,), float(leaf), dtype=k.dtype, device=k.device),
         kbar=kc.mean(1),
         vbar=vc.mean(1),
         S=torch.einsum("lid,lif->ldf", dev, dev),
