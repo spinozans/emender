@@ -157,6 +157,8 @@ training path.
 
 ## 9. Measurement plan (to be registered on its own)
 
+**Measured at language scale (SAL-1):** the order-0 skeleton cost [nothing to run](suffix_attention/RESULT.md) (static counts, 12 ms batch binding, parity ~1e-6) but did **not** beat a co-trained LOCAL host at a 4:1 archive ratio (3.16616 vs 3.16190 bits/byte, interval [−0.01633, +0.00412]); zstd with the raw archive as a dictionary beat both. The learned order-2 residual is deferred at a measured 23.7 s/update for the current-weight rebuild — the section-7 wall, now a number. The ratio, not the machinery, is the live lever.
+
 1. At 16,384 rows, where exact is computable: arms EXACT / current features / order-2 /
    skeleton (order 0 *inside the softmax*) / LOCAL. Measure per rung: relative `log Z_C`
    error, read TV, next-token KL, achieved certificate `ε` per budget, and the transverse
