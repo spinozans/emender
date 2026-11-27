@@ -27,6 +27,9 @@ from .settings import (
 
 MOD = __package__ + ".gate"
 
+# The ready.json seal set a campaign's roles must carry before any stage.
+READY_KEYS = ("rows", "build", "fit")
+
 
 def order_sha(s):
     from . import run
@@ -72,12 +75,7 @@ def admission(stage, cap):
     else:
         need(
             not (DATA / "probe-opened").exists()
-            and r
-            == dict(
-                rows=sha(DATA / "rows.json"),
-                build=sha(DATA / "build.json"),
-                fit=sha(DATA / "fit.json"),
-            ),
+            and r == {k: sha(DATA / f"{k}.json") for k in READY_KEYS},
             "missing data seals or previously opened PROBE",
         )
     free = shutil.disk_usage(BASE).free
@@ -100,7 +98,7 @@ def spawn(stage, cap, module, arms=None):
     a = admission(stage, cap)
     if arms:
         a["arms"] = list(arms)
-    if module not in ("device_check", "run", "seal", "sal2run"):
+    if module not in ("device_check", "run", "seal", "sal2run", "sal3run"):
         raise ValueError("unknown stage module")
     JOB.mkdir(mode=0o700, exist_ok=True)
     put(JOB / "admission.json", a)
@@ -118,12 +116,16 @@ def spawn(stage, cap, module, arms=None):
                 stderr=subprocess.STDOUT,
             )
 
-    sal2 = module.startswith("sal2")
-    p = start(["bash", str(HERE / ("leased2.sh" if sal2 else "leased.sh"))], "console")
-    put(JOB / "owner.json", dict(pid=p.pid, start=proc(p.pid)[19]))
-    obs = start(
-        [PY, "-m", __package__ + (".sal2" if sal2 else ".gate"), "watch"], "watch.log"
+    campaign = (
+        "sal3"
+        if module.startswith("sal3")
+        else ("sal2" if module.startswith("sal2") else None)
     )
+    script = {None: "leased.sh", "sal2": "leased2.sh", "sal3": "leased3.sh"}[campaign]
+    entry = {None: "gate", "sal2": "sal2", "sal3": "sal3"}[campaign]
+    p = start(["bash", str(HERE / script)], "console")
+    put(JOB / "owner.json", dict(pid=p.pid, start=proc(p.pid)[19]))
+    obs = start([PY, "-m", __package__ + "." + entry, "watch"], "watch.log")
     print("detached owner", p.pid, "observer", obs.pid, flush=True)
 
 

@@ -209,16 +209,36 @@ class SalPack:
     """
 
     def __init__(
-        self, build, m, batch=16, depth=MAX_DEPTH, cap=CORE_CAP, bank=True, counts=None
+        self,
+        build,
+        m,
+        batch=16,
+        depth=MAX_DEPTH,
+        cap=CORE_CAP,
+        bank=True,
+        counts=None,
+        rows=None,
     ):
-        a = np.asarray(build)
-        if a.ndim != 2 or a.dtype != np.uint8 or a.shape[1] < 2 or not len(a):
-            raise ValueError("rectangular uint8 archive")
-        self.rows = a.shape[0] * (a.shape[1] - 1)
-        self.leaves = self.rows // LEAF
-        if bank and (self.rows % LEAF or self.leaves & (self.leaves - 1)):
+        if build is None:
+            # Archive-less packs serve stages whose counts were bound off-card
+            # from an external index (SAL-3): only the live-window geometry and
+            # the archive row count exist, and both arms must be bank-free.
+            if bank or counts is not None or not isinstance(rows, int) or rows < 1:
+                raise ValueError("archive-less packs carry no bank or counts")
+            a = None
+            self.rows = rows
+            self.leaves = None
+        else:
+            a = np.asarray(build)
+            if a.ndim != 2 or a.dtype != np.uint8 or a.shape[1] < 2 or not len(a):
+                raise ValueError("rectangular uint8 archive")
+            self.rows = a.shape[0] * (a.shape[1] - 1)
+            self.leaves = self.rows // LEAF
+        if bank and (a is None or self.rows % LEAF or self.leaves & (self.leaves - 1)):
             raise ValueError("complete dyadic tree geometry required")
-        if counts is None:
+        if a is None:
+            self.counts = None
+        elif counts is None:
             self.counts = CountIndex(a, depth, rowids=bank)
         else:
             if (

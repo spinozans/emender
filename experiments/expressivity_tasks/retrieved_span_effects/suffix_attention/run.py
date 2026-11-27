@@ -31,6 +31,16 @@ from .settings import ARMS, DATA, JOB, N, SEEDS, STAGE2_ARMS, sha
 # no training state); a rebound campaign overrides this entry to its own CLI.
 PROBE_ENTRY = __package__ + ".data"
 
+# The shared-dictionary codec baseline's raw bytes: None means "the in-memory
+# archive"; a rebound campaign with an external index supplies its own
+# (possibly capped/fallback) provider.
+DICT_BYTES = None
+
+# For externally indexed archives: after the quarantined probe extraction,
+# an optional second quarantined subprocess binds the probe's count tables
+# from the index transport before scoring. None keeps the in-RAM path.
+BIND_ENTRY = None
+
 UPDATES = 2048
 BATCH = 16
 TARGETS_PER_WINDOW = 64
@@ -151,7 +161,9 @@ def fits(batches, index, tick, ref, dev="cpu", arms=ARMS):
         dict(
             qualified=ref,
             rows_sha=sha(DATA / "rows.json"),
-            build_sha=sha(DATA / "build.npy"),
+            build_sha=sha(DATA / "build.npy")
+            if (DATA / "build.npy").exists()
+            else get(DATA / "container.json")["container_sha256"],
             fit_sha=sha(DATA / "fit.npy"),
             fits=info,
         ),
@@ -207,18 +219,30 @@ def score(batches, index, tick, dev="cpu", arms=ARMS):
     return losses, clocks
 
 
-def frames(x, build):
-    """Actual zstd level-3 frame bytes per probe excerpt, decoded and checked."""
+def frames(x, build, dict_bytes=None):
+    """Actual zstd level-3 frame bytes per probe excerpt, decoded and checked.
+
+    The shared-dictionary baseline uses `dict_bytes` when given, else the
+    in-memory archive's bytes; with neither (an externally indexed archive)
+    only the plain baseline is produced and the caller reports the fallback.
+    """
+    raw_dict = dict_bytes() if callable(dict_bytes) else dict_bytes
+    if raw_dict is None and build is not None:
+        raw_dict = build.tobytes()
     out = {}
     for label, d in [
         ("plain", None),
         (
             "shared_raw_archive",
-            zstd.ZstdCompressionDict(
-                build.tobytes(), dict_type=zstd.DICT_TYPE_RAWCONTENT
+            None
+            if raw_dict is None
+            else zstd.ZstdCompressionDict(
+                raw_dict, dict_type=zstd.DICT_TYPE_RAWCONTENT
             ),
         ),
     ]:
+        if label != "plain" and d is None:
+            continue
         enc = zstd.ZstdCompressor(level=3, dict_data=d)
         dec = zstd.ZstdDecompressor(dict_data=d)
         n = 0
@@ -253,9 +277,11 @@ def summarize(losses, arms=ARMS):
         means[a] = b.mean().item()
         per_seed[a] = b.mean(1).tolist()
     comp = {}
-    for a, c in CONTRASTS:
-        if a not in arms or c not in arms:
-            continue
+    pairs = [(a, c) for a, c in CONTRASTS if a in arms and c in arms]
+    for a in arms:
+        if a != arms[0] and (a, arms[0]) not in pairs:
+            pairs.append((a, arms[0]))
+    for a, c in pairs:
         d = rates[c] - rates[a]
         v = d.mean(0)
         lo, hi = np.quantile(draws @ v / docs, [0.025, 0.975])
@@ -266,6 +292,7 @@ def summarize(losses, arms=ARMS):
             seeds=seeds.tolist(),
             positive=bool(lo > 0 and (seeds > 0).all()),
         )
+    primary = f"{arms[1]}:{arms[0]}" if len(arms) == 2 else "skeleton:local"
     return dict(
         raw_bytes=docs * 4097,
         shifted_targets=docs * 4096,
@@ -273,14 +300,56 @@ def summarize(losses, arms=ARMS):
         mean_bpb=means,
         per_seed_bpb=per_seed,
         contrasts=comp,
-        primary_positive=comp["skeleton:local"]["positive"],
+        primary_positive=comp[primary]["positive"],
     )
 
 
 def bind_all(pack, role, shuffle):
     x = load(role)
     t0 = time.perf_counter()
-    batches = pack.dataset(x, shuffle=shuffle)
+    receipt = DATA / f"bound-{role}.json"
+    if receipt.exists():
+        # Externally indexed archive (SAL-3): the per-batch m/h tensors were
+        # bound off-card from the index transport; load them only under the
+        # sealed receipts. Window order mirrors dataset()'s exactly.
+        r = get(receipt)
+        z = np.load(DATA / f"bound-{role}.npz", allow_pickle=False)
+        need(sha(DATA / f"bound-{role}.npz") == r["batches_sha"], "unbound batches")
+        n = r["batches"]
+        fields = ("ids", "targets", "local_succ", "m", "h")
+        keys = [f"b{i}_{f}" for i in range(n) for f in fields]
+        need(
+            set(z.files) == set(keys)
+            and r["rows_sha"] == sha(DATA / "rows.json")
+            and r["targets"] == sum(len(z[f"b{i}_targets"]) for i in range(n)),
+            "bound batch set mismatch",
+        )
+        batches = []
+        for i in range(n):
+            ids = torch.as_tensor(z[f"b{i}_ids"], dtype=torch.long)
+            targets = torch.as_tensor(z[f"b{i}_targets"], dtype=torch.long)
+            batches.append(
+                dict(
+                    ids=ids,
+                    targets=targets,
+                    spans=pack.spans,
+                    lengths=pack.lengths,
+                    rows=pack.rows,
+                    local_rows=pack.local_rows,
+                    local_succ=torch.as_tensor(z[f"b{i}_local_succ"], dtype=torch.long),
+                    pair_owner=pack.pair_owner,
+                    pair_row=pack.pair_row,
+                    m=torch.as_tensor(z[f"b{i}_m"], dtype=torch.float32),
+                    h=torch.as_tensor(z[f"b{i}_h"]),
+                    core=torch.zeros((len(targets), 0), dtype=torch.long),
+                    core_valid=torch.zeros(len(targets), dtype=torch.bool),
+                    cover_owner=torch.zeros(0, dtype=torch.long),
+                    cover_lv=torch.zeros(0, dtype=torch.long),
+                    cover_idx=torch.zeros(0, dtype=torch.long),
+                )
+            )
+    else:
+        batches = pack.dataset(x, shuffle=shuffle)
     return (
         x,
         batches,
@@ -288,6 +357,7 @@ def bind_all(pack, role, shuffle):
             preparation_s=time.perf_counter() - t0,
             batches=len(batches),
             real_targets=sum(len(b["targets"]) for b in batches),
+            bound_from_index=receipt.exists(),
         ),
     )
 
@@ -315,6 +385,7 @@ def main():
     dev = torch.device("cuda")
     ref = a["qualified"]
     stage = a["stage"]
+    arms = tuple(a.get("arms", STAGE2_ARMS))
     units = 0
 
     def tick(label):
@@ -326,7 +397,7 @@ def main():
         )
 
     tick("verified adopted CUDA device")
-    build = load("build")
+    build = load("build") if (DATA / "build.json").exists() else None
     cache = DATA / "counts-cache"
     counts = None
     if (cache / "meta.json").exists():
@@ -335,13 +406,29 @@ def main():
         counts = CountIndex.load(
             cache, meta=dict(archive_sha=get(DATA / "build.json")["array_sha"])
         )
-    pack = SalPack(
-        build,
-        SalLM(SEEDS[0]),
-        batch=BATCH,
-        bank=any(a.startswith("order2") for a in a.get("arms", STAGE2_ARMS)),
-        counts=counts,
-    )
+    if build is None:
+        # Externally indexed archive (SAL-3): the row count comes from the
+        # sealed container receipt, and every batch is bound off-card.
+        c = get(DATA / "container.json")
+        need(
+            "rows" in c and c.get("bound") is True,
+            "unbound external archive receipt",
+        )
+        pack = SalPack(
+            None,
+            SalLM(SEEDS[0]),
+            batch=BATCH,
+            bank=False,
+            rows=int(c["rows"]),
+        )
+    else:
+        pack = SalPack(
+            build,
+            SalLM(SEEDS[0]),
+            batch=BATCH,
+            bank=any(a.startswith("order2") for a in a.get("arms", STAGE2_ARMS)),
+            counts=counts,
+        )
     frozen_ok = (
         (JOB / "frozen.json").exists()
         and (JOB / "freeze-ack.json").exists()
@@ -356,7 +443,7 @@ def main():
         _, fit_batches, fit_setup = bind_all(pack, "fit", True)
         need(fit_setup["batches"] == UPDATES, "fit batch count mismatch")
         tick("fit batches bound")
-        fits(fit_batches, pack.index, tick, ref, dev=dev, arms=STAGE2_ARMS)
+        fits(fit_batches, pack.index, tick, ref, dev=dev, arms=arms)
         del fit_batches
     env = dict(os.environ, CUDA_VISIBLE_DEVICES="")
     env.pop("GPU_LEASE_HELD", None)
@@ -366,11 +453,18 @@ def main():
         env=env,
         check=True,
     )
+    if BIND_ENTRY is not None:
+        subprocess.run(
+            [sys.executable, "-m", *BIND_ENTRY],
+            cwd=ROOT,
+            env=env,
+            check=True,
+        )
     x, probe_batches, probe_setup = bind_all(pack, "probe", False)
     tick("locked probe opened after witnessed freeze")
-    losses, clocks = score(probe_batches, pack.index, tick, dev=dev, arms=STAGE2_ARMS)
-    quality = summarize(losses, STAGE2_ARMS)
-    zstd_price = frames(x, build)
+    losses, clocks = score(probe_batches, pack.index, tick, dev=dev, arms=arms)
+    quality = summarize(losses, arms)
+    zstd_price = frames(x, build, dict_bytes=DICT_BYTES)
     tick("all fits and scores closed")
     put(
         JOB / "complete.json",
