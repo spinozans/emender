@@ -330,6 +330,8 @@ def windows_file(role, d, path):
 
 def consult_pass(role, d, tag, windows, out, jobs=96):
     """Run one transport pass; verify the journal and per-row exactness."""
+    out = str(out)
+    windows = str(windows)
     need(not Path(out).exists(), "consult output already exists")
     p = subprocess.run(
         [
