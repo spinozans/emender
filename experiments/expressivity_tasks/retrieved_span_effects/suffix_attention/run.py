@@ -306,12 +306,16 @@ def main():
     torch.backends.cudnn.allow_tf32 = False
     dev = torch.device("cuda")
     ref = a["qualified"]
+    stage = a["stage"]
     units = 0
 
     def tick(label):
         nonlocal units
         units += 1
-        put(JOB / "progress.json", dict(units=units, pid=os.getpid(), label=label))
+        put(
+            JOB / f"progress-{stage}.json",
+            dict(units=units, pid=os.getpid(), label=label),
+        )
 
     tick("verified adopted CUDA device")
     build = load("build")

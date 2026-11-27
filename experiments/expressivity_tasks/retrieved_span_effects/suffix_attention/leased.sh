@@ -8,6 +8,7 @@ mod=experiments.expressivity_tasks.retrieved_span_effects.suffix_attention
 here=$PWD/experiments/expressivity_tasks/retrieved_span_effects/suffix_attention
 d=output/retrieved-span-effects/sal-1/device
 stage=$(cat "$d/stage")
+modname=$(cat "$d/module")
 [[ $(hostname) == lambda01 && -z ${GPU_LEASE_HELD:-} && -d $d && ! -e $d/released-$stage ]]
 for _ in {1..100}; do [[ -f $d/owner.json ]] && grep -q '^PPid:[[:space:]]*1$' /proc/$$/status && break; sleep .1; done
 grep -q '^PPid:[[:space:]]*1$' /proc/$$/status
@@ -43,11 +44,11 @@ created=$(awk -F= '$1=="created"{print $2}' "$d/initial-$stage")
 limit=$(( created + cap < deadline ? created + cap : deadline ))
 limit=$(( limit - $(date +%s) - 15 ))
 [[ $limit -gt 0 ]]
-timeout -k 4 "$limit" "$py" -m "$mod.$stage"
+timeout -k 4 "$limit" "$py" -m "$mod.$modname"
 if [[ $stage == run ]]; then
   [[ -s $d/watch-ack-run && -s $d/complete.json ]]
 else
-  [[ -s $d/meter.json ]]
+  [[ -s $d/meter-$stage.json ]]
 fi
 cp "$file" "$d/after-$stage"
 [[ $(awk -F= '$1=="heartbeat"{print $2}' "$d/after-$stage") -gt $(awk -F= '$1=="heartbeat"{print $2}' "$d/initial-$stage") ]]

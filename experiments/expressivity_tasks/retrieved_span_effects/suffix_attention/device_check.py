@@ -135,19 +135,23 @@ def clocks(dev):
 
 def main():
     dev, owner = lease_identity()
+    stage = get(JOB / "admission.json")["stage"]
     units = 0
 
     def tick(label):
         nonlocal units
         units += 1
-        put(JOB / "progress.json", dict(units=units, pid=os.getpid(), label=label))
+        put(
+            JOB / f"progress-{stage}.json",
+            dict(units=units, pid=os.getpid(), label=label),
+        )
 
     tick("verified adopted CUDA device")
     losses = parity(dev)
     tick("invented per-arm update parity passed")
     meter = clocks(dev)
     meter["parity_losses"] = losses
-    put(JOB / "meter.json", meter)
+    put(JOB / f"meter-{stage}.json", meter)
     tick("full-geometry invented clocks recorded")
     print(meter["update_s"], flush=True)
     print("STAGE 1 OK", flush=True)

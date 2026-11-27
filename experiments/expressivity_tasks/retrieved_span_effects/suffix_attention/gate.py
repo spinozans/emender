@@ -83,11 +83,14 @@ def admission(stage, cap):
     )
 
 
-def spawn(stage, cap):
+def spawn(stage, cap, module):
     a = admission(stage, cap)
+    if module not in ("device_check", "run"):
+        raise ValueError("unknown stage module")
     JOB.mkdir(mode=0o700, exist_ok=True)
     put(JOB / "admission.json", a)
     (JOB / "stage").write_text(stage + "\n")
+    (JOB / "module").write_text(module + "\n")
 
     def start(args, name):
         with (JOB / f"{stage}-{name}").open("xb") as f:
@@ -179,9 +182,10 @@ def observe():
             raise RuntimeError(
                 "detached owner exited before lease release; inspect " + owner_log
             )
-        if (JOB / "progress.json").exists() and initial.exists():
+        progress = JOB / f"progress-{stage}.json"
+        if progress.exists() and initial.exists():
             ini = fields(initial)
-            p = get(JOB / "progress.json")
+            p = get(progress)
             file = ROOT / ".wg/gpu_leases" / ini["gpu"]
             if file.is_file() and p["units"] > last:
                 lock = fields(file)
@@ -271,8 +275,8 @@ def observe():
 def monitor(stage):
     charge_file = JOB / f"charge-{stage}.json"
     while not charge_file.exists():
-        if (JOB / "watch-failure").exists():
-            raise RuntimeError((JOB / "watch-failure").read_text())
+        for fail in JOB.glob("watch-failure-*"):
+            raise RuntimeError(fail.read_text())
         time.sleep(0.5)
     charge = get(charge_file)
     print(charge, flush=True)
@@ -289,7 +293,7 @@ if __name__ == "__main__":
     action, *args = sys.argv[1:]
     os.umask(0o077)
     if action == "spawn":
-        spawn(args[0], int(args[1]))
+        spawn(args[0], int(args[1]), args[2])
     elif action == "prelease":
         cap, deadline = prelease(args[0], args[1], args[2])
         print(cap, deadline)
@@ -299,7 +303,8 @@ if __name__ == "__main__":
         try:
             observe()
         except BaseException as exc:
-            (JOB / "watch-failure").write_text(repr(exc))
+            stage = get(JOB / "admission.json")["stage"]
+            (JOB / f"watch-failure-{stage}").write_text(repr(exc))
             raise
     elif action == "monitor":
         monitor(args[0])
