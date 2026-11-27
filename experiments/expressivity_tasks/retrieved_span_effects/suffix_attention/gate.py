@@ -83,8 +83,10 @@ def admission(stage, cap):
     )
 
 
-def spawn(stage, cap, module):
+def spawn(stage, cap, module, arms=None):
     a = admission(stage, cap)
+    if arms:
+        a["arms"] = list(arms)
     if module not in ("device_check", "run"):
         raise ValueError("unknown stage module")
     JOB.mkdir(mode=0o700, exist_ok=True)
@@ -130,12 +132,14 @@ def witness_freeze():
         and f["qualified"] == a["qualified"]
         and f["fit_sha"] == sha(DATA / "fit.npy")
         and f["build_sha"] == sha(DATA / "build.npy")
-        and set(f["fits"]) == {f"{s}.{arm}" for s in SEEDS for arm in ARMS},
+        and set(f["fits"])
+        == {f"{s}.{arm}" for s in SEEDS for arm in a.get("arms", ARMS)},
         "invalid freeze",
     )
+    arms = a.get("arms", ARMS)
     for s in SEEDS:
         inits = set()
-        for arm in ARMS:
+        for arm in arms:
             k = f"{s}.{arm}"
             p = JOB / (k + ".json")
             z = get(p)
@@ -153,7 +157,7 @@ def witness_freeze():
         JOB / "freeze-ack.json",
         dict(
             frozen_sha=sha(JOB / "frozen.json"),
-            fits=len(SEEDS) * len(ARMS),
+            fits=len(SEEDS) * len(arms),
             observer_pid=os.getpid(),
             rows_sha=a["rows_sha"],
         ),
@@ -293,7 +297,7 @@ if __name__ == "__main__":
     action, *args = sys.argv[1:]
     os.umask(0o077)
     if action == "spawn":
-        spawn(args[0], int(args[1]), args[2])
+        spawn(args[0], int(args[1]), args[2], args[3:] or None)
     elif action == "prelease":
         cap, deadline = prelease(args[0], args[1], args[2])
         print(cap, deadline)

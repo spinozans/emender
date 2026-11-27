@@ -23,7 +23,7 @@ from ..meter import await_ack
 from ..window import ROOT, descendant, fields, get, put, need
 from .data import load
 from .model import SalLM, SalPack
-from .settings import ARMS, DATA, JOB, N, SEEDS, sha
+from .settings import ARMS, DATA, JOB, N, SEEDS, STAGE2_ARMS, sha
 
 UPDATES = 2048
 BATCH = 16
@@ -82,14 +82,14 @@ def update(m, o, batch, arm, archive):
     return loss.detach()
 
 
-def fits(batches, index, tick, ref, dev="cpu"):
-    """Train all six fits; freeze them; wait for the independent witness."""
+def fits(batches, index, tick, ref, dev="cpu", arms=ARMS):
+    """Train every (seed, arm) fit; freeze them; wait for the independent witness."""
     from ..corpus_windows.packet import WindowArchive
 
     need(len(batches) >= UPDATES, "registered batch count below the schedule")
     info = {}
     for s in SEEDS:
-        for arm in ARMS:
+        for arm in arms:
             k = f"{s}.{arm}"
             m = SalLM(s).to(dev)
             m.train()
@@ -154,7 +154,7 @@ def fits(batches, index, tick, ref, dev="cpu"):
 
 
 @torch.no_grad()
-def score(batches, index, tick, dev="cpu"):
+def score(batches, index, tick, dev="cpu", arms=ARMS):
     """One scoring pass per frozen fit; per-document nats from window sums."""
     from ..corpus_windows.packet import WindowArchive
 
@@ -170,7 +170,7 @@ def score(batches, index, tick, dev="cpu"):
     losses = {}
     clocks = {}
     for s in SEEDS:
-        for arm in ARMS:
+        for arm in arms:
             k = f"{s}.{arm}"
             p = JOB / (k + ".pt")
             j = JOB / (k + ".json")
@@ -225,18 +225,18 @@ def frames(x, build):
     return out
 
 
-def summarize(losses):
+def summarize(losses, arms=ARMS):
     """Ideal bits per original byte, paired document bootstrap, seed directions."""
     docs = N["probe"]
     need(
-        set(losses) == {f"{s}.{a}" for s in SEEDS for a in ARMS},
+        set(losses) == {f"{s}.{a}" for s in SEEDS for a in arms},
         "incomplete fits",
     )
     draws = np.random.default_rng(5750).multinomial(
         docs, np.full(docs, 1 / docs), size=10000
     )
     rates, means, per_seed = {}, {}, {}
-    for a in ARMS:
+    for a in arms:
         n = np.stack([losses[f"{s}.{a}"] for s in SEEDS])
         need(
             n.shape == (len(SEEDS), docs) and np.isfinite(n).all() and (n >= 0).all(),
@@ -248,6 +248,8 @@ def summarize(losses):
         per_seed[a] = b.mean(1).tolist()
     comp = {}
     for a, c in CONTRASTS:
+        if a not in arms or c not in arms:
+            continue
         d = rates[c] - rates[a]
         v = d.mean(0)
         lo, hi = np.quantile(draws @ v / docs, [0.025, 0.975])
@@ -323,7 +325,7 @@ def main():
     _, fit_batches, fit_setup = bind_all(pack, "fit", True)
     need(fit_setup["batches"] == UPDATES, "fit batch count mismatch")
     tick("fit batches bound")
-    fits(fit_batches, pack.index, tick, ref, dev=dev)
+    fits(fit_batches, pack.index, tick, ref, dev=dev, arms=STAGE2_ARMS)
     del fit_batches
     env = dict(os.environ, CUDA_VISIBLE_DEVICES="")
     env.pop("GPU_LEASE_HELD", None)
@@ -335,8 +337,8 @@ def main():
     )
     x, probe_batches, probe_setup = bind_all(pack, "probe", False)
     tick("locked probe opened after witnessed freeze")
-    losses, clocks = score(probe_batches, pack.index, tick, dev=dev)
-    quality = summarize(losses)
+    losses, clocks = score(probe_batches, pack.index, tick, dev=dev, arms=STAGE2_ARMS)
+    quality = summarize(losses, STAGE2_ARMS)
     zstd_price = frames(x, build)
     tick("all fits and scores closed")
     put(
