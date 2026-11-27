@@ -22,6 +22,7 @@ import zstandard as zstd
 from ..meter import await_ack
 from ..window import ROOT, descendant, fields, get, put, need
 from .data import load
+from .ladder import CountIndex
 from .model import SalLM, SalPack
 from .settings import ARMS, DATA, JOB, N, SEEDS, STAGE2_ARMS, sha
 
@@ -321,7 +322,21 @@ def main():
 
     tick("verified adopted CUDA device")
     build = load("build")
-    pack = SalPack(build, SalLM(SEEDS[0]), batch=BATCH)
+    cache = DATA / "counts-cache"
+    counts = None
+    if (cache / "meta.json").exists():
+        # CPU-side prep builds the big index off the leased card; the stage
+        # only loads it, and only when its binding matches the sealed archive.
+        counts = CountIndex.load(
+            cache, meta=dict(archive_sha=get(DATA / "build.json")["array_sha"])
+        )
+    pack = SalPack(
+        build,
+        SalLM(SEEDS[0]),
+        batch=BATCH,
+        bank=any(a.startswith("order2") for a in a.get("arms", STAGE2_ARMS)),
+        counts=counts,
+    )
     frozen_ok = (
         (JOB / "frozen.json").exists()
         and (JOB / "freeze-ack.json").exists()

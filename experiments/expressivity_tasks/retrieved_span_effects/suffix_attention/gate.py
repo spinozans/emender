@@ -100,7 +100,7 @@ def spawn(stage, cap, module, arms=None):
     a = admission(stage, cap)
     if arms:
         a["arms"] = list(arms)
-    if module not in ("device_check", "run", "seal"):
+    if module not in ("device_check", "run", "seal", "sal2run"):
         raise ValueError("unknown stage module")
     JOB.mkdir(mode=0o700, exist_ok=True)
     put(JOB / "admission.json", a)
@@ -118,9 +118,12 @@ def spawn(stage, cap, module, arms=None):
                 stderr=subprocess.STDOUT,
             )
 
-    p = start(["bash", str(HERE / "leased.sh")], "console")
+    sal2 = module.startswith("sal2")
+    p = start(["bash", str(HERE / ("leased2.sh" if sal2 else "leased.sh"))], "console")
     put(JOB / "owner.json", dict(pid=p.pid, start=proc(p.pid)[19]))
-    obs = start([PY, "-m", MOD, "watch"], "watch.log")
+    obs = start(
+        [PY, "-m", __package__ + (".sal2" if sal2 else ".gate"), "watch"], "watch.log"
+    )
     print("detached owner", p.pid, "observer", obs.pid, flush=True)
 
 

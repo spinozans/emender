@@ -13,6 +13,7 @@ ever reused across updates.
 """
 
 from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -44,6 +45,46 @@ class _Level:
     key_starts: np.ndarray  # boundaries into `keys` per code
 
 
+def _level_arrays(a, d, rowids=True):
+    """Per-depth sorted code table for one archive; row ids optional."""
+    n, w = a.shape
+    c, m = _pack(a, d)
+    succ = a[:, d:].ravel().astype(np.int64)
+    flat = c.ravel()
+    codes, inv = np.unique(flat, return_inverse=True)
+    counts = np.bincount(inv, minlength=len(codes))
+    starts = np.concatenate(([0], np.cumsum(counts)))
+    if rowids:
+        grouped = np.argsort(inv, kind="stable")
+        r_idx, j = grouped // m, grouped % m
+        gids = r_idx * (w - 1) + j + d - 1
+    else:
+        gids = np.empty(0, np.int64)
+    keys, key_counts = np.unique(inv * ALPHA + succ, return_counts=True)
+    key_starts = np.searchsorted(keys, np.arange(len(codes) + 1) * ALPHA)
+    return codes, counts, starts, gids, keys, key_counts, key_starts
+
+
+def _json_put(path, obj):
+    import json as _json
+
+    with open(path, "w") as f:
+        f.write(_json.dumps(obj, sort_keys=True) + "\n")
+
+
+def _json_get(path):
+    import json as _json
+
+    with open(path) as f:
+        return _json.loads(f.read())
+
+
+# injected names used by CountIndex.save/load (kept local to avoid growing
+# the module's public surface)
+put_json = _json_put
+get_json = _json_get
+
+
 class CountIndex:
     """Static byte-suffix counts over a rectangular archive.
 
@@ -53,7 +94,7 @@ class CountIndex:
     target t uses the d bytes x[t-d:t]. Nothing here depends on weights.
     """
 
-    def __init__(self, archive, depth=MAX_DEPTH):
+    def __init__(self, archive, depth=MAX_DEPTH, rowids=True):
         a = np.ascontiguousarray(archive)
         if a.ndim != 2 or a.dtype != np.uint8 or a.shape[1] < 2 or not len(a):
             raise ValueError("rectangular uint8 archive (documents x bytes)")
@@ -62,22 +103,12 @@ class CountIndex:
         n, w = a.shape
         self.archive, self.depth, self.rows = a, depth, n * (w - 1)
         self.root = np.bincount(a[:, 1:].ravel(), minlength=ALPHA).astype(np.int64)
-        self.levels = []
-        for d in range(1, depth + 1):
-            c, m = _pack(a, d)
-            succ = a[:, d:].ravel().astype(np.int64)
-            flat = c.ravel()
-            codes, inv = np.unique(flat, return_inverse=True)
-            grouped = np.argsort(inv, kind="stable")
-            r_idx, j = grouped // m, grouped % m
-            gids = r_idx * (w - 1) + j + d - 1
-            counts = np.bincount(inv, minlength=len(codes))
-            starts = np.concatenate(([0], np.cumsum(counts)))
-            keys, key_counts = np.unique(inv * ALPHA + succ, return_counts=True)
-            key_starts = np.searchsorted(keys, np.arange(len(codes) + 1) * ALPHA)
-            self.levels.append(
-                _Level(codes, counts, starts, gids, keys, key_counts, key_starts)
-            )
+        self.levels = [
+            _Level(*_level_arrays(a, d, rowids)) for d in range(1, depth + 1)
+        ]
+        self._build_dense()
+
+    def _build_dense(self):
         # Static dense successor histograms for shallow depths: bind-time work is
         # then a pure gather instead of a scatter over long posting runs.
         self.dense = {}
@@ -90,6 +121,75 @@ class CountIndex:
                     minlength=len(lev.codes) * ALPHA,
                 ).reshape(len(lev.codes), ALPHA)
                 self.dense[d] = table.astype(np.int64)
+
+    def save(self, path, meta=None):
+        """Write every level plus a binding receipt to `path` (a directory).
+
+        The cache binds to the archive through `meta` (at minimum its sha256);
+        loading verifies the binding so a stale cache can never be used.
+        """
+        path = Path(path)
+        if path.exists() and any(path.iterdir()):
+            raise RuntimeError("cache directory not empty")
+        path.mkdir(mode=0o700, parents=True, exist_ok=True)
+        for d, lev in enumerate(self.levels, 1):
+            np.savez(
+                path / f"level-{d}.npz",
+                codes=lev.codes,
+                counts=lev.counts,
+                starts=lev.row_starts,
+                rows=lev.rows,
+                keys=lev.keys,
+                key_counts=lev.key_counts,
+                key_starts=lev.key_starts,
+            )
+        put_json(
+            path / "meta.json",
+            dict(
+                rows=self.rows,
+                depth=self.depth,
+                root=self.root.tolist(),
+                levels=len(self.levels),
+                **(meta or {}),
+            ),
+        )
+
+    @classmethod
+    def load(cls, path, meta=None, rowids=True):
+        """Load a saved cache; refuse any binding mismatch.
+
+        `meta` must contain the same keys written at save time (typically
+        dict(archive_sha=...)); every value must match exactly.
+        """
+        path = Path(path)
+        m = get_json(path / "meta.json")
+        for k, v in (meta or {}).items():
+            if m.get(k) != v:
+                raise ValueError(f"cache binding mismatch on {k}")
+        if not 1 <= m["depth"] <= MAX_DEPTH or m["levels"] != m["depth"]:
+            raise ValueError("invalid cache geometry")
+        self = cls.__new__(cls)
+        self.archive = None
+        self.depth = m["depth"]
+        self.rows = m["rows"]
+        self.root = np.asarray(m["root"], np.int64)
+        self.levels = []
+        for d in range(1, self.depth + 1):
+            z = np.load(path / f"level-{d}.npz")
+            lev = _Level(
+                z["codes"],
+                z["counts"],
+                z["starts"],
+                z["rows"],
+                z["keys"],
+                z["key_counts"],
+                z["key_starts"],
+            )
+            if not rowids and len(lev.rows):
+                raise ValueError("cache carries row ids")
+            self.levels.append(lev)
+        self._build_dense()
+        return self
 
     def stats(self, x):
         """Exact-depth classes for every target of live windows/documents.
@@ -193,6 +293,8 @@ class CountIndex:
         if d < 1 or d > self.depth or t < d:
             return np.empty(0, np.int64)
         lev = self.levels[d - 1]
+        if self.archive is None or not len(lev.rows):
+            raise RuntimeError("row ids were not built for this index")
         code = _pack(self.archive[row : row + 1], d)[0].reshape(-1)[t - d]
         p = int(np.searchsorted(lev.codes, code))
         if p == len(lev.codes) or lev.codes[p] != code:

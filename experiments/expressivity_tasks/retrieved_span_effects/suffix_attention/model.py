@@ -208,20 +208,36 @@ class SalPack:
     stored across updates.
     """
 
-    def __init__(self, build, m, batch=16, depth=MAX_DEPTH, cap=CORE_CAP):
+    def __init__(
+        self, build, m, batch=16, depth=MAX_DEPTH, cap=CORE_CAP, bank=True, counts=None
+    ):
         a = np.asarray(build)
         if a.ndim != 2 or a.dtype != np.uint8 or a.shape[1] < 2 or not len(a):
             raise ValueError("rectangular uint8 archive")
         self.rows = a.shape[0] * (a.shape[1] - 1)
         self.leaves = self.rows // LEAF
-        if self.rows % LEAF or self.leaves & (self.leaves - 1):
+        if bank and (self.rows % LEAF or self.leaves & (self.leaves - 1)):
             raise ValueError("complete dyadic tree geometry required")
-        self.counts = CountIndex(a, depth)
-        self.index = EndpointIndex(
-            [(f"build:{i}", p.tolist()) for i, p in enumerate(a)],
-            tokenizer=TOKENIZER,
-        )
-        self.archive = WindowArchive(m, self.index)
+        if counts is None:
+            self.counts = CountIndex(a, depth, rowids=bank)
+        else:
+            if (
+                counts.rows != self.rows
+                or counts.depth != depth
+                or bool(len(counts.levels[-1].rows)) != bank
+            ):
+                raise RuntimeError("prebuilt count table geometry mismatch")
+            self.counts = counts
+        if bank:
+            self.index = EndpointIndex(
+                [(f"build:{i}", p.tolist()) for i, p in enumerate(a)],
+                tokenizer=TOKENIZER,
+            )
+            self.archive = WindowArchive(m, self.index)
+        else:
+            self.index = None
+            self.archive = None
+        self.bank = bank
         self.depth = depth
         self.cap = cap
         self.batch = batch
@@ -246,7 +262,8 @@ class SalPack:
         self.pair_owner = torch.as_tensor(owner, dtype=torch.long, device=dev)
         self.pair_row = torch.as_tensor(row, dtype=torch.long, device=dev)
         self._covers = {}
-        self._build_intervals(a)
+        if bank:
+            self._build_intervals(a)
 
     def _cover(self, lo_leaf, hi_leaf):
         key = (lo_leaf, hi_leaf)
@@ -287,6 +304,28 @@ class SalPack:
         y = torch.as_tensor(windows[:, 1:].ravel(), dtype=torch.long, device=dev)
         _, _, m_ex, h_ex = self.counts.bind_stats(windows)
         Q = b * t
+        if not self.bank:
+            # Skeleton-only stages carry no core/cover machinery: those
+            # tensors exist but stay empty, and the order-2 arm is refused
+            # by construction (run spawns it only with a bank).
+            return dict(
+                ids=ids,
+                targets=y,
+                spans=self.spans,
+                lengths=self.lengths,
+                rows=self.rows,
+                local_rows=self.local_rows,
+                local_succ=ids[self.local_rows + 1],
+                pair_owner=self.pair_owner,
+                pair_row=self.pair_row,
+                m=torch.as_tensor(m_ex.reshape(Q, -1), dtype=torch.float32, device=dev),
+                h=torch.as_tensor(h_ex.reshape(Q, self.depth + 1, ALPHA), device=dev),
+                core=torch.zeros((Q, 0), dtype=torch.long, device=dev),
+                core_valid=torch.zeros(Q, dtype=torch.bool, device=dev),
+                cover_owner=torch.zeros(0, dtype=torch.long, device=dev),
+                cover_lv=torch.zeros(0, dtype=torch.long, device=dev),
+                cover_idx=torch.zeros(0, dtype=torch.long, device=dev),
+            )
         full = self._cover(0, 0)
         core = np.full((Q, self.cap), -1, np.int64)
         valid = np.zeros(Q, bool)
