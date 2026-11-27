@@ -61,16 +61,16 @@ def reserve():
         "unbound pilot rows",
     )
     blocked = ex2 | {r["sha256"] for r in spent}
-    pilot_roles = [r["sha256"] for role in pilot["roles"] for r in pilot["roles"][role]]
+    pilot_rows = [r for role in pilot["roles"] for r in pilot["roles"][role]]
     need(
         len(blocked) == pilot["excluded"] == 62054
         and panels.fingerprint(sorted(blocked)) == pilot["excluded_sha"]
-        and len(pilot_roles) == 512
-        and not (set(pilot_roles) & blocked),
+        and len(pilot_rows) == 512
+        and not ({r["sha256"] for r in pilot_rows} & blocked),
         "pilot exclusion chain mismatch",
     )
     rows, blocked, supply = s51.next_block(
-        records, blocked, pilot_roles, sum(N.values()), book["source"]
+        records, blocked, pilot_rows, sum(N.values()), book["source"]
     )
     need(
         len(rows) == sum(N.values()) and len(blocked) == 62566, "fresh suffix mismatch"
