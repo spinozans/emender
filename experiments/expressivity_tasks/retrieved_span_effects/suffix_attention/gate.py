@@ -61,16 +61,25 @@ def admission(stage, cap):
         "insufficient campaign window remaining",
     )
     r = get(DATA / "ready.json")
-    need(
-        not (DATA / "probe-opened").exists()
-        and r
-        == dict(
-            rows=sha(DATA / "rows.json"),
-            build=sha(DATA / "build.json"),
-            fit=sha(DATA / "fit.json"),
-        ),
-        "missing data seals or previously opened PROBE",
-    )
+    if stage.startswith("seal"):
+        need(
+            (DATA / "probe-opened").exists()
+            and (JOB / "frozen.json").exists()
+            and (JOB / "freeze-ack.json").exists()
+            and (JOB / "document-losses.npz").exists(),
+            "seal stage requires the completed scoring artifacts",
+        )
+    else:
+        need(
+            not (DATA / "probe-opened").exists()
+            and r
+            == dict(
+                rows=sha(DATA / "rows.json"),
+                build=sha(DATA / "build.json"),
+                fit=sha(DATA / "fit.json"),
+            ),
+            "missing data seals or previously opened PROBE",
+        )
     free = shutil.disk_usage(BASE).free
     need(free >= 20 * 1024**3, "insufficient disk")
     return dict(
