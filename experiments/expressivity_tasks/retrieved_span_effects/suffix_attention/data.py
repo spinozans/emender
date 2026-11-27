@@ -9,7 +9,8 @@ import numpy as np
 
 from ..language_compression.settings import DATA as PILOT_DATA, MAN, OLD
 from ..natural_data import DATA as PREVIOUS
-from .settings import DATA, JOB, N, sha, cpu, get, put, need, qualified
+from ..window import get, put, need
+from .settings import DATA, JOB, N, sha, cpu, qualified
 
 
 def reserve():

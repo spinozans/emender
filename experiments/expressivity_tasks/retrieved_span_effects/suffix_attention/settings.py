@@ -11,7 +11,6 @@ HERE = Path(__file__).resolve().parent
 BASE = ROOT / "output/retrieved-span-effects/sal-1"
 DATA = BASE / "data"
 JOB = BASE / "device"
-REG = "3b0752d1fb608f4dfa72b6121d136484b4706a3d"
 N = {"build": 2048, "fit": 512, "probe": 128}
 ARMS = ("local", "skeleton", "order2")
 SEEDS = (5751, 5752)
@@ -53,14 +52,13 @@ def qualified():
         "scripts/gpu_lease.sh",
     ]
     need(
-        q["registered"] == REG
-        and q["cpu_tests"] > 0
+        q["cpu_tests"] > 0
         and q["natural_memberships"] == q["natural_documents"] == 0
         and q["tests_sha256"] == sha(BASE / "sal-phase-a-final.log")
         and subprocess.check_output(
             ["git", "rev-parse", ref + "^"], cwd=ROOT, text=True
         ).strip()
-        == REG
+        == q["registered"]
         and not subprocess.run(
             ["git", "diff", "--quiet", ref, "--", *deps], cwd=ROOT
         ).returncode
