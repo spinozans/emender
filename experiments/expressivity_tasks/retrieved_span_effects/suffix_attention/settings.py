@@ -15,6 +15,7 @@ N = {"build": 2048, "fit": 512, "probe": 128}
 ARMS = ("local", "skeleton", "order2")
 SEEDS = (5751, 5752)
 CAMPAIGN_CAP = 15000
+CAMPAIGN_END = 1795845600  # 2026-11-28 06:00 UTC; the operator's one-day mandate
 
 
 def sha(p):
