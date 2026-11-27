@@ -44,8 +44,8 @@ limit=$(( created + cap < deadline ? created + cap : deadline ))
 limit=$(( limit - $(date +%s) - 15 ))
 [[ $limit -gt 0 ]]
 timeout -k 4 "$limit" "$py" -m "$mod.$modname"
-if [[ $stage == run ]]; then
-  [[ -s $d/watch-ack-run && -s $d/complete.json ]]
+if [[ $stage =~ ^run[0-9]*$ ]]; then
+  [[ -s $d/watch-ack-$stage && -s $d/complete.json ]]
 else
   [[ -s $d/meter-$stage.json ]]
 fi

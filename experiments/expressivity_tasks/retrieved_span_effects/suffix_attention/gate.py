@@ -239,7 +239,7 @@ def observe():
                 print("ALL FITS WITNESSED", flush=True)
             if (
                 proven
-                and stage == "run"
+                and stage.startswith("run")
                 and (JOB / "complete.json").exists()
                 and last == get(JOB / "complete.json")["units"]
                 and not ack.exists()
@@ -283,7 +283,9 @@ def observe():
             + "\n"
         )
     stage_ok = (
-        (JOB / f"meter-{stage}.json").exists() if stage != "run" else ack.exists()
+        (JOB / f"meter-{stage}.json").exists()
+        if not stage.startswith("run")
+        else ack.exists()
     )
     need(
         ok and released_ok and proven and int(term["rc"]) == 0 and stage_ok,

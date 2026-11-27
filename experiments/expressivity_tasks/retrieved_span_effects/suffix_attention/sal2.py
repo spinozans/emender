@@ -65,6 +65,9 @@ def rebind():
     sal_gate.ARMS = ARMS2
     sal_gate.qualified = qualified
     sal_data.qualified = qualified
+    # The probe extraction is a quarantined subprocess; it must re-enter
+    # through SAL-2's rebound CLI, not the default campaign paths.
+    sal_run.PROBE_ENTRY = __package__ + ".sal2"
     return sal_data, sal_run, sal_gate
 
 
@@ -203,9 +206,7 @@ def reserve():
         "fresh rows overlap SAL-1 roles",
     )
     fresh_hashes = {r["sha256"] for r in rows}
-    arch, scan = archive_rows(
-        book["source"], exclude=blocked2 | fresh_hashes
-    )
+    arch, scan = archive_rows(book["source"], exclude=blocked2 | fresh_hashes)
     need(
         len(arch) == N2["build"]
         and scan["region_end"] <= ARCHIVE_CAP
@@ -277,11 +278,7 @@ def archive_rows(source, count=None, cap=None, min_len=None, exclude=None):
                     h = hashlib.sha256(raw).hexdigest()
                     if h in exclude:
                         skipped += 1
-                    elif (
-                        int(h, 16) % 100 >= 2
-                        and n >= min_len
-                        and h not in seen
-                    ):
+                    elif int(h, 16) % 100 >= 2 and n >= min_len and h not in seen:
                         seen.add(h)
                         j = int(h[16:32], 16) % ((n - 1) // WINDOW_T)
                         rows.append(

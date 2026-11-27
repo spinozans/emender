@@ -158,12 +158,10 @@ def test_archive_rows_excludes_spent_and_fresh(tmp_path):
     docs = [bytes(rng.integers(65, 91, 4200, dtype=np.uint8)) for _ in range(8)]
     source = _write_pile(tmp_path, docs)
     h_all = [hashlib.sha256(x).hexdigest() for x in docs]
-    rows, scan = sal2.archive_rows(
-        source, count=5, exclude=set(h_all[:3])
-    )
-    assert [r["sha256"] for r in rows] == [h for h in h_all[3:] if int(h, 16) % 100 >= 2][:5] or set(
-        r["sha256"] for r in rows
-    ) == set(h_all[3:])
+    rows, scan = sal2.archive_rows(source, count=5, exclude=set(h_all[:3]))
+    assert [r["sha256"] for r in rows] == [
+        h for h in h_all[3:] if int(h, 16) % 100 >= 2
+    ][:5] or set(r["sha256"] for r in rows) == set(h_all[3:])
     assert scan["excluded_duplicates"] == 3
 
 
@@ -195,6 +193,13 @@ def test_sal2_wiring():
     assert '"sal2run"' in gate_src and "leased2.sh" in gate_src
     run_src = (here / "run.py").read_text()
     assert "counts-cache" in run_src and "archive_sha" in run_src
+    # the quarantined probe subprocess re-enters through the rebound CLI
+    assert 'PROBE_ENTRY = __package__ + ".data"' in run_src
+    assert sal2.sal_run.PROBE_ENTRY.endswith(".sal2")
+    # run-lineage stages (continuations) close on ack + complete like "run"
+    gate_src = (here / "gate.py").read_text()
+    assert 'stage.startswith("run")' in gate_src
+    assert "[[ $stage =~ ^run[0-9]*$ ]]" in script
     # the archive geometry is the registered 512:1 design point
     assert sal2.N2["build"] * 4096 == sal2.N2["fit"] * 4096 * 512
     assert sal2.N2["build"] * (4097 - 1) == 2**30

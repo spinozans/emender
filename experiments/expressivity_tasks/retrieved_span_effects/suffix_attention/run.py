@@ -21,10 +21,15 @@ import zstandard as zstd
 
 from ..meter import await_ack
 from ..window import ROOT, descendant, fields, get, put, need
+
 from .data import load
 from .ladder import CountIndex
 from .model import SalLM, SalPack
 from .settings import ARMS, DATA, JOB, N, SEEDS, STAGE2_ARMS, sha
+
+# The probe is opened in a quarantined fresh subprocess (fail-closed seals,
+# no training state); a rebound campaign overrides this entry to its own CLI.
+PROBE_ENTRY = __package__ + ".data"
 
 UPDATES = 2048
 BATCH = 16
@@ -356,7 +361,7 @@ def main():
     env = dict(os.environ, CUDA_VISIBLE_DEVICES="")
     env.pop("GPU_LEASE_HELD", None)
     subprocess.run(
-        [sys.executable, "-m", __package__ + ".data", "probe"],
+        [sys.executable, "-m", PROBE_ENTRY, "probe"],
         cwd=ROOT,
         env=env,
         check=True,
