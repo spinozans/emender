@@ -100,7 +100,7 @@ def spawn(stage, cap, module, arms=None):
     a = admission(stage, cap)
     if arms:
         a["arms"] = list(arms)
-    if module not in ("device_check", "run"):
+    if module not in ("device_check", "run", "seal"):
         raise ValueError("unknown stage module")
     JOB.mkdir(mode=0o700, exist_ok=True)
     put(JOB / "admission.json", a)
