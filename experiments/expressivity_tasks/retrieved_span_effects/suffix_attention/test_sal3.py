@@ -285,3 +285,84 @@ def test_index_alone_uniform_mixture(tmp_path, monkeypatch):
         assert n_t == expect
     finally:
         sal3.N3 = old
+
+
+def test_shallow_oracle_matches_direct_brute_force():
+    """The numpy shallow verifier equals a direct walk of the no-cross law."""
+    rng = np.random.default_rng(2026)
+    # invented text with documents (starts at 0 and after each framing byte)
+    docs = [
+        bytes(rng.integers(97, 123, int(rng.integers(6, 40)), dtype=np.uint8))
+        for _ in range(40)
+    ]
+    text = b"\x1e".join(docs) + b"\x1e"
+    starts = [0] + list(np.cumsum([len(d) + 1 for d in docs[:-1]]))
+    starts = np.asarray(starts, np.int64)
+    arr = np.frombuffer(text, np.uint8)
+    n = len(text)
+    ctxs = set()
+    for _ in range(60):
+        p = int(rng.integers(1, n))
+        L = int(rng.integers(1, 4))
+        if p >= L:
+            ctxs.add(tuple(arr[p - L : p]))
+    # a few common single bytes for the depth-1/0 route
+    ctxs |= {
+        (97,),
+        (98,),
+        (32,),
+        (10,),
+        (
+            101,
+            115,
+        ),
+        (116, 104, 101),
+    }
+    got = sal3.shallow_oracle(ctxs, arr, starts)
+
+    def direct(ctx):
+        L = len(ctx)
+        width = eof = 0
+        hist = np.zeros(256, np.int64)
+        for p in range(n - L):
+            if tuple(arr[p : p + L]) != tuple(ctx):
+                continue
+            if any(int(s) in range(p + 1, p + L) for s in starts):
+                continue  # crossing match
+            q = p + L
+            if (
+                q == n
+                or int(np.searchsorted(np.sort(starts), q)) < len(starts)
+                and q in set(map(int, starts))
+            ):
+                pass
+            if q in set(map(int, starts)) or q == n:
+                eof += 1
+            else:
+                hist[arr[q]] += 1
+        return dict(width=width + eof + 0, eof=eof, hist=hist)
+
+    # direct's width must count all non-crossing occurrences
+    def direct2(ctx):
+        L = len(ctx)
+        eof = 0
+        hist = np.zeros(256, np.int64)
+        startset = set(map(int, starts))
+        for p in range(n - L + 1):  # an occurrence may end at the text end
+            if tuple(arr[p : p + L]) != tuple(ctx):
+                continue
+            if any(s in range(p + 1, p + L) for s in startset):
+                continue
+            q = p + L
+            if q in startset or q == n:
+                eof += 1  # END branch: a document starts, or the text ends
+            else:
+                hist[arr[q]] += 1
+        return dict(width=int(hist.sum()) + eof, eof=eof, hist=hist)
+
+    for ctx in ctxs:
+        want = direct2(ctx)
+        g = got[bytes(ctx)]
+        assert g["width"] == want["width"], (ctx, g["width"], want["width"])
+        assert g["eof"] == want["eof"], (ctx, g["eof"], want["eof"])
+        assert np.array_equal(g["hist"], want["hist"]), ctx

@@ -625,6 +625,138 @@ def bind_role(role, jobs=96):
 
 XSA_GATES = Path("/home/erikg/sxgc/gates")
 
+SHALLOW_DEPTHS = (1, 2, 3)
+
+
+def shallow_oracle(contexts, text, starts):
+    """Exact no-cross brute force for depth 1..3 contexts over `text`.
+
+    `contexts` is a set of context tuples (bytes of length 1..3); returns
+    {ctx: dict(width=, eof=, hist=256 ints)}. Raw (context, successor)
+    pair counts come from one chunked pass; every no-cross correction
+    (crossing occurrences and END branches) is a gather over the KNOWN
+    document starts, so boundary work is O(docs), not O(text).
+
+    The law: an occurrence of the L-byte context at position p is a
+    crossing match iff a document start lies in (p, p+L-1]; an END branch
+    iff p+L is a document start or the end of the text; else its content
+    successor is text[p+L].
+    """
+    text = np.asarray(text, np.uint8)
+    starts = np.asarray(starts, np.int64)
+    text_len = len(text)
+
+    def end(off):
+        # a gather around every document start; positions outside the text
+        # (the first document has no preceding byte) carry -1, which can
+        # never equal a byte value, so fabricated bytes cannot match
+        idx = starts + off
+        ok = (idx >= 0) & (idx < text_len)
+        out = np.full(len(starts), -1, np.int64)
+        out[ok] = text[idx[ok]]
+        return out
+
+    wants = {}
+    for L in SHALLOW_DEPTHS:
+        cs = sorted({bytes(c) for c in contexts if len(c) == L})
+        # the rolling chunk keys treat the FIRST context byte as most
+        # significant; read the same way here
+        wants[L] = np.asarray([int.from_bytes(c, "big") for c in cs], np.int64)
+    raw_tables = {}
+
+    step = 1 << 28
+    if len(wants[1]):
+        raw_tables[1] = np.zeros(1 << 16, np.int64)
+    if len(wants[2]):
+        raw_tables[2] = np.zeros(1 << 24, np.int64)
+    if len(wants[3]):
+        lut = np.zeros(256, bool)
+        lut[(wants[3] >> 16).astype(np.uint8)] = True
+        raw_tables[3] = np.zeros((len(wants[3]), 256), np.int64)
+    for lo in range(0, text_len, step):
+        chunk = text[lo : min(lo + step + 3, text_len)]
+        # each chunk owns exactly [lo, lo+step) pair positions: the +3
+        # overlap exists only so the key builders see whole contexts
+        if len(wants[1]):
+            keep = min(step, text_len - 1 - lo)
+            k = chunk[: keep + 1]
+            k = k[:-1].astype(np.int64) * 256 + k[1:]
+            raw_tables[1] += np.bincount(k, minlength=1 << 16)
+        if len(wants[2]):
+            keep = min(step, text_len - 2 - lo)
+            k = chunk[: keep + 2]
+            k = k[:-2].astype(np.int64) * 65536 + k[1:-1].astype(np.int64) * 256 + k[2:]
+            raw_tables[2] += np.bincount(k, minlength=1 << 24)
+        if len(wants[3]):
+            keep = min(step, text_len - 3 - lo)
+            k = chunk[: keep + 3]
+            s = k[3:]
+            k = (
+                k[:-3].astype(np.int64) * 65536
+                + k[1:-2].astype(np.int64) * 256
+                + k[2:-1]
+            )
+            m = lut[(k >> 16).astype(np.int64)]
+            if m.any():
+                cand = k[m]
+                pos = np.clip(np.searchsorted(wants[3], cand), 0, len(wants[3]) - 1)
+                hit = wants[3][pos] == cand
+                if hit.any():
+                    pair = pos[hit] * 256 + s[m][hit]
+                    np.add.at(raw_tables[3], (pair >> 8, pair & 255), 1)
+
+    out = {}
+    for L in SHALLOW_DEPTHS:
+        for ctx_b in (bytes(c) for c in contexts if len(c) == L):
+            key = ctx_b
+            kint = int.from_bytes(key, "big")
+            if L == 1:
+                raw = raw_tables[1][kint * 256 : kint * 256 + 256].copy()
+            elif L == 2:
+                raw = raw_tables[2][kint * 256 : kint * 256 + 256].copy()
+            else:
+                row = int(np.searchsorted(wants[3], kint))
+                raw = (
+                    raw_tables[3][row].copy()
+                    if row < len(wants[3]) and wants[3][row] == kint
+                    else np.zeros(256, np.int64)
+                )
+            if L == 1:
+                pre = end(-1)
+                s0 = end(0)
+                m = pre == key[0]
+                eof = int(m.sum()) + int(text[-1] == key[0])
+                hist = raw - np.bincount(np.clip(s0[m], 0, 255), minlength=256).astype(
+                    np.int64
+                )
+            elif L == 2:
+                a, b = key
+                pre2, pre1, s0, s1 = end(-2), end(-1), end(0), end(1)
+                cross = (pre1 == a) & (s0 == b)
+                eofm = (pre2 == a) & (pre1 == b)
+                eof = int(eofm.sum()) + int(text[-2:].tobytes() == key)
+                hist = (
+                    raw
+                    - np.bincount(np.clip(s1[cross], 0, 255), minlength=256)
+                    - np.bincount(np.clip(s0[eofm], 0, 255), minlength=256)
+                ).astype(np.int64)
+            else:
+                a, b, c = key
+                pre3, pre2, pre1 = end(-3), end(-2), end(-1)
+                s0, s1, s2 = end(0), end(1), end(2)
+                cross1 = (pre1 == a) & (s0 == b) & (s1 == c)
+                cross2 = (pre2 == a) & (pre1 == b) & (s0 == c)
+                eofm = (pre3 == a) & (pre2 == b) & (pre1 == c)
+                eof = int(eofm.sum()) + int(text[-3:].tobytes() == key)
+                hist = (
+                    raw
+                    - np.bincount(np.clip(s2[cross1], 0, 255), minlength=256)
+                    - np.bincount(np.clip(s1[cross2], 0, 255), minlength=256)
+                    - np.bincount(np.clip(s0[eofm], 0, 255), minlength=256)
+                ).astype(np.int64)
+            out[key] = dict(width=int(hist.sum()) + eof, eof=eof, hist=hist)
+    return out
+
 
 def _oracle_query_lines(cands):
     lines = []
@@ -703,7 +835,9 @@ def qualify(jobs=96):
     with qfile.open("w") as f:
         for i, pos in cands:
             for d in DEPTHS:
-                f.write(f"{pos} {d}\n")
+                if d >= 4:  # shallower depths use the numpy no-cross oracle:
+                    # the C oracle's short-context path is a full scan
+                    f.write(f"{pos} {d}\n")
 
     rates = {}
     sweep_shas = {}
@@ -739,20 +873,35 @@ def qualify(jobs=96):
             timeout=3600,
         )
     want = _parse_oracle(oout)
+    # the shallow no-cross oracle: one chunked numpy pass over the
+    # container's text for every depth-1..3 context of the sweep
+    text100 = np.memmap(CORPUS, dtype=np.uint8, mode="r")[:100_000_000_000]
+    _, starts = doc_starts()
+    shallow_ctxs = set()
+    for i, pos in cands:
+        for d in (1, 2, 3):
+            shallow_ctxs.add(tuple(bytes(text100[pos - d : pos])))
+    shallow = shallow_oracle(shallow_ctxs, text100, starts)
     checked = 0
     for d in DEPTHS:
         rows = read_rows(work / f"sweep-rows{d}.bin")
         need(len(rows) == 64, "sweep rows")
         for j, (i, pos) in enumerate(cands):
             r = rows[j]
-            wq = want[(pos, d)]
+            if d >= 4:
+                wq = want[(pos, d)]
+                w_pairs = wq["pairs"]
+            else:
+                sw = shallow[bytes(text100[pos - d : pos])]
+                wq = dict(width=sw["width"], eof=sw["eof"])
+                w_pairs = {int(b): int(c) for b, c in enumerate(sw["hist"]) if c}
             got_pairs = {int(b): int(c) for b, c in r["pairs"]}
             need(
                 r["ctxlen"] == d
                 and not (r["flags"] & 16)
                 and r["width"] == wq["width"]
                 and r["eof"] == wq["eof"]
-                and got_pairs == wq["pairs"],
+                and got_pairs == w_pairs,
                 f"depth-sweep mismatch at {pos} d={d}",
             )
             checked += 1
@@ -771,28 +920,21 @@ def qualify(jobs=96):
     depth0_pass(d0out, jobs=jobs)
     d0rows = read_rows(d0out)
     need(len(d0rows) == 256, "depth0 rows")
-    q0 = work / "depth0-queries.txt"
-    with q0.open("w") as f:
-        for r in d0rows:
-            f.write(f"{r['off']} 1\n")
-    o0 = work / "depth0-oracle.out"
-    with o0.open("wb") as f:
-        subprocess.run(
-            [str(oracle), str(SEPS), str(CORPUS), "100000000000", str(q0)],
-            stdout=f,
-            check=True,
-            timeout=3600,
-        )
-    w0 = _parse_oracle(o0)
+    shallow0 = shallow_oracle(
+        {tuple(bytes(text100[r["off"] - 1 : r["off"]])) for r in d0rows},
+        text100,
+        starts,
+    )
     for r in d0rows:
-        wq = w0[(r["off"], 1)]
+        sw = shallow0[bytes(text100[r["off"] - 1 : r["off"]])]
         got = {int(b): int(c) for b, c in r["pairs"]}
+        wq_pairs = {int(b): int(c) for b, c in enumerate(sw["hist"]) if c}
         need(
             r["ctxlen"] == 1
             and not (r["flags"] & 16)
-            and r["width"] == wq["width"]
-            and r["eof"] == wq["eof"]
-            and got == wq["pairs"],
+            and r["width"] == sw["width"]
+            and r["eof"] == sw["eof"]
+            and got == wq_pairs,
             f"depth0 mismatch at {r['off']}",
         )
     h0 = np.zeros(256, np.int64)
