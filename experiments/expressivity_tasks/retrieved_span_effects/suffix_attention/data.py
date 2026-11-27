@@ -73,7 +73,7 @@ def reserve():
         "pilot exclusion chain mismatch",
     )
     rows, blocked, supply = s51.next_block(
-        records, blocked, pilot_rows, sum(N.values()), book["source"]
+        records, blocked, pilot_rows, sum(N.values()), book["source"]["size"]
     )
     need(
         len(rows) == sum(N.values()) and len(blocked) == 62566, "fresh suffix mismatch"
