@@ -32,6 +32,20 @@ def brute_depths(archive, x, t, depth):
     return depths
 
 
+def test_bind_stats_matches_reference_stats():
+    rng = np.random.default_rng(5773)
+    archive = rng.integers(0, 3, (4, 21), dtype=np.uint8)
+    x = rng.integers(0, 3, (3, 12), dtype=np.uint8)
+    idx = CountIndex(archive, 6)
+    c1, h1, m1, e1 = idx.stats(x)
+    c2, h2, m2, e2 = idx.bind_stats(x)
+    np.testing.assert_array_equal(c1, c2)
+    np.testing.assert_allclose(h1, h2, rtol=0, atol=0)
+    np.testing.assert_array_equal(m1, m2)
+    np.testing.assert_allclose(e1, e2, rtol=0, atol=1e-5)
+    assert (e2.sum(-1) == m2).all()
+
+
 def test_skeleton_is_exact_depth_scored_attention():
     rng = np.random.default_rng(5765)
     archive = rng.integers(0, 4, (5, 33), dtype=np.uint8)

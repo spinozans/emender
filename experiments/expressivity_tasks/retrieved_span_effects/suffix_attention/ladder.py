@@ -78,6 +78,18 @@ class CountIndex:
             self.levels.append(
                 _Level(codes, counts, starts, gids, keys, key_counts, key_starts)
             )
+        # Static dense successor histograms for shallow depths: bind-time work is
+        # then a pure gather instead of a scatter over long posting runs.
+        self.dense = {}
+        for d in (1, 2):
+            lev = self.levels[d - 1]
+            if len(lev.codes) * ALPHA <= 2**26:
+                table = np.bincount(
+                    lev.keys,
+                    weights=lev.key_counts,
+                    minlength=len(lev.codes) * ALPHA,
+                ).reshape(len(lev.codes), ALPHA)
+                self.dense[d] = table.astype(np.int64)
 
     def stats(self, x):
         """Exact-depth classes for every target of live windows/documents.
@@ -121,6 +133,60 @@ class CountIndex:
         m[:, :, :-1] -= counts[:, :, 1:]
         h[:, :, :-1] -= hists[:, :, 1:]
         return counts, hists, m, h
+
+    def bind_stats(self, x):
+        """Fast per-batch version of `stats` for live reset windows.
+
+        Shallow depths use the static dense tables (gather); deeper depths
+        deduplicate the batch's codes and scatter only their posting runs.
+        Returns the same four arrays as `stats`.
+        """
+        a = np.asarray(x)
+        n, w = a.shape
+        counts = np.zeros((n, w - 1, self.depth + 1), np.int64)
+        hists = np.zeros((n, w - 1, self.depth + 1, ALPHA), np.float32)
+        counts[:, :, 0] = self.rows
+        hists[:, :, 0] = self.root
+        for d in range(1, self.depth + 1):
+            lev = self.levels[d - 1]
+            c, m = _pack(a, d)
+            flat = c.ravel()
+            pos = np.minimum(np.searchsorted(lev.codes, flat), len(lev.codes) - 1)
+            hit = lev.codes[pos] == flat
+            counts[:, d - 1 : w - 1, d] = np.where(hit, lev.counts[pos], 0).reshape(
+                n, m
+            )
+            if d in self.dense:
+                h = self.dense[d][np.where(hit, pos, 0)].reshape(n, m, ALPHA)
+                hists[:, d - 1 : w - 1, d] = np.where(
+                    hit.reshape(n, m)[:, :, None], h, 0
+                )
+            else:
+                ucodes, uinv = np.unique(flat[hit], return_inverse=True)
+                upos = np.searchsorted(lev.codes, ucodes)
+                if not (len(upos) == len(ucodes) and (lev.codes[upos] == ucodes).all()):
+                    raise ValueError("unique depth code lookup failed")
+                starts = lev.key_starts[upos]
+                lens = lev.key_starts[upos + 1] - starts
+                base = np.repeat(starts, lens)
+                off = np.arange(int(lens.sum())) - np.repeat(
+                    np.cumsum(lens) - lens, lens
+                )
+                kv = lev.keys[base + off]
+                freq = lev.key_counts[base + off]
+                table = np.bincount(
+                    np.repeat(np.arange(len(ucodes)), lens) * ALPHA + kv % ALPHA,
+                    weights=freq,
+                    minlength=len(ucodes) * ALPHA,
+                ).reshape(len(ucodes), ALPHA)
+                h = np.zeros((len(flat), ALPHA), np.float32)
+                h[hit] = table[uinv].astype(np.float32)
+                hists[:, d - 1 : w - 1, d] = h.reshape(n, m, ALPHA)
+        m_ex = counts.copy()
+        h_ex = hists.copy()
+        m_ex[:, :, :-1] -= counts[:, :, 1:]
+        h_ex[:, :, :-1] -= hists[:, :, 1:]
+        return counts, hists, m_ex, h_ex
 
     def matched_rows(self, row, t, d):
         """Archive row ids whose depth-d code equals x[row, t-d:t], or []."""
@@ -224,31 +290,33 @@ class MomentTree(torch.nn.Module):
         )
         levels = [level]
         while len(levels[-1]["n"]) > 1:
-            p = {key: list() for key in level}
             cur = levels[-1]
-            for a, b in zip(range(0, len(cur["n"]), 2), range(1, len(cur["n"]), 2)):
-                na, nb = cur["n"][a], cur["n"][b]
-                n = na + nb
-                kbar = (na * cur["kbar"][a] + nb * cur["kbar"][b]) / n
-                vbar = (na * cur["vbar"][a] + nb * cur["vbar"][b]) / n
-                dk = cur["kbar"][a] - cur["kbar"][b]
-                dvv = cur["vbar"][a] - cur["vbar"][b]
-                p["n"].append(n)
-                p["kbar"].append(kbar)
-                p["vbar"].append(vbar)
-                p["S"].append(
-                    cur["S"][a] + cur["S"][b] + (na * nb / n) * torch.outer(dk, dk)
+            na, nb = cur["n"][0::2], cur["n"][1::2]
+            n = na + nb
+            ka, kb = cur["kbar"][0::2], cur["kbar"][1::2]
+            kbar = (na[:, None] * ka + nb[:, None] * kb) / n[:, None]
+            va, vb = cur["vbar"][0::2], cur["vbar"][1::2]
+            vbar = (na[:, None] * va + nb[:, None] * vb) / n[:, None]
+            dk = ka - kb
+            dvv = va - vb
+            coef = (na * nb / n)[:, None, None]
+            levels.append(
+                dict(
+                    n=n,
+                    kbar=kbar,
+                    vbar=vbar,
+                    S=cur["S"][0::2]
+                    + cur["S"][1::2]
+                    + coef * (dk[:, :, None] * dk[:, None, :]),
+                    T=cur["T"][0::2]
+                    + cur["T"][1::2]
+                    + coef * (dvv[:, :, None] * dk[:, None, :]),
+                    R=torch.maximum(
+                        cur["R"][0::2] + (ka - kbar).norm(dim=1),
+                        cur["R"][1::2] + (kb - kbar).norm(dim=1),
+                    ),
                 )
-                p["T"].append(
-                    cur["T"][a] + cur["T"][b] + (na * nb / n) * torch.outer(dvv, dk)
-                )
-                p["R"].append(
-                    torch.maximum(
-                        cur["R"][a] + (cur["kbar"][a] - kbar).norm(),
-                        cur["R"][b] + (cur["kbar"][b] - kbar).norm(),
-                    )
-                )
-            levels.append({key: torch.stack(val) for key, val in p.items()})
+            )
         return levels
 
     def _node(self, levels, node):
