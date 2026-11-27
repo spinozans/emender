@@ -254,6 +254,62 @@ def mix_sources(parts):
     return peak + torch.log(z), (w[:, None] * vals).sum(0) / z
 
 
+def moment_statistics(k, v, leaf):
+    """Complete dyadic tree of order-2 statistics over fixed leaves.
+
+    Pure function of the current keys and values: per node the count, mean
+    key, mean value, within-node key scatter S, value–key cross scatter T,
+    and the exact leaf radius (merged conservatively upward). Parents merge
+    by the parallel mean/covariance updates; every level is exact.
+    """
+    rows, d, dv = k.shape[0], k.shape[1], v.shape[1]
+    if rows % leaf or rows // leaf & (rows // leaf - 1):
+        raise ValueError("complete dyadic tree geometry required")
+    L = rows // leaf
+    kc = k.reshape(L, leaf, d)
+    vc = v.reshape(L, leaf, dv)
+    dev = kc - kc.mean(1, keepdim=True)
+    devv = vc - vc.mean(1, keepdim=True)
+    level = dict(
+        n=torch.full((L,), float(leaf), dtype=k.dtype),
+        kbar=kc.mean(1),
+        vbar=vc.mean(1),
+        S=torch.einsum("lid,lif->ldf", dev, dev),
+        T=torch.einsum("lie,lif->lef", devv, dev),
+        R=dev.norm(dim=2).amax(1),
+    )
+    levels = [level]
+    while len(levels[-1]["n"]) > 1:
+        cur = levels[-1]
+        na, nb = cur["n"][0::2], cur["n"][1::2]
+        n = na + nb
+        ka, kb = cur["kbar"][0::2], cur["kbar"][1::2]
+        kbar = (na[:, None] * ka + nb[:, None] * kb) / n[:, None]
+        va, vb = cur["vbar"][0::2], cur["vbar"][1::2]
+        vbar = (na[:, None] * va + nb[:, None] * vb) / n[:, None]
+        dk = ka - kb
+        dvv = va - vb
+        coef = (na * nb / n)[:, None, None]
+        levels.append(
+            dict(
+                n=n,
+                kbar=kbar,
+                vbar=vbar,
+                S=cur["S"][0::2]
+                + cur["S"][1::2]
+                + coef * (dk[:, :, None] * dk[:, None, :]),
+                T=cur["T"][0::2]
+                + cur["T"][1::2]
+                + coef * (dvv[:, :, None] * dk[:, None, :]),
+                R=torch.maximum(
+                    cur["R"][0::2] + (ka - kbar).norm(dim=1),
+                    cur["R"][1::2] + (kb - kbar).norm(dim=1),
+                ),
+            )
+        )
+    return levels
+
+
 class MomentTree(torch.nn.Module):
     """Order-2 Gaussian closure over a complete dyadic tree of fixed leaves.
 
@@ -275,49 +331,7 @@ class MomentTree(torch.nn.Module):
     def statistics(self, k, v):
         if k.shape != (self.rows, self.d) or v.shape != (self.rows, self.dv):
             raise ValueError("bank keys/values shape mismatch")
-        L = self.rows // self.leaf
-        kc = k.reshape(L, self.leaf, self.d)
-        vc = v.reshape(L, self.leaf, self.dv)
-        dev = kc - kc.mean(1, keepdim=True)
-        devv = vc - vc.mean(1, keepdim=True)
-        level = dict(
-            n=torch.full((L,), float(self.leaf), dtype=k.dtype),
-            kbar=kc.mean(1),
-            vbar=vc.mean(1),
-            S=torch.einsum("lid,lif->ldf", dev, dev),
-            T=torch.einsum("lie,lif->lef", devv, dev),
-            R=dev.norm(dim=2).amax(1),
-        )
-        levels = [level]
-        while len(levels[-1]["n"]) > 1:
-            cur = levels[-1]
-            na, nb = cur["n"][0::2], cur["n"][1::2]
-            n = na + nb
-            ka, kb = cur["kbar"][0::2], cur["kbar"][1::2]
-            kbar = (na[:, None] * ka + nb[:, None] * kb) / n[:, None]
-            va, vb = cur["vbar"][0::2], cur["vbar"][1::2]
-            vbar = (na[:, None] * va + nb[:, None] * vb) / n[:, None]
-            dk = ka - kb
-            dvv = va - vb
-            coef = (na * nb / n)[:, None, None]
-            levels.append(
-                dict(
-                    n=n,
-                    kbar=kbar,
-                    vbar=vbar,
-                    S=cur["S"][0::2]
-                    + cur["S"][1::2]
-                    + coef * (dk[:, :, None] * dk[:, None, :]),
-                    T=cur["T"][0::2]
-                    + cur["T"][1::2]
-                    + coef * (dvv[:, :, None] * dk[:, None, :]),
-                    R=torch.maximum(
-                        cur["R"][0::2] + (ka - kbar).norm(dim=1),
-                        cur["R"][1::2] + (kb - kbar).norm(dim=1),
-                    ),
-                )
-            )
-        return levels
+        return moment_statistics(k, v, self.leaf)
 
     def _node(self, levels, node):
         lv, idx = node
