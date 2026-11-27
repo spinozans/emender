@@ -358,7 +358,7 @@ def main():
             quality=quality,
         ),
     )
-    await_ack(JOB)
+    await_ack(JOB, "watch-ack-run")
 
 
 if __name__ == "__main__":
