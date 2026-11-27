@@ -233,3 +233,55 @@ def test_archiveless_pack_refusals():
         SalPack(None, SalLM(2), batch=4, bank=False)
     p = SalPack(None, SalLM(3), batch=4, bank=False, rows=128)
     assert p.rows == 128 and p.counts is None and p.index is None
+
+
+def test_index_alone_uniform_mixture(tmp_path, monkeypatch):
+    """The pure-interface diagnostic matches a hand-computed mixture NLL."""
+    from . import close3
+
+    a = _archive()
+    docs = _docs()
+    ci, fc, fh, m_ex, h_ex, dist, expect = _flat_stats(a, docs)
+    classes = {d: fc[:, d] for d in sal3.DEPTHS}
+    hists = {d: fh[:, d] for d in sal3.DEPTHS}
+    m, h = sal3.telescope(classes, hists, ci.rows, ci.root, expect)
+    old = dict(sal3.N3)
+    try:
+        sal3.N3 = {"fit": 4}
+        zs = sal3.build_batches("fit", docs, m, h)
+        zpath = tmp_path / "bound-fit.npz"
+        np.savez(zpath, **zs)
+        from ..window import put as wput
+
+        wput(
+            tmp_path / "bound-fit.json",
+            dict(batches=len(zs) // 5),
+        )
+        monkeypatch.setattr(sal3, "DATA3", tmp_path)
+        got, n_t = close3.index_alone("fit", "uniform")
+        # hand-computed: uniform weights over the telescoped classes
+        wins = np.lib.stride_tricks.sliding_window_view(docs, 65, axis=1)[
+            :, ::64, :
+        ].reshape(-1, 65)
+        order = np.random.default_rng(5750).permutation(len(wins))
+        total = 0.0
+        for bi, lo in enumerate(range(0, len(order), 16)):
+            sel = order[lo : lo + 16]
+            y = wins[sel, 1:].astype(np.int64).ravel()
+            base = (sel // 64) * 4096 + (sel % 64) * 64
+            idx = np.repeat(base, 64) + np.tile(np.arange(64), 16)
+            mm = m[idx].astype(np.float64)
+            hh = h[idx].astype(np.float64)
+            num = hh.sum(1)
+            den = mm.sum(1)
+            hit = den > 0
+            p = np.full(len(y), 1 / 256.0)
+            p[hit] = num[hit, y[hit]] / den[hit]
+            total += float(-np.log(p).sum())
+        want = 8.0 * total / len(y) / (len(order) // 16) * 0 + 8.0 * total / (
+            (len(order) // 16) * len(y)
+        )
+        assert got == pytest.approx(want, rel=1e-12)
+        assert n_t == expect
+    finally:
+        sal3.N3 = old
