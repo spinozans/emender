@@ -719,7 +719,7 @@ def qualify(jobs=96):
         sweep_shas[d] = facts["rows_sha256"]
 
     oracle = work / "nocross_oracle"
-    need(not oracle.exists())
+    need(not oracle.exists(), "oracle already built")
     subprocess.run(
         ["gcc", "-O2", "-o", str(oracle), str(XSA_GATES / "nocross_oracle.c")],
         check=True,
