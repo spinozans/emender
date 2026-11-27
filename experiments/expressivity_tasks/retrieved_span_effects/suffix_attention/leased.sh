@@ -7,8 +7,8 @@ py=$PWD/.venv/bin/python
 mod=experiments.expressivity_tasks.retrieved_span_effects.suffix_attention
 here=$PWD/experiments/expressivity_tasks/retrieved_span_effects/suffix_attention
 d=output/retrieved-span-effects/sal-1/device
-[[ $(hostname) == lambda01 && -z ${GPU_LEASE_HELD:-} && -d $d && ! -e $d/released-$stage ]]
 stage=$(cat "$d/stage")
+[[ $(hostname) == lambda01 && -z ${GPU_LEASE_HELD:-} && -d $d && ! -e $d/released-$stage ]]
 for _ in {1..100}; do [[ -f $d/owner.json ]] && grep -q '^PPid:[[:space:]]*1$' /proc/$$/status && break; sleep .1; done
 grep -q '^PPid:[[:space:]]*1$' /proc/$$/status
 start=$(awk '{sub(/.*\) /, ""); print $20}' /proc/$$/stat)
