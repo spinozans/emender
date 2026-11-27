@@ -9,7 +9,7 @@ from torch.nn import functional as F
 from torch.utils.checkpoint import checkpoint
 
 from ..corpus_kernel.attention import Answer, _merge, _torch_tiles, log_features
-from .tree import tree, leaf_reference
+from .tree import tree, leaf_reference, parent_reference
 
 
 def prefix_reference(e, inputs):
@@ -39,19 +39,21 @@ class Step:
     bank: object
     kernel: object
     nll: object
+    fast_mix: object
 
 
 def torch_nll(logits, y):
     return F.cross_entropy(logits, y, reduction="sum")
 
 
-def encode(packet, m, mode, backend):
+def encode(packet, m, mode, backend, *, live_transform=None):
     """Transient, called exactly once per forward. No learned input to a future update is cached."""
     a = packet.archive
     a.check(m)
     if mode not in ("dense", "indexed"):
         raise ValueError("unknown corpus law")
     if backend == "torch":
+        parents, fast_mix = parent_reference, None
         mean, leaves, kernel, nll = (
             prefix_reference,
             leaf_reference,
@@ -61,6 +63,8 @@ def encode(packet, m, mode, backend):
     elif backend == "triton":
         from .triton_prefix import prefix as mean
         from .triton_leaf import leaves
+        from .triton_parent import parents
+        from .triton_mix import mix as fast_mix
         from ..corpus_kernel.triton_tiles import reduce_tiles as kernel
         from .triton_nll import nll
     else:
@@ -71,6 +75,8 @@ def encode(packet, m, mode, backend):
         return (e + m.context(mean(e, inp))).tanh(), e
 
     x, e = states(packet.inputs)
+    if live_transform is not None:
+        x = live_transform(x, packet.inputs)
     lr = packet.local_rows
     lk = m.key(x[lr]) if len(lr) else x[:0]
     lv = (
@@ -91,11 +97,13 @@ def encode(packet, m, mode, backend):
         k = x[:0]
         v = x.new_empty((0, m.width))
     rows = (packet.layout, k, v, x.new_zeros(len(k)))
-    bank = tree(rows, m.omega, leaves) if mode == "indexed" and len(k) else None
-    return Step(x, m.query(x), lk, lv, lb, rows, bank, kernel, nll)
+    bank = (
+        tree(rows, m.omega, leaves, parents) if mode == "indexed" and len(k) else None
+    )
+    return Step(x, m.query(x), lk, lv, lb, rows, bank, kernel, nll, fast_mix)
 
 
-def read(packet, m, step, mode, block, x, q):
+def read(packet, m, step, mode, block, x, q, *, value_only=False):
     _, k, v, b = step.rows
     rec = []
     g = torch.arange(len(x), device=x.device) * 3
@@ -138,7 +146,18 @@ def read(packet, m, step, mode, block, x, q):
             else x.new_zeros((len(x), m.width))
         )
         rec.append((g + 2, pk, w, w[:, None] * value))
-    return _merge(q, m.width, rec)
+    if value_only and step.fast_mix is not None and rec:
+        from .triton_mix import csr
+
+        groups, pk, z, u = zip(*rec, strict=True)
+        routes = block.mix_routes
+        key = (mode, bool(len(k)), packet.allow_skip)
+        if key not in routes:
+            with torch.inference_mode(False):
+                routes[key] = csr(torch.cat(groups) // 3, len(q))
+        return step.fast_mix(torch.cat(pk), torch.cat(z), torch.cat(u), routes[key])
+    ans = _merge(q, m.width, rec)
+    return ans.read if value_only else ans
 
 
 @dataclass
@@ -171,10 +190,10 @@ def predict(packet, m, mode, backend):
 
 
 def _sum_loss(packet, m, step, mode, block, x, q, y):
-    a = read(packet, m, step, mode, block, x, q)
+    v = read(packet, m, step, mode, block, x, q, value_only=True)
     if m.kind == "pointer":
-        return -a.read.gather(1, y[:, None]).log().sum()
-    return step.nll(m.lm(x + m.out(a.read)), y)
+        return -v.gather(1, y[:, None]).log().sum()
+    return step.nll(m.lm(x + m.out(v)), y)
 
 
 def loss(packet, m, mode, backend, checkpoint_blocks):

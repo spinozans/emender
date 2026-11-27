@@ -18,7 +18,17 @@ def leaf_reference(psi, b, v, leaf):
     return logits.logsumexp(-1), logits.softmax(-1) @ values
 
 
-def tree(rows, omega, leaves=leaf_reference):
+def parent_reference(z, u):
+    n, r = len(z) // 2, z.shape[1]
+    p = z[: 2 * n].view(n, 2, r)
+    weight = p.softmax(1)
+    mom = u[: 2 * n].view(n, 2, r, u.shape[2])
+    return torch.cat((p.logsumexp(1), z[2 * n :])), torch.cat(
+        ((weight[..., None] * mom).sum(1), u[2 * n :])
+    )
+
+
+def tree(rows, omega, leaves=leaf_reference, parents=parent_reference):
     layout, k, v, b = rows
     psi = log_features(k, omega)
     r = len(omega)
@@ -28,12 +38,7 @@ def tree(rows, omega, leaves=leaf_reference):
         zs = [z]
         us = [u]
         while len(z) > 1:
-            n = len(z) // 2
-            p = z[: 2 * n].view(n, 2, r)
-            weight = p.softmax(1)
-            mom = u[: 2 * n].view(n, 2, r, w)
-            z = torch.cat((p.logsumexp(1), z[2 * n :]))
-            u = torch.cat(((weight[..., None] * mom).sum(1), u[2 * n :]))
+            z, u = parents(z, u)
             zs.append(z)
             us.append(u)
         node_z = torch.cat(zs)

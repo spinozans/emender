@@ -66,7 +66,7 @@ class _NLL(torch.autograd.Function):
         return dx, None
 
 
-def nll(x, y):
+def nll_rows(x, y):
     if (
         not supported(x)
         or x.ndim != 2
@@ -76,4 +76,8 @@ def nll(x, y):
         or y.device != x.device
     ):
         raise ValueError("invalid native token NLL inputs")
-    return _NLL.apply(x.contiguous(), y.contiguous()).sum()
+    return _NLL.apply(x.contiguous(), y.contiguous())
+
+
+def nll(x, y):
+    return nll_rows(x, y).sum()

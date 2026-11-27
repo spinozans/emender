@@ -5,7 +5,7 @@ Shared local K/V row p has a successor in the live inputs and is readable only
 by q>p in that same window. All starts/lengths are validated at construction.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from itertools import accumulate, chain
 from operator import index as integer
 
@@ -114,6 +114,7 @@ class Block:
     plan: Plan
     work: object
     local_tiles: torch.Tensor
+    mix_routes: dict = field(default_factory=dict, compare=False, repr=False)
 
 
 class Windows:
