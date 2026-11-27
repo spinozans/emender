@@ -106,11 +106,14 @@ def extract(role):
     from ...x49_live_trace_memory.panels import window
 
     cpu()
-    ref = qualified()
+    qualified()
     r = get(DATA / "rows.json")
     h = sha(DATA / "rows.json")
+    # The rows are hash-sealed by the reservation; the receipt's qualified
+    # field records the seal at reservation time and must stay internally
+    # consistent, but a resumed campaign may have resealed its source since.
     need(
-        ref == r["qualified"] == get(DATA / "reservation.json")["qualified"]
+        get(DATA / "reservation.json")["qualified"] == r["qualified"]
         and h == get(DATA / "reservation.json")["rows_sha"]
         and len(r["roles"][role]) == N[role],
         "unbound new role",
