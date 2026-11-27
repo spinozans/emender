@@ -38,6 +38,11 @@ XSA = Path("/home/erikg/sxgc/xsa/target/release/xsa")
 XSA_SHA = "57fb2d85ed7ab46c22db066741f53180"  # prefix; full sha checked at runtime
 XSA_SHA_FULL = None  # filled by verify_tools()
 CORPUS = Path("/mnt/nvme2n1/erikg/pile.txt")
+# The container's exact text, materialized by the rehearsal build and sealed
+# in its journal (corpus_sha256); the X3 gate's own oracle reads the corpus
+# via the file's full stat size, so it must see exactly the 100 GB text.
+CORPUS100 = Path("/mnt/nvme2n1/erikg/pile-head100.txt")
+CORPUS100_SHA = "de79fe96057b604a71513770111f246ab0e936d3cf56415bcc5a43bba60bbbfd"
 SEPS = Path("/mnt/nvme2n1/erikg/pilemap100/seps.bin")
 # Eight transport passes, d = 1..8. The deepest class is the >=8 class,
 # exactly as SAL-1/2's bind_stats (its telescope subtracts only [:-1]).
@@ -655,6 +660,7 @@ def qualify(jobs=96):
     sal_settings.cpu()
     qualified()
     csha, bsha = verify_tools()
+    need(sha(CORPUS100) == CORPUS100_SHA, "container text file sha mismatch")
     work = B3 / "transport-qualification"
     need(not work.exists(), "transport qualification already run")
     work.mkdir(mode=0o700, parents=True)
@@ -666,7 +672,7 @@ def qualify(jobs=96):
                 "bash",
                 str(XSA_GATES / "no_cross_x3_consult.sh"),
                 str(CONTAINER),
-                str(CORPUS),
+                str(CORPUS100),
                 str(SEPS),
                 str(work / "x3"),
                 str(jobs),
@@ -795,6 +801,8 @@ def qualify(jobs=96):
         dict(
             container_sha256=csha,
             binary_sha256=bsha,
+            container_text_sha256=CORPUS100_SHA,
+            note="first attempt failed in the X3 script's own oracle arm: it stat-reads the full 1.3 TB corpus file; the gate now runs against the container's exact materialized text (sha-matched to the rehearsal journal)",
             x3_result=x3_result,
             x3_spot=x3_spot,
             sweep_positions=len(cands),
