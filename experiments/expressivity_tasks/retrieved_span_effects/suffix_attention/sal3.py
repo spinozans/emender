@@ -777,7 +777,7 @@ def _parse_oracle(path):
             for item in kv["pairs"].split(","):
                 b, c = item.split(":")
                 pairs[int(b)] = int(c)
-        out[(int(kv["off"]), int(kv["clen"]))] = dict(
+        out[(int(kv["off"]), int(kv["ctxlen"]))] = dict(
             width=int(kv["width"]), eof=int(kv["eof"]), pairs=pairs
         )
     return out
@@ -898,7 +898,7 @@ def qualify(jobs=96):
                 sw = shallow[bytes(text100[pos - d : pos])]
                 wq = dict(width=sw["width"], eof=sw["eof"])
                 w_pairs = {int(b): int(c) for b, c in enumerate(sw["hist"]) if c}
-            got_pairs = {int(b): int(c) for b, c in r["pairs"]}
+            got_pairs = {int(b): int(c) for b, c in enumerate(r["hist"]) if c}
             need(
                 r["ctxlen"] == d
                 and not (r["flags"] & 16)
@@ -930,7 +930,7 @@ def qualify(jobs=96):
     )
     for r in d0rows:
         sw = shallow0[bytes(text100[r["off"] - 1 : r["off"]])]
-        got = {int(b): int(c) for b, c in r["pairs"]}
+        got = {int(b): int(c) for b, c in enumerate(r["hist"]) if c}
         wq_pairs = {int(b): int(c) for b, c in enumerate(sw["hist"]) if c}
         need(
             r["ctxlen"] == 1
