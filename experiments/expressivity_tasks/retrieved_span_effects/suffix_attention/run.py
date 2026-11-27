@@ -322,11 +322,21 @@ def main():
     tick("verified adopted CUDA device")
     build = load("build")
     pack = SalPack(build, SalLM(SEEDS[0]), batch=BATCH)
-    _, fit_batches, fit_setup = bind_all(pack, "fit", True)
-    need(fit_setup["batches"] == UPDATES, "fit batch count mismatch")
-    tick("fit batches bound")
-    fits(fit_batches, pack.index, tick, ref, dev=dev, arms=STAGE2_ARMS)
-    del fit_batches
+    frozen_ok = (
+        (JOB / "frozen.json").exists()
+        and (JOB / "freeze-ack.json").exists()
+        and get(JOB / "freeze-ack.json")["frozen_sha"] == sha(JOB / "frozen.json")
+    )
+    if frozen_ok:
+        # The witnessed all-fit freeze is the atomic resume point; the fits
+        # are already closed and sealed. Do not retrain them.
+        tick("resuming from the witnessed freeze")
+    else:
+        _, fit_batches, fit_setup = bind_all(pack, "fit", True)
+        need(fit_setup["batches"] == UPDATES, "fit batch count mismatch")
+        tick("fit batches bound")
+        fits(fit_batches, pack.index, tick, ref, dev=dev, arms=STAGE2_ARMS)
+        del fit_batches
     env = dict(os.environ, CUDA_VISIBLE_DEVICES="")
     env.pop("GPU_LEASE_HELD", None)
     subprocess.run(

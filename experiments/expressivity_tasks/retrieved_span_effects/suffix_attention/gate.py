@@ -50,6 +50,10 @@ def admission(stage, cap):
     ref = qualified()
     need(isinstance(cap, int) and 0 < cap <= CAMPAIGN_CAP, "invalid stage cap")
     need(not (JOB / f"charge-{stage}.json").exists(), "stage already run; no retry")
+    need(
+        not (JOB / f"initial-{stage}").exists(),
+        "stage already in flight or completed without a charge",
+    )
     spent = campaign_spent()
     need(spent + cap <= CAMPAIGN_CAP, "stage would exceed the campaign cap")
     need(
@@ -267,7 +271,7 @@ def observe():
             + "\n"
         )
     stage_ok = (
-        (JOB / "meter.json").exists() if stage == "device_check" else ack.exists()
+        (JOB / f"meter-{stage}.json").exists() if stage != "run" else ack.exists()
     )
     need(
         ok and released_ok and proven and int(term["rc"]) == 0 and stage_ok,
