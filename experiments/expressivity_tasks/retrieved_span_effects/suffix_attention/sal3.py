@@ -153,11 +153,12 @@ def doc_starts():
     data = open(SEPS, "rb").read(48)
     docs = struct.unpack_from("<Q", data, 16)[0]
     with open(SEPS, "rb") as f:
-        f.seek(48)
-        deltas = np.frombuffer(f.read(4 * docs), dtype="<u4")
+        f.seek(48 + 4)  # the deltas are u32 at 48+4*i for i = 1..docs
+        deltas = np.frombuffer(f.read(4 * (docs - 1)), dtype="<u4")
     starts = np.empty(docs + 1, np.int64)
     starts[0] = 0
-    np.cumsum(deltas, out=starts[1:])
+    np.cumsum(deltas, out=starts[1:docs])
+    starts[docs] = 0  # the final sentinel is unused by callers
     return docs, starts
 
 
