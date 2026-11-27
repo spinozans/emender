@@ -327,6 +327,7 @@ def main():
         and (JOB / "freeze-ack.json").exists()
         and get(JOB / "freeze-ack.json")["frozen_sha"] == sha(JOB / "frozen.json")
     )
+    fit_setup = None
     if frozen_ok:
         # The witnessed all-fit freeze is the atomic resume point; the fits
         # are already closed and sealed. Do not retrain them.
@@ -361,6 +362,7 @@ def main():
             torch=torch.__version__,
             fit_setup=fit_setup,
             probe_setup=probe_setup,
+            stage=stage,
             archive=dict(documents=N["build"], rows=pack.rows, leaf=128),
             frozen_sha=sha(JOB / "frozen.json"),
             rows_sha=sha(DATA / "rows.json"),
