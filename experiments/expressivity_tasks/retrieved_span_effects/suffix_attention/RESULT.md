@@ -73,3 +73,19 @@ vs LOCAL, with the archive's literal-dictionary value (zstd) as the honest
 codec baseline that any neural reader must beat.
 
 [Protocol](PROTOCOL.md) · [Amendment A1](AMENDMENT.md) · [Law](../XSA_ATTENTION_LAW.md) · [Compact result and hashes](receipts/result.json)
+
+## Follow-up: SAL-2
+
+The registered ratio sweep ran as its first point at **512:1** (1 GiB
+archive, 2^30 rows, same host and dose): SKELETON − LOCAL = **−0.00238**
+[−0.00586, +0.00124], both seeds negative — a 128× larger archive moved the
+effect less than its own CI. The fitted weights show the archive was not
+suppressed (prior 0.527, depth-8 weight 125×, m₈ median 478 on real
+contexts): the counts are dense exactly where the local host is already
+good, and single-digit-backed where the host is weak. The value-bearing
+rare-context regime needs ~50–500× more backing than 1 GiB — the 100 GB
+class, which is where X43's win sits. zstd with the raw archive as a
+dictionary beat both arms again (3.06750). Registered decision rule 2
+fired: no further in-RAM ratio points; the successor is the 100 GB XSA
+transport (SAL-3). Full report: [RESULT-SAL2.md](RESULT-SAL2.md) ·
+[Receipt](receipts/sal2-result.json)

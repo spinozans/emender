@@ -65,6 +65,7 @@ def rebind():
     sal_gate.ARMS = ARMS2
     sal_gate.qualified = qualified
     sal_data.qualified = qualified
+    sal_run.N = N2
     # The probe extraction is a quarantined subprocess; it must re-enter
     # through SAL-2's rebound CLI, not the default campaign paths.
     sal_run.PROBE_ENTRY = __package__ + ".sal2"
