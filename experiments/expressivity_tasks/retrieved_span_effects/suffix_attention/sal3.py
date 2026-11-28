@@ -799,10 +799,11 @@ def bind_role(role, jobs=96):
     zpath = DATA3 / f"bound-{role}.npz"
     need(not zpath.exists(), "bound batches already exist")
     np.savez(zpath, **zs)
+    nb = len({k.rsplit("_", 1)[0] for k in zs})
     put(
         DATA3 / f"bound-{role}.json",
         dict(
-            batches=len(zs),
+            batches=nb,
             batches_sha=sha(zpath),
             rows_sha=sha(DATA3 / "rows.json"),
             targets=expect,
@@ -1278,6 +1279,8 @@ def main():
     which = sys.argv[1] if len(sys.argv) > 1 else None
     if which == "prepare":
         prepare()
+    elif which == "bind-fit":
+        bind_role("fit")
     elif which == "bind-probe":
         bind_role("probe")
     elif which == "probe":
