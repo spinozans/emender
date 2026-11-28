@@ -681,7 +681,7 @@ XSA_GATES = Path("/home/erikg/sxgc/gates")
 SHALLOW_DEPTHS = (1, 2, 3)
 
 
-def shallow_oracle(contexts, text, starts):
+def shallow_oracle(contexts, text, starts, with_table=False):
     """Exact no-cross brute force for depth 1..3 contexts over `text`.
 
     `contexts` is a set of context tuples (bytes of length 1..3); returns
@@ -808,6 +808,8 @@ def shallow_oracle(contexts, text, starts):
                     - np.bincount(np.clip(s0[eofm], 0, 255), minlength=256)
                 ).astype(np.int64)
             out[key] = dict(width=int(hist.sum()) + eof, eof=eof, hist=hist)
+    if with_table:
+        return out, raw_tables[1]
     return out
 
 
