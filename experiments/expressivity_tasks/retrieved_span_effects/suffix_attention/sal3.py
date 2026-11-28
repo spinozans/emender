@@ -236,12 +236,20 @@ def container_registry():
     the sealed seps structure and the sealed container text.
     """
     reg = DATA3 / "container-registry.jsonl"
+    rj = DATA3 / "container-registry.json"
     if reg.is_file():
-        n = len(reg.read_text().splitlines())
-        need(n == 16_119_767, "sealed registry row count mismatch")
+        q = get(rj)
+        need(
+            len(reg.read_text().splitlines()) == 16_119_767
+            and q["rows"] == 16_119_767
+            and sha(reg) == q["registry_sha256"],
+            "sealed registry mismatch",
+        )
         return reg
     docs, starts = doc_starts()
     h = hashlib.sha256()
+    dup = 0
+    seen = set()
     with open(CORPUS, "rb", buffering=0) as f, reg.open("w") as out:
         for i in range(len(starts) - 1):
             s, e = int(starts[i]), int(starts[i + 1])
@@ -252,16 +260,21 @@ def container_registry():
                 d.update(chunk)
                 pos += len(chunk)
             hh = d.hexdigest()
+            if hh in seen:
+                dup += 1
+            seen.add(hh)
             h.update(hh.encode())
             out.write(json.dumps(dict(doc=i, offset=s, length=e - s, sha256=hh)) + "\n")
     put(
-        DATA3 / "container-registry.json",
+        rj,
         dict(
             rows=16_119_767,
+            duplicate_content_rows=dup,
             registry_sha256=h.hexdigest(),
             container_text_sha256=CORPUS100_SHA,
         ),
     )
+    print(f"container registry sealed: {dup} duplicate-content rows", flush=True)
     return reg
 
 
@@ -337,13 +350,12 @@ def reserve():
     ex3 = base3 | {r["sha256"] for r in sal2_fresh}
     need(len(ex3) == 328038, "exclusion ledger mismatch")
     reg = container_registry()
-    seen = set()
-    eligible = []
+    by_hash = {}
     for ln in reg.read_text().splitlines():
         r = json.loads(ln)
-        hh = r["sha256"]
-        need(hh not in seen, f"container duplicate content at doc {r['doc']}")
-        seen.add(hh)
+        by_hash.setdefault(r["sha256"], r)  # first occurrence in container order
+    eligible = []
+    for hh, r in by_hash.items():
         if (
             r["length"] > 4096
             and hh not in ex3
