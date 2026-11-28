@@ -799,7 +799,7 @@ def bind_role(role, jobs=96):
     zpath = DATA3 / f"bound-{role}.npz"
     need(not zpath.exists(), "bound batches already exist")
     np.savez(zpath, **zs)
-    nb = len({k.rsplit("_", 1)[0] for k in zs})
+    nb = sum(1 for k in zs if k.endswith("_ids"))
     put(
         DATA3 / f"bound-{role}.json",
         dict(
