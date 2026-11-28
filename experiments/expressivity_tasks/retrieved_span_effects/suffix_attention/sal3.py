@@ -443,40 +443,90 @@ def pass_arrays(path, d, expect):
     return c, h
 
 
-def depth0_pass(out, jobs=96):
-    """The archive's successor marginal via the 256 single-byte contexts."""
+def depth0_pass(out, jobs=96, present=None, head_mb=256):
+    """The archive's successor marginal via the single-byte contexts.
+
+    Rare byte values can be absent from the head scan; they are located by
+    a deep chunked scan of the container's text. `present` is the
+    authoritative set of byte values that occur as contexts (from the
+    qualification's full depth-1 pair table): every one of them must be
+    located. Without `present`, the scan runs to the end of the text and
+    byte values never located are recorded as assumed-zero.
+    """
     docs, starts = doc_starts()
-    with open(CORPUS, "rb", buffering=0) as f:
-        head = f.read(256 << 20)
-    need(len(head) > WINDOW_T, "corpus head")
     import bisect
 
+    text_len = 100_000_000_000
+    with open(CORPUS, "rb", buffering=0) as f:
+        head = f.read(head_mb << 20)
+    need(len(head) > WINDOW_T, "corpus head")
+
+    def accept(p, b, found):
+        if b in found:
+            return
+        i = bisect.bisect_right(starts, p) - 1
+        # a document-start position has an empty spine under the
+        # transport's cut law; only in-document positions may host a
+        # single-byte context
+        if p > starts[i]:
+            found[b] = (i, p - starts[i])
+
     found = {}
-    for p in range(2, len(head)):
-        b = head[p - 1]
-        if b not in found:
-            i = bisect.bisect_right(starts, p) - 1
-            # a document-start position has an empty spine under the
-            # transport's cut law; only in-document positions may host a
-            # single-byte context
-            if p > starts[i]:
-                found[b] = (i, p - starts[i])
-        if len(found) == 256:
-            break
-    need(len(found) == 256, f"only {len(found)} byte values in the head")
+    head_arr = np.frombuffer(head, np.uint8)
+    for b in range(256):
+        idx = np.flatnonzero(head_arr[:-1] == b)
+        if len(idx):
+            for p in idx[::-1]:
+                accept(int(p) + 1, b, found)
+                if b in found:
+                    break
+    missing = [
+        b for b in range(256) if b not in found and (present is None or b in present)
+    ]
+    if missing:
+        mm = np.memmap(CORPUS, dtype=np.uint8, mode="r")
+        step = 1 << 30
+        want = np.asarray(missing, np.uint8)
+        for lo in range(len(head) - 1, text_len, step):
+            hi = min(lo + step + 1, text_len)
+            chunk = mm[lo:hi]
+            hits = np.flatnonzero(np.isin(chunk[:-1], want))
+            for j in hits[::-1]:
+                accept(lo + int(j) + 1, int(chunk[j]), found)
+                if all(b in found for b in missing):
+                    break
+            missing = [b for b in missing if b not in found]
+            want = np.asarray(missing, np.uint8)
+            if not missing:
+                break
+        del mm
+    if present is not None:
+        need(
+            all(b in found for b in present),
+            f"authoritative byte values not located: "
+            f"{sorted(b for b in present if b not in found)}",
+        )
+    assumed_zero = sorted(b for b in range(256) if b not in found)
     path = out + ".windows.jsonl"
     with open(path, "w") as f:
         for b, (i, s) in sorted(found.items()):
             f.write(json.dumps(dict(doc=int(i), start=int(s), len=1, left=1)) + "\n")
     facts = consult_pass("depth0", 1, "depth0", path, out, jobs=jobs)
     rows = read_rows(out)
-    need(len(rows) == 256, "depth0 rows")
+    need(len(rows) == len(found), "depth0 rows")
     h0 = np.zeros(256, np.int64)
     for r in rows:
         need(not (r["flags"] & 16) and r["ctxlen"] == 1, "depth0 row flags")
         h0 += r["hist"]
     n = int(h0.sum())
-    return dict(rows=int(n), h0=h0.tolist(), facts=facts, windows_sha=sha(path))
+    return dict(
+        rows=int(n),
+        h0=h0.tolist(),
+        facts=facts,
+        windows_sha=sha(path),
+        contexts=len(found),
+        assumed_zero=assumed_zero,
+    )
 
 
 def telescope(classes, hists, n_rows, h0, expect):
@@ -800,28 +850,47 @@ def qualify(jobs=96):
     csha, bsha = verify_tools()
     need(sha(CORPUS100) == CORPUS100_SHA, "container text file sha mismatch")
     work = B3 / "transport-qualification"
-    need(not work.exists(), "transport qualification already run")
-    work.mkdir(mode=0o700, parents=True)
+    resumed = work.exists()
+    if not resumed:
+        work.mkdir(mode=0o700, parents=True)
+
+    def journal_facts(rows_path, expect_positions):
+        """Re-verify a finished consult pass from its journal and rows."""
+        j = Path(str(rows_path) + ".journal")
+        need(j.is_file(), f"missing journal for {rows_path}")
+        done = [
+            ln for ln in j.read_text().splitlines() if ln.startswith("CONSULT_DONE")
+        ]
+        need(len(done) == 1, f"missing CONSULT_DONE in {j}")
+        facts = dict(kv.split("=", 1) for kv in done[0].split()[1:] if "=" in kv)
+        need(
+            int(facts["positions"]) == expect_positions,
+            f"journal positions mismatch for {rows_path}",
+        )
+        return facts
 
     x3log = work / "x3.log"
-    with x3log.open("wb") as f:
-        p = subprocess.run(
-            [
-                "bash",
-                str(XSA_GATES / "no_cross_x3_consult.sh"),
-                str(CONTAINER),
-                str(CORPUS100),
-                str(SEPS),
-                str(work / "x3"),
-                str(jobs),
-            ],
-            cwd=ROOT,
-            stdout=f,
-            stderr=subprocess.STDOUT,
-            timeout=14400,
-        )
-    x3 = x3log.read_text()
-    need(p.returncode == 0 and "X3_RESULT PASS" in x3, "X3 gate failed")
+    if resumed and x3log.is_file() and "X3_RESULT PASS" in x3log.read_text():
+        x3 = x3log.read_text()
+    else:
+        with x3log.open("wb") as f:
+            p = subprocess.run(
+                [
+                    "bash",
+                    str(XSA_GATES / "no_cross_x3_consult.sh"),
+                    str(CONTAINER),
+                    str(CORPUS100),
+                    str(SEPS),
+                    str(work / "x3"),
+                    str(jobs),
+                ],
+                cwd=ROOT,
+                stdout=f,
+                stderr=subprocess.STDOUT,
+                timeout=14400,
+            )
+        x3 = x3log.read_text()
+        need(p.returncode == 0 and "X3_RESULT PASS" in x3, "X3 gate failed")
     x3_result = [ln for ln in x3.splitlines() if ln.startswith("X3_RESULT")][0]
     x3_spot = [ln for ln in x3.splitlines() if ln.startswith("X3_ORACLE_SPOT_CHECK")][0]
 
@@ -846,36 +915,43 @@ def qualify(jobs=96):
     sweep_shas = {}
     for d in DEPTHS:
         w = work / f"sweep-w{d}.jsonl"
-        with w.open("w") as f:
-            for i, pos in cands:
-                f.write(json.dumps(dict(doc=int(i), start=1024, len=1, left=d)) + "\n")
         out = work / f"sweep-rows{d}.bin"
-        facts = consult_pass("qual", d, "sweep", w, out, jobs=jobs)
-        need(int(facts["positions"]) == 64, "sweep positions")
+        if out.is_file():
+            facts = journal_facts(out, 64)
+        else:
+            with w.open("w") as f:
+                for i, pos in cands:
+                    f.write(
+                        json.dumps(dict(doc=int(i), start=1024, len=1, left=d)) + "\n"
+                    )
+            facts = consult_pass("qual", d, "sweep", w, out, jobs=jobs)
+            need(int(facts["positions"]) == 64, "sweep positions")
         rates[d] = facts["positions_per_s"]
         sweep_shas[d] = facts["rows_sha256"]
 
     oracle = work / "nocross_oracle"
-    need(not oracle.exists(), "oracle already built")
-    subprocess.run(
-        ["gcc", "-O2", "-o", str(oracle), str(XSA_GATES / "nocross_oracle.c")],
-        check=True,
-    )
-    oout = work / "sweep-oracle.out"
-    with oout.open("wb") as f:
+    if not oracle.is_file():
         subprocess.run(
-            [
-                str(oracle),
-                str(SEPS),
-                str(CORPUS),
-                "100000000000",
-                str(qfile),
-            ],
-            stdout=f,
+            ["gcc", "-O2", "-o", str(oracle), str(XSA_GATES / "nocross_oracle.c")],
             check=True,
-            timeout=3600,
         )
+    oout = work / "sweep-oracle.out"
+    if not oout.is_file():
+        with oout.open("wb") as f:
+            subprocess.run(
+                [
+                    str(oracle),
+                    str(SEPS),
+                    str(CORPUS),
+                    "100000000000",
+                    str(qfile),
+                ],
+                stdout=f,
+                check=True,
+                timeout=3600,
+            )
     want = _parse_oracle(oout)
+    need(len(want) == 5 * 64, "oracle rows")
     # the shallow no-cross oracle: one chunked numpy pass over the
     # container's text for every depth-1..3 context of the sweep
     text100 = np.memmap(CORPUS, dtype=np.uint8, mode="r")[:100_000_000_000]
@@ -884,7 +960,10 @@ def qualify(jobs=96):
     for i, pos in cands:
         for d in (1, 2, 3):
             shallow_ctxs.add(tuple(bytes(text100[pos - d : pos])))
-    shallow = shallow_oracle(shallow_ctxs, text100, starts)
+    shallow, table1 = shallow_oracle(shallow_ctxs, text100, starts, with_table=True)
+    present = {
+        int(c) for c in range(256) if int(table1[c * 256 : (c + 1) * 256].sum()) > 0
+    }
     checked = 0
     for d in DEPTHS:
         rows = read_rows(work / f"sweep-rows{d}.bin")
@@ -911,18 +990,25 @@ def qualify(jobs=96):
 
     # determinism: repeat one pass, byte-identical rows
     w = work / "det-w.jsonl"
-    with w.open("w") as f:
-        for i, pos in cands:
-            f.write(json.dumps(dict(doc=int(i), start=1024, len=1, left=4)) + "\n")
     det = work / "det-rows.bin"
-    facts = consult_pass("qual", 4, "det", w, det, jobs=jobs)
+    if det.is_file():
+        facts = journal_facts(det, 64)
+    else:
+        if not w.is_file():
+            with w.open("w") as f:
+                for i, pos in cands:
+                    f.write(
+                        json.dumps(dict(doc=int(i), start=1024, len=1, left=4)) + "\n"
+                    )
+        facts = consult_pass("qual", 4, "det", w, det, jobs=jobs)
     need(facts["rows_sha256"] == sweep_shas[4], "determinism mismatch")
 
     # depth 0: the 256 single-byte contexts vs the oracle, then the marginal
     d0out = str(work / "depth0.bin")
-    depth0_pass(d0out, jobs=jobs)
+    need(not Path(d0out).is_file(), "depth0 pass already exists; remove to redo")
+    depth0_pass(d0out, jobs=jobs, present=present)
     d0rows = read_rows(d0out)
-    need(len(d0rows) == 256, "depth0 rows")
+    need(len(d0rows) == len(present), "depth0 rows")
     shallow0 = shallow_oracle(
         {tuple(bytes(text100[r["off"] - 1 : r["off"]])) for r in d0rows},
         text100,
@@ -950,6 +1036,8 @@ def qualify(jobs=96):
             container_sha256=csha,
             binary_sha256=bsha,
             container_text_sha256=CORPUS100_SHA,
+            resumed_from_artifacts=resumed,
+            sweep_rows_shas=sweep_shas,
             note="first attempt failed in the X3 script's own oracle arm: it stat-reads the full 1.3 TB corpus file; the gate now runs against the container's exact materialized text (sha-matched to the rehearsal journal)",
             x3_result=x3_result,
             x3_spot=x3_spot,
