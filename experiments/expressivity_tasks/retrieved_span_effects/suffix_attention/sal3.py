@@ -242,7 +242,7 @@ def container_registry():
         need(
             len(reg.read_text().splitlines()) == 16_119_767
             and q["rows"] == 16_119_767
-            and sha(reg) == q["registry_sha256"],
+            and sha(reg) == q["registry_file_sha256"],
             "sealed registry mismatch",
         )
         return reg
@@ -271,6 +271,7 @@ def container_registry():
             rows=16_119_767,
             duplicate_content_rows=dup,
             registry_sha256=h.hexdigest(),
+            registry_file_sha256=sha(reg),
             container_text_sha256=CORPUS100_SHA,
         ),
     )
