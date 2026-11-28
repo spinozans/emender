@@ -132,3 +132,41 @@ failed stages are results, continued under new names with retained notes;
 stage-suffixed artifacts; the quarantined probe subprocess, the optional
 post-extraction bind subprocess, the parameterized ready-seal set and the
 run-lineage closure are the SAL-2 published fixes carried forward.
+
+## Amendment: in-container roles (registered before any probe opening)
+
+The first `prepare` failed closed at the transport, exposing a geometry
+defect in the original registration: the chain's fresh-role supply lies
+beyond byte 100.6 GB (the `MIN_OFFSET` prior-train guard blocks the corpus
+head as earlier-campaign material), while the consult transport serves
+only windows that agree with the container's document structure — and the
+container **is** the corpus head. No chain-fresh document can ever be
+served by the qualified interface; the stateless out-of-archive query path
+runs at serving rates (hours per fit pass), not transport rates.
+
+The executable form of the registered measurement, adopted before the
+probe was ever opened:
+
+1. **Roles are drawn inside the container**, from documents excluded
+   from every ledger role (the X49 registry's blocked set, the pilot's
+   rows, SAL-1's 2,688, SAL-2's 262,144 archive documents and 640 fresh
+   rows). The exclusion ledger is exactly the corrected chain arithmetic:
+   328,038 documents. The coarse `MIN_OFFSET` guard is replaced by the
+   container constraint; the per-hash ledger is fully respected — no
+   document carries two roles.
+2. **Every role pass carries `--exclude-source`**: the position's own
+   occurrence is removed from its successor histogram (X3 gate:
+   `X3_EXCLUDE rows=50000 excluded=50000 result=PASS`). Same-document
+   other-position occurrences remain; their mass is bounded by the
+   document's length over the archive's context counts (<=0.01% at depth
+   <=2, essentially zero at depth >=4), and is receipted at depths 1..3
+   in the close via the numpy oracle.
+3. **The claim is amended accordingly**: this campaign measures the count
+   law's marginal compression value on documents the archive contains
+   (position-self-excluded), not on chain-fresh documents. The fresh
+   form is deferred to the stateless-query transport as a registered
+   follow-up.
+4. The depth-0 constants remain the archive-global successor marginal
+   (no exclusion), a receipted convention.
+5. The zstd dictionary baseline is unchanged: the raw archive contains
+   the probe documents verbatim, exactly as registered.

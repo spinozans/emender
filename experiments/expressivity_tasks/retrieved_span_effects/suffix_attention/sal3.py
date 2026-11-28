@@ -271,15 +271,32 @@ def reserve():
         "SAL-2 selection not reproduced",
     )
     base3 = blocked2 | {r["sha256"] for r in sal2_arch}
-    rows, blocked3, supply = s51.next_block(
-        records, base3, sal2_fresh, N3["fit"] + N3["probe"], book["source"]["size"]
-    )
-    need(
-        len(rows) == N3["fit"] + N3["probe"]
-        and len(blocked3) == 328038
-        and supply == SAL3_SUPPLY,
-        "fresh suffix mismatch",
-    )
+    # AMENDMENT (see PROTOCOL-SAL3.md): the container is the corpus head;
+    # the chain's fresh supply lies beyond it and the qualified consult
+    # transport serves only container windows (fail-closed doc structure).
+    # SAL-3's roles are drawn inside the container from documents excluded
+    # from every ledger role, and every role pass carries --exclude-source
+    # (the X3-verified position-self exclusion). The coarse MIN_OFFSET
+    # prior-train guard is replaced by the container constraint.
+    ex3 = base3 | {r["sha256"] for r in sal2_fresh}
+    need(len(ex3) == 328038, "exclusion ledger mismatch")
+    panels.MIN_OFFSET = 0
+    records3 = [
+        r for r in records if r["byte_offset"] + r["byte_length"] <= 100_000_000_000
+    ]
+    need(len(records3) > 0, "no in-container records")
+    quotas = {"train": N3["fit"] + N3["probe"]}
+    chosen, supply3 = panels.select(records3, ex3, quotas, 100_000_000_000)
+    panels.verify_selection(records3, ex3, chosen, quotas, supply3)
+    rows = chosen["train"]
+    need(len(rows) == N3["fit"] + N3["probe"], "in-container selection mismatch")
+    for row in rows:
+        need(
+            row["offset"] + row["length"] <= 100_000_000_000,
+            "selected document outside the container",
+        )
+    blocked3 = ex3
+    supply = supply3["train"]
     put(
         DATA3 / "rows.json",
         dict(
@@ -291,6 +308,7 @@ def reserve():
             excluded=len(blocked3),
             excluded_sha=panels.fingerprint(sorted(blocked3)),
             supply=supply,
+            roles_amendment="in-container-exclude-source",
             roles=dict(
                 fit=rows[: N3["fit"]],
                 probe=rows[N3["fit"] :],
@@ -314,16 +332,32 @@ def reserve():
 
 
 def windows_file(role, d, path):
-    """One whole-row window per role document, at spine budget d."""
+    """One whole-row window per role document, at spine budget d.
+
+    `doc` is the container's document index, resolved from the seps
+    structure (the transport validates doc/base against it, fail-closed).
+    """
     r = get(DATA3 / "rows.json")
     need(r["roles"][role] and len(r["roles"][role]) == N3[role], "role rows")
+    import bisect
+
+    _, starts = doc_starts()
     with open(path, "w") as f:
-        for i, row in enumerate(r["roles"][role]):
+        for row in r["roles"][role]:
+            off, n = row["offset"], row["length"]
+            i = bisect.bisect_left(starts, off)
+            need(
+                i < len(starts)
+                and int(starts[i]) == off
+                and off + n <= 100_000_000_000
+                and row["start"] + 1 + WINDOW_T <= n,
+                f"role document {off} not a container document",
+            )
             f.write(
                 json.dumps(
                     dict(
-                        doc=i,
-                        base=row["offset"],
+                        doc=int(i),
+                        base=off,
                         start=row["start"] + 1,
                         len=WINDOW_T,  # the row's 4096 target positions
                         left=d,
@@ -334,35 +368,50 @@ def windows_file(role, d, path):
     return sha(path)
 
 
-def consult_pass(role, d, tag, windows, out, jobs=96):
-    """Run one transport pass; verify the journal and per-row exactness."""
+def consult_pass(role, d, tag, windows, out, jobs=96, exclude=True):
+    """Run one transport pass; verify the journal and per-row exactness.
+
+    Role passes (fit/probe binds) carry --exclude-source: the X3-verified
+    position-self exclusion, required by the in-container roles amendment.
+    Qualification passes run without it, matching their no-cross oracles.
+    """
     out = str(out)
     windows = str(windows)
     need(not Path(out).exists(), "consult output already exists")
+    args = [
+        str(XSA),
+        "consult",
+        "--container",
+        str(CONTAINER),
+        "--corpus",
+        str(CORPUS),
+        "--windows",
+        str(windows),
+        "--output",
+        str(out),
+        "--rss-gb",
+        "8",
+        "-j",
+        str(jobs),
+    ]
+    if exclude:
+        args.append("--exclude-source")
     p = subprocess.run(
-        [
-            str(XSA),
-            "consult",
-            "--container",
-            str(CONTAINER),
-            "--corpus",
-            str(CORPUS),
-            "--windows",
-            str(windows),
-            "--output",
-            str(out),
-            "--rss-gb",
-            "8",
-            "-j",
-            str(jobs),
-        ],
+        args,
         cwd=ROOT,
         capture_output=True,
         text=True,
     )
     need(p.returncode == 0, f"consult {tag} d={d} failed: {p.stdout[-800:]}")
     journal = Path(out + ".journal")
-    done = [ln for ln in journal.read_text().splitlines() if "CONSULT_DONE" in ln]
+    jtext = journal.read_text()
+    open_line = [ln for ln in jtext.splitlines() if ln.startswith("CONSULT_OPEN")]
+    need(len(open_line) == 1, "missing CONSULT_OPEN")
+    need(
+        ("exclude_source=1" in open_line[0]) == exclude,
+        "position-self exclusion state mismatch in the journal",
+    )
+    done = [ln for ln in jtext.splitlines() if "CONSULT_DONE" in ln]
     need(len(done) == 1, "missing CONSULT_DONE")
     facts = dict(kv.split("=", 1) for kv in done[0].split()[1:] if "=" in kv)
     return facts
@@ -514,7 +563,7 @@ def depth0_pass(out, jobs=96, present=None, head_mb=256):
     with open(path, "w") as f:
         for b, (i, s) in sorted(found.items()):
             f.write(json.dumps(dict(doc=int(i), start=int(s), len=1, left=1)) + "\n")
-    facts = consult_pass("depth0", 1, "depth0", path, out, jobs=jobs)
+    facts = consult_pass("depth0", 1, "depth0", path, out, jobs=jobs, exclude=False)
     rows = read_rows(out)
     need(len(rows) == len(found), "depth0 rows")
     h0 = np.zeros(256, np.int64)
@@ -929,7 +978,7 @@ def qualify(jobs=96):
                     f.write(
                         json.dumps(dict(doc=int(i), start=1024, len=1, left=d)) + "\n"
                     )
-            facts = consult_pass("qual", d, "sweep", w, out, jobs=jobs)
+            facts = consult_pass("qual", d, "sweep", w, out, jobs=jobs, exclude=False)
             need(int(facts["positions"]) == 64, "sweep positions")
         rates[d] = facts["positions_per_s"]
         sweep_shas[d] = facts["rows_sha256"]
@@ -1005,7 +1054,7 @@ def qualify(jobs=96):
                     f.write(
                         json.dumps(dict(doc=int(i), start=1024, len=1, left=4)) + "\n"
                     )
-        facts = consult_pass("qual", 4, "det", w, det, jobs=jobs)
+        facts = consult_pass("qual", 4, "det", w, det, jobs=jobs, exclude=False)
     need(facts["rows_sha256"] == sweep_shas[4], "determinism mismatch")
 
     # depth 0: the 256 single-byte contexts vs the oracle, then the marginal
@@ -1063,7 +1112,19 @@ def prepare():
     reserve()
     sal_data.extract("fit")
     csha, bsha = verify_tools()
-    d0 = depth0_pass(str(DATA3 / "depth0.bin"))
+    cpath = DATA3 / "container.json"
+    if cpath.is_file():
+        c0 = get(cpath)
+        need(
+            c0["container_sha256"] == csha
+            and c0["rows"] > 0
+            and len(c0["h0"]) == 256
+            and (DATA3 / "depth0.bin").is_file(),
+            "sealed depth0 receipt mismatch",
+        )
+        d0 = dict(rows=c0["rows"], h0=c0["h0"], facts=c0["depth0"])
+    else:
+        d0 = depth0_pass(str(DATA3 / "depth0.bin"))
     n = d0["rows"]
     st = os.stat(CORPUS)
     put(
@@ -1084,6 +1145,8 @@ def prepare():
             rows=n,
             h0=d0["h0"],
             depth0=d0["facts"],
+            roles_sha=sha(DATA3 / "rows.json"),
+            roles_amendment="in-container-exclude-source",
             bound=False,
         ),
     )
