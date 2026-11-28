@@ -8,6 +8,7 @@ the transport and loaded under sealed receipts. Registered in
 PROTOCOL-SAL3.md before any new natural membership access.
 """
 
+import hashlib
 import json
 import os
 import struct
@@ -227,8 +228,45 @@ def _chain_base():
     return book, records, blocked, pilot, pilot_rows, panels, s51
 
 
+def container_registry():
+    """The container's own document registry: one sha256 per document.
+
+    The chain's record universe begins past the corpus head; the container
+    IS the head, so the amendment draws roles from a registry derived from
+    the sealed seps structure and the sealed container text.
+    """
+    reg = DATA3 / "container-registry.jsonl"
+    if reg.is_file():
+        n = len(reg.read_text().splitlines())
+        need(n == 16_119_767, "sealed registry row count mismatch")
+        return reg
+    docs, starts = doc_starts()
+    h = hashlib.sha256()
+    with open(CORPUS, "rb", buffering=0) as f, reg.open("w") as out:
+        for i in range(len(starts) - 1):
+            s, e = int(starts[i]), int(starts[i + 1])
+            d = hashlib.sha256()
+            pos = s
+            while pos < e:
+                chunk = f.read(min(1 << 20, e - pos))
+                d.update(chunk)
+                pos += len(chunk)
+            hh = d.hexdigest()
+            h.update(hh.encode())
+            out.write(json.dumps(dict(doc=i, offset=s, length=e - s, sha256=hh)) + "\n")
+    put(
+        DATA3 / "container-registry.json",
+        dict(
+            rows=16_119_767,
+            registry_sha256=h.hexdigest(),
+            container_text_sha256=CORPUS100_SHA,
+        ),
+    )
+    return reg
+
+
 def reserve():
-    """Fresh fit/probe roles extending the chain past SAL-1 and SAL-2."""
+    """In-container fit/probe roles under the registered amendment."""
     rebind()
     ref = qualified()
     sal_settings.cpu()
@@ -237,7 +275,10 @@ def reserve():
         "depth0.bin.journal",
         "depth0.bin.windows.jsonl",
         "container.json",
-    }  # role-independent sealed evidence: the archive-global depth-0 marginal
+        "container-registry.jsonl",
+        "container-registry.json",
+    }  # role-independent sealed evidence: the archive-global depth-0
+    # marginal and the container document registry
     if DATA3.exists():
         extra = sorted(x.name for x in DATA3.iterdir() if x.name not in resume)
         need(not extra, f"data directory not empty from an earlier run: {extra}")
@@ -295,23 +336,40 @@ def reserve():
     # prior-train guard is replaced by the container constraint.
     ex3 = base3 | {r["sha256"] for r in sal2_fresh}
     need(len(ex3) == 328038, "exclusion ledger mismatch")
-    panels.MIN_OFFSET = 0
-    records3 = [
-        r for r in records if r["byte_offset"] + r["byte_length"] <= 100_000_000_000
+    reg = container_registry()
+    seen = set()
+    eligible = []
+    for ln in reg.read_text().splitlines():
+        r = json.loads(ln)
+        hh = r["sha256"]
+        need(hh not in seen, f"container duplicate content at doc {r['doc']}")
+        seen.add(hh)
+        if (
+            r["length"] > 4096
+            and hh not in ex3
+            and {0: "calibration", 1: "final_test"}.get(int(hh, 16) % 100, "train")
+            == "train"
+        ):
+            eligible.append(
+                (panels.digest(("sal3-in-container-v1:" + hh).encode("ascii")), r)
+            )
+    eligible.sort(key=lambda x: x[0])
+    rows = [
+        dict(r, start=0, split="train") for _, r in eligible[: N3["fit"] + N3["probe"]]
     ]
-    need(len(records3) > 0, "no in-container records")
-    quotas = {"train": N3["fit"] + N3["probe"]}
-    chosen, supply3 = panels.select(records3, ex3, quotas, 100_000_000_000)
-    panels.verify_selection(records3, ex3, chosen, quotas, supply3)
-    rows = chosen["train"]
-    need(len(rows) == N3["fit"] + N3["probe"], "in-container selection mismatch")
-    for row in rows:
+    need(len(rows) == N3["fit"] + N3["probe"], "in-container supply exhausted")
+    # set-first witness: the selection is the global rank minimum among
+    # eligible container documents, none excluded, none duplicated
+    chosen_hashes = {r["sha256"] for r in rows}
+    need(len(chosen_hashes) == len(rows), "selected duplicate content")
+    need(not chosen_hashes & ex3, "selected a ledger role")
+    for r in rows:
         need(
-            row["offset"] + row["length"] <= 100_000_000_000,
-            "selected document outside the container",
+            r["offset"] + r["length"] <= 100_000_000_000 and r["length"] > 4096,
+            "selected document outside the container or too short",
         )
     blocked3 = ex3
-    supply = supply3["train"]
+    supply = len(eligible) - len(rows)
     put(
         DATA3 / "rows.json",
         dict(
