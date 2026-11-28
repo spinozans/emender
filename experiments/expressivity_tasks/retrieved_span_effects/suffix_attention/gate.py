@@ -87,7 +87,8 @@ def admission(stage, cap):
         ledger=spent,
         deadline=CAMPAIGN_END,
         rows_sha=r["rows"],
-        build_seal=r["build"],
+        # SAL-3's archive seal is the container receipt (no in-RAM build)
+        build_seal=r["build"] if "build" in r else r["container"],
         fit_seal=r["fit"],
         allowlist="0,1",
         automatic_retry=False,
