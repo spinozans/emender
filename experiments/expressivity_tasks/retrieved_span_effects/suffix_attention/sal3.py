@@ -53,7 +53,10 @@ DEPTHS = tuple(range(1, 9))
 LAW_DEPTH = 8
 WINDOW_T = 4096
 SAL2_SUPPLY = 1811
-SAL3_SUPPLY = 531
+# corrected from the earlier session's estimate, which double-counted the
+# SAL-2 fresh set (640) in the blocked total and its supply; the chain
+# arithmetic reproduces SAL-1 and SAL-2 bit-exactly through this code path
+SAL3_SUPPLY = 1166
 ZSTD_DICT_FALLBACK = 4 << 30
 
 
@@ -273,7 +276,7 @@ def reserve():
     )
     need(
         len(rows) == N3["fit"] + N3["probe"]
-        and len(blocked3) == 328678
+        and len(blocked3) == 328038
         and supply == SAL3_SUPPLY,
         "fresh suffix mismatch",
     )

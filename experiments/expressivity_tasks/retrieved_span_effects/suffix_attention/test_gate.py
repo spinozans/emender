@@ -43,6 +43,18 @@ def env(tmp_path, monkeypatch):
 
 def test_admission_enforces_campaign_ledger_and_single_use(env):
     base, data, job = env
+    # the mechanism is calendar-independent: the campaign window is patched
+    # to a fixed future so the test stays meaningful after the real window
+    # closes
+    real_end = gate.CAMPAIGN_END
+    gate.CAMPAIGN_END = gate.time.time() + 8 * 3600
+    try:
+        _admission_body(base, data, job, gate, real_end)
+    finally:
+        gate.CAMPAIGN_END = real_end
+
+
+def _admission_body(base, data, job, gate, real_end):
     monkeypatch_time = {"now": gate.time.time() + 0}
     a = gate.admission("device_check", 400)
     assert a["ledger"] == 0 and a["cap"] == 400
