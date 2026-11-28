@@ -232,8 +232,23 @@ def reserve():
     rebind()
     ref = qualified()
     sal_settings.cpu()
+    resume = {
+        "depth0.bin",
+        "depth0.bin.journal",
+        "depth0.bin.windows.jsonl",
+        "container.json",
+    }  # role-independent sealed evidence: the archive-global depth-0 marginal
     if DATA3.exists():
-        need(not any(DATA3.iterdir()), "data directory not empty from an earlier run")
+        extra = sorted(x.name for x in DATA3.iterdir() if x.name not in resume)
+        need(not extra, f"data directory not empty from an earlier run: {extra}")
+        c0 = get(DATA3 / "container.json")
+        need(
+            "CONSULT_COMMIT" in (DATA3 / "depth0.bin.journal").read_text()
+            and c0["container_sha256"] == CONTAINER_SHA
+            and c0["rows"] > 0
+            and len(c0["h0"]) == 256,
+            "sealed depth0 evidence mismatch",
+        )
     else:
         DATA3.mkdir(mode=0o700)
     book, records, blocked, pilot, pilot_rows, panels, s51 = _chain_base()
